@@ -1,0 +1,5 @@
+path="external/ntfs-3g"		<project path="external/ntfs-3g" name="platform/external/ntfs-3g" remote="x86" revision="r-x86" />
+path="packages/apps/Eleven"		<project path="packages/apps/Eleven" name="platform/packages/apps/Eleven" remote="x86" revision="q-x86" />
+path="packages/apps/Taskbar"		<project path="packages/apps/Taskbar" name="platform/packages/apps/Taskbar" remote="x86" revision="q-x86" />
+path="prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9"		<project path="prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9" name="platform/prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9" remote="aosp" revision="refs/tags/android-10.0.0_r37" clone-depth="1" />
+path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6"		<project path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6" name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6" remote="aosp" revision="master" />
