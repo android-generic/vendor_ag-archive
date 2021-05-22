@@ -1,0 +1,34 @@
+From 25f5a2a9e8fe44e368aecb8fb9b551d6797cebb7 Mon Sep 17 00:00:00 2001
+From: "he, bo" <bo.he@intel.com>
+Date: Fri, 26 Oct 2018 09:23:58 +0800
+Subject: [PATCH 3/8] Align the pageBlockOrder to the kerne 4.19 kernel
+
+Change-Id: Ieb76e3d78856c80c0450e239b5ba026219920c2e
+Tracked-On: https://jira01.devtools.intel.com/browse/OAM-70044
+Signed-off-by: he, bo <bo.he@intel.com>
+
+Conflicts:
+	cmds/incident_helper/src/parsers/PageTypeInfoParser.cpp
+---
+ cmds/incident_helper/src/parsers/PageTypeInfoParser.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/cmds/incident_helper/src/parsers/PageTypeInfoParser.cpp b/cmds/incident_helper/src/parsers/PageTypeInfoParser.cpp
+index 2a89c920c11..9f60c9bba7d 100644
+--- a/cmds/incident_helper/src/parsers/PageTypeInfoParser.cpp
++++ b/cmds/incident_helper/src/parsers/PageTypeInfoParser.cpp
+@@ -78,7 +78,11 @@ PageTypeInfoParser::Parse(const int in, const int out) const
+                 // An example looks like:
+                 // header line:      type    0   1   2 3 4 5 6 7 8 9 10
+                 // record line: Unmovable  426 279 226 1 1 1 0 0 2 2  0
++                // The pageBlockOrder = 9 and it's zero-indexed. so total parts
++                // are 9 + 1(zero-indexed for pageBlockOrder) +1(zero-indexed) + 1(the type part) = 12.
+                 record_t pageCounts = parseRecord(record[2]);
++                int pageCountsSize = pageBlockOrder + 3;
++                if ((int)pageCounts.size() != pageCountsSize) return BAD_VALUE;
+ 
+                 proto.write(PageTypeInfoProto::MigrateType::TYPE, pageCounts[0]);
+                 for (size_t i=1; i<pageCounts.size(); i++) {
+-- 
+2.17.1
+

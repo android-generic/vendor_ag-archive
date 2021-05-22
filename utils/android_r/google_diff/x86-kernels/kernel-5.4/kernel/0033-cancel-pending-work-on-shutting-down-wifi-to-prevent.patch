@@ -1,0 +1,40 @@
+From 212136688b9c97cbc105a6c9a823674660ee8487 Mon Sep 17 00:00:00 2001
+From: Jake Day <jake@ninebysix.com>
+Date: Sun, 24 Dec 2017 14:04:35 -0500
+Subject: [PATCH 33/89] cancel pending work on shutting down wifi to prevent
+ hangs
+
+---
+ drivers/net/wireless/marvell/mwifiex/pcie.c | 2 ++
+ drivers/net/wireless/marvell/mwifiex/sdio.c | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/drivers/net/wireless/marvell/mwifiex/pcie.c b/drivers/net/wireless/marvell/mwifiex/pcie.c
+index df469fe72e33..0d7a6522d18c 100644
+--- a/drivers/net/wireless/marvell/mwifiex/pcie.c
++++ b/drivers/net/wireless/marvell/mwifiex/pcie.c
+@@ -306,6 +306,8 @@ static void mwifiex_pcie_remove(struct pci_dev *pdev)
+ 		mwifiex_init_shutdown_fw(priv, MWIFIEX_FUNC_SHUTDOWN);
+ 	}
+ 
++	cancel_work_sync(&card->work);
++
+ 	mwifiex_remove_card(adapter);
+ }
+ 
+diff --git a/drivers/net/wireless/marvell/mwifiex/sdio.c b/drivers/net/wireless/marvell/mwifiex/sdio.c
+index b322c2755e9a..ecdd4da9123a 100644
+--- a/drivers/net/wireless/marvell/mwifiex/sdio.c
++++ b/drivers/net/wireless/marvell/mwifiex/sdio.c
+@@ -399,6 +399,8 @@ mwifiex_sdio_remove(struct sdio_func *func)
+ 		mwifiex_init_shutdown_fw(priv, MWIFIEX_FUNC_SHUTDOWN);
+ 	}
+ 
++	cancel_work_sync(&card->work);
++
+ 	mwifiex_remove_card(adapter);
+ }
+ 
+-- 
+2.30.2
+

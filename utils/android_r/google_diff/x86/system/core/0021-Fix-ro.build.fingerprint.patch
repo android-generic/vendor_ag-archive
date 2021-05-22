@@ -1,0 +1,41 @@
+From b54322c9ba6e7dfb7e1c989c6877f8927ee65d4d Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Wed, 15 Jan 2020 16:48:22 +0800
+Subject: [PATCH 21/22] Fix ro.build.fingerprint
+
+Fix mismatched fingerprints, a stupid bug of Android 10.
+---
+ init/property_service.cpp | 17 +----------------
+ 1 file changed, 1 insertion(+), 16 deletions(-)
+
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index 07ce1b6d0..f9adb68d5 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -848,22 +848,7 @@ static void property_derive_build_fingerprint() {
+         return;
+     }
+ 
+-    const std::string UNKNOWN = "unknown";
+-    build_fingerprint = GetProperty("ro.product.brand", UNKNOWN);
+-    build_fingerprint += '/';
+-    build_fingerprint += GetProperty("ro.product.name", UNKNOWN);
+-    build_fingerprint += '/';
+-    build_fingerprint += GetProperty("ro.product.device", UNKNOWN);
+-    build_fingerprint += ':';
+-    build_fingerprint += GetProperty("ro.build.version.release", UNKNOWN);
+-    build_fingerprint += '/';
+-    build_fingerprint += GetProperty("ro.build.id", UNKNOWN);
+-    build_fingerprint += '/';
+-    build_fingerprint += GetProperty("ro.build.version.incremental", UNKNOWN);
+-    build_fingerprint += ':';
+-    build_fingerprint += GetProperty("ro.build.type", UNKNOWN);
+-    build_fingerprint += '/';
+-    build_fingerprint += GetProperty("ro.build.tags", UNKNOWN);
++    build_fingerprint = GetProperty("ro.vendor.build.fingerprint", "");
+ 
+     LOG(INFO) << "Setting property 'ro.build.fingerprint' to '" << build_fingerprint << "'";
+ 
+-- 
+2.30.2
+

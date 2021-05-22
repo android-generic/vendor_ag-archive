@@ -1,0 +1,30 @@
+From 150bff82ec28c34bf7a838402a33009e40f442d2 Mon Sep 17 00:00:00 2001
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Date: Thu, 26 Mar 2020 14:13:19 +0200
+Subject: [PATCH 74/89] platform/x86: surface3_power: Drop useless macro
+ ACPI_PTR()
+
+Driver depends to ACPI, this marco always is evaluated to the parameter,
+thus useless. Drop it for good.
+
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+---
+ drivers/platform/x86/surface3_power.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/platform/x86/surface3_power.c b/drivers/platform/x86/surface3_power.c
+index f6c646f5af93..24010e0696a0 100644
+--- a/drivers/platform/x86/surface3_power.c
++++ b/drivers/platform/x86/surface3_power.c
+@@ -574,7 +574,7 @@ static struct i2c_driver mshw0011_driver = {
+ 	.remove = mshw0011_remove,
+ 	.driver = {
+ 		.name = "mshw0011",
+-		.acpi_match_table = ACPI_PTR(mshw0011_acpi_match),
++		.acpi_match_table = mshw0011_acpi_match,
+ 	},
+ };
+ module_i2c_driver(mshw0011_driver);
+-- 
+2.30.2
+

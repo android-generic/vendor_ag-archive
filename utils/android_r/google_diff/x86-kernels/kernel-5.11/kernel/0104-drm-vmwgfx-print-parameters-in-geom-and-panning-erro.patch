@@ -1,0 +1,45 @@
+From 1fd464ae5298e8eb8e68bf9d6adb759f1021c5df Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 24 Oct 2020 23:09:37 +0200
+Subject: [PATCH 104/106] drm/vmwgfx: print parameters in geom and panning
+ errors
+
+To debug geom issues in vmw_fb_check_var()
+and panning issues in vmw_fb_pan_display()
+---
+ drivers/gpu/drm/vmwgfx/vmwgfx_fb.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_fb.c b/drivers/gpu/drm/vmwgfx/vmwgfx_fb.c
+index 4d60201037d1..7ab0d2518f3a 100644
+--- a/drivers/gpu/drm/vmwgfx/vmwgfx_fb.c
++++ b/drivers/gpu/drm/vmwgfx/vmwgfx_fb.c
+@@ -142,14 +142,14 @@ static int vmw_fb_check_var(struct fb_var_screeninfo *var,
+ 
+ 	if ((var->xoffset + var->xres) > par->max_width ||
+ 	    (var->yoffset + var->yres) > par->max_height) {
+-		DRM_ERROR("Requested geom can not fit in framebuffer\n");
++		DRM_ERROR("Requested geom can not fit in framebuffer %d > %d || %d > %d\n", var->xoffset + var->xres, par->max_width, var->yoffset + var->yres, par->max_height);
+ 		return -EINVAL;
+ 	}
+ 
+ 	if (!vmw_kms_validate_mode_vram(vmw_priv,
+ 					var->xres * var->bits_per_pixel/8,
+ 					var->yoffset + var->yres)) {
+-		DRM_ERROR("Requested geom can not fit in framebuffer\n");
++		DRM_ERROR("Requested geom %d,%d can not fit in framebuffer vmw_kms_validate_mode_vram\n", var->xres * var->bits_per_pixel/8, var->yoffset + var->yres);
+ 		return -EINVAL;
+ 	}
+ 
+@@ -303,7 +303,7 @@ static int vmw_fb_pan_display(struct fb_var_screeninfo *var,
+ 
+ 	if ((var->xoffset + var->xres) > var->xres_virtual ||
+ 	    (var->yoffset + var->yres) > var->yres_virtual) {
+-		DRM_ERROR("Requested panning can not fit in framebuffer\n");
++		DRM_ERROR("Requested panning can not fit in framebuffer %d > %d || %d > %d\n", var->xoffset + var->xres, var->xres_virtual, var->yoffset + var->yres, var->yres_virtual);
+ 		return -EINVAL;
+ 	}
+ 
+-- 
+2.17.1
+

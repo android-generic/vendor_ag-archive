@@ -1,0 +1,34 @@
+From 65082fc9aadea86457631398bd41d12137a5c11f Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 14 Oct 2018 20:51:29 +0200
+Subject: [PATCH 51/89] drm/amd/display: enable SI support in the Kconfig (v2)
+
+CONFIG_DRM_AMD_DC_SI configuration option is added, default setting is disabled
+
+(v2) Hainan is not supported, description updated accordingly
+---
+ drivers/gpu/drm/amd/display/Kconfig | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/drivers/gpu/drm/amd/display/Kconfig b/drivers/gpu/drm/amd/display/Kconfig
+index 71991a28a775..10bb9ce40bad 100644
+--- a/drivers/gpu/drm/amd/display/Kconfig
++++ b/drivers/gpu/drm/amd/display/Kconfig
+@@ -44,6 +44,14 @@ config DRM_AMD_DC_DSC_SUPPORT
+ 	    Choose this option if you want to have
+ 	    Dynamic Stream Compression support
+ 
++config DRM_AMD_DC_SI
++	bool "AMD DC support for Southern Islands ASICs"
++	default n
++	help
++	  Choose this option to enable new AMD DC support for SI asics
++	  by default. This includes Tahiti, Pitcairn, Cape Verde, Oland.
++	  Hainan is not supported by AMD DC and it has no physical DCE6.
++
+ config DEBUG_KERNEL_DC
+ 	bool "Enable kgdb break in DC"
+ 	depends on DRM_AMD_DC
+-- 
+2.30.2
+

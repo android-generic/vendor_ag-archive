@@ -1,0 +1,29 @@
+From 098440ea33c24a773ba43243577ad8fea53ce041 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 14 Apr 2020 18:26:28 +0800
+Subject: [PATCH 78/89] platform/x86: acerhdf: replace space by * in modalias
+
+Using space in module alias makes it harder to parse modules.alias.
+Replace it by a star(*).
+
+Signed-off-by: Chih-Wei Huang <cwhuang@linux.org.tw>
+---
+ drivers/platform/x86/acerhdf.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/platform/x86/acerhdf.c b/drivers/platform/x86/acerhdf.c
+index 5ea8da5f0f70..75b4a7b94a92 100644
+--- a/drivers/platform/x86/acerhdf.c
++++ b/drivers/platform/x86/acerhdf.c
+@@ -824,7 +824,7 @@ MODULE_ALIAS("dmi:*:*Packard*Bell*:pnDOTMU*:");
+ MODULE_ALIAS("dmi:*:*Packard*Bell*:pnENBFT*:");
+ MODULE_ALIAS("dmi:*:*Packard*Bell*:pnDOTMA*:");
+ MODULE_ALIAS("dmi:*:*Packard*Bell*:pnDOTVR46*:");
+-MODULE_ALIAS("dmi:*:*Acer*:pnExtensa 5420*:");
++MODULE_ALIAS("dmi:*:*Acer*:pnExtensa*5420*:");
+ 
+ module_init(acerhdf_init);
+ module_exit(acerhdf_exit);
+-- 
+2.30.2
+

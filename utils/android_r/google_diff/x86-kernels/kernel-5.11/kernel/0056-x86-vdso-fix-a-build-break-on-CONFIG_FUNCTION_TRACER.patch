@@ -1,0 +1,28 @@
+From cf0e4bb27aa61ead2da826ce53b4efa147993977 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Wed, 11 May 2016 21:13:58 +0800
+Subject: [PATCH 056/106] x86/vdso: fix a build break on
+ CONFIG_FUNCTION_TRACER=y
+
+The -mfentry must be filtered out, otherwise it causes the error:
+
+arch/x86/entry/vdso/vdso32/note.S:1:0: sorry, unimplemented: -mfentry isn't supported for 32-bit in combination with -fpic
+---
+ arch/x86/entry/vdso/Makefile | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/x86/entry/vdso/Makefile b/arch/x86/entry/vdso/Makefile
+index 02e3e42f380b..435302522abc 100644
+--- a/arch/x86/entry/vdso/Makefile
++++ b/arch/x86/entry/vdso/Makefile
+@@ -141,6 +141,7 @@ CPPFLAGS_vdso32/vdso32.lds = $(CPPFLAGS_vdso.lds)
+ VDSO_LDFLAGS_vdso32.lds = -m elf_i386 -soname linux-gate.so.1
+ 
+ KBUILD_AFLAGS_32 := $(filter-out -m64,$(KBUILD_AFLAGS)) -DBUILD_VDSO
++KBUILD_AFLAGS_32 := $(filter-out -mfentry,$(KBUILD_AFLAGS_32))
+ $(obj)/vdso32.so.dbg: KBUILD_AFLAGS = $(KBUILD_AFLAGS_32)
+ $(obj)/vdso32.so.dbg: asflags-$(CONFIG_X86_64) += -m32
+ 
+-- 
+2.17.1
+

@@ -1,0 +1,45 @@
+From 10c3a6ce64971774ad06c56d13c133623dc3560a Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 30 Apr 2021 22:26:44 -0400
+Subject: [PATCH 29/36] reorganize BoardConfig a bit
+
+Change-Id: If518d1a5131882fd23933f687b52804786f2819b
+---
+ BoardConfig.mk | 15 ++++++++-------
+ 1 file changed, 8 insertions(+), 7 deletions(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 203f2c3..e483cf1 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -59,9 +59,15 @@ USE_INTEL_OMX_COMPONENTS := true
+ USE_OPENGL_RENDERER := true
+ NUM_FRAMEBUFFER_SURFACE_BUFFERS ?= 3
+ BOARD_USES_DRM_GRALLOC := true
+-BOARD_USES_GRALLOC1 := true
+ BOARD_USES_DRM_HWCOMPOSER ?= true
+ 
++BOARD_USES_MINIGBM := true
++BOARD_USES_MINIGBM_INTEL := true
++BOARD_USES_GRALLOC1 := true
++BOARD_USES_IA_HWCOMPOSER := true
++TARGET_USES_HWC2 ?= true
++#BOARD_USES_VULKAN := true
++
+ USE_CAMERA_STUB ?= false
+ 
+ SUPERUSER_EMBEDDED := true
+@@ -99,9 +105,4 @@ USE_XML_AUDIO_POLICY_CONF := 1
+ BUILD_BROKEN_USES_BUILD_HOST_EXECUTABLE := true
+ BUILD_BROKEN_USES_BUILD_HOST_STATIC_LIBRARY := true
+ 
+-BOARD_USES_MINIGBM := true
+-BOARD_USES_MINIGBM_INTEL := true
+-BOARD_USES_GRALLOC1 := true
+-BOARD_USES_IA_HWCOMPOSER := true
+-TARGET_USES_HWC2 ?= true
+-#BOARD_USES_VULKAN := true
++-include vendor/google/emu-x86/board/native_bridge_arm_on_x86.mk
+-- 
+2.17.1
+

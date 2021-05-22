@@ -1,0 +1,31 @@
+From 7ed5d0676c9f0e2143e2efee3cbad009d48a16a6 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 17 Aug 2019 17:33:11 +0200
+Subject: [PATCH 52/89] drm/amd/display: dc/clk_mgr: add support for SI parts
+
+After commit c69dd2d0 "drm/amd/display: Refactor clk_mgr functions"
+dc/clk_mgr requires these changes to add SI parts support
+
+Necessary to avoid hitting default: ASSERT(0); /* Unknown Asic */
+that would cause kernel freeze
+---
+ drivers/gpu/drm/amd/display/dc/clk_mgr/clk_mgr.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/drivers/gpu/drm/amd/display/dc/clk_mgr/clk_mgr.c b/drivers/gpu/drm/amd/display/dc/clk_mgr/clk_mgr.c
+index c43797bea413..687467b020e9 100644
+--- a/drivers/gpu/drm/amd/display/dc/clk_mgr/clk_mgr.c
++++ b/drivers/gpu/drm/amd/display/dc/clk_mgr/clk_mgr.c
+@@ -78,6 +78,9 @@ struct clk_mgr *dc_clk_mgr_create(struct dc_context *ctx, struct pp_smu_funcs *p
+ 	}
+ 
+ 	switch (asic_id.chip_family) {
++#if defined(CONFIG_DRM_AMD_DC_SI)
++	case FAMILY_SI:
++#endif
+ 	case FAMILY_CI:
+ 	case FAMILY_KV:
+ 		dce_clk_mgr_construct(ctx, clk_mgr);
+-- 
+2.30.2
+

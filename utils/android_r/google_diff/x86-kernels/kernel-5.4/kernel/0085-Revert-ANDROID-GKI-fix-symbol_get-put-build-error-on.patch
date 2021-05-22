@@ -1,0 +1,27 @@
+From 403f0fb2a65d293ee9f47f23fd4e47b27fa5f0be Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Thu, 5 Nov 2020 07:37:43 -0500
+Subject: [PATCH 85/89] Revert "ANDROID: GKI: fix symbol_get/put() build error
+ on arm64 defconfig"
+
+This reverts commit 9c8aa25e2955df58dae59e409ec1bc7f850935d9.
+---
+ drivers/media/tuners/Kconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/media/tuners/Kconfig b/drivers/media/tuners/Kconfig
+index 0945734a2553..e104bb7766e1 100644
+--- a/drivers/media/tuners/Kconfig
++++ b/drivers/media/tuners/Kconfig
+@@ -39,7 +39,7 @@ config MEDIA_TUNER_TDA18250
+ 	  Say Y here to include support for TDA18250 tuner.
+ 
+ config MEDIA_TUNER_TDA8290
+-	bool "TDA 8290/8295 + 8275(a)/18271 tuner combo"
++	tristate "TDA 8290/8295 + 8275(a)/18271 tuner combo"
+ 	depends on MEDIA_SUPPORT && I2C
+ 	select MEDIA_TUNER_TDA827X
+ 	select MEDIA_TUNER_TDA18271
+-- 
+2.30.2
+

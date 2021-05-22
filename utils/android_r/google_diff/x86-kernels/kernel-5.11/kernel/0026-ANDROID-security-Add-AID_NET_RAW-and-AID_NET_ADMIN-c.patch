@@ -1,0 +1,54 @@
+From a720eb944d7e435103f18f4d2bf1f7dfd293617a Mon Sep 17 00:00:00 2001
+From: Chia-chi Yeh <chiachi@android.com>
+Date: Fri, 19 Jun 2009 07:15:05 +0800
+Subject: [PATCH 026/106] ANDROID: security: Add AID_NET_RAW and AID_NET_ADMIN
+ capability check in cap_capable().
+
+Signed-off-by: Chia-chi Yeh <chiachi@android.com>
+Signed-off-by: youling257 <youling257@gmail.com>
+---
+ include/linux/android_aid.h | 1 +
+ security/commoncap.c        | 9 +++++++++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/include/linux/android_aid.h b/include/linux/android_aid.h
+index dc66530e5fc7..3d7a5ead1200 100644
+--- a/include/linux/android_aid.h
++++ b/include/linux/android_aid.h
+@@ -21,5 +21,6 @@
+ #define AID_OBSOLETE_001 KGIDT_INIT(3002)  /* was NET_BT */
+ #define AID_INET         KGIDT_INIT(3003)
+ #define AID_NET_RAW      KGIDT_INIT(3004)
++#define AID_NET_ADMIN    KGIDT_INIT(3005)
+ 
+ #endif
+diff --git a/security/commoncap.c b/security/commoncap.c
+index 26c1cb725dcb..c63747d4e6c4 100644
+--- a/security/commoncap.c
++++ b/security/commoncap.c
+@@ -25,6 +25,10 @@
+ #include <linux/binfmts.h>
+ #include <linux/personality.h>
+ 
++#ifdef CONFIG_ANDROID_PARANOID_NETWORK
++#include <linux/android_aid.h>
++#endif
++
+ /*
+  * If a non-root user executes a setuid-root binary in
+  * !secure(SECURE_NOROOT) mode, then we raise capabilities.
+@@ -67,6 +71,11 @@ int cap_capable(const struct cred *cred, struct user_namespace *targ_ns,
+ {
+ 	struct user_namespace *ns = targ_ns;
+ 
++	if (cap == CAP_NET_RAW && in_egroup_p(AID_NET_RAW))
++		return 0;
++	if (cap == CAP_NET_ADMIN && in_egroup_p(AID_NET_ADMIN))
++		return 0;
++
+ 	/* See if cred has the capability in the target user namespace
+ 	 * by examining the target user namespace and all of the target
+ 	 * user namespace's parents.
+-- 
+2.17.1
+

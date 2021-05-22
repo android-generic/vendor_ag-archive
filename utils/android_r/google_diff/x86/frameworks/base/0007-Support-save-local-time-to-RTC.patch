@@ -1,0 +1,74 @@
+From c37267f57dc366772074b2c0a3e729cf90978da6 Mon Sep 17 00:00:00 2001
+From: Ma Jian <majian@jidemail.com>
+Date: Sun, 12 Jun 2016 15:13:55 +0800
+Subject: [PATCH 07/22] Support save local time to RTC
+
+Make it work for dual boot with Windows, we could set property
+persist.rtc_local_time to 1, so that RemixOS and Windows both
+use local time in rtc.
+
+NO_REF_TASK
+Tested:
+1) set time in android, reboot to bios, make sure the time in bois is
+   local time
+2) reboot back to android, the current time should be correct local time
+   (this need another change)
+
+Change-Id: Id2c0ce150fb9320b132ad8bdd83b38dcae1070db
+---
+ ...com_android_server_AlarmManagerService.cpp | 25 ++++++++++++++-----
+ 1 file changed, 19 insertions(+), 6 deletions(-)
+
+diff --git a/services/core/jni/com_android_server_AlarmManagerService.cpp b/services/core/jni/com_android_server_AlarmManagerService.cpp
+index e79612fbf3d..efcc11e8ea7 100644
+--- a/services/core/jni/com_android_server_AlarmManagerService.cpp
++++ b/services/core/jni/com_android_server_AlarmManagerService.cpp
+@@ -38,6 +38,7 @@
+ #include <unistd.h>
+ #include <linux/ioctl.h>
+ #include <linux/rtc.h>
++#include <cutils/properties.h>
+ 
+ #include <array>
+ #include <memory>
+@@ -132,7 +133,7 @@ int AlarmImpl::getTime(int type, struct itimerspec *spec)
+ int AlarmImpl::setTime(struct timeval *tv)
+ {
+     struct rtc_time rtc;
+-    struct tm tm, *gmtime_res;
++    struct tm tm, *localtime_res, *gmtime_res;
+     int fd;
+     int res;
+ 
+@@ -155,11 +156,23 @@ int AlarmImpl::setTime(struct timeval *tv)
+         return res;
+     }
+ 
+-    gmtime_res = gmtime_r(&tv->tv_sec, &tm);
+-    if (!gmtime_res) {
+-        ALOGV("gmtime_r() failed: %s\n", strerror(errno));
+-        res = -1;
+-        goto done;
++    // @jide when persist.rtc_local_time is set to 1, we store the localtime to rtc
++    //
++    bool rtc_local_time = property_get_bool("persist.rtc_local_time", false);
++    if (rtc_local_time) {
++        localtime_res = localtime_r(&tv->tv_sec, &tm);
++        if (!localtime_res) {
++            ALOGV("localtime_r() failed: %s\n", strerror(errno));
++            res = -1;
++            goto done;
++        }
++    } else {
++        gmtime_res = gmtime_r(&tv->tv_sec, &tm);
++        if (!gmtime_res) {
++            ALOGV("gmtime_r() failed: %s\n", strerror(errno));
++            res = -1;
++            goto done;
++        }
+     }
+ 
+     memset(&rtc, 0, sizeof(rtc));
+-- 
+2.30.2
+

@@ -1,0 +1,44 @@
+From 863dd19d3dac51335db6f0d6f42589e1dbfc0e40 Mon Sep 17 00:00:00 2001
+From: Nolen Johnson <johnsonnolen@gmail.com>
+Date: Tue, 14 Apr 2020 17:40:02 -0500
+Subject: [PATCH 35/36] common: Kang LMKD configuration from bonito
+
+  - [fcuzzocrea]: also set lowmem prop dynamically
+
+Change-Id: Ie36a85cfa287d97cc074d0d1a66ee1e70bc9ed6e
+
+Conflicts:
+	device.mk
+
+Conflicts:
+	init.sh
+---
+ device.mk | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/device.mk b/device.mk
+index 8793418..1108c6f 100644
+--- a/device.mk
++++ b/device.mk
+@@ -33,6 +33,18 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES := \
+     ro.arch=x86 \
+     persist.rtc_local_time=1 \
+ 
++# LMKd
++PRODUCT_PRODUCT_PROPERTIES += \
++    ro.lmk.low=1001 \
++    ro.lmk.medium=800 \
++    ro.lmk.critical=0 \
++    ro.lmk.critical_upgrade=false \
++    ro.lmk.upgrade_pressure=100 \
++    ro.lmk.downgrade_pressure=100 \
++    ro.lmk.kill_heaviest_task=true \
++    ro.lmk.kill_timeout_ms=100 \
++    ro.lmk.use_minfree_levels=true
++
+ PRODUCT_COPY_FILES := \
+     $(if $(wildcard $(PRODUCT_DIR)init.rc),$(PRODUCT_DIR)init.rc:root/init.rc) \
+     $(if $(wildcard $(PRODUCT_DIR)init.sh),$(PRODUCT_DIR),$(LOCAL_PATH)/)init.sh:system/etc/init.sh \
+-- 
+2.17.1
+

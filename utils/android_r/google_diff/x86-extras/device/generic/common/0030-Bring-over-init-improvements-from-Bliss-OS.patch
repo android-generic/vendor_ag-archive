@@ -1,0 +1,194 @@
+From cda09b3e648ae7c6270b4b838bbeebecb577aaee Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 30 Apr 2021 22:31:54 -0400
+Subject: [PATCH 30/36] Bring over init improvements from Bliss OS
+
+Change-Id: Iabc3318ca5c92c26abbe971975d6c30c9c88e51d
+---
+ init.sh | 99 +++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 93 insertions(+), 6 deletions(-)
+
+diff --git a/init.sh b/init.sh
+index 8a8b5a0..0a1479c 100644
+--- a/init.sh
++++ b/init.sh
+@@ -187,6 +187,33 @@ function init_uvesafb()
+ function init_hal_gralloc()
+ {
+ 	[ "$VULKAN" = "1" ] && GRALLOC=gbm
++	
++	case "$(cat /proc/fb | head -1)" in
++		0*amdgpudrmfb)
++			if [ "$AMDGPU_MODESET" != "0" ]; then
++				modprobe amdgpu
++			fi			
++			;;
++		0*radeondrmfb)
++			if [ "$RADEON_MODESET" != "0" ]; then
++				modprobe radeon
++			fi			
++			;;
++		0*nouveau*)
++			if [ "$NOUVEAU_MODESET" != "0" ]; then
++				modprobe nouveau
++			fi			
++			;;
++		0*i915drmfb|0*inteldrmfb)
++			if [ "$I915_MODESET" != "0" ]; then
++				modprobe i915
++			fi
++			;;
++		"")
++			;;
++		0*)
++			;;
++	esac
+ 
+ 	case "$(cat /proc/fb | head -1)" in
+ 		*virtio*drmfb|*DRM*emulated)
+@@ -318,6 +345,11 @@ function init_hal_sensors()
+ 			modprobe lis3lv02d_i2c
+ 			echo -n "enabled" > /sys/class/thermal/thermal_zone0/mode
+ 			;;
++		*Aspire*SW5-012*)
++			set_property ro.iio.accel.quirks no-trig
++			set_property ro.iio.anglvel.quirks no-trig
++			set_property ro.iio.accel.order 102
++			;;
+ 		*ThinkPad*Tablet*)
+ 			modprobe hdaps
+ 			hal_sensors=hdaps
+@@ -325,15 +357,16 @@ function init_hal_sensors()
+ 		*LenovoideapadD330*)
+ 			set_property ro.iio.accel.quirks no-trig
+ 			set_property ro.iio.accel.order 102
++			set_property ro.ignore_atkbd 1
+ 			;&
+ 		*LINX1010B*)
+ 			set_property ro.iio.accel.x.opt_scale -1
+ 			set_property ro.iio.accel.z.opt_scale -1
+ 			;;
+-		*i7-WN*)
++		*i7-WN*|*SP111-33*)
+ 			set_property ro.iio.accel.quirks no-trig
+ 			;&
+-		*i7Stylus*)
++		*i7Stylus*|*M80TA*)
+ 			set_property ro.iio.accel.x.opt_scale -1
+ 			;;
+ 		*LenovoMIIX320*|*ONDATablet*)
+@@ -341,9 +374,9 @@ function init_hal_sensors()
+ 			set_property ro.iio.accel.x.opt_scale -1
+ 			set_property ro.iio.accel.y.opt_scale -1
+ 			;;
+-		*SP111-33*)
+-			set_property ro.iio.accel.quirks no-trig
+-			;&
++		*Venue*8*Pro*3845*)
++			set_property ro.iio.accel.order 102
++			;;
+ 		*ST70416-6*)
+ 			set_property ro.iio.accel.order 102
+ 			;;
+@@ -353,6 +386,11 @@ function init_hal_sensors()
+ 		*T*0*TA*|*M80TA*)
+ 			set_property ro.iio.accel.y.opt_scale -1
+ 			;;
++		*SwitchSA5-271*|*SwitchSA5-271P*)
++			set_property ro.ignore_atkbd 1
++			has_sensors=true
++			hal_sensors=iio
++			;&
+ 		*)
+ 			has_sensors=false
+ 			;;
+@@ -363,12 +401,24 @@ function init_hal_sensors()
+ 		busybox chown -R 1000.1000 /sys/bus/iio/devices/iio:device*/
+ 		[ -n "`ls /sys/bus/iio/devices/iio:device*/in_accel_x_raw 2> /dev/null`" ] && has_sensors=true
+ 		hal_sensors=iio
++	elif lsmod | grep -q hid_sensor_accel_3d; then
++		hal_sensors=hsb
++		has_sensors=true
+ 	elif lsmod | grep -q lis3lv02d_i2c; then
+ 		hal_sensors=hdaps
+ 		has_sensors=true
+-	elif [ "$hal_sensors" != "kbd" ]; then
++	elif [ "$hal_sensors" != "kbd" ] | [ hal_sensors=iio ]; then
+ 		has_sensors=true
+ 	fi
++	
++	# TODO close Surface Pro 4 sensor until bugfix 
++	case "$(cat $DMIPATH/uevent)" in 
++		*SurfacePro4*) 
++		  hal_sensors=kbd 
++		  ;; 
++		*) 
++		  ;; 
++	esac
+ 
+ 	set_property ro.hardware.sensors $hal_sensors
+ 	set_property config.override_forced_orient ${HAS_SENSORS:-$has_sensors}
+@@ -436,9 +486,25 @@ function init_cpu_governor()
+ 	}
+ }
+ 
++function set_lowmem()
++{
++	# 512 MB size in kB : https://source.android.com/devices/tech/perf/low-ram
++	SIZE_512MB=2048000
++
++	mem_size=`cat /proc/meminfo | grep MemTotal | tr -s ' ' | cut -d ' ' -f 2`
++
++	if [ "$mem_size" -le "$SIZE_512MB" ]
++	then
++		setprop ro.config.low_ram true
++	else
++		setprop ro.config.low_ram false
++	fi
++}
++
+ function do_init()
+ {
+ 	init_misc
++	set_lowmem
+ 	init_hal_audio
+ 	init_hal_bluetooth
+ 	init_hal_camera
+@@ -536,6 +602,15 @@ function do_bootcomplete()
+ 		fi
+ 	done
+ 
++	# check wifi setup
++	FILE_CHECK=/data/misc/wifi/wpa_supplicant.conf
++
++	if [ ! -f "$FILE_CHECK" ]; then
++	    cp -a /system/etc/wifi/wpa_supplicant.conf $FILE_CHECK
++            chown 1010.1010 $FILE_CHECK
++            chmod 660 $FILE_CHECK
++	fi
++	
+ 	post_bootcomplete
+ }
+ 
+@@ -562,6 +637,18 @@ for c in `cat /proc/cmdline`; do
+ 					DPI=*)
+ 						set_property ro.sf.lcd_density "$DPI"
+ 						;;
++					nouveau.modeset=0)
++						NOUVEAU_MODESET=0
++						;;
++					amdgpu.modeset=0)
++						AMDGPU_MODESET=0
++						;;
++					radeon.modeset=0)
++						RADEON_MODESET=0
++						;;
++					i915.modeset=0)
++						I915_MODESET=0
++						;;
+ 				esac
+ 				[ "$SETUPWIZARD" = "0" ] && set_property ro.setupwizard.mode DISABLED
+ 			fi
+-- 
+2.17.1
+

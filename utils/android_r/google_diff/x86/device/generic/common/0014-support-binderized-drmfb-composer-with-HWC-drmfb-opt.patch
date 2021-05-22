@@ -1,0 +1,52 @@
+From 0eb709654d2bfd8ccd869f116f6d18f76398cbd1 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 9 May 2020 09:44:35 +0200
+Subject: [PATCH 14/36] support binderized drmfb-composer with HWC=drmfb option
+ (v2)
+
+android.hardware.graphics.composer@2.1-service.drmfb added to PRODUCT_PACKAGES
+
+New logic is added in init_hal_hwcomposer() function to enable drmfb-composer
+if HWC=drmfb cmdline option used vendor.hwcomposer-2-1.drmfb service is started
+
+(v2) Remove android.hardware.graphics.composer@2.1-service in PRODUCT_PACKAGES
+     as it was causing issues to drm_gralloc
+     Remove 'stop vendor.hwcomposer-2-1' in init_hal_hwcomposer()
+
+Many thanks to lambdadroid for drmfb-composer
+
+Signed-off-by: Mauro Rossi <issor.oruam@gmail.com>
+---
+ init.sh   | 1 +
+ treble.mk | 3 ++-
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/init.sh b/init.sh
+index c46b159..c4c73c3 100644
+--- a/init.sh
++++ b/init.sh
+@@ -208,6 +208,7 @@ function init_hal_gralloc()
+ function init_hal_hwcomposer()
+ {
+ 	# TODO
++	[ "$HWC" = "drmfb" ] && start vendor.hwcomposer-2-1.drmfb
+ 	return
+ }
+ 
+diff --git a/treble.mk b/treble.mk
+index c94126d..a070956 100644
+--- a/treble.mk
++++ b/treble.mk
+@@ -5,7 +5,8 @@ PRODUCT_PACKAGES += \
+ 
+ # HWComposer HAL
+ PRODUCT_PACKAGES += \
+-    android.hardware.graphics.composer@2.1-impl
++    android.hardware.graphics.composer@2.1-impl \
++    android.hardware.graphics.composer@2.1-service.drmfb
+ 
+ # Audio HAL
+ PRODUCT_PACKAGES += \
+-- 
+2.17.1
+

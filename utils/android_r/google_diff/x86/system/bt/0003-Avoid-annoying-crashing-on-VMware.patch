@@ -1,0 +1,139 @@
+From 17cb2b7f3789248b839c2afa35608c31a9d9218c Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 12 Jun 2018 14:32:03 +0800
+Subject: [PATCH 3/7] Avoid annoying crashing on VMware
+
+---
+ device/src/controller.cc | 18 ------------------
+ 1 file changed, 18 deletions(-)
+
+diff --git a/device/src/controller.cc b/device/src/controller.cc
+index a260b98c6..49a3ffa34 100644
+--- a/device/src/controller.cc
++++ b/device/src/controller.cc
+@@ -332,13 +332,11 @@ static uint8_t* get_local_supported_codecs(uint8_t* number_of_codecs) {
+ 
+ static const bt_device_features_t* get_features_ble(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return &features_ble;
+ }
+ 
+ static const uint8_t* get_ble_supported_states(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return ble_supported_states;
+ }
+ 
+@@ -399,50 +397,42 @@ static bool supports_ble(void) {
+ 
+ static bool supports_ble_privacy(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_ENHANCED_PRIVACY_SUPPORTED(features_ble.as_array);
+ }
+ 
+ static bool supports_ble_set_privacy_mode() {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_ENHANCED_PRIVACY_SUPPORTED(features_ble.as_array) &&
+          HCI_LE_SET_PRIVACY_MODE_SUPPORTED(supported_commands);
+ }
+ 
+ static bool supports_ble_packet_extension(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_DATA_LEN_EXT_SUPPORTED(features_ble.as_array);
+ }
+ 
+ static bool supports_ble_connection_parameters_request(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_CONN_PARAM_REQ_SUPPORTED(features_ble.as_array);
+ }
+ 
+ static bool supports_ble_2m_phy(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_2M_PHY_SUPPORTED(features_ble.as_array);
+ }
+ 
+ static bool supports_ble_coded_phy(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_CODED_PHY_SUPPORTED(features_ble.as_array);
+ }
+ 
+ static bool supports_ble_extended_advertising(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_EXTENDED_ADVERTISING_SUPPORTED(features_ble.as_array);
+ }
+ 
+ static bool supports_ble_periodic_advertising(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_PERIODIC_ADVERTISING_SUPPORTED(features_ble.as_array);
+ }
+ 
+@@ -453,7 +443,6 @@ static uint16_t get_acl_data_size_classic(void) {
+ 
+ static uint16_t get_acl_data_size_ble(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return acl_data_size_ble;
+ }
+ 
+@@ -469,7 +458,6 @@ static uint16_t get_acl_packet_size_ble(void) {
+ 
+ static uint16_t get_ble_suggested_default_data_length(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return ble_suggested_default_data_length;
+ }
+ 
+@@ -481,13 +469,11 @@ static uint16_t get_ble_maximum_tx_data_length(void) {
+ 
+ static uint16_t get_ble_maxium_advertising_data_length(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return ble_maxium_advertising_data_length;
+ }
+ 
+ static uint8_t get_ble_number_of_supported_advertising_sets(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return ble_number_of_supported_advertising_sets;
+ }
+ 
+@@ -498,19 +484,16 @@ static uint16_t get_acl_buffer_count_classic(void) {
+ 
+ static uint8_t get_acl_buffer_count_ble(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return acl_buffer_count_ble;
+ }
+ 
+ static uint8_t get_ble_white_list_size(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return ble_white_list_size;
+ }
+ 
+ static uint8_t get_ble_resolving_list_max_size(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return ble_resolving_list_max_size;
+ }
+ 
+@@ -520,7 +503,6 @@ static void set_ble_resolving_list_max_size(int resolving_list_max_size) {
+   if (resolving_list_max_size != 0) {
+     CHECK(readable);
+   }
+-  CHECK(ble_supported);
+   ble_resolving_list_max_size = resolving_list_max_size;
+ }
+ 
+-- 
+2.30.2
+

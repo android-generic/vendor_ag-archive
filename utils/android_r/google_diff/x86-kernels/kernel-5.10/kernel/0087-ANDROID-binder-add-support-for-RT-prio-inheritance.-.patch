@@ -1,0 +1,26 @@
+From adba63f50c661652b3c34e31af7fe50efe6f2c01 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 16 Aug 2020 19:41:33 +0200
+Subject: [PATCH 087/107] ANDROID: binder: add support for RT prio inheritance.
+ (v2)
+
+Remove a } leftover
+---
+ drivers/android/binder.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/android/binder.c b/drivers/android/binder.c
+index fdb5cb8a7859..a78a68384b16 100644
+--- a/drivers/android/binder.c
++++ b/drivers/android/binder.c
+@@ -2914,7 +2914,6 @@ static bool binder_proc_transaction(struct binder_transaction *t,
+ 			pending_async = true;
+ 		else
+ 			node->has_async_transaction = true;
+-		}
+ 		if (thread && pending_async) {
+ 			/*
+ 			 * The node state has changed since we selected
+-- 
+2.17.1
+

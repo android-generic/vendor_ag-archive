@@ -1,0 +1,1166 @@
+From f63230978ac193ecf50d29d6e7fba4b7e369cb75 Mon Sep 17 00:00:00 2001
+From: Victor Bo <bvoid@yandex.ru>
+Date: Thu, 29 Apr 2021 15:14:40 -0400
+Subject: [PATCH 13/13] Revert "Squashed import of in-display fingerprint
+ sensors related changes"
+
+This reverts commit c8e63f4767da0f0116501ecd21b2f4ccf8635c99.
+
+Change-Id: I787f2b4d40e4b49bd2c7830bbeed5d6815744189
+---
+ .../internal/statusbar/IStatusBar.aidl        |   6 -
+ .../internal/statusbar/IStatusBarService.aidl |   6 -
+ core/res/res/values/bliss_config.xml          |   3 -
+ core/res/res/values/bliss_symbols.xml         |   3 -
+ packages/SystemUI/Android.bp                  |   2 -
+ .../res-keyguard/values/bliss_dimens.xml      |   3 -
+ .../res/drawable/fod_icon_default.xml         |  25 -
+ packages/SystemUI/res/values/bliss_colors.xml |   4 -
+ packages/SystemUI/res/values/config.xml       |   1 -
+ .../keyguard/KeyguardSecurityContainer.java   |   6 +-
+ .../systemui/biometrics/FODCircleView.java    | 464 ------------------
+ .../biometrics/FODCircleViewImpl.java         |  72 ---
+ .../systemui/dagger/SystemUIBinder.java       |   7 -
+ .../systemui/statusbar/CommandQueue.java      |  28 --
+ .../phone/StatusBarKeyguardViewManager.java   |  11 +-
+ services/core/Android.bp                      |   1 -
+ .../biometrics/BiometricServiceBase.java      |   2 +-
+ .../fingerprint/FingerprintService.java       | 111 -----
+ .../statusbar/StatusBarManagerService.java    |  22 -
+ 19 files changed, 4 insertions(+), 773 deletions(-)
+ delete mode 100644 packages/SystemUI/res/drawable/fod_icon_default.xml
+ delete mode 100644 packages/SystemUI/src/com/android/systemui/biometrics/FODCircleView.java
+ delete mode 100644 packages/SystemUI/src/com/android/systemui/biometrics/FODCircleViewImpl.java
+
+diff --git a/core/java/com/android/internal/statusbar/IStatusBar.aidl b/core/java/com/android/internal/statusbar/IStatusBar.aidl
+index a8e29679ddc..553990be84b 100644
+--- a/core/java/com/android/internal/statusbar/IStatusBar.aidl
++++ b/core/java/com/android/internal/statusbar/IStatusBar.aidl
+@@ -235,11 +235,5 @@ oneway interface IStatusBar
+     void toggleCameraFlash(boolean proximityCheck);
+     void toggleCameraFlashState(boolean enable);
+ 
+-    /**
+-     *  Used to show or hide in display fingerprint view.
+-     */
+-    void showInDisplayFingerprintView();
+-    void hideInDisplayFingerprintView();
+-
+     void triggerElmyraAction(String action);
+ }
+diff --git a/core/java/com/android/internal/statusbar/IStatusBarService.aidl b/core/java/com/android/internal/statusbar/IStatusBarService.aidl
+index 55481e6e022..7a7586803c1 100644
+--- a/core/java/com/android/internal/statusbar/IStatusBarService.aidl
++++ b/core/java/com/android/internal/statusbar/IStatusBarService.aidl
+@@ -156,12 +156,6 @@ interface IStatusBarService
+     void toggleCameraFlash(boolean proximityCheck);
+     void toggleCameraFlashState(boolean enable);
+ 
+-    /**
+-     * Used to show or hide in display fingerprint view.
+-     */
+-    void showInDisplayFingerprintView();
+-    void hideInDisplayFingerprintView();
+-
+     void triggerElmyraAction(String action);
+     void toggleRecentApps();
+     void toggleSplitScreen();
+diff --git a/core/res/res/values/bliss_config.xml b/core/res/res/values/bliss_config.xml
+index 71e6f85a096..a27ebe808e8 100644
+--- a/core/res/res/values/bliss_config.xml
++++ b/core/res/res/values/bliss_config.xml
+@@ -51,9 +51,6 @@
+          out of setting a batch size, which fixes rotation. -->
+     <bool name="config_useDefaultBatchingForAccel">true</bool>
+ 
+-    <!-- Whether to show a custom view for FOD -->
+-    <bool name="config_needCustomFODView">false</bool>
+-
+     <string-array translatable="false" name="custom_config_globalActionsList">
+         <item>emergency</item>
+         <item>lockdown</item>
+diff --git a/core/res/res/values/bliss_symbols.xml b/core/res/res/values/bliss_symbols.xml
+index 33f65461cce..7975518812e 100644
+--- a/core/res/res/values/bliss_symbols.xml
++++ b/core/res/res/values/bliss_symbols.xml
+@@ -49,9 +49,6 @@
+     <!-- Whether to allow process with media UID to access CameraServiceProxy -->
+     <java-symbol type="bool" name="config_allowMediaUidForCameraServiceProxy" />
+ 
+-    <!-- Whether to show a custom view for FOD -->
+-    <java-symbol type="bool" name="config_needCustomFODView" />
+-
+     <!-- Power Menu -->
+   <java-symbol type="string" name="reboot_to_recovery_title" />
+   <java-symbol type="string" name="reboot_to_recovery_message" />
+diff --git a/packages/SystemUI/Android.bp b/packages/SystemUI/Android.bp
+index 44dfe361aeb..826420eb48d 100644
+--- a/packages/SystemUI/Android.bp
++++ b/packages/SystemUI/Android.bp
+@@ -71,7 +71,6 @@ android_library {
+         "SystemUI-proto",
+         "dagger2-2.19",
+         "jsr330",
+-        "vendor.lineage.biometrics.fingerprint.inscreen-V1.0-java",
+         "airbnb-lottie",
+         "faceunlock_framework",
+     ],
+@@ -146,7 +145,6 @@ android_library {
+         "truth-prebuilt",
+         "dagger2-2.19",
+         "jsr330",
+-        "vendor.lineage.biometrics.fingerprint.inscreen-V1.0-java",
+         "airbnb-lottie",
+     ],
+     libs: [
+diff --git a/packages/SystemUI/res-keyguard/values/bliss_dimens.xml b/packages/SystemUI/res-keyguard/values/bliss_dimens.xml
+index 164600e8932..105aa9cea73 100644
+--- a/packages/SystemUI/res-keyguard/values/bliss_dimens.xml
++++ b/packages/SystemUI/res-keyguard/values/bliss_dimens.xml
+@@ -15,9 +15,6 @@
+ -->
+ <resources>
+ 
+-    <!-- The minimum bottom margin of the keyguard security container -->
+-    <dimen name="kg_security_container_min_bottom_margin">0dp</dimen>
+-
+     <!-- Binary Clock -->
+     <dimen name="binary_clock_dot_size">8dp</dimen>
+     <dimen name="binary_clock_stroke_width">2dp</dimen>
+diff --git a/packages/SystemUI/res/drawable/fod_icon_default.xml b/packages/SystemUI/res/drawable/fod_icon_default.xml
+deleted file mode 100644
+index 38e9d311128..00000000000
+--- a/packages/SystemUI/res/drawable/fod_icon_default.xml
++++ /dev/null
+@@ -1,25 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<!--
+-     Copyright (C) 2019 The LineageOS Project
+-
+-     Licensed under the Apache License, Version 2.0 (the "License");
+-     you may not use this file except in compliance with the License.
+-     You may obtain a copy of the License at
+-
+-          http://www.apache.org/licenses/LICENSE-2.0
+-
+-     Unless required by applicable law or agreed to in writing, software
+-     distributed under the License is distributed on an "AS IS" BASIS,
+-     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-     See the License for the specific language governing permissions and
+-     limitations under the License.
+--->
+-<vector xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:width="48dp"
+-    android:height="48dp"
+-    android:viewportWidth="24.0"
+-    android:viewportHeight="24.0">
+-    <path
+-        android:fillColor="#ffffff"
+-        android:pathData="M17.81,4.47c-0.08,0 -0.16,-0.02 -0.23,-0.06C15.66,3.42 14,3 12.01,3c-1.98,0 -3.86,0.47 -5.57,1.41 -0.24,0.13 -0.54,0.04 -0.68,-0.2 -0.13,-0.24 -0.04,-0.55 0.2,-0.68C7.82,2.52 9.86,2 12.01,2c2.13,0 3.99,0.47 6.03,1.52 0.25,0.13 0.34,0.43 0.21,0.67 -0.09,0.18 -0.26,0.28 -0.44,0.28zM3.5,9.72c-0.1,0 -0.2,-0.03 -0.29,-0.09 -0.23,-0.16 -0.28,-0.47 -0.12,-0.7 0.99,-1.4 2.25,-2.5 3.75,-3.27C9.98,4.04 14,4.03 17.15,5.65c1.5,0.77 2.76,1.86 3.75,3.25 0.16,0.22 0.11,0.54 -0.12,0.7 -0.23,0.16 -0.54,0.11 -0.7,-0.12 -0.9,-1.26 -2.04,-2.25 -3.39,-2.94 -2.87,-1.47 -6.54,-1.47 -9.4,0.01 -1.36,0.7 -2.5,1.7 -3.4,2.96 -0.08,0.14 -0.23,0.21 -0.39,0.21zM9.75,21.79c-0.13,0 -0.26,-0.05 -0.35,-0.15 -0.87,-0.87 -1.34,-1.43 -2.01,-2.64 -0.69,-1.23 -1.05,-2.73 -1.05,-4.34 0,-2.97 2.54,-5.39 5.66,-5.39s5.66,2.42 5.66,5.39c0,0.28 -0.22,0.5 -0.5,0.5s-0.5,-0.22 -0.5,-0.5c0,-2.42 -2.09,-4.39 -4.66,-4.39 -2.57,0 -4.66,1.97 -4.66,4.39 0,1.44 0.32,2.77 0.93,3.85 0.64,1.15 1.08,1.64 1.85,2.42 0.19,0.2 0.19,0.51 0,0.71 -0.11,0.1 -0.24,0.15 -0.37,0.15zM16.92,19.94c-1.19,0 -2.24,-0.3 -3.1,-0.89 -1.49,-1.01 -2.38,-2.65 -2.38,-4.39 0,-0.28 0.22,-0.5 0.5,-0.5s0.5,0.22 0.5,0.5c0,1.41 0.72,2.74 1.94,3.56 0.71,0.48 1.54,0.71 2.54,0.71 0.24,0 0.64,-0.03 1.04,-0.1 0.27,-0.05 0.53,0.13 0.58,0.41 0.05,0.27 -0.13,0.53 -0.41,0.58 -0.57,0.11 -1.07,0.12 -1.21,0.12zM14.91,22c-0.04,0 -0.09,-0.01 -0.13,-0.02 -1.59,-0.44 -2.63,-1.03 -3.72,-2.1 -1.4,-1.39 -2.17,-3.24 -2.17,-5.22 0,-1.62 1.38,-2.94 3.08,-2.94 1.7,0 3.08,1.32 3.08,2.94 0,1.07 0.93,1.94 2.08,1.94s2.08,-0.87 2.08,-1.94c0,-3.77 -3.25,-6.83 -7.25,-6.83 -2.84,0 -5.44,1.58 -6.61,4.03 -0.39,0.81 -0.59,1.76 -0.59,2.8 0,0.78 0.07,2.01 0.67,3.61 0.1,0.26 -0.03,0.55 -0.29,0.64 -0.26,0.1 -0.55,-0.04 -0.64,-0.29 -0.49,-1.31 -0.73,-2.61 -0.73,-3.96 0,-1.2 0.23,-2.29 0.68,-3.24 1.33,-2.79 4.28,-4.6 7.51,-4.6 4.55,0 8.25,3.51 8.25,7.83 0,1.62 -1.38,2.94 -3.08,2.94s-3.08,-1.32 -3.08,-2.94c0,-1.07 -0.93,-1.94 -2.08,-1.94s-2.08,0.87 -2.08,1.94c0,1.71 0.66,3.31 1.87,4.51 0.95,0.94 1.86,1.46 3.27,1.85 0.27,0.07 0.42,0.35 0.35,0.61 -0.05,0.23 -0.26,0.38 -0.47,0.38z" />
+-</vector>
+diff --git a/packages/SystemUI/res/values/bliss_colors.xml b/packages/SystemUI/res/values/bliss_colors.xml
+index c95fb13fa16..eeadcb2a737 100644
+--- a/packages/SystemUI/res/values/bliss_colors.xml
++++ b/packages/SystemUI/res/values/bliss_colors.xml
+@@ -15,10 +15,6 @@
+ -->
+ <resources>
+ 
+-    <!-- Color of the FOD view -->
+-    <color name="config_fodColor">#00ff00</color>
+-    <color name="config_fodColorBackground">#20000000</color>
+-
+    <color name="accent_device_default_light">@*android:color/accent_device_default_light</color>
+ 
+ </resources>
+diff --git a/packages/SystemUI/res/values/config.xml b/packages/SystemUI/res/values/config.xml
+index d3a0dcee4ec..1761b539359 100644
+--- a/packages/SystemUI/res/values/config.xml
++++ b/packages/SystemUI/res/values/config.xml
+@@ -319,7 +319,6 @@
+         <item>com.android.systemui.globalactions.GlobalActionsComponent</item>
+         <item>com.android.systemui.ScreenDecorations</item>
+         <item>com.android.systemui.biometrics.AuthController</item>
+-        <item>com.android.systemui.biometrics.FODCircleViewImpl</item>
+         <item>com.android.systemui.SliceBroadcastRelayHandler</item>
+         <item>com.android.systemui.SizeCompatModeActivityController</item>
+         <item>com.android.systemui.statusbar.notification.InstantAppNotifier</item>
+diff --git a/packages/SystemUI/src/com/android/keyguard/KeyguardSecurityContainer.java b/packages/SystemUI/src/com/android/keyguard/KeyguardSecurityContainer.java
+index 3905d5f5df1..1db2e32b8cd 100644
+--- a/packages/SystemUI/src/com/android/keyguard/KeyguardSecurityContainer.java
++++ b/packages/SystemUI/src/com/android/keyguard/KeyguardSecurityContainer.java
+@@ -517,9 +517,6 @@ public class KeyguardSecurityContainer extends FrameLayout implements KeyguardSe
+ 
+         // Consume bottom insets because we're setting the padding locally (for IME and navbar.)
+         int inset;
+-        int minBottomMargin = getResources().getDimensionPixelSize(
+-                R.dimen.kg_security_container_min_bottom_margin);
+-
+         if (sNewInsetsMode == NEW_INSETS_MODE_FULL) {
+             int bottomInset = insets.getInsetsIgnoringVisibility(systemBars()).bottom;
+             int imeInset = insets.getInsets(ime()).bottom;
+@@ -527,8 +524,7 @@ public class KeyguardSecurityContainer extends FrameLayout implements KeyguardSe
+         } else {
+             inset = insets.getSystemWindowInsetBottom();
+         }
+-        setPadding(getPaddingLeft(), getPaddingTop(), getPaddingRight(),
+-               minBottomMargin > inset ? minBottomMargin : inset);
++        setPadding(getPaddingLeft(), getPaddingTop(), getPaddingRight(), inset);
+         return insets.inset(0, 0, 0, inset);
+     }
+ 
+diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/FODCircleView.java b/packages/SystemUI/src/com/android/systemui/biometrics/FODCircleView.java
+deleted file mode 100644
+index 7f52e6c51a6..00000000000
+--- a/packages/SystemUI/src/com/android/systemui/biometrics/FODCircleView.java
++++ /dev/null
+@@ -1,464 +0,0 @@
+-/**
+- * Copyright (C) 2019-2020 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-package com.android.systemui.biometrics;
+-
+-import android.app.admin.DevicePolicyManager;
+-import android.content.Context;
+-import android.content.res.Configuration;
+-import android.content.res.Resources;
+-import android.graphics.Canvas;
+-import android.graphics.Color;
+-import android.graphics.Paint;
+-import android.graphics.PixelFormat;
+-import android.graphics.Point;
+-import android.os.Handler;
+-import android.os.Looper;
+-import android.os.RemoteException;
+-import android.provider.Settings;
+-import android.view.Display;
+-import android.view.Gravity;
+-import android.view.MotionEvent;
+-import android.view.Surface;
+-import android.view.View;
+-import android.view.WindowManager;
+-import android.widget.ImageView;
+-
+-import com.android.internal.widget.LockPatternUtils;
+-import com.android.keyguard.KeyguardSecurityModel.SecurityMode;
+-import com.android.keyguard.KeyguardUpdateMonitor;
+-import com.android.keyguard.KeyguardUpdateMonitorCallback;
+-import com.android.systemui.Dependency;
+-import com.android.systemui.R;
+-
+-import vendor.lineage.biometrics.fingerprint.inscreen.V1_0.IFingerprintInscreen;
+-import vendor.lineage.biometrics.fingerprint.inscreen.V1_0.IFingerprintInscreenCallback;
+-
+-import java.util.NoSuchElementException;
+-import java.util.Timer;
+-import java.util.TimerTask;
+-
+-public class FODCircleView extends ImageView {
+-    private final int mPositionX;
+-    private final int mPositionY;
+-    private final int mSize;
+-    private final int mDreamingMaxOffset;
+-    private final int mNavigationBarSize;
+-    private final boolean mShouldBoostBrightness;
+-    private final Paint mPaintFingerprintBackground = new Paint();
+-    private final Paint mPaintFingerprint = new Paint();
+-    private final WindowManager.LayoutParams mParams = new WindowManager.LayoutParams();
+-    private final WindowManager.LayoutParams mPressedParams = new WindowManager.LayoutParams();
+-    private final WindowManager mWindowManager;
+-
+-    private IFingerprintInscreen mFingerprintInscreenDaemon;
+-
+-    private int mDreamingOffsetX;
+-    private int mDreamingOffsetY;
+-
+-    private boolean mIsBouncer;
+-    private boolean mIsDreaming;
+-    private boolean mIsCircleShowing;
+-
+-    private Handler mHandler;
+-
+-    private final ImageView mPressedView;
+-
+-    private LockPatternUtils mLockPatternUtils;
+-
+-    private Timer mBurnInProtectionTimer;
+-
+-    private IFingerprintInscreenCallback mFingerprintInscreenCallback =
+-            new IFingerprintInscreenCallback.Stub() {
+-        @Override
+-        public void onFingerDown() {
+-            mHandler.post(() -> showCircle());
+-        }
+-
+-        @Override
+-        public void onFingerUp() {
+-            mHandler.post(() -> hideCircle());
+-        }
+-    };
+-
+-    private KeyguardUpdateMonitor mUpdateMonitor;
+-
+-    private KeyguardUpdateMonitorCallback mMonitorCallback = new KeyguardUpdateMonitorCallback() {
+-        @Override
+-        public void onDreamingStateChanged(boolean dreaming) {
+-            mIsDreaming = dreaming;
+-            updateAlpha();
+-
+-            if (dreaming) {
+-                mBurnInProtectionTimer = new Timer();
+-                mBurnInProtectionTimer.schedule(new BurnInProtectionTask(), 0, 60 * 1000);
+-            } else if (mBurnInProtectionTimer != null) {
+-                mBurnInProtectionTimer.cancel();
+-            }
+-        }
+-
+-        @Override
+-        public void onKeyguardBouncerChanged(boolean isBouncer) {
+-            mIsBouncer = isBouncer;
+-            if (mUpdateMonitor.isFingerprintDetectionRunning()) {
+-                if (isPinOrPattern(mUpdateMonitor.getCurrentUser()) || !isBouncer) {
+-                    show();
+-                } else {
+-                    hide();
+-                }
+-            } else {
+-                hide();
+-            }
+-        }
+-
+-        @Override
+-        public void onStartedGoingToSleep(int why) {
+-            hide();
+-        }
+-
+-        @Override
+-        public void onScreenTurnedOn() {
+-            if (mUpdateMonitor.isFingerprintDetectionRunning()) {
+-                show();
+-            }
+-        }
+-    };
+-
+-    public FODCircleView(Context context) {
+-        super(context);
+-
+-        setScaleType(ScaleType.CENTER);
+-
+-        IFingerprintInscreen daemon = getFingerprintInScreenDaemon();
+-        if (daemon == null) {
+-            throw new RuntimeException("Unable to get IFingerprintInscreen");
+-        }
+-
+-        try {
+-            mShouldBoostBrightness = daemon.shouldBoostBrightness();
+-            mPositionX = daemon.getPositionX();
+-            mPositionY = daemon.getPositionY();
+-            mSize = daemon.getSize();
+-        } catch (RemoteException e) {
+-            throw new RuntimeException("Failed to retrieve FOD circle position or size");
+-        }
+-
+-        Resources res = context.getResources();
+-
+-        mPaintFingerprint.setColor(res.getColor(R.color.config_fodColor));
+-        mPaintFingerprint.setAntiAlias(true);
+-
+-        mPaintFingerprintBackground.setColor(res.getColor(R.color.config_fodColorBackground));
+-        mPaintFingerprintBackground.setAntiAlias(true);
+-
+-        mWindowManager = context.getSystemService(WindowManager.class);
+-
+-        mNavigationBarSize = res.getDimensionPixelSize(R.dimen.navigation_bar_size);
+-
+-        mDreamingMaxOffset = (int) (mSize * 0.1f);
+-
+-        mHandler = new Handler(Looper.getMainLooper());
+-
+-        mParams.height = mSize;
+-        mParams.width = mSize;
+-        mParams.format = PixelFormat.TRANSLUCENT;
+-
+-        mParams.packageName = "android";
+-        mParams.type = WindowManager.LayoutParams.TYPE_DISPLAY_OVERLAY;
+-        mParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE |
+-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+-        mParams.gravity = Gravity.TOP | Gravity.LEFT;
+-
+-        mPressedParams.copyFrom(mParams);
+-        mPressedParams.flags |= WindowManager.LayoutParams.FLAG_DIM_BEHIND;
+-
+-        mParams.setTitle("Fingerprint on display");
+-        mPressedParams.setTitle("Fingerprint on display.touched");
+-
+-        mPressedView = new ImageView(context)  {
+-            @Override
+-            protected void onDraw(Canvas canvas) {
+-                if (mIsCircleShowing) {
+-                    canvas.drawCircle(mSize / 2, mSize / 2, mSize / 2.0f, mPaintFingerprint);
+-                }
+-                super.onDraw(canvas);
+-            }
+-        };
+-        mPressedView.setImageResource(R.drawable.fod_icon_pressed);
+-
+-        mWindowManager.addView(this, mParams);
+-
+-        updatePosition();
+-        hide();
+-
+-        mLockPatternUtils = new LockPatternUtils(mContext);
+-
+-        mUpdateMonitor = Dependency.get(KeyguardUpdateMonitor.class);
+-        mUpdateMonitor.registerCallback(mMonitorCallback);
+-    }
+-
+-    @Override
+-    protected void onDraw(Canvas canvas) {
+-        if (!mIsCircleShowing) {
+-            canvas.drawCircle(mSize / 2, mSize / 2, mSize / 2.0f, mPaintFingerprintBackground);
+-        }
+-        super.onDraw(canvas);
+-    }
+-
+-    @Override
+-    public boolean onTouchEvent(MotionEvent event) {
+-        float x = event.getAxisValue(MotionEvent.AXIS_X);
+-        float y = event.getAxisValue(MotionEvent.AXIS_Y);
+-
+-        boolean newIsInside = (x > 0 && x < mSize) && (y > 0 && y < mSize);
+-
+-        if (event.getAction() == MotionEvent.ACTION_DOWN && newIsInside) {
+-            showCircle();
+-            return true;
+-        } else if (event.getAction() == MotionEvent.ACTION_UP) {
+-            hideCircle();
+-            return true;
+-        } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+-            return true;
+-        }
+-
+-        return false;
+-    }
+-
+-    @Override
+-    public void onConfigurationChanged(Configuration newConfig) {
+-        updatePosition();
+-    }
+-
+-    public IFingerprintInscreen getFingerprintInScreenDaemon() {
+-        if (mFingerprintInscreenDaemon == null) {
+-            try {
+-                mFingerprintInscreenDaemon = IFingerprintInscreen.getService();
+-                if (mFingerprintInscreenDaemon != null) {
+-                    mFingerprintInscreenDaemon.setCallback(mFingerprintInscreenCallback);
+-                    mFingerprintInscreenDaemon.asBinder().linkToDeath((cookie) -> {
+-                        mFingerprintInscreenDaemon = null;
+-                    }, 0);
+-                }
+-            } catch (NoSuchElementException | RemoteException e) {
+-                // do nothing
+-            }
+-        }
+-        return mFingerprintInscreenDaemon;
+-    }
+-
+-    public void dispatchPress() {
+-        IFingerprintInscreen daemon = getFingerprintInScreenDaemon();
+-        try {
+-            daemon.onPress();
+-        } catch (RemoteException e) {
+-            // do nothing
+-        }
+-    }
+-
+-    public void dispatchRelease() {
+-        IFingerprintInscreen daemon = getFingerprintInScreenDaemon();
+-        try {
+-            daemon.onRelease();
+-        } catch (RemoteException e) {
+-            // do nothing
+-        }
+-    }
+-
+-    public void dispatchShow() {
+-        IFingerprintInscreen daemon = getFingerprintInScreenDaemon();
+-        try {
+-            daemon.onShowFODView();
+-        } catch (RemoteException e) {
+-            // do nothing
+-        }
+-    }
+-
+-    public void dispatchHide() {
+-        IFingerprintInscreen daemon = getFingerprintInScreenDaemon();
+-        try {
+-            daemon.onHideFODView();
+-        } catch (RemoteException e) {
+-            // do nothing
+-        }
+-    }
+-
+-    public void showCircle() {
+-        mIsCircleShowing = true;
+-
+-        setKeepScreenOn(true);
+-
+-        setDim(true);
+-        dispatchPress();
+-
+-        setImageDrawable(null);
+-        invalidate();
+-    }
+-
+-    public void hideCircle() {
+-        mIsCircleShowing = false;
+-
+-        setImageResource(R.drawable.fod_icon_default);
+-        invalidate();
+-
+-        dispatchRelease();
+-        setDim(false);
+-
+-        setKeepScreenOn(false);
+-    }
+-
+-    public void show() {
+-        if (!mUpdateMonitor.isScreenOn()) {
+-            // Keyguard is shown just after screen turning off
+-            return;
+-        }
+-
+-        if (mIsBouncer && !isPinOrPattern(mUpdateMonitor.getCurrentUser())) {
+-            // Ignore show calls when Keyguard password screen is being shown
+-            return;
+-        }
+-
+-        updatePosition();
+-
+-        dispatchShow();
+-        setVisibility(View.VISIBLE);
+-    }
+-
+-    public void hide() {
+-        setVisibility(View.GONE);
+-        hideCircle();
+-        dispatchHide();
+-    }
+-
+-    private void updateAlpha() {
+-        setAlpha(mIsDreaming ? 0.5f : 1.0f);
+-    }
+-
+-    private void updatePosition() {
+-        Display defaultDisplay = mWindowManager.getDefaultDisplay();
+-
+-        Point size = new Point();
+-        defaultDisplay.getRealSize(size);
+-
+-        int rotation = defaultDisplay.getRotation();
+-        int x, y;
+-        switch (rotation) {
+-            case Surface.ROTATION_0:
+-                x = mPositionX;
+-                y = mPositionY;
+-                break;
+-            case Surface.ROTATION_90:
+-                x = mPositionY;
+-                y = mPositionX;
+-                break;
+-            case Surface.ROTATION_180:
+-                x = mPositionX;
+-                y = size.y - mPositionY - mSize;
+-                break;
+-            case Surface.ROTATION_270:
+-                x = size.x - mPositionY - mSize - mNavigationBarSize;
+-                y = mPositionX;
+-                break;
+-            default:
+-                throw new IllegalArgumentException("Unknown rotation: " + rotation);
+-        }
+-
+-        mPressedParams.x = mParams.x = x;
+-        mPressedParams.y = mParams.y = y;
+-
+-        if (mIsDreaming) {
+-            mParams.x += mDreamingOffsetX;
+-            mParams.y += mDreamingOffsetY;
+-        }
+-
+-        mWindowManager.updateViewLayout(this, mParams);
+-
+-        if (mPressedView.getParent() != null) {
+-            mWindowManager.updateViewLayout(mPressedView, mPressedParams);
+-        }
+-    }
+-
+-    private void setDim(boolean dim) {
+-        if (dim) {
+-            int curBrightness = Settings.System.getInt(getContext().getContentResolver(),
+-                    Settings.System.SCREEN_BRIGHTNESS, 100);
+-            int dimAmount = 0;
+-
+-            IFingerprintInscreen daemon = getFingerprintInScreenDaemon();
+-            try {
+-                dimAmount = daemon.getDimAmount(curBrightness);
+-            } catch (RemoteException e) {
+-                // do nothing
+-            }
+-
+-            if (mShouldBoostBrightness) {
+-                mPressedParams.screenBrightness = 1.0f;
+-            }
+-
+-            mPressedParams.dimAmount = dimAmount / 255.0f;
+-            if (mPressedView.getParent() == null) {
+-                mWindowManager.addView(mPressedView, mPressedParams);
+-            } else {
+-                mWindowManager.updateViewLayout(mPressedView, mPressedParams);
+-            }
+-        } else {
+-            if (mShouldBoostBrightness) {
+-                mPressedParams.screenBrightness = 0.0f;
+-            }
+-            mPressedParams.dimAmount = 0.0f;
+-            if (mPressedView.getParent() != null) {
+-                mWindowManager.removeView(mPressedView);
+-            }
+-        }
+-    }
+-
+-    private boolean isPinOrPattern(int userId) {
+-        int passwordQuality = mLockPatternUtils.getActivePasswordQuality(userId);
+-        switch (passwordQuality) {
+-            // PIN
+-            case DevicePolicyManager.PASSWORD_QUALITY_NUMERIC:
+-            case DevicePolicyManager.PASSWORD_QUALITY_NUMERIC_COMPLEX:
+-            // Pattern
+-            case DevicePolicyManager.PASSWORD_QUALITY_SOMETHING:
+-                return true;
+-        }
+-
+-        return false;
+-    }
+-
+-    private class BurnInProtectionTask extends TimerTask {
+-        @Override
+-        public void run() {
+-            long now = System.currentTimeMillis() / 1000 / 60;
+-
+-            mDreamingOffsetX = (int) (now % (mDreamingMaxOffset * 4));
+-            if (mDreamingOffsetX > mDreamingMaxOffset * 2) {
+-                mDreamingOffsetX = mDreamingMaxOffset * 4 - mDreamingOffsetX;
+-            }
+-
+-            // Let y to be not synchronized with x, so that we get maximum movement
+-            mDreamingOffsetY = (int) ((now + mDreamingMaxOffset / 3) % (mDreamingMaxOffset * 2));
+-            if (mDreamingOffsetY > mDreamingMaxOffset * 2) {
+-                mDreamingOffsetY = mDreamingMaxOffset * 4 - mDreamingOffsetY;
+-            }
+-
+-            mDreamingOffsetX -= mDreamingMaxOffset;
+-            mDreamingOffsetY -= mDreamingMaxOffset;
+-
+-            mHandler.post(() -> updatePosition());
+-        }
+-    };
+-}
+diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/FODCircleViewImpl.java b/packages/SystemUI/src/com/android/systemui/biometrics/FODCircleViewImpl.java
+deleted file mode 100644
+index 127e47ab5db..00000000000
+--- a/packages/SystemUI/src/com/android/systemui/biometrics/FODCircleViewImpl.java
++++ /dev/null
+@@ -1,72 +0,0 @@
+-/**
+- * Copyright (C) 2019 The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-package com.android.systemui.biometrics;
+-
+-import android.content.Context;
+-import android.content.pm.PackageManager;
+-import android.util.Slog;
+-import android.view.View;
+-
+-import com.android.systemui.SystemUI;
+-import com.android.systemui.statusbar.CommandQueue;
+-
+-import javax.inject.Inject;
+-import javax.inject.Singleton;
+-
+-@Singleton
+-public class FODCircleViewImpl extends SystemUI implements CommandQueue.Callbacks {
+-    private static final String TAG = "FODCircleViewImpl";
+-
+-    private FODCircleView mFodCircleView;
+-    private final CommandQueue mCommandQueue;
+-
+-    @Inject
+-    public FODCircleViewImpl(Context context, CommandQueue commandQueue) {
+-        super(context);
+-        mCommandQueue = commandQueue;
+-    }
+-
+-    @Override
+-    public void start() {
+-        PackageManager packageManager = mContext.getPackageManager();
+-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT) ||
+-                !mContext.getResources().getBoolean(
+-                        com.android.internal.R.bool.config_needCustomFODView)) {
+-            return;
+-        }
+-        mCommandQueue.addCallback(this);
+-        try {
+-            mFodCircleView = new FODCircleView(mContext);
+-        } catch (RuntimeException e) {
+-            Slog.e(TAG, "Failed to initialize FODCircleView", e);
+-        }
+-    }
+-
+-    @Override
+-    public void showInDisplayFingerprintView() {
+-        if (mFodCircleView != null) {
+-            mFodCircleView.show();
+-        }
+-    }
+-
+-    @Override
+-    public void hideInDisplayFingerprintView() {
+-        if (mFodCircleView != null) {
+-            mFodCircleView.hide();
+-        }
+-    }
+-}
+diff --git a/packages/SystemUI/src/com/android/systemui/dagger/SystemUIBinder.java b/packages/SystemUI/src/com/android/systemui/dagger/SystemUIBinder.java
+index a0a2e6f0dd6..413a522bccd 100644
+--- a/packages/SystemUI/src/com/android/systemui/dagger/SystemUIBinder.java
++++ b/packages/SystemUI/src/com/android/systemui/dagger/SystemUIBinder.java
+@@ -24,7 +24,6 @@ import com.android.systemui.SystemUI;
+ import com.android.systemui.accessibility.SystemActions;
+ import com.android.systemui.accessibility.WindowMagnification;
+ import com.android.systemui.biometrics.AuthController;
+-import com.android.systemui.biometrics.FODCircleViewImpl;
+ import com.android.systemui.bubbles.dagger.BubbleModule;
+ import com.android.systemui.globalactions.GlobalActionsComponent;
+ import com.android.systemui.keyguard.KeyguardViewMediator;
+@@ -67,12 +66,6 @@ public abstract class SystemUIBinder {
+     @ClassKey(Divider.class)
+     public abstract SystemUI bindDivider(Divider sysui);
+ 
+-    /** Inject into FODCircleViewImpl. */
+-    @Binds
+-    @IntoMap
+-    @ClassKey(FODCircleViewImpl.class)
+-    public abstract SystemUI FODCircleViewImpl(FODCircleViewImpl sysui);
+-
+     /** Inject into GarbageMonitor.Service. */
+     @Binds
+     @IntoMap
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/CommandQueue.java b/packages/SystemUI/src/com/android/systemui/statusbar/CommandQueue.java
+index 4505db1c0ec..5ee77cd862c 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/CommandQueue.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/CommandQueue.java
+@@ -128,8 +128,6 @@ public class CommandQueue extends IStatusBar.Stub implements CallbackController<
+     private static final int MSG_SUPPRESS_AMBIENT_DISPLAY          = 56 << MSG_SHIFT;
+     private static final int MSG_TOGGLE_CAMERA_FLASH           	   = 90 << MSG_SHIFT;
+     private static final int MSG_TOGGLE_SETTINGS_PANEL             = 91 << MSG_SHIFT;
+-    private static final int MSG_SHOW_IN_DISPLAY_FINGERPRINT_VIEW  = 57 << MSG_SHIFT;
+-    private static final int MSG_HIDE_IN_DISPLAY_FINGERPRINT_VIEW  = 58 << MSG_SHIFT;
+     private static final int MSG_TRIGGER_ACTION                    = 93 << MSG_SHIFT;
+     private static final int MSG_TOGGLE_CAMERA_FLASH_STATE     = 60 << MSG_SHIFT;
+ 
+@@ -275,8 +273,6 @@ public class CommandQueue extends IStatusBar.Stub implements CallbackController<
+         default void onBiometricHelp(String message) { }
+         default void onBiometricError(int modality, int error, int vendorCode) { }
+         default void hideAuthenticationDialog() { }
+-        default void showInDisplayFingerprintView() { }
+-        default void hideInDisplayFingerprintView() { }
+ 
+         /**
+          * @see IStatusBar#onDisplayReady(int)
+@@ -876,20 +872,6 @@ public class CommandQueue extends IStatusBar.Stub implements CallbackController<
+         }
+     }
+ 
+-    @Override
+-    public void showInDisplayFingerprintView() {
+-        synchronized (mLock) {
+-            mHandler.obtainMessage(MSG_SHOW_IN_DISPLAY_FINGERPRINT_VIEW).sendToTarget();
+-        }
+-    }
+-
+-    @Override
+-    public void hideInDisplayFingerprintView() {
+-        synchronized (mLock) {
+-            mHandler.obtainMessage(MSG_HIDE_IN_DISPLAY_FINGERPRINT_VIEW).sendToTarget();
+-        }
+-    }
+-
+     @Override
+     public void onDisplayReady(int displayId) {
+         synchronized (mLock) {
+@@ -1372,16 +1354,6 @@ public class CommandQueue extends IStatusBar.Stub implements CallbackController<
+                 case MSG_TOGGLE_CAMERA_FLASH:
+                     for (int i = 0; i < mCallbacks.size(); i++) {
+                         mCallbacks.get(i).toggleCameraFlash((boolean) msg.obj);
+-		    }
+-		    break;
+-                case MSG_SHOW_IN_DISPLAY_FINGERPRINT_VIEW:
+-                    for (int i = 0; i < mCallbacks.size(); i++) {
+-                        mCallbacks.get(i).showInDisplayFingerprintView();
+-                    }
+-                    break;
+-                case MSG_HIDE_IN_DISPLAY_FINGERPRINT_VIEW:
+-                    for (int i = 0; i < mCallbacks.size(); i++) {
+-                        mCallbacks.get(i).hideInDisplayFingerprintView();
+                     }
+                     break;
+                 case MSG_TRIGGER_ACTION:
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarKeyguardViewManager.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarKeyguardViewManager.java
+index 10583a69b9c..c6f85309ee2 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarKeyguardViewManager.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/StatusBarKeyguardViewManager.java
+@@ -117,7 +117,6 @@ public class StatusBarKeyguardViewManager implements RemoteInputController.Callb
+ 
+         @Override
+         public void onStartingToShow() {
+-            updateStates();
+             updateLockIcon();
+         }
+ 
+@@ -166,7 +165,6 @@ public class StatusBarKeyguardViewManager implements RemoteInputController.Callb
+     protected boolean mLastShowing;
+     protected boolean mLastOccluded;
+     private boolean mLastBouncerShowing;
+-    private boolean mLastBouncerInTransit;
+     private boolean mLastBouncerDismissible;
+     protected boolean mLastRemoteInputActive;
+     private boolean mLastDozing;
+@@ -817,7 +815,6 @@ public class StatusBarKeyguardViewManager implements RemoteInputController.Callb
+         boolean showing = mShowing;
+         boolean occluded = mOccluded;
+         boolean bouncerShowing = mBouncer.isShowing();
+-        boolean bouncerInTransit = mBouncer.inTransit();
+         boolean bouncerDismissible = !mBouncer.isFullscreenBouncer();
+         boolean remoteInputActive = mRemoteInputActive;
+ 
+@@ -849,11 +846,8 @@ public class StatusBarKeyguardViewManager implements RemoteInputController.Callb
+         if ((showing && !occluded) != (mLastShowing && !mLastOccluded) || mFirstUpdate) {
+             mKeyguardUpdateManager.onKeyguardVisibilityChanged(showing && !occluded);
+         }
+-
+-        boolean bouncerVisible = bouncerShowing || bouncerInTransit;
+-        boolean lastBouncerVisible = mLastBouncerShowing || mLastBouncerInTransit;
+-        if (bouncerVisible != lastBouncerVisible || mFirstUpdate) {
+-            mKeyguardUpdateManager.sendKeyguardBouncerChanged(bouncerVisible);
++        if (bouncerShowing != mLastBouncerShowing || mFirstUpdate) {
++            mKeyguardUpdateManager.sendKeyguardBouncerChanged(bouncerShowing);
+         }
+ 
+         mFirstUpdate = false;
+@@ -861,7 +855,6 @@ public class StatusBarKeyguardViewManager implements RemoteInputController.Callb
+         mLastGlobalActionsVisible = mGlobalActionsVisible;
+         mLastOccluded = occluded;
+         mLastBouncerShowing = bouncerShowing;
+-        mLastBouncerInTransit = bouncerInTransit;
+         mLastBouncerDismissible = bouncerDismissible;
+         mLastRemoteInputActive = remoteInputActive;
+         mLastDozing = mDozing;
+diff --git a/services/core/Android.bp b/services/core/Android.bp
+index b0ed17ee7f8..d688a8ff8b5 100644
+--- a/services/core/Android.bp
++++ b/services/core/Android.bp
+@@ -131,7 +131,6 @@ java_library_static {
+         "netd_aidl_interfaces-platform-java",
+         "overlayable_policy_aidl-java",
+         "SurfaceFlingerProperties",
+-        "vendor.lineage.biometrics.fingerprint.inscreen-V1.0-java",
+         "faceunlock_framework",
+     ],
+ }
+diff --git a/services/core/java/com/android/server/biometrics/BiometricServiceBase.java b/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
+index b1522e9b286..18e7b14a836 100644
+--- a/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
++++ b/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
+@@ -1037,7 +1037,7 @@ public abstract class BiometricServiceBase extends SystemService
+     /**
+      * @return true if this is keyguard package
+      */
+-    protected boolean isKeyguard(String clientPackage) {
++    private boolean isKeyguard(String clientPackage) {
+         return mKeyguardPackage.equals(clientPackage);
+     }
+ 
+diff --git a/services/core/java/com/android/server/biometrics/fingerprint/FingerprintService.java b/services/core/java/com/android/server/biometrics/fingerprint/FingerprintService.java
+index 0f237f0fcbe..a90fee6788a 100644
+--- a/services/core/java/com/android/server/biometrics/fingerprint/FingerprintService.java
++++ b/services/core/java/com/android/server/biometrics/fingerprint/FingerprintService.java
+@@ -80,15 +80,12 @@ import org.json.JSONArray;
+ import org.json.JSONException;
+ import org.json.JSONObject;
+ 
+-import vendor.lineage.biometrics.fingerprint.inscreen.V1_0.IFingerprintInscreen;
+-
+ import java.io.File;
+ import java.io.FileDescriptor;
+ import java.io.PrintWriter;
+ import java.util.ArrayList;
+ import java.util.Collections;
+ import java.util.List;
+-import java.util.NoSuchElementException;
+ import java.util.concurrent.CopyOnWriteArrayList;
+ 
+ /**
+@@ -110,9 +107,6 @@ public class FingerprintService extends BiometricServiceBase {
+     private static final long FAIL_LOCKOUT_TIMEOUT_MS = 30 * 1000;
+     private static final String KEY_LOCKOUT_RESET_USER = "lockout_reset_user";
+ 
+-    private final boolean mHasFod;
+-    private boolean mIsKeyguard;
+-
+     private final class ResetFailedAttemptsForUserRunnable implements Runnable {
+         @Override
+         public void run() {
+@@ -647,7 +641,6 @@ public class FingerprintService extends BiometricServiceBase {
+ 
+     @GuardedBy("this")
+     private IBiometricsFingerprint mDaemon;
+-    private IFingerprintInscreen mFingerprintInscreenDaemon;
+     private final SparseBooleanArray mTimedLockoutCleared;
+     private final SparseIntArray mFailedAttempts;
+     private final AlarmManager mAlarmManager;
+@@ -669,21 +662,6 @@ public class FingerprintService extends BiometricServiceBase {
+                         new Fingerprint(getBiometricUtils().getUniqueName(getContext(), groupId),
+                                 groupId, fingerId, deviceId);
+                 FingerprintService.super.handleEnrollResult(fingerprint, remaining);
+-                if (remaining == 0 && mHasFod) {
+-                    IFingerprintInscreen fodDaemon = getFingerprintInScreenDaemon();
+-                    if (fodDaemon != null) {
+-                        try {
+-                            fodDaemon.onFinishEnroll();
+-                        } catch (RemoteException e) {
+-                            Slog.e(TAG, "onFinishEnroll failed", e);
+-                        }
+-                    }
+-                    try {
+-                        mStatusBarService.hideInDisplayFingerprintView();
+-                    } catch (RemoteException e) {
+-                        Slog.e(TAG, "hideInDisplayFingerprintView failed", e);
+-                    }
+-                }
+             });
+         }
+ 
+@@ -695,16 +673,6 @@ public class FingerprintService extends BiometricServiceBase {
+         @Override
+         public void onAcquired_2_2(long deviceId, int acquiredInfo, int vendorCode) {
+             mHandler.post(() -> {
+-                IFingerprintInscreen daemon = getFingerprintInScreenDaemon();
+-                if (daemon != null) {
+-                    try {
+-                        if (daemon.handleAcquired(acquiredInfo, vendorCode)) {
+-                            return;
+-                        }
+-                    } catch (RemoteException e) {
+-                        Slog.e(TAG, "handleError failed", e);
+-                    }
+-                }
+                 FingerprintService.super.handleAcquired(deviceId, acquiredInfo, vendorCode);
+             });
+         }
+@@ -724,29 +692,12 @@ public class FingerprintService extends BiometricServiceBase {
+ 
+                 final Fingerprint fp = new Fingerprint("", groupId, fingerId, deviceId);
+                 FingerprintService.super.handleAuthenticated(authenticated, fp, token);
+-                if (mHasFod && fp.getBiometricId() != 0) {
+-                    try {
+-                        mStatusBarService.hideInDisplayFingerprintView();
+-                    } catch (RemoteException e) {
+-                        Slog.e(TAG, "hideInDisplayFingerprintView failed", e);
+-                    }
+-                }
+             });
+         }
+ 
+         @Override
+         public void onError(final long deviceId, final int error, final int vendorCode) {
+             mHandler.post(() -> {
+-                IFingerprintInscreen daemon = getFingerprintInScreenDaemon();
+-                if (daemon != null) {
+-                    try {
+-                        if (daemon.handleError(error, vendorCode)) {
+-                            return;
+-                        }
+-                    } catch (RemoteException e) {
+-                        Slog.e(TAG, "handleError failed", e);
+-                    }
+-                }
+                 FingerprintService.super.handleError(deviceId, error, vendorCode);
+                 // TODO: this chunk of code should be common to all biometric services
+                 if (error == BiometricConstants.BIOMETRIC_ERROR_HW_UNAVAILABLE) {
+@@ -794,21 +745,6 @@ public class FingerprintService extends BiometricServiceBase {
+                 Slog.w(TAG, "authenticate(): no fingerprint HAL!");
+                 return ERROR_ESRCH;
+             }
+-            if (mHasFod) {
+-                IFingerprintInscreen fodDaemon = getFingerprintInScreenDaemon();
+-                if (fodDaemon != null) {
+-                    try {
+-                        fodDaemon.setLongPressEnabled(mIsKeyguard);
+-                    } catch (RemoteException e) {
+-                        Slog.e(TAG, "setLongPressEnabled failed", e);
+-                    }
+-                }
+-                try {
+-                    mStatusBarService.showInDisplayFingerprintView();
+-                } catch (RemoteException e) {
+-                    Slog.e(TAG, "showInDisplayFingerprintView failed", e);
+-                }
+-            }
+             return daemon.authenticate(operationId, groupId);
+         }
+ 
+@@ -819,13 +755,6 @@ public class FingerprintService extends BiometricServiceBase {
+                 Slog.w(TAG, "cancel(): no fingerprint HAL!");
+                 return ERROR_ESRCH;
+             }
+-            if (mHasFod) {
+-                try {
+-                    mStatusBarService.hideInDisplayFingerprintView();
+-                } catch (RemoteException e) {
+-                    Slog.e(TAG, "hideInDisplayFingerprintView failed", e);
+-                }
+-            }
+             return daemon.cancel();
+         }
+ 
+@@ -857,21 +786,6 @@ public class FingerprintService extends BiometricServiceBase {
+                 Slog.w(TAG, "enroll(): no fingerprint HAL!");
+                 return ERROR_ESRCH;
+             }
+-            if (mHasFod) {
+-                IFingerprintInscreen fodDaemon = getFingerprintInScreenDaemon();
+-                if (fodDaemon != null) {
+-                    try {
+-                        fodDaemon.onStartEnroll();
+-                    } catch (RemoteException e) {
+-                        Slog.e(TAG, "onStartEnroll failed", e);
+-                    }
+-                }
+-                try {
+-                    mStatusBarService.showInDisplayFingerprintView();
+-                } catch (RemoteException e) {
+-                    Slog.e(TAG, "showInDisplayFingerprintView failed", e);
+-                }
+-            }
+             return daemon.enroll(cryptoToken, groupId, timeout);
+         }
+ 
+@@ -891,10 +805,6 @@ public class FingerprintService extends BiometricServiceBase {
+         context.registerReceiver(mLockoutReceiver, new IntentFilter(getLockoutResetIntent()),
+                 getLockoutBroadcastPermission(), null /* handler */);
+         mLockPatternUtils = new LockPatternUtils(context);
+-
+-        PackageManager packageManager = context.getPackageManager();
+-        mHasFod = context.getResources().getBoolean(
+-                com.android.internal.R.bool.config_needCustomFODView);
+     }
+ 
+     @Override
+@@ -979,7 +889,6 @@ public class FingerprintService extends BiometricServiceBase {
+ 
+                     daemon.setActiveGroup(userId, fpDir.getAbsolutePath());
+                     mCurrentUserId = userId;
+-                    mIsKeyguard = isKeyguard(clientPackage);
+                 }
+                 mAuthenticatorIds.put(userId,
+                         hasEnrolledBiometrics(userId) ? daemon.getAuthenticatorId() : 0L);
+@@ -1117,26 +1026,6 @@ public class FingerprintService extends BiometricServiceBase {
+         return mDaemon;
+     }
+ 
+-    private synchronized IFingerprintInscreen getFingerprintInScreenDaemon() {
+-        if (!mHasFod) {
+-            return null;
+-        }
+-
+-        if (mFingerprintInscreenDaemon == null) {
+-            try {
+-                mFingerprintInscreenDaemon = IFingerprintInscreen.getService();
+-                if (mFingerprintInscreenDaemon != null) {
+-                    mFingerprintInscreenDaemon.asBinder().linkToDeath((cookie) -> {
+-                        mFingerprintInscreenDaemon = null;
+-                    }, 0);
+-                }
+-            } catch (NoSuchElementException | RemoteException e) {
+-                Slog.e(TAG, "Failed to get IFingerprintInscreen interface", e);
+-            }
+-        }
+-        return mFingerprintInscreenDaemon;
+-    }
+-
+     private long startPreEnroll(IBinder token) {
+         IBiometricsFingerprint daemon = getFingerprintDaemon();
+         if (daemon == null) {
+diff --git a/services/core/java/com/android/server/statusbar/StatusBarManagerService.java b/services/core/java/com/android/server/statusbar/StatusBarManagerService.java
+index a8529bf277d..bb8cd1b3047 100644
+--- a/services/core/java/com/android/server/statusbar/StatusBarManagerService.java
++++ b/services/core/java/com/android/server/statusbar/StatusBarManagerService.java
+@@ -819,28 +819,6 @@ public class StatusBarManagerService extends IStatusBarService.Stub implements D
+         return mTracingEnabled;
+     }
+ 
+-    @Override
+-    public void showInDisplayFingerprintView() {
+-        if (mBar != null) {
+-            try {
+-                mBar.showInDisplayFingerprintView();
+-            } catch (RemoteException ex) {
+-                // do nothing
+-            }
+-        }
+-    }
+-
+-    @Override
+-    public void hideInDisplayFingerprintView() {
+-        if (mBar != null) {
+-            try {
+-                mBar.hideInDisplayFingerprintView();
+-            } catch (RemoteException ex) {
+-                // do nothing
+-            }
+-        }
+-    }
+-
+     // TODO(b/117478341): make it aware of multi-display if needed.
+     @Override
+     public void toggleCameraFlash(boolean proximityCheck) {
+-- 
+2.17.1
+

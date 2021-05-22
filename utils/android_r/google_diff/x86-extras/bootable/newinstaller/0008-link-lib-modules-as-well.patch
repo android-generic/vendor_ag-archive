@@ -1,0 +1,25 @@
+From fdff0b193d7f3ff4a07c871dda928c21d8982c53 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Mon, 4 Mar 2019 21:04:20 -0500
+Subject: [PATCH 08/11] link /lib/modules as well
+
+---
+ initrd/init | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/initrd/init b/initrd/init
+index 506a9601..a4733a2e 100755
+--- a/initrd/init
++++ b/initrd/init
+@@ -170,6 +170,8 @@ cd /android
+ ln -s mnt/$SRC /src
+ ln -s android/system /
+ ln -s ../system/lib/firmware ../system/lib/modules /lib
++mkdir -p /lib/modules
++ln -s /system/lib/modules /lib/modules/`uname -r`
+ 
+ if [ -d system/apex/com.android.runtime.debug ]; then
+ 	ln -s ../android/system/apex/com.android.runtime.debug /apex/com.android.runtime
+-- 
+2.17.1
+

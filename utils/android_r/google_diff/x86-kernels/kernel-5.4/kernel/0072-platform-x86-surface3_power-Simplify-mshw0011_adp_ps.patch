@@ -1,0 +1,36 @@
+From d0fb7c52454eae95a5f077e2a3b71188a8fcccc2 Mon Sep 17 00:00:00 2001
+From: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+Date: Thu, 26 Mar 2020 16:05:56 +0200
+Subject: [PATCH 72/89] platform/x86: surface3_power: Simplify
+ mshw0011_adp_psr() to one liner
+
+Refactor mshw0011_adp_psr() to be one liner.
+
+Signed-off-by: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+---
+ drivers/platform/x86/surface3_power.c | 9 +--------
+ 1 file changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/drivers/platform/x86/surface3_power.c b/drivers/platform/x86/surface3_power.c
+index 3eb1b48c562e..4229e64a84e8 100644
+--- a/drivers/platform/x86/surface3_power.c
++++ b/drivers/platform/x86/surface3_power.c
+@@ -295,14 +295,7 @@ static int mshw0011_bst(struct mshw0011_data *cdata, struct bst *bst)
+ 
+ static int mshw0011_adp_psr(struct mshw0011_data *cdata)
+ {
+-	struct i2c_client *client = cdata->adp1;
+-	int ret;
+-
+-	ret = i2c_smbus_read_byte_data(client, MSHW0011_ADP1_REG_PSR);
+-	if (ret < 0)
+-		return ret;
+-
+-	return ret;
++	return i2c_smbus_read_byte_data(cdata->adp1, MSHW0011_ADP1_REG_PSR);
+ }
+ 
+ static int mshw0011_isr(struct mshw0011_data *cdata)
+-- 
+2.30.2
+

@@ -1,0 +1,36 @@
+From e1ab9faca997479c5c6ffd7e130e614d0b57babf Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 15 Aug 2020 20:44:38 +0200
+Subject: [PATCH 081/100] drm: print log for SET_MASTER and DROP_MASTER (v2)
+
+In order to help logging the processes involved
+
+(v2) changes due to commit
+     907f53200 ("drm: vmwgfx: remove drm_driver::master_set() return type")
+---
+ drivers/gpu/drm/drm_auth.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/gpu/drm/drm_auth.c b/drivers/gpu/drm/drm_auth.c
+index f2d46b7ac6f9..52d48718db31 100644
+--- a/drivers/gpu/drm/drm_auth.c
++++ b/drivers/gpu/drm/drm_auth.c
+@@ -125,6 +125,7 @@ struct drm_master *drm_master_create(struct drm_device *dev)
+ static void drm_set_master(struct drm_device *dev, struct drm_file *fpriv,
+ 			   bool new_master)
+ {
++	DRM_INFO("({ex,im}plicit set) process \"%s\" [%d] master = %d\n", current->comm, task_pid_nr(current), fpriv->is_master);
+ 	dev->master = drm_master_get(fpriv->master);
+ 	if (dev->driver->master_set)
+ 		dev->driver->master_set(dev, fpriv, new_master);
+@@ -256,6 +257,7 @@ int drm_setmaster_ioctl(struct drm_device *dev, void *data,
+ static void drm_drop_master(struct drm_device *dev,
+ 			    struct drm_file *fpriv)
+ {
++	DRM_INFO("({ex,im}plicit drop) process \"%s\" [%d] master = %d\n", current->comm, task_pid_nr(current), fpriv->is_master);
+ 	if (dev->driver->master_drop)
+ 		dev->driver->master_drop(dev, fpriv);
+ 	drm_master_put(&dev->master);
+-- 
+2.17.1
+

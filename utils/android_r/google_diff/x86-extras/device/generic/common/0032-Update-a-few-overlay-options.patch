@@ -1,0 +1,32 @@
+From 44d5b5b52af1ca335cced7960d5c5b0bbfd36e6f Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Mon, 28 Sep 2020 18:47:40 -0400
+Subject: [PATCH 32/36] Update a few overlay options
+
+enable lockscreen
+adjust screen off timeout
+adjust sleep timeout
+enable rotation by default
+Change-Id: I7c027c717cdda2a5275984c4b66f4e4fec02cef2
+---
+ .../base/packages/SettingsProvider/res/values/defaults.xml  | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/overlay/frameworks/base/packages/SettingsProvider/res/values/defaults.xml b/overlay/frameworks/base/packages/SettingsProvider/res/values/defaults.xml
+index 652cbe7..53a7c0b 100644
+--- a/overlay/frameworks/base/packages/SettingsProvider/res/values/defaults.xml
++++ b/overlay/frameworks/base/packages/SettingsProvider/res/values/defaults.xml
+@@ -18,6 +18,8 @@
+ -->
+ <resources>
+     <bool name="def_bluetooth_on">false</bool>
+-    <bool name="def_lockscreen_disabled">true</bool>
+-    <integer name="def_screen_off_timeout">600000</integer>
++    <bool name="def_lockscreen_disabled">false</bool>
++    <integer name="def_screen_off_timeout">900000</integer>
++    <integer name="def_sleep_timeout">86400000</integer>    
++    <bool name="def_accelerometer_rotation">true</bool>
+ </resources>
+-- 
+2.17.1
+

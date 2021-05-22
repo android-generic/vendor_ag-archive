@@ -1,0 +1,27 @@
+From 7ffae0a5b1f139a6bec18e5910df0dc22f5615f5 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Thu, 17 Oct 2019 14:39:45 -0400
+Subject: [PATCH 14/14] Setup FFMPEG audio/mpeg-L2 codec correctly
+
+Now that Android supports audio mp2, one has to make sure the FFMPEG
+variant is configured correctly when being used.
+---
+ media/libstagefright/ACodec.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index 4edc14a40a..6af2b5d5f5 100644
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -2151,7 +2151,7 @@ status_t ACodec::configureCodec(
+             outputFormat->setInt32("using-sw-renderer", 1);
+         }
+     } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_MPEG) ||
+-        !strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_MPEG_LAYER_II)) {
++        (!strncmp(mComponentName.c_str(), "OMX.google.", 11) && !strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_MPEG_LAYER_II))) {
+         int32_t numChannels, sampleRate;
+         if (!msg->findInt32("channel-count", &numChannels)
+                 || !msg->findInt32("sample-rate", &sampleRate)) {
+-- 
+2.30.2
+

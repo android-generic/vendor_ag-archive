@@ -1,0 +1,29 @@
+From 32cffca970313710fcd18cf65518e312e8eeb178 Mon Sep 17 00:00:00 2001
+From: Ronny Buchmann <60157654+ronnybuchmann@users.noreply.github.com>
+Date: Fri, 2 Apr 2021 21:27:00 +0200
+Subject: [PATCH 22/36] init.sh: select connected HDMI ouput
+
+---
+ init.sh | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/init.sh b/init.sh
+index 1ae140a..5abd9a2 100644
+--- a/init.sh
++++ b/init.sh
+@@ -71,6 +71,12 @@ function init_hal_audio()
+ 			set_prop_if_empty hal.audio.out pcmC0D2p
+ 			;;
+ 	esac
++	
++	# choose the first connected HDMI port on card 0 or 1
++	pcm=$(alsa_ctl store -f - 0 2>/dev/null| grep "CARD" -A 2 | grep "value true" -B 1 | grep "HDMI.*pcm" | head -1 | sed -e's/.*pcm=\([0-9]*\).*/\1/')
++	[ "$pcm" -ge 0 ] 2>/dev/null && set_prop_if_empty hal.audio.out "pcmC0D${pcm}p"
++	pcm=$(alsa_ctl store -f - 1 2>/dev/null| grep "CARD" -A 2 | grep "value true" -B 1 | grep "HDMI.*pcm" | head -1 | sed -e's/.*pcm=\([0-9]*\).*/\1/')
++	[ "$pcm" -ge 0 ] 2>/dev/null && set_prop_if_empty hal.audio.out "pcmC1D${pcm}p"
+ }
+ 
+ function init_hal_bluetooth()
+-- 
+2.17.1
+

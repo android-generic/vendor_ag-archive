@@ -1,0 +1,25 @@
+From 9cef4f255585b2252e095cee0431dd55c9943d11 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 29 Nov 2019 19:46:31 +0800
+Subject: [PATCH 21/22] Set forceDesktopMode to true
+
+---
+ services/core/java/com/android/server/wm/DisplayRotation.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/wm/DisplayRotation.java b/services/core/java/com/android/server/wm/DisplayRotation.java
+index 1284e009ee3..962220bc61c 100644
+--- a/services/core/java/com/android/server/wm/DisplayRotation.java
++++ b/services/core/java/com/android/server/wm/DisplayRotation.java
+@@ -331,7 +331,7 @@ public class DisplayRotation {
+         final boolean isTv = mContext.getPackageManager().hasSystemFeature(
+                 PackageManager.FEATURE_LEANBACK);
+         mDefaultFixedToUserRotation =
+-                (isCar || isTv || mService.mIsPc || mDisplayContent.forceDesktopMode())
++                (isCar || isTv || mService.mIsPc || /* mDisplayContent.forceDesktopMode() */ true)
+                 // For debug purposes the next line turns this feature off with:
+                 // $ adb shell setprop config.override_forced_orient true
+                 // $ adb shell wm size reset
+-- 
+2.30.2
+

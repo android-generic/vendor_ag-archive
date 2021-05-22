@@ -1,0 +1,32 @@
+From 62ae8603783a9482bb5c108ba1dcaf3c254f4d4f Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sun, 10 Jun 2018 17:46:25 +0800
+Subject: [PATCH 2/7] Remove the unused function
+
+---
+ vendor_libs/linux/interface/hci_packetizer.cc | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/vendor_libs/linux/interface/hci_packetizer.cc b/vendor_libs/linux/interface/hci_packetizer.cc
+index 0c0a979e7..6016cad6c 100644
+--- a/vendor_libs/linux/interface/hci_packetizer.cc
++++ b/vendor_libs/linux/interface/hci_packetizer.cc
+@@ -52,6 +52,7 @@ void HciPacketizer::CbHciPacket(uint8_t *data, size_t len) {
+     packet_ready_cb_();
+ }
+ 
++#if 0
+ void HciPacketizer::OnDataReady(int fd, HciPacketType packet_type) {
+   switch (state_) {
+     case HCI_PREAMBLE: {
+@@ -89,6 +90,7 @@ void HciPacketizer::OnDataReady(int fd, HciPacketType packet_type) {
+     }
+   }
+ }
++#endif
+ 
+ }  // namespace hci
+ }  // namespace bluetooth
+-- 
+2.30.2
+

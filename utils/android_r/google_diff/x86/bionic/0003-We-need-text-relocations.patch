@@ -1,0 +1,33 @@
+From 96e4b44f98fb1591251182f71a21545007c79ad1 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 8 Mar 2018 12:30:36 +0800
+Subject: [PATCH 3/3] We need text relocations
+
+Don't show annoying warnings.
+---
+ linker/linker.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/linker/linker.cpp b/linker/linker.cpp
+index d4802904b..1fd631efa 100644
+--- a/linker/linker.cpp
++++ b/linker/linker.cpp
+@@ -3265,7 +3265,6 @@ bool soinfo::link_image(const SymbolLookupList& lookup_list, soinfo* local_group
+                      "Enforced-for-API-level-23)", get_realpath());
+       return false;
+     }
+-#endif
+     // Make segments writable to allow text relocations to work properly. We will later call
+     // phdr_table_protect_segments() after all of them are applied.
+     DL_WARN_documented_change(23,
+@@ -3273,6 +3272,7 @@ bool soinfo::link_image(const SymbolLookupList& lookup_list, soinfo* local_group
+                               "\"%s\" has text relocations",
+                               get_realpath());
+     add_dlwarning(get_realpath(), "text relocations");
++#endif
+     if (phdr_table_unprotect_segments(phdr, phnum, load_bias) < 0) {
+       DL_ERR("can't unprotect loadable segments for \"%s\": %s", get_realpath(), strerror(errno));
+       return false;
+-- 
+2.30.2
+

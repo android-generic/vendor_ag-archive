@@ -1,0 +1,27 @@
+From 1541de6b2377453192e5101340f272fe130154cf Mon Sep 17 00:00:00 2001
+From: Ronny Buchmann <60157654+ronnybuchmann@users.noreply.github.com>
+Date: Mon, 5 Apr 2021 21:48:52 +0200
+Subject: [PATCH 23/36] init.sh: fix manufacturer/model fallback
+
+---
+ init.sh | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/init.sh b/init.sh
+index 5abd9a2..31b1b3d 100644
+--- a/init.sh
++++ b/init.sh
+@@ -26,8 +26,8 @@ function init_misc()
+ {
+ 	# device information
+ 	VENDOR=$(cat $DMIPATH/sys_vendor)
+-	[ -z "$VENDOR" ] ? setprop ro.product.manufacturer $(cat $DMIPATH/board_vendor) : setprop ro.product.manufacturer "$VENDOR"
+-	[ -z "$PRODUCT" ] ? setprop ro.product.model "$BOARD" : setprop ro.product.model "$PRODUCT"
++	if [ -z "$VENDOR" ]; then setprop ro.product.manufacturer "$(cat $DMIPATH/board_vendor)"; else setprop ro.product.manufacturer "$VENDOR"; fi
++	if [ -z "$PRODUCT" ]; then setprop ro.product.model "$BOARD"; else setprop ro.product.model "$PRODUCT"; fi
+ 
+ 	# a hack for USB modem
+ 	lsusb | grep 1a8d:1000 && eject
+-- 
+2.17.1
+
