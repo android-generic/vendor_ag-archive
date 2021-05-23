@@ -27,6 +27,10 @@ function ag-menu()
 	bash vendor/${vendor_path}/ag-core/ag-menu.sh $1 $2 $3 $4
 }
 
+function manifest-backup
+{
+	bash vendor/${vendor_path}/scripts/manifest-backup/manifest-backup.sh
+}
 
 function get-cros-files-x86
 {
