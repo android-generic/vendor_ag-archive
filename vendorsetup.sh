@@ -1,5 +1,5 @@
 rompath=$(pwd)
-vendor_path="x86"
+vendor_path="ag"
 
 function apply-x86-patches
 {
@@ -20,6 +20,11 @@ function apply-kernel-patches()
 
 	vendor/${vendor_path}/utils/ap_kernel.sh $1
 
+}
+
+function ag-menu()
+{
+	bash vendor/${vendor_path}/ag-core/ag-menu.sh $1 $2 $3 $4
 }
 
 
