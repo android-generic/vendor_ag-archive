@@ -4,6 +4,9 @@ temp_path="$rompath/vendor/$vendor_path/tmp/"
 config_type="$1"
 popt=0
 
+rm -rf $temp_path/modules.lst
+rm -rf $temp_path/priv-modules.lst
+
 #setup colors
 red=`tput setaf 1`
 green=`tput setaf 2`
@@ -62,7 +65,7 @@ ask() {
 
 # Run the functions
 
-if [ $1 == "" ]; then
+if [ "$1" == "" ]; then
 	echo "You must specify a target type (pc, gsi, emu)"
 fi
 echo -e ${reset}"$1 specified"${reset}

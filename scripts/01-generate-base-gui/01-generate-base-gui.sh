@@ -4,7 +4,7 @@ temp_path="$rompath/vendor/$vendor_path/tmp/"
 config_type="$1"
 popt=0
 source $rompath/vendor/$vendor_path/ag-core/gui/easybashgui
-include $rompath/vendor/$vendor_path/ag-core/gui/easybashgui
+# include $rompath/vendor/$vendor_path/ag-core/gui/easybashgui
 
 #setup colors
 red=`tput setaf 1`
@@ -61,6 +61,12 @@ ask() {
     done
 }
 
+if [ -d $rompath/.repo/local_manifests/ ]; then
+	echo -e ${reset}""${reset}
+	echo -e ${teal}"local_manifests Path Already Created"${reset}
+else
+	mkdir -p "$rompath/.repo/local_manifests/"
+fi
 
 checkOptions() {
 	if [ -f "$temp_path/device-options.lst" ]; then

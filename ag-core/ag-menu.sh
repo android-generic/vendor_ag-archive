@@ -7,6 +7,32 @@ modulepath="$rompath/vendor/$vendor_path/scripts"
 privmodulepath="$rompath/vendor/$vendor_path/private-scripts"
 source $rompath/vendor/$vendor_path/ag-core/gui/easybashgui
 
+#setup colors
+red=`tput setaf 1`
+green=`tput setaf 2`
+yellow=`tput setaf 3`
+blue=`tput setaf 4`
+purple=`tput setaf 5`
+teal=`tput setaf 6`
+light=`tput setaf 7`
+dark=`tput setaf 8`
+ltred=`tput setaf 9`
+ltgreen=`tput setaf 10`
+ltyellow=`tput setaf 11`
+ltblue=`tput setaf 12`
+ltpurple=`tput setaf 13`
+CL_CYN=`tput setaf 12`
+CL_RST=`tput sgr0`
+reset=`tput sgr0`
+
+if [ ! -d "$temp_path" ]; then
+	echo "Grabbing initial modules list"
+	mkdir -p $temp_path
+fi
+rm -rf $temp_path/modules.lst
+rm -rf $temp_path/priv-modules.lst
+echo "Refreshing modules list"
+bash $modulepath/tools-grab-modules/tools-grab-modules.sh $config_type
 modules=$(cat $temp_path/modules.lst |tr "\n" " ")
 privatemodules=$(cat $temp_path/priv-modules.lst |tr "\n" " ")
 

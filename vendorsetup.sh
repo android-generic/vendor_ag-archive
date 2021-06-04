@@ -24,7 +24,15 @@ function apply-kernel-patches()
 
 function ag-menu()
 {
-	bash vendor/${vendor_path}/ag-core/ag-menu.sh $1 $2 $3 $4
+	if [ "$1" == "" ]; then
+		echo -e "You must specify a target type (pc, gsi, emu)"
+	elif [ "$1" == "gsi" ]; then
+		echo -e "You must wait for that target type to become available. Check repo for updates"
+	elif [ "$1" == "emu" ]; then
+		echo -e "You must wait for that target type to become available. Check repo for updates"
+	else
+		bash vendor/${vendor_path}/ag-core/ag-menu.sh $1 $2 $3 $4
+	fi
 }
 
 function manifest-backup

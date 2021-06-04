@@ -16,5 +16,8 @@
     
 	<remove-project name="platform/external/protobuf" />
 	<project path="external/protobuf" name="platform/external/protobuf" remote="aosp" revision="android11-release" clone-depth="1" />
+	
+	<remove-project name="platform/external/llvm" />
+	<project path="external/llvm" name="platform/external/llvm" remote="aosp" revision="android11-release" />
   
 </manifest>

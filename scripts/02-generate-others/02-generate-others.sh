@@ -51,6 +51,13 @@ else
 	mkdir -p "$temp_path"
 fi
 
+if [ -d $rompath/.repo/local_manifests/ ]; then
+	echo -e ${reset}""${reset}
+	echo -e ${teal}"local_manifests Path Already Created"${reset}
+
+else
+	mkdir -p "$rompath/.repo/local_manifests/"
+fi
 
 echo -e '<?xml version="1.0" encoding="UTF-8"?>' > "$temp_path/06-others.xml"
 echo -e '<manifest>' >> "$temp_path/06-others.xml"

@@ -32,10 +32,16 @@ readFile() {
 	echo -e ${reset}""${reset}
 	
 	while IFS= read -r rpitem; do
-		if grep -Rl "$rpitem" $rompath/.repo/manifests/; then
+		if grep -RlZ "$rpitem" $rompath/.repo/manifests/; then
 			echo -e ${yellow}"	ROM already includes:	$rpitem"${reset}
 		else
-		    addRemove "$rpitem"
+			prefix="<remove-project name="
+			suffix=" />"
+			item=${rpitem#"$prefix"}
+			item=${item%"$suffix"}
+			if grep -RlZ "$item" $rompath/.repo/manifests/; then
+				addRemove "$rpitem"
+			fi
 		fi
 	done < $rompath/vendor/$vendor_path/configs/$config_type/remove.lst
 }
