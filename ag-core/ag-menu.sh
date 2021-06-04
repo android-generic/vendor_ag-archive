@@ -5,6 +5,8 @@ temp_path="$rompath/vendor/$vendor_path/tmp"
 config_type="$1"
 modulepath="$rompath/vendor/$vendor_path/scripts"
 privmodulepath="$rompath/vendor/$vendor_path/private-scripts"
+export supertitle="Android Generic Project - Main Menu"
+export supericon="$rompath/vendor/$vendor_path/ag-core/includes/ag-logo.png"
 source $rompath/vendor/$vendor_path/ag-core/gui/easybashgui
 
 #setup colors

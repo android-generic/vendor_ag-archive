@@ -12,15 +12,12 @@ if [ ! -d "$rompath/vendor/prebuilts/agp-apps" ]; then
 fi
 
 cd device/generic/common 
-#~ command="cat device.mk"
 command=`git log --pretty="format:%aD, %s" | grep -F "Add AGP-Apps"`
 
-if ! $command; then
+if [ -n "$command" ]; then
 	echo "ALREADY THERE"
 else
     echo "NOT THERE, ADDING"
-#~ fi 
-#~ if ! $command ; then
 	
 cat >> device.mk <<\EOF
 

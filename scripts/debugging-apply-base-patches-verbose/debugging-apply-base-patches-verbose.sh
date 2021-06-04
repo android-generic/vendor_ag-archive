@@ -135,7 +135,6 @@ cd $patch_dir
 patch_list=`find * -iname "*.patch" | sort -u`
 
 apply_patch "$patch_list" "$patch_dir"
-#~ apply_patch "$patch_list" "$patch_dir" 2>&1 | tee $top_dir/vendor/$vendor_path/tmp/conflicts.script
 
 echo ""
 if [[ "$conflict" == "y" ]]; then
