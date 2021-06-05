@@ -1,0 +1,79 @@
+From 088d0bbfe73cb7d6207738cbab7e08f0a80f7397 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 13 May 2021 14:04:09 -0400
+Subject: [PATCH 07/13] Revert "biometrics: Allow posting reset runnable for
+ all clients"
+
+This reverts commit dcdcd3599d6f35ba692042fdbedd0e8ca62556e2.
+Change-Id: I499db68bd6b9bfa8addddb0361b067ca1fedb966
+---
+ core/res/res/values/bliss_config.xml                       | 4 ----
+ core/res/res/values/bliss_symbols.xml                      | 4 ----
+ .../android/server/biometrics/BiometricServiceBase.java    | 7 -------
+ 3 files changed, 15 deletions(-)
+
+diff --git a/core/res/res/values/bliss_config.xml b/core/res/res/values/bliss_config.xml
+index a211c35e930..1dc7702c52a 100644
+--- a/core/res/res/values/bliss_config.xml
++++ b/core/res/res/values/bliss_config.xml
+@@ -60,10 +60,6 @@
+     <!-- Whether to cleanup fingerprints upon connection to the daemon and when user switches -->
+     <bool name="config_cleanupUnusedFingerprints">true</bool>
+ 
+-    <!-- Whether to post reset runnable for all clients. Needed for some older
+-         vendor fingerprint HAL implementations. -->
+-    <bool name="config_fingerprintPostResetRunnableForAllClients">false</bool>
+-
+     <string-array translatable="false" name="custom_config_globalActionsList">
+         <item>emergency</item>
+         <item>lockdown</item>
+diff --git a/core/res/res/values/bliss_symbols.xml b/core/res/res/values/bliss_symbols.xml
+index 87727a5f847..044488c8c28 100644
+--- a/core/res/res/values/bliss_symbols.xml
++++ b/core/res/res/values/bliss_symbols.xml
+@@ -57,10 +57,6 @@
+ 
+     <!-- Whether to cleanup fingerprints upon connection to the daemon and when user switches -->
+     <java-symbol type="bool" name="config_cleanupUnusedFingerprints" />
+-
+-    <!-- Post reset runnable for all clients -->
+-    <java-symbol type="bool" name="config_fingerprintPostResetRunnableForAllClients" />
+-
+     <!-- Power Menu -->
+   <java-symbol type="string" name="reboot_to_recovery_title" />
+   <java-symbol type="string" name="reboot_to_recovery_message" />
+diff --git a/services/core/java/com/android/server/biometrics/BiometricServiceBase.java b/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
+index 81c2a150c4b..534709eb7cb 100644
+--- a/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
++++ b/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
+@@ -88,7 +88,6 @@ public abstract class BiometricServiceBase extends SystemService
+     private final PowerManager mPowerManager;
+     private final UserManager mUserManager;
+     private final MetricsLogger mMetricsLogger;
+-    private final boolean mPostResetRunnableForAllClients;
+     private final BiometricTaskStackListener mTaskStackListener = new BiometricTaskStackListener();
+     private final ResetClientStateRunnable mResetClientState = new ResetClientStateRunnable();
+     private final ArrayList<LockoutResetMonitor> mLockoutMonitors = new ArrayList<>();
+@@ -668,8 +667,6 @@ public abstract class BiometricServiceBase extends SystemService
+                 com.android.internal.R.bool.config_notifyClientOnFingerprintCancelSuccess);
+         mCleanupUnusedFingerprints = mContext.getResources().getBoolean(
+                 com.android.internal.R.bool.config_cleanupUnusedFingerprints);
+-        mPostResetRunnableForAllClients = mContext.getResources().getBoolean(
+-                com.android.internal.R.bool.config_fingerprintPostResetRunnableForAllClients);
+     }
+ 
+     @Override
+@@ -1088,10 +1085,6 @@ public abstract class BiometricServiceBase extends SystemService
+                             + "(" + newClient.getOwnerString() + ")"
+                             + ", initiatedByClient = " + initiatedByClient);
+                 }
+-                if (mPostResetRunnableForAllClients) {
+-                    mHandler.removeCallbacks(mResetClientState);
+-                    mHandler.postDelayed(mResetClientState, CANCEL_TIMEOUT_LIMIT);
+-                }
+             } else {
+                 currentClient.stop(initiatedByClient);
+ 
+-- 
+2.17.1
+

@@ -1,0 +1,26 @@
+From 4a4e55bdea592ec595d23ff4f9091737ed4ee967 Mon Sep 17 00:00:00 2001
+From: Victor Bo <bvoid@yandex.ru>
+Date: Thu, 29 Apr 2021 15:01:27 -0400
+Subject: [PATCH 01/13] Revert "FODCircleView: Update FOD icon position on
+ DreamingStateChanged"
+
+This reverts commit d89649a968c7aa238908e317e039fdd76e482c4d.
+---
+ .../src/com/android/systemui/biometrics/FODCircleView.java       | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/FODCircleView.java b/packages/SystemUI/src/com/android/systemui/biometrics/FODCircleView.java
+index 25c3c662bd5..4012e6112af 100644
+--- a/packages/SystemUI/src/com/android/systemui/biometrics/FODCircleView.java
++++ b/packages/SystemUI/src/com/android/systemui/biometrics/FODCircleView.java
+@@ -138,7 +138,6 @@ public class FODCircleView extends ImageView {
+                 mBurnInProtectionTimer.schedule(new BurnInProtectionTask(), 0, 60 * 1000);
+             } else if (mBurnInProtectionTimer != null) {
+                 mBurnInProtectionTimer.cancel();
+-                updatePosition();
+             }
+         }
+ 
+-- 
+2.17.1
+
