@@ -48,7 +48,7 @@ nb_type=""
 magisk=""
 gearlock=""
 # - Make Command (iso_img, efi_img, rpm)
-mak=""
+make_type=""
 
 productType() {
 	# Device type selection	
@@ -62,6 +62,7 @@ productType() {
 	echo "Timeout in $TMOUT sec."${CL_RST}
 	answer=$(0< "${dir_tmp}/${file_tmp}" )
 	product="${answer}"
+	echo -e ${product} > $temp_path/product.config
 	
 }
 
@@ -90,6 +91,8 @@ variantType() {
 		echo "invalid option ${answer}"
 		exit
 	fi
+	echo -e ${variant} > $temp_path/variant.config
+	
 	
 }
 
@@ -109,20 +112,15 @@ appsType() {
 	if [ "${answer}" = "FOSS" ]; then
 		echo "you chose ${answer}"		
 		if [ ! -d $rompath/vendor/foss ]; then
-			echo -e "You will need to clone the emu-gapps into $rompath/vendor/google/emu-gapps first"
+			echo -e "You will need to clone the foss vendor"
 		else
-			apps="foss"
-			export USE_FOSS_APPS=true
-			export USE_EMU_GAPPS=false
-			export USE_GMS=false
+			apps="&& export USE_FOSS_APPS=true "
+			echo -e ${apps} > $temp_path/apps.config
 			if [ -d $rompath/vendor/foss/bin ]; then
 				echo -e "Foss vendor apps already pulled"
-				#~ TMOUT=10
 				echo ${purple}"Default Answer = N, Timeout in $TMOUT sec."${CL_RST}
-				#~ question "Do you want to refresh/update FOSS apps?"
 				menu "Update FOSS apps" "Do not update"
 				choice="$( 0< "${dir_tmp}/${file_tmp}" )"
-				#~ answer="${?}"
 				if [ "${choice}" = "Do not update" ]
 					then
 					ok_message "doing nothing"
@@ -172,33 +170,34 @@ appsType() {
 		if [ ! -d $rompath/vendor/gms ]; then
 			echo -e "You will need to clone the gms into $rompath/vendor/gms first"
 		else
-			apps="gms"
-			export USE_GMS=true
-			export USE_EMU_GAPPS=false
-			export USE_FOSS_APPS=false
+			apps="&& export USE_GMS=true "
+			echo -e ${apps} > $temp_path/apps.config
 		fi
 	elif [ "${answer}" = "EMU-Gapps" ]; then
 		echo "you chose ${answer}"
 		if [ ! -d $rompath/vendor/google/emu-gapps ]; then
 			echo -e "You will need to clone the emu-gapps into $rompath/vendor/google/emu-gapps first"
 		else
-			apps="emugapps"
-			export USE_EMU_GAPPS=true
-			export USE_GMS=false
-			export USE_FOSS_APPS=false
+			if [ -d $rompath/vendor/foss/bin ]; then
+				echo -e "Removing foss apps so gapps will work properly"
+				rm -rf $rompath/vendor/foss/bin
+				rm -rf $rompath/vendor/foss/Android.mk
+				rm -rf $rompath/vendor/foss/apps.mk
+			fi
+			apps="&& export USE_EMU_GAPPS=true"
+			echo -e ${apps} > $temp_path/apps.config
 		fi
 	elif [ "${answer}" = "Vanilla" ]; then
 		echo "you chose ${answer}"
-		apps="none"
-		export USE_EMU_GAPPS=false
-		export USE_GMS=false
-		export USE_FOSS_APPS=false
+		apps="None"
 	else
 		echo "invalid option ${answer}"
 		exit
 	fi
 	
 }
+
+# nb_type
 
 nbType() {
 	# Apps type selection	
@@ -215,18 +214,58 @@ nbType() {
 	if [ "${answer}" = "None" ]; then
 		echo "you chose ${answer}"
 		nb_type="none"
-		export USE_LIBNDK_TRANSLATION_NB=false
-		export USE_CROS_HOUDINI_NB=false
 	elif [ "${answer}" = "Intel's Houdini" ]; then
 		echo "you chose ${answer}"
-		nb_type="houdini"
-		export USE_LIBNDK_TRANSLATION_NB=false
-		export USE_CROS_HOUDINI_NB=true
+		if [ ! -d $rompath/vendor/google/chromeos-x86 ]; then
+			echo -e "You will need to clone the repo into $rompath/vendor/google/chromeos-x86 first"
+		else
+			nb_type="&& export USE_CROS_HOUDINI_NB=true "
+			echo -e ${nb_type} > $temp_path/nb_type.config
+			if [ -d $rompath/vendor/google/chromeos-x86/proprietary ]; then 
+				echo "files already downloaded"
+			else
+				cd $rompath/vendor/google/chromeos-x86
+				bash $rompath/vendor/google/chromeos-x86/extract-files.sh
+				cd $rompath
+			fi
+		fi
 	elif [ "${answer}" = "Google's libndk-translation" ]; then
 		echo "you chose ${answer}"
-		nb_type="libndk"
-		export USE_LIBNDK_TRANSLATION_NB=true
-		export USE_CROS_HOUDINI_NB=false
+		nb_type="&& export USE_LIBNDK_TRANSLATION_NB=true "
+		echo -e ${nb_type} > $temp_path/nb_type.config
+	else
+		echo "invalid option ${answer}"
+		exit
+	fi
+	
+}
+
+# make_type
+
+makeType() {
+	# Apps type selection	
+	alert_message 'Which make type do you want?'
+	echo -e ${CL_CYN}"(default is 'Standard .iso Image')"
+	TMOUT=10
+	title="Choose an apps type"
+	selection=("Standard .iso Image"
+		"EFI .img file"
+		"RPM Linux Installer")
+	menu "Standard .iso Image" "EFI .img file" "RPM Linux Installer"
+	echo "Timeout in $TMOUT sec."${CL_RST}
+	answer=$(0< "${dir_tmp}/${file_tmp}" )
+	if [ "${answer}" = "Standard .iso Image" ]; then
+		echo "you chose ${answer}"
+		make_type="iso_img"
+		echo -e ${make_type} > $temp_path/make_type.config
+	elif [ "${answer}" = "EFI .img file" ]; then
+		echo "you chose ${answer}"
+		make_type="efi_img"
+		echo -e ${make_type} > $temp_path/make_type.config
+	elif [ "${answer}" = "RPM Linux Installer" ]; then
+		echo "you chose ${answer}"
+		make_type="rpm"
+		echo -e ${make_type} > $temp_path/make_type.config
 	else
 		echo "invalid option ${answer}"
 		exit
@@ -240,7 +279,8 @@ extraOptions() {
 	array=$(0< "${dir_tmp}/${file_tmp}" )
 	for option in "$array"; do
 		if _contains "${option}" "Make Clean before build"; then
-		  clean="make clean"
+		  clean="&& make clean "
+		  echo -e ${clean} > $temp_path/clean.config
 		fi
 	done
 }
@@ -258,18 +298,29 @@ runBuild() {
 	if [ "$product" == "" ]; then
 		alert_message 'you need to select a product type'
 	fi
-	if [ ! "$variant" == "" ] | [ ! "$product" == "" ] | [ ! "$apps" == "" ] | [ ! "$nb_type" == "" ]; then
-		lunch="$product-$variant"
-		echo -e "$lunch"
+	if [ "$make_type" == "" ]; then
+		alert_message 'you need to select a make type'
+	fi
+	if [ ! "$variant" == "" ] | [ ! "$product" == "" ] | [ ! "$apps" == "" ] | [ ! "$nb_type" == "" ]| [ ! "$make_type" == "" ]; then
+		if [ "$apps" = "none" ]; then
+			apps=""
+		fi
+		if [ "$nb_type" = "none" ]; then
+			nb_type=""
+		fi
+		
+		lunchtype="$product-$variant"
+		echo -e ${lunchtype} > $temp_path/lunch.config
+		full_command="$env && lunch $lunchtype $clean $apps $nb_type && make -j$(nproc --all) $make_type"
+		echo -e ${full_command} > $temp_path/command.sh 
+		chmod -x $temp_path/command.sh
+		echo -e "Full Command saved"
+		echo -e "$full_command"
 		echo ""
 		echo "Project Working Path: $rompath"
 		echo ""
 		cd $rompath
-		#~ $env
-		. build/envsetup.sh
-		lunch $lunch
-		$clean
-		make -j$(nproc --all) iso_img
+		bash $temp_path/command.sh
 	fi
 }
 
@@ -278,12 +329,46 @@ runBuild() {
 #~ variantType
 #~ appsType
 #~ nbType
+#~ makeType
 #~ extraOptions
 #~ runBuild
 
+if [ -f $temp_path/command.sh ]; then
+	full_command=$(cat $temp_path/command.sh)
+	echo "Full command loaded: ${full_command}"
+fi
+if [ -f $temp_path/apps.config ]; then
+	apps=$(cat $temp_path/apps.config)
+	echo "apps command loaded: ${apps}"
+fi
+if [ -f $temp_path/nb_type.config ]; then
+	nb_type=$(cat $temp_path/nb_type.config)
+	echo "nb_type command loaded: ${nb_type}"
+fi
+if [ -f $temp_path/lunch.config ]; then
+	lunch=$(cat $temp_path/lunch.config)
+	echo "lunch command loaded: ${lunch}"
+fi
+if [ -f $temp_path/product.config ]; then
+	product=$(cat $temp_path/product.config)
+	echo "product command loaded: ${product}"
+fi
+if [ -f $temp_path/variant.config ]; then
+	variant=$(cat $temp_path/variant.config)
+	echo "variant command loaded: ${variant}"
+fi
+if [ -f $temp_path/clean.config ]; then
+	clean=$(cat $temp_path/clean.config)
+	echo "clean command loaded: ${clean}"
+fi
+if [ -f $temp_path/make_type.config ]; then
+	make_type=$(cat $temp_path/make_type.config)
+	echo "make_type command loaded: ${make_type}"
+fi
+
 while :
 	do
-	menu "Select Product Type" "Select Variant Type" "Select Apps Type" "Select Native-Bridge Type" "Select Extra Options" "Start the Build"
+	menu "Select Product Type" "Select Variant Type" "Select Apps Type" "Select Native-Bridge Type" "Select make type" "Select Extra Options" "Start the Build"
 	answer=$(0< "${dir_tmp}/${file_tmp}" )
 	if [ "${answer}" = "" ]; then
 		exit
@@ -311,6 +396,10 @@ while :
 	if [ "${answer}" = "Start the Build" ]; then
 		echo "Selected ${answer}"
 		runBuild
+	fi	
+	if [ "${answer}" = "Select make type" ]; then
+		echo "Selected ${answer}"
+		makeType
 	fi
 	
 done
