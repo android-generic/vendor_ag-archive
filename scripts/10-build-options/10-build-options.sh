@@ -281,8 +281,40 @@ extraOptions() {
 		if _contains "${option}" "Make Clean before build"; then
 		  clean="&& make clean "
 		  echo -e ${clean} > $temp_path/clean.config
+		else
+		  clean=""
+		  echo -e ${clean} > $temp_path/clean.config
 		fi
 	done
+}
+
+runMakeClean() {
+	alert_message 'Are you sure you want to make clean? It will wipe your compile progress and start over'
+	
+	# Apps type selection	
+	alert_message 'Which make type do you want?'
+	echo -e ${CL_CYN}"(default is 'Standard .iso Image')"
+	TMOUT=10
+	title="Choose an apps type"
+	selection=("Make Clean just once on it's own")
+	menu "Make Clean just once on it's own"
+	echo "Timeout in $TMOUT sec."${CL_RST}
+	answer=$(0< "${dir_tmp}/${file_tmp}" )
+	if [ "${answer}" = "Make Clean just once on it's own" ]; then
+		run_clean_command="$env && make clean"
+		echo -e ${run_clean_command} > $temp_path/run_clean_command.sh 
+		chmod -x $temp_path/run_clean_command.sh
+		echo -e "Clean Command saved"
+		echo -e "$run_clean_command"
+		echo ""
+		echo "Project Working Path: $rompath"
+		echo ""
+		cd $rompath
+		bash $temp_path/run_clean_command.sh
+	else
+		echo "invalid option ${answer}"
+		exit
+	fi
 }
 
 runBuild() {
@@ -331,6 +363,7 @@ runBuild() {
 #~ nbType
 #~ makeType
 #~ extraOptions
+#~ runMakeClean
 #~ runBuild
 
 if [ -f $temp_path/command.sh ]; then
@@ -368,7 +401,7 @@ fi
 
 while :
 	do
-	menu "Select Product Type" "Select Variant Type" "Select Apps Type" "Select Native-Bridge Type" "Select make type" "Select Extra Options" "Start the Build"
+	menu "Select Product Type" "Select Variant Type" "Select Apps Type" "Select Native-Bridge Type" "Select make type" "Select Extra Options" "Run Make Clean" "Start the Build"
 	answer=$(0< "${dir_tmp}/${file_tmp}" )
 	if [ "${answer}" = "" ]; then
 		exit
@@ -396,10 +429,14 @@ while :
 	if [ "${answer}" = "Start the Build" ]; then
 		echo "Selected ${answer}"
 		runBuild
-	fi	
+	fi
 	if [ "${answer}" = "Select make type" ]; then
 		echo "Selected ${answer}"
 		makeType
+	fi
+	if [ "${answer}" = "Run Make Clean" ]; then
+		echo "Selected ${answer}"
+		runMakeClean
 	fi
 	
 done
