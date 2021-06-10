@@ -31,6 +31,31 @@ if [ ! -d "$temp_path" ]; then
 	echo "Grabbing initial modules list"
 	mkdir -p $temp_path
 fi
+
+# Add desktop icon if there isn't one yet
+if [ ! -f "~/Desktop/$prj_folder_name-ag-$config_type.desktop" ]; then
+	echo "Creating Desktop Icon"
+	shell_cmd="$SHELL"
+	prj_folder_name="${PWD##*/}"
+	cat > $temp_path/$prj_folder_name-ag-$config_type.desktop <<EOF
+[Desktop Entry]
+Version=1.0
+Name=ag-$config_type
+Comment=AG for $rompath
+Exec=sh -c 'cd $rompath && bash vendor/ag/ag-core/ag-menu.sh $config_type;$shell_cmd'
+Icon=$rompath/vendor/$vendor_path/ag-core/includes/ag-logo.png
+Terminal=true
+Type=Application
+Categories=Application;
+Name[en_US.UTF-8]=$prj_folder_name-ag-$config_type
+
+EOF
+
+chmod -X $temp_path/$prj_folder_name-ag-$config_type.desktop
+cp $temp_path/$prj_folder_name-ag-$config_type.desktop ~/Desktop/
+
+fi
+
 rm -rf $temp_path/modules.lst
 rm -rf $temp_path/priv-modules.lst
 echo "Refreshing modules list"
