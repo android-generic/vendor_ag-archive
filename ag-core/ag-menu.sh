@@ -51,7 +51,7 @@ Name[en_US.UTF-8]=$prj_folder_name-ag-$config_type
 
 EOF
 
-chmod -X $temp_path/$prj_folder_name-ag-$config_type.desktop
+chmod 777 $temp_path/$prj_folder_name-ag-$config_type.desktop
 cp $temp_path/$prj_folder_name-ag-$config_type.desktop ~/Desktop/
 
 fi
