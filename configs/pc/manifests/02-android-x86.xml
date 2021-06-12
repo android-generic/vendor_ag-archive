@@ -2,7 +2,7 @@
 <manifest>
 
   <project path="test/kernel" name="kernel/tests" remote="aosp" />
-  <project path="bootable/newinstaller" name="platform/bootable/newinstaller" remote="x86" revision="q-x86" />
+  <project path="bootable/newinstaller" name="bootable_newinstaller" remote="ag" revision="r11-r36" />
   <project path="external/alsa-lib" name="platform/external/alsa-lib" remote="x86" revision="r-x86" />
   <project path="external/alsa-utils" name="platform/external/alsa-utils" remote="x86" revision="r-x86" />
   <project path="external/bluetooth/bluez" name="platform/external/bluetooth/bluez" remote="x86" revision="r-x86" />
@@ -16,7 +16,6 @@
   <project path="external/exfat" name="platform/external/exfat" remote="x86" revision="r-x86" />
   <project path="external/ffmpeg" name="platform/external/ffmpeg" remote="x86" revision="r-x86" />
   <project path="external/gbm_gralloc" name="platform/external/gbm_gralloc" remote="x86" revision="r-x86" />
-  <project path="external/kernel-drivers" name="platform/external/kernel-drivers" remote="x86" revision="r-x86" />
   <project path="external/koush/Superuser" name="platform/external/koush/Superuser" remote="x86" revision="r-x86" />
   <project path="external/koush/Widgets" name="platform/external/koush/Widgets" remote="x86" revision="r-x86" />
   <project path="external/libdrm" name="platform/external/libdrm" remote="x86" revision="q-x86" />

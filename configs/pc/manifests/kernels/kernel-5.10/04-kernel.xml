@@ -9,5 +9,6 @@
 	<project path="kernel" name="kernel/common" remote="aosp" revision="4fd92aab91320f10627d288eb4b6f973ece3b01c" />
 	-->  
 	<project path="kernel" name="kernel_common" remote="BR-x86" revision="google-5.10-lts-pledge-xanmod" />
+	<project path="external/kernel-drivers" name="android-generic/external_kernel-drivers" remote="ghub" revision="k5.12-b2" />
 
 </manifest>

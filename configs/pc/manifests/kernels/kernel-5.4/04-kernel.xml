@@ -9,5 +9,9 @@
 	<project path="kernel" name="kernel/common" remote="x86" revision="kernel-4.19" />
 	-->  
 	<project path="kernel" name="kernel/common" remote="aosp" revision="4fd92aab91320f10627d288eb4b6f973ece3b01c" />
+<!--
+    <project path="external/kernel-drivers" name="platform/external/kernel-drivers" remote="x86" revision="r-x86" />
+-->
+    <project path="external/kernel-drivers" name="android-generic/external_kernel-drivers" remote="ghub" revision="k5.12-b2" />
 
 </manifest>

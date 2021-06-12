@@ -1,0 +1,30 @@
+From a270b2893d58f36ba3516679b1ca29ba952fca2a Mon Sep 17 00:00:00 2001
+From: Luca Stefani <luca.stefani.ge1@gmail.com>
+Date: Fri, 26 Jun 2020 18:58:43 +0200
+Subject: [PATCH 1/6] SurfaceFlingerProperties: Use proper prop scope
+
+* System scope is deperecated,
+  Public scope should be used instead
+
+Test: m
+Change-Id: I9fc658487397f1dfb2175d071736e0bc1eb3ad04
+---
+ .../surfaceflinger/sysprop/SurfaceFlingerProperties.sysprop     | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/surfaceflinger/sysprop/SurfaceFlingerProperties.sysprop b/services/surfaceflinger/sysprop/SurfaceFlingerProperties.sysprop
+index cfc301bd22..7b1f0fb0a8 100644
+--- a/services/surfaceflinger/sysprop/SurfaceFlingerProperties.sysprop
++++ b/services/surfaceflinger/sysprop/SurfaceFlingerProperties.sysprop
+@@ -328,7 +328,7 @@ prop {
+ prop {
+     api_name: "refresh_rate_switching"
+     type: Boolean
+-    scope: System
++    scope: Public
+     access: Readonly
+     prop_name: "ro.surface_flinger.refresh_rate_switching"
+     deprecated: true
+-- 
+2.20.1
+

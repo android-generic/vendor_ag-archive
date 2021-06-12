@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <manifest>
     
-    <!-- BoringdroidSystemUI -->
-    <project path="vendor/boringdroid" name="vendor_boringdroid.git" remote="bd" revision="boringdroid-11.0.0" />
-    <project path="vendor/prebuilts/bdapps" name="vendor_prebuilts_bdapps.git" remote="bd" revision="boringdroid-11.0.0" />
-  
-    <!-- Gearlock Recovery -->
-	<project name="gearlock" path="vendor/gearlock" remote="ax" revision="main" />
-	
 	<!-- Magisk -->
     <project name="rusty-magisk" path="rusgik" remote="ax" revision="568ca9e1774846aa4592801054d24989f3f4fd9d" />
     
@@ -19,5 +12,11 @@
 	
 	<remove-project name="platform/external/llvm" />
 	<project path="external/llvm" name="platform/external/llvm" remote="aosp" revision="android11-release" />
+	
+<!--
+	<project path="prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9" name="lineageos/android_prebuilts_gcc_linux-x86_x86_x86_64-linux-android-4.9" groups="pdk,linux,x86" clone-depth="1" remote="ghub" revision="lineage-18.1" />
+-->
+    <project path="prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9" name="platform/prebuilts/gcc/linux-x86/x86/x86_64-linux-android-4.9" remote="aosp" revision="refs/tags/android-10.0.0_r37" clone-depth="1" />
+  
   
 </manifest>

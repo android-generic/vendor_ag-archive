@@ -177,6 +177,18 @@ appsType() {
 		echo "you chose ${answer}"
 		if [ ! -d $rompath/vendor/google/emu-gapps ]; then
 			echo -e "You will need to clone the emu-gapps into $rompath/vendor/google/emu-gapps first"
+			git clone https://gitlab.com/BlissRoms/vendor_google_emu-gapps.git vendor/google/emu-gapps
+			cd $rompath/vendor/google/emu-gapps
+			git checkout origin/r11
+			cd $rompath
+			if [ -d $rompath/vendor/foss/bin ]; then
+				echo -e "Removing foss apps so gapps will work properly"
+				rm -rf $rompath/vendor/foss/bin
+				rm -rf $rompath/vendor/foss/Android.mk
+				rm -rf $rompath/vendor/foss/apps.mk
+			fi
+			apps="&& export USE_EMU_GAPPS=true"
+			echo -e ${apps} > $temp_path/apps.config
 		else
 			if [ -d $rompath/vendor/foss/bin ]; then
 				echo -e "Removing foss apps so gapps will work properly"
@@ -217,7 +229,13 @@ nbType() {
 	elif [ "${answer}" = "Intel's Houdini" ]; then
 		echo "you chose ${answer}"
 		if [ ! -d $rompath/vendor/google/chromeos-x86 ]; then
-			echo -e "You will need to clone the repo into $rompath/vendor/google/chromeos-x86 first"
+			echo -e "You don't have it yet. Cloning that into $rompath/vendor/google/chromeos-x86 first"
+			git clone https://github.com/BlissRoms-x86/android_vendor_google_chromeos-x86 vendor/google/chromeos-x86
+			cd $rompath/vendor/google/chromeos-x86
+			bash $rompath/vendor/google/chromeos-x86/extract-files.sh
+			cd $rompath
+			nb_type="&& export USE_CROS_HOUDINI_NB=true "
+			echo -e ${nb_type} > $temp_path/nb_type.config
 		else
 			nb_type="&& export USE_CROS_HOUDINI_NB=true "
 			echo -e ${nb_type} > $temp_path/nb_type.config
@@ -274,16 +292,25 @@ makeType() {
 }
 
 extraOptions() {
-	list "Make Clean before build"
+	list "Make Clean before build" "No Kernel Cross-Compile"
 	IFS=$'\n'
 	array=$(0< "${dir_tmp}/${file_tmp}" )
 	for option in "$array"; do
 		if _contains "${option}" "Make Clean before build"; then
 		  clean="&& make clean "
 		  echo -e ${clean} > $temp_path/clean.config
-		else
+		fi
+		if _contains "${option}" "No Kernel Cross-Compile"; then
+		  nkcc="&& export NO_KERNEL_CROSS_COMPILE=true "
+		  echo -e ${nkcc} > $temp_path/nkcc.config
+		fi
+		if ! _contains "${option}" "Make Clean before build"; then
 		  clean=""
 		  echo -e ${clean} > $temp_path/clean.config
+		fi
+		if ! _contains "${option}" "No Kernel Cross-Compile"; then
+		  nkcc=""
+		  echo -e ${nkcc} > $temp_path/nkcc.config
 		fi
 	done
 }
@@ -343,7 +370,7 @@ runBuild() {
 		
 		lunchtype="$product-$variant"
 		echo -e ${lunchtype} > $temp_path/lunch.config
-		full_command="$env && lunch $lunchtype $clean $apps $nb_type && make -j$(nproc --all) $make_type"
+		full_command="$env && lunch $lunchtype $clean $apps $nb_type $nkcc && make -j$(nproc --all) $make_type"
 		echo -e ${full_command} > $temp_path/command.sh 
 		chmod -x $temp_path/command.sh
 		echo -e "Full Command saved"
@@ -397,6 +424,10 @@ fi
 if [ -f $temp_path/make_type.config ]; then
 	make_type=$(cat $temp_path/make_type.config)
 	echo "make_type command loaded: ${make_type}"
+fi
+if [ -f $temp_path/nkcc.config ]; then
+	nkcc=$(cat $temp_path/nkcc.config)
+	echo "nkcc command loaded: ${nkcc}"
 fi
 
 while :
