@@ -344,6 +344,56 @@ runMakeClean() {
 	fi
 }
 
+enableRustik() {
+	# Enable rusgik
+	shell_cmd="$SHELL"
+	if [ "$product" == "" ]; then
+		alert_message 'you need to select a product type'
+	else
+		if [ "$product" == "android_x86_64" ]; then
+			if [ -d "$HOME/.cargo/bin" ] ; then
+				export PATH="$HOME/.cargo/bin:$PATH"
+			fi
+			cd $rompath/rusgik
+			rcmd1="rustup target add x86_64-unknown-linux-musl"
+			rcmd2="RUSTFLAGS='-C link-arg=-s' cargo build --release --target x86_64-unknown-linux-musl"
+			echo -e ${rcmd1} > $temp_path/rcmd1.sh
+			chmod -x $temp_path/rcmd1.sh
+			cp $temp_path/rcmd1.sh $rompath/rusgik
+			echo -e ${rcmd2} > $temp_path/rcmd2.sh
+			chmod -x $temp_path/rcmd2.sh
+			cp $temp_path/rcmd2.sh $rompath/rusgik
+			cat rcmd1.sh
+			bash rcmd1.sh
+			cat rcmd2.sh
+			bash rcmd2.sh
+			cd $rompath
+		elif [ "$product" == "android_x86" ]; then
+			if [ -d "$HOME/.cargo/bin" ] ; then
+				export PATH="$HOME/.cargo/bin:$PATH"
+			fi
+			cd $rompath/rusgik
+			rcmd1="rustup target add i686-unknown-linux-musl"
+			rcmd2="RUSTFLAGS='-C link-arg=-s' cargo build --release --target i686-unknown-linux-musl"
+			echo -e ${rcmd1} > $temp_path/rcmd1.sh
+			chmod -x $temp_path/rcmd1.sh
+			cp $temp_path/rcmd1.sh $rompath/rusgik
+			echo -e ${rcmd2} > $temp_path/rcmd2.sh
+			chmod -x $temp_path/rcmd2.sh
+			cp $temp_path/rcmd2.sh $rompath/rusgik
+			cat rcmd1.sh
+			bash rcmd1.sh
+			cat rcmd2.sh
+			bash rcmd2.sh
+			cd $rompath
+		else 
+			alert_message 'The current product type is not supported'
+		fi
+	fi
+	
+}
+
+
 runBuild() {
 	if [ "$nb_type" == "" ]; then
 		alert_message 'you need to select a native-bridge option'
@@ -432,7 +482,7 @@ fi
 
 while :
 	do
-	menu "Select Product Type" "Select Variant Type" "Select Apps Type" "Select Native-Bridge Type" "Select make type" "Select Extra Options" "Run Make Clean" "Start the Build"
+	menu "Select Product Type" "Select Variant Type" "Select Apps Type" "Select Native-Bridge Type" "Select make type" "Select Extra Options" "Run Make Clean" "Enable Rusty-Magisk" "Start the Build" 
 	answer=$(0< "${dir_tmp}/${file_tmp}" )
 	if [ "${answer}" = "" ]; then
 		exit
@@ -468,6 +518,10 @@ while :
 	if [ "${answer}" = "Run Make Clean" ]; then
 		echo "Selected ${answer}"
 		runMakeClean
+	fi
+	if [ "${answer}" = "Enable Rusty-Magisk" ]; then
+		echo "Selected ${answer}"
+		enableRustik
 	fi
 	
 done
