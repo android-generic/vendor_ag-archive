@@ -1,7 +1,7 @@
 # Android-Generic Project Readme
 
 
-<img src="https://i.imgur.com/bTd1SMo.png">
+<img src="https://github.com/android-generic/artwork/raw/master/brand/Abdroid-Generic_Logo__2_transparent.png">
 
 - **TOC**
 
