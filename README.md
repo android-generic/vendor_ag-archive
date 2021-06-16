@@ -246,8 +246,6 @@ Now we can go step-by-step through the next few steps and learn how to operate A
     
     This command is dependent on all previous options and will also save/reload your last used build command (all the options selected in this section above), then run the build command in the terminal.
     
-    ![](assets/Aspose.Words.1281b0cf-dc2d-4a06-abff-17714d8e6c91.038.png)
-    
     From this point forward, any errors will need to be resolved manually. 
 
 # Debugging
@@ -318,13 +316,13 @@ Now we can go step-by-step through the next few steps and learn how to operate A
         cp system/core/0001-init-don-t-bail-out-even-no-SELinux-domain- defined.patch vendor/android-generic/patches/google\_diff/x86 /pc\_vendor\_patches/\_\_YourVendorName\_\_/patches/system/core/0015- init-don-t-bail-out-even-no-SELinux-domain-defined.patch
     
     
-    - (Bliss/Lineage/Others)  ###Apply Extras Patches###
+    - (Bliss/Lineage/Others)  **Apply Extras Patches**
     
     ![](assets/Aspose.Words.1281b0cf-dc2d-4a06-abff-17714d8e6c91.048.png)
     
     Selecting this will apply any patches that have been added to vendor/ag/utils/android\_r/google\_diff/x86-extras/ These have a number of patches for Bliss and LineageOS based projects.
     
-    - (Bliss/Others) ###Apply Prepatches###
+    - (Bliss/Others) **Apply Prepatches**
     
     ![](assets/Aspose.Words.1281b0cf-dc2d-4a06-abff-17714d8e6c91.050.png)
     
