@@ -1,37 +1,20 @@
-Getting started
+# Table of contents
 
-## Table of contents
+1. Prerequisites
+2. How to include Android-Generic Project into your Project:
+3. Setting Up
 
-- [1 Prerequisites](#1-Prerequisites)
-- [How can I contribute?](#how-can-i-contribute)
-  - [Reporting bugs](#reporting-bugs)
-    - [Before submitting a bug report](#before-submitting-a-bug-report)
-    - [How do I write a good bug report?](#how-do-i-write-a-good-bug-report)
-    - [How do I submit a bug report?](#how-do-i-submit-a-bug-report)
-  - [Feature request](#feature-request)
-    - [Before submitting a feature request](#before-submitting-a-feature-request)
-    - [How do I submit a feature request?](#how-do-i-submit-a-feature-request)
-  - [Code contributions](#code-contributions)
-    - [First code contribution](#first-code-contribution)
-  - [Design contributions](#design-contributions)
-- [Pull requests](#pull-requests)
-  - [How to make a proper pull request](#how-to-make-a-proper-pull-request)
-  - [What do I do after I submitted a PR?](#what-do-i-do-after-i-submitted-a-pr)
-- [License](#license)
-
-
-1. How to include Android-Generic Project into your Project:
-1. Setting Up
-
-PC Instructions:
+    PC Instructions:
 
 4. Operation
 
-Build Options Debugging
+    Build Options 
 
-Tools
+    Debugging
 
-Private Tools/Scripts
+    Tools
+
+5. Private Tools/Scripts
 
 # 1. Prerequisites
 
@@ -353,47 +336,47 @@ Now we can go step-by-step through the next few steps and learn how to operate A
 
 There are various tools we added to help add/maintain/troubleshoot. Those are all listed below
 
-###Add AG Prebuilt Apps###
+- ###Add AG Prebuilt Apps###
 
-This will clone the AGP Prebuilts repo into your project and link to your build. This includes:
+    This will clone the AGP Prebuilts repo into your project and link to your build. This includes:
+    
+    - **Set Orientation** - A manual screen rotation control for Android
+    
+    - **Taskbar** - The featured "Desktop Mode" for Bliss OS created by @farmerbb
+    
+    - **Taskbar Support Library** - A secondary app for Taskbar that contains permissions and defaults for how Taskbar runs on Bliss OS 
+    
+    - **Google Webview** - A version we have confirmed working on our PC builds (Many ROM's include a version of Webview that does not play nice with PC builds)
+    
+    - (FOSS ONLY) - **AuroraServices** - a secondary app for Aurora Store/Droid that allows a more seamless install experience. 
+    
+    - **Wallpaper Overlays** - Will also include any wallpapers added to the drawable folders in vendor/prebuilts/agp-apps/overlay/frameworks /base/core/res/res/
 
-- **Set Orientation** - A manual screen rotation control for Android
+- ###Add Boringdroid###
 
-- **Taskbar** - The featured "Desktop Mode" for Bliss OS created by @farmerbb
+    This will clone in all the repos required to add Boringdroid System UI to your build, and automatically patch frameworks/base with the required additions
 
-- **Taskbar Support Library** - A secondary app for Taskbar that contains permissions and defaults for how Taskbar runs on Bliss OS 
+- ###Add Gearlock###
 
-- **Google Webview** - A version we have confirmed working on our PC builds (Many ROM's include a version of Webview that does not play nice with PC builds)
+    This will clone in Gearlock and will automatically launch it's scripts when you start your build command 
 
-- (FOSS ONLY) - **AuroraServices** - a secondary app for Aurora Store/Droid that allows a more seamless install experience. 
+- ###Generate Permissions###
 
-- **Wallpaper Overlays** - Will also include any wallpapers added to the drawable folders in vendor/prebuilts/agp-apps/overlay/frameworks /base/core/res/res/
+    This tool is meant to help figure out the various permissions that .apk's ask for, and will generate a private permissions .xml for any single (or batch folder of) apk files. will ask you to select a folder of prebuilt .apk files, and then select a permissions folder/filename to contain the resulting permissions.xml 
 
-###Add Boringdroid###
+- ###Grab Modules###
 
-This will clone in all the repos required to add Boringdroid System UI to your build, and automatically patch frameworks/base with the required additions
+    When updating/adding on new scripts to use with AGP, this will reload the modules list and relaunch the menu (mostly redundant now as the menu reloads the list automatically)
 
-###Add Gearlock###
+- ###Manifest Backup###
 
-This will clone in Gearlock and will automatically launch it's scripts when you start your build command 
-
-###Generate Permissions###
-
-This tool is meant to help figure out the various permissions that .apk's ask for, and will generate a private permissions .xml for any single (or batch folder of) apk files. will ask you to select a folder of prebuilt .apk files, and then select a permissions folder/filename to contain the resulting permissions.xml 
-
-###Grab Modules###
-
-When updating/adding on new scripts to use with AGP, this will reload the modules list and relaunch the menu (mostly redundant now as the menu reloads the list automatically)
-
-###Manifest Backup###
-
-This will take all the repos currently included in your project and generate a manifest.xml with revisions included in order to easily share your project with others. 
+    This will take all the repos currently included in your project and generate a manifest.xml with revisions included in order to easily share your project with others. 
 
 ##Private Tools/Scripts##
 
 This project supports an array of proprietary and enterprise functions that will be included in vendor/ag/private-scripts/ which is only accessible through licensed access to our private AGP repos. In the Public repo for AGP, you will see a placeholder script that does nothing:
 
-##license-to-access-enterprise-tools##
+**license-to-access-enterprise-tools**
 
 If you do have access to the AGP private repos, all the scripts included in your license will show up at the bottom of the main menu. For example, in the screen below, we have three scripts:
 
@@ -403,3 +386,5 @@ If you do have access to the AGP private repos, all the scripts included in your
 - ##Add Proprietary Native-Bridge## - Will allow you to include a vendor licensed native-bridge, like Intel's Houdini
 - ##Add Proprietary Recovery## - Will add your customized recovery image (Recovery development contract required)
 - And more...
+
+
