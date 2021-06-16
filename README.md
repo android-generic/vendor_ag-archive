@@ -39,11 +39,9 @@ Latest Ubuntu LTS Releases https://www.ubuntu.com/download/server Decent CPU (Du
 ###Installing Java 8###
 
     sudo apt-get update && upgrade
-sudo apt-get install openjdk-8-jdk-headless
-
-update-alternatives --config java (make sure Java 8 is selected)
-
-update-alternatives --config javac (make sure Java 8 is selected) 
+    sudo apt-get install openjdk-8-jdk-headless
+    update-alternatives --config java (make sure Java 8 is selected)
+    update-alternatives --config javac (make sure Java 8 is selected) 
 
 ###Grabbing Dependencies###
 
@@ -57,19 +55,20 @@ If you plan on building the kernel with the NO\_KERNEL\_CROSS\_COMPILE flag, you
 
 Including AGP into your AOSP based project is as simple as cloning it into a vendor folder.
 
-    git clone https://github.com/vendor\_ag vendor/ag
+    git clone https://github.com/vendor_ag vendor/ag
 
 # 3. Setting Up
 
 Once the project is cloned, all you have to do is a couple small commands to get things going.
 
-###PC Instructions:###
+- ##PC Instructions:##
 
-(pc only for now, gsi & emu will be added back soon)
+    (pc only for now, gsi & emu will be added back soon)
+    
 
     . build/envsetup.sh  ag-menu pc
 
-That's it! It will initially generate the menu items with what is available for modules on initial launch
+    That's it! It will initially generate the menu items with what is available for modules on initial launch
 
 # 4. Operation
 
