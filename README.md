@@ -61,14 +61,13 @@ Including AGP into your AOSP based project is as simple as cloning it into a ven
 
 Once the project is cloned, all you have to do is a couple small commands to get things going.
 
-- ##PC Instructions:##
+**PC Instructions:**
+(pc only for now, gsi & emu will be added back soon)
 
-    (pc only for now, gsi & emu will be added back soon)
-    
 
     . build/envsetup.sh  ag-menu pc
 
-    That's it! It will initially generate the menu items with what is available for modules on initial launch
+That's it! It will initially generate the menu items with what is available for modules on initial launch
 
 # 4. Operation
 
