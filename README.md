@@ -38,7 +38,7 @@ You will need to have synced AOSP source for Android 11, or a ROM prior to addin
 - AOSP
 - WIP - Lineage OS
 
-Please make sure you're well versed in building AOSP: AOSP building instructions before proceeding.
+Please make sure you're well versed in building AOSP: [AOSP building instructions](http://source.android.com/source/index.html) before proceeding.
 
 ## What you need to build with
 
@@ -361,11 +361,11 @@ This will clone the AGP Prebuilts repo into your project and link to your build.
 
 ### - Add Boringdroid
 
-This will clone in all the repos required to add Boringdroid System UI to your build, and automatically patch frameworks/base with the required additions
+This will give you the option to add or remove Boringdroid. Adding it will clone in all the repos required to add Boringdroid System UI to your build, and automatically patch frameworks/base with the required additions
 
 ### - Add Gearlock
 
-This will clone in Gearlock and will automatically launch it's scripts when you start your build command
+This will give you the option to add or remove Gearlock. Adding it will clone in Gearlock and will automatically launch it's scripts when you start your build command
 
 ### - Generate Permissions
 
