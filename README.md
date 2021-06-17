@@ -1,4 +1,4 @@
-<img src="https://github.com/android-generic/artwork/raw/master/brand/Abdroid-Generic_Logo__2_transparent.png">
+<img src="https://github.com/android-generic/artwork/raw/master/brand/Android-Generic_Logo__2_transparent.png">
 # Android-Generic Project Readme
 
 ## What Is This?
