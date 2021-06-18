@@ -1,4 +1,4 @@
-<img src="https://github.com/android-generic/artwork/raw/master/brand/Abdroid-Generic_Logo__2_transparent.png">
+<img src="https://github.com/android-generic/artwork/raw/master/brand/Android-Generic_Logo__2_transparent.png">
 # Android-Generic Project Readme
 
 ## What Is This?
@@ -73,7 +73,7 @@ If you plan on building the kernel with the NO\_KERNEL\_CROSS\_COMPILE flag, you
 Including AGP into your AOSP based project is as simple as cloning it into a vendor folder.
     
 
-    git clone https://github.com/vendor_ag vendor/ag
+    git clone https://github.com/android-generic/vendor_ag vendor/ag
 
 # 3. Setting Up
 
@@ -83,7 +83,8 @@ Once the project is cloned, all you have to do is a couple small commands to get
 (pc only for now, gsi & emu will be added back soon)
     
 
-    . build/envsetup.sh  ag-menu pc
+    . build/envsetup.sh
+    ag-menu pc
 
 That's it! It will initially generate the menu items with what is available for modules on initial launch.
 
