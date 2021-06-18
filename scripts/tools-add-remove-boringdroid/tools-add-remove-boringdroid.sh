@@ -178,11 +178,13 @@ EOF
 		
 	elif [ "${answer}" = "Remove Boringdroid" ]; then
 		echo "you chose ${answer}"
-		if [ ! -d "$rompath/vendor/Boringdroid" ]; then
+		if [ -d "$rompath/vendor/Boringdroid" ]; then
+			echo "You wqill have to manually revert Commits in frameworks/base"
+			echo ""
 			echo "Removing Boringdroid repo"
-			rm -rf vendor/Boringdroid
+			rm -rf $rompath/vendor/Boringdroid
 			echo "Removing bdapps repo"
-			rm -rf vendor/prebuilts/bdapps
+			rm -rf $rompath/vendor/prebuilts/bdapps
 		fi
 		echo "Boringdroid is removed"
 	else

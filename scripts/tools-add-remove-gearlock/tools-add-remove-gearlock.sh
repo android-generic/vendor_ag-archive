@@ -51,9 +51,11 @@ useGearlock() {
 		echo "Gearlock is ready"
 	elif [ "${answer}" = "Remove Gearlock" ]; then
 		echo "you chose ${answer}"
-		if [ ! -d "$rompath/vendor/gearlock" ]; then
+		if [ -d "$rompath/vendor/gearlock" ]; then
+			echo "You wqill have to manually revert Commits in bootable/newinstaller and device/generic/common"
+			echo ""
 			echo "Removing repo"
-			rm -rf vendor/gearlock
+			rm -rf $rompath/vendor/gearlock
 		fi
 		echo "Gearlock is removed"
 	else
