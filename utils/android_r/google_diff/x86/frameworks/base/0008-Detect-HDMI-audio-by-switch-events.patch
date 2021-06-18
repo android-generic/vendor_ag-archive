@@ -1,4 +1,4 @@
-From c37eb1cb965e0a3023289cdd190626af8729efaf Mon Sep 17 00:00:00 2001
+From 03029cbd41ea2c2391e79dc14cf3aa5989a29d42 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 13 Sep 2016 17:43:11 +0800
 Subject: [PATCH 08/22] Detect HDMI audio by switch events

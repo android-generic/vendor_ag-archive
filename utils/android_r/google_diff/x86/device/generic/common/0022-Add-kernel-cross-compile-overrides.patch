@@ -1,0 +1,30 @@
+From 6e15a2f18be6dc080531594637798aaa924cc40c Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 20 May 2021 11:47:49 -0400
+Subject: [PATCH 5/5] Add kernel cross compile overrides
+
+---
+ build/tasks/kernel.mk | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/build/tasks/kernel.mk b/build/tasks/kernel.mk
+index a363aea..592ec6f 100644
+--- a/build/tasks/kernel.mk
++++ b/build/tasks/kernel.mk
+@@ -41,6 +41,13 @@ else
+ $(error not implemented)
+ endif
+ 
++# Allow to use local gcc: "export NO_KERNEL_CROSS_COMPILE=true" 
++# or adding NO_KERNEL_CROSS_COMPILE := true to BoardConfig.mk
++ifeq ($(NO_KERNEL_CROSS_COMPILE),true)
++KERNEL_CROSS_COMPILE ?=
++CROSS_COMPILE :=
++endif
++
+ KBUILD_OUTPUT := $(TARGET_OUT_INTERMEDIATES)/kernel
+ ifeq ($(HOST_OS),darwin)
+ KBUILD_JOBS := $(shell /usr/sbin/sysctl -n hw.ncpu)
+-- 
+2.17.1
+

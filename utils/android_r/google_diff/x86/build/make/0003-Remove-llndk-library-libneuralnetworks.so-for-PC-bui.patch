@@ -1,0 +1,24 @@
+From 94b9e107b9f41286f693236ea93496dcd11ad2b4 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 20 May 2021 13:36:13 -0400
+Subject: [PATCH 2/3] Remove llndk library, libneuralnetworks.so for PC builds
+
+---
+ target/product/gsi/current.txt | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/target/product/gsi/current.txt b/target/product/gsi/current.txt
+index c753e6c3be..ae35a0cb01 100644
+--- a/target/product/gsi/current.txt
++++ b/target/product/gsi/current.txt
+@@ -13,7 +13,6 @@ LLNDK: liblog.so
+ LLNDK: libm.so
+ LLNDK: libmediandk.so
+ LLNDK: libnativewindow.so
+-LLNDK: libneuralnetworks.so
+ LLNDK: libselinux.so
+ LLNDK: libsync.so
+ LLNDK: libvndksupport.so
+-- 
+2.17.1
+

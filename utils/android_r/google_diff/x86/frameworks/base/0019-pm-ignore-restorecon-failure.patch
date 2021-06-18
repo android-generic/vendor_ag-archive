@@ -1,4 +1,4 @@
-From 998b3cf8e2178d8281ae3f17ff7d0c411a9d1321 Mon Sep 17 00:00:00 2001
+From 4de54ead77ce62ba802957b59780a585a05aeaa6 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 18 Oct 2018 15:47:19 +0800
 Subject: [PATCH 19/22] pm: ignore restorecon failure
@@ -11,10 +11,10 @@ installed. Just ignore the errors to workaround it.
  2 files changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/services/core/java/com/android/server/pm/PackageInstallerService.java b/services/core/java/com/android/server/pm/PackageInstallerService.java
-index f8115d39b37..dfc749a508e 100644
+index 9f0efa5fad8..0e96db788f1 100644
 --- a/services/core/java/com/android/server/pm/PackageInstallerService.java
 +++ b/services/core/java/com/android/server/pm/PackageInstallerService.java
-@@ -857,7 +857,7 @@ public class PackageInstallerService extends IPackageInstaller.Stub implements
+@@ -848,7 +848,7 @@ public class PackageInstallerService extends IPackageInstaller.Stub implements
          }
  
          if (!SELinux.restorecon(stageDir)) {
@@ -24,10 +24,10 @@ index f8115d39b37..dfc749a508e 100644
      }
  
 diff --git a/services/core/java/com/android/server/pm/PackageManagerService.java b/services/core/java/com/android/server/pm/PackageManagerService.java
-index 9ac2da188ba..778a1a42042 100644
+index febbfbce9e6..83b8ac148fa 100644
 --- a/services/core/java/com/android/server/pm/PackageManagerService.java
 +++ b/services/core/java/com/android/server/pm/PackageManagerService.java
-@@ -15795,7 +15795,6 @@ public class PackageManagerService extends IPackageManager.Stub
+@@ -15810,7 +15810,6 @@ public class PackageManagerService extends IPackageManager.Stub
              //TODO(b/136132412): enable selinux restorecon for incremental directories
              if (!onIncremental && !SELinux.restoreconRecursive(afterCodeFile)) {
                  Slog.w(TAG, "Failed to restorecon");

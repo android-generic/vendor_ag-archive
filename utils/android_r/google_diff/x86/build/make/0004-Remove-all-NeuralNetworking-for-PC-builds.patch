@@ -1,0 +1,101 @@
+From 4d254d57c4f447ad9fdb738ac47b5e8b7f350b81 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 20 May 2021 16:51:27 -0400
+Subject: [PATCH 3/3] Remove all NeuralNetworking for PC builds.
+
+---
+ target/product/base_system.mk | 2 --
+ target/product/gsi/28.txt     | 3 ---
+ target/product/gsi/29.txt     | 4 ----
+ target/product/gsi/30.txt     | 5 -----
+ 4 files changed, 14 deletions(-)
+
+diff --git a/target/product/base_system.mk b/target/product/base_system.mk
+index 21beda9ebf..539b1489da 100644
+--- a/target/product/base_system.mk
++++ b/target/product/base_system.mk
+@@ -62,7 +62,6 @@ PRODUCT_PACKAGES += \
+     com.android.os.statsd \
+     com.android.permission \
+     com.android.resolv \
+-    com.android.neuralnetworks \
+     com.android.sdkext \
+     com.android.tethering \
+     com.android.tzdata \
+@@ -163,7 +162,6 @@ PRODUCT_PACKAGES += \
+     libnetd_client \
+     libnetlink \
+     libnetutils \
+-    libneuralnetworks_packageinfo \
+     libOpenMAXAL \
+     libOpenSLES \
+     libpdfium \
+diff --git a/target/product/gsi/28.txt b/target/product/gsi/28.txt
+index 712e91c587..c2b307e6c6 100644
+--- a/target/product/gsi/28.txt
++++ b/target/product/gsi/28.txt
+@@ -11,7 +11,6 @@ LLNDK: liblog.so
+ LLNDK: libm.so
+ LLNDK: libmediandk.so
+ LLNDK: libnativewindow.so
+-LLNDK: libneuralnetworks.so
+ LLNDK: libsync.so
+ LLNDK: libvndksupport.so
+ LLNDK: libvulkan.so
+@@ -106,8 +105,6 @@ VNDK-core: android.hardware.media.bufferpool@1.0.so
+ VNDK-core: android.hardware.media.omx@1.0.so
+ VNDK-core: android.hardware.media@1.0.so
+ VNDK-core: android.hardware.memtrack@1.0.so
+-VNDK-core: android.hardware.neuralnetworks@1.0.so
+-VNDK-core: android.hardware.neuralnetworks@1.1.so
+ VNDK-core: android.hardware.nfc@1.0.so
+ VNDK-core: android.hardware.nfc@1.1.so
+ VNDK-core: android.hardware.oemlock@1.0.so
+diff --git a/target/product/gsi/29.txt b/target/product/gsi/29.txt
+index 14faba5585..55f4052d95 100644
+--- a/target/product/gsi/29.txt
++++ b/target/product/gsi/29.txt
+@@ -12,7 +12,6 @@ LLNDK: liblog.so
+ LLNDK: libm.so
+ LLNDK: libmediandk.so
+ LLNDK: libnativewindow.so
+-LLNDK: libneuralnetworks.so
+ LLNDK: libsync.so
+ LLNDK: libvndksupport.so
+ LLNDK: libvulkan.so
+@@ -136,9 +135,6 @@ VNDK-core: android.hardware.media.c2@1.0.so
+ VNDK-core: android.hardware.media.omx@1.0.so
+ VNDK-core: android.hardware.media@1.0.so
+ VNDK-core: android.hardware.memtrack@1.0.so
+-VNDK-core: android.hardware.neuralnetworks@1.0.so
+-VNDK-core: android.hardware.neuralnetworks@1.1.so
+-VNDK-core: android.hardware.neuralnetworks@1.2.so
+ VNDK-core: android.hardware.nfc@1.0.so
+ VNDK-core: android.hardware.nfc@1.1.so
+ VNDK-core: android.hardware.nfc@1.2.so
+diff --git a/target/product/gsi/30.txt b/target/product/gsi/30.txt
+index 0589517711..aa020f8cd3 100644
+--- a/target/product/gsi/30.txt
++++ b/target/product/gsi/30.txt
+@@ -13,7 +13,6 @@ LLNDK: liblog.so
+ LLNDK: libm.so
+ LLNDK: libmediandk.so
+ LLNDK: libnativewindow.so
+-LLNDK: libneuralnetworks.so
+ LLNDK: libselinux.so
+ LLNDK: libsync.so
+ LLNDK: libvndksupport.so
+@@ -167,10 +166,6 @@ VNDK-core: android.hardware.media.c2@1.1.so
+ VNDK-core: android.hardware.media.omx@1.0.so
+ VNDK-core: android.hardware.media@1.0.so
+ VNDK-core: android.hardware.memtrack@1.0.so
+-VNDK-core: android.hardware.neuralnetworks@1.0.so
+-VNDK-core: android.hardware.neuralnetworks@1.1.so
+-VNDK-core: android.hardware.neuralnetworks@1.2.so
+-VNDK-core: android.hardware.neuralnetworks@1.3.so
+ VNDK-core: android.hardware.nfc@1.0.so
+ VNDK-core: android.hardware.nfc@1.1.so
+ VNDK-core: android.hardware.nfc@1.2.so
+-- 
+2.17.1
+

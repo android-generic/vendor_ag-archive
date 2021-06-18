@@ -1,4 +1,4 @@
-From b749742eba1eddc9e339130bf72e60c5ff9ada22 Mon Sep 17 00:00:00 2001
+From dc0b680bfa365278c49bd46c0301967a3d750ef7 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 1 Apr 2020 17:54:21 -0400
 Subject: [PATCH] Add dependency on libbinder_headers

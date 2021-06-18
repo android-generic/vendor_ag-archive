@@ -1,4 +1,4 @@
-From 4342cdd7dff3e47416193a9232d6491ba6b7c864 Mon Sep 17 00:00:00 2001
+From 3027fed7699b492676b57d2a69e71bc679901467 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 22 Dec 2014 12:08:17 +0800
 Subject: [PATCH 06/22] Map keycode 120 to APP_SWITCH
@@ -9,7 +9,7 @@ Define the unused keycode 120 to be APP_SWITCH.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/data/keyboards/Generic.kl b/data/keyboards/Generic.kl
-index 75b8b819bf3..2f8f6e2a25c 100644
+index cdf94d80cd8..0e096427d5e 100644
 --- a/data/keyboards/Generic.kl
 +++ b/data/keyboards/Generic.kl
 @@ -139,7 +139,7 @@ key 116   POWER

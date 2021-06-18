@@ -1,7 +1,7 @@
-From 63c9ed326a9fc55c15f34264d632e1159d678031 Mon Sep 17 00:00:00 2001
+From 3f190328b4b5703a561f78caee56c943e395c54e Mon Sep 17 00:00:00 2001
 From: Andrew Boie <andrew.p.boie@intel.com>
 Date: Tue, 10 Jul 2012 20:43:29 -0700
-Subject: [PATCH 05/22] libdiskconfig: HACK Don't do space checks on zero-size
+Subject: [PATCH 05/21] libdiskconfig: HACK Don't do space checks on zero-size
  images
 
 If an image file is of zero size, assume we just want to expand it
@@ -32,5 +32,5 @@ index ace9bbfb1..a0fe1c343 100644
          }
  
 -- 
-2.30.2
+2.17.1
 

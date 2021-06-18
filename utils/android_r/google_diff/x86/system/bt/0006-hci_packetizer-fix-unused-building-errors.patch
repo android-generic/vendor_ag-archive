@@ -1,0 +1,45 @@
+From 6cd577354a2d083522bc8686a860e8970226a7d9 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Thu, 26 Dec 2019 21:52:57 +0100
+Subject: [PATCH 6/6] hci_packetizer: fix unused building errors
+
+Fixes the following building errors:
+
+system/bt/vendor_libs/linux/interface/hci_packetizer.cc:28:14:
+error: unused variable 'preamble_size_for_type' [-Werror,-Wunused-const-variable]
+const size_t preamble_size_for_type[] = {
+             ^
+system/bt/vendor_libs/linux/interface/hci_packetizer.cc:35:8:
+error: unused function 'HciGetPacketLengthForType' [-Werror,-Wunused-function]
+size_t HciGetPacketLengthForType(HciPacketType type, const uint8_t* preamble) {
+       ^
+2 errors generated.
+---
+ vendor_libs/linux/interface/hci_packetizer.cc | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/vendor_libs/linux/interface/hci_packetizer.cc b/vendor_libs/linux/interface/hci_packetizer.cc
+index 6016cad6c..f77c7f083 100644
+--- a/vendor_libs/linux/interface/hci_packetizer.cc
++++ b/vendor_libs/linux/interface/hci_packetizer.cc
+@@ -22,7 +22,7 @@
+ 
+ #include <dlfcn.h>
+ #include <fcntl.h>
+-
++#if 0
+ namespace {
+ 
+ const size_t preamble_size_for_type[] = {
+@@ -39,7 +39,7 @@ size_t HciGetPacketLengthForType(HciPacketType type, const uint8_t* preamble) {
+ }
+ 
+ }  // namespace
+-
++#endif
+ namespace android {
+ namespace hardware {
+ namespace bluetooth {
+-- 
+2.30.2
+

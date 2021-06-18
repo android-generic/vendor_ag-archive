@@ -1,4 +1,4 @@
-From 547126897c636d84ae75fdaf9bdd84bd8674d7f6 Mon Sep 17 00:00:00 2001
+From 2d5ec047cce19a3ce29df500c3e1941af3761968 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 17 May 2018 17:29:48 +0800
 Subject: [PATCH 13/16] SurfaceFlinger: support higher resolution
@@ -8,10 +8,10 @@ Subject: [PATCH 13/16] SurfaceFlinger: support higher resolution
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index 80588ec78..b7e22368f 100644
+index bd39d512f..4707d359b 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -332,8 +332,10 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory, SkipInitializationTag)
+@@ -331,8 +331,10 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory, SkipInitializationTag)
  //                     density = 140.0f;
  //                 } else if (area < 1920 * 1080) {
  //                     density = 160.0f;

@@ -1,0 +1,2 @@
+utils/android_r/google_diff/x86/packages/modules/ArtPrebuilt/0001-Update-ART-Module-prebuilts-to-build-7377750.patch filter=lfs diff=lfs merge=lfs -text
+utils/android_r/google_diff/x86/prebuilts/module_sdk/art/0001-Update-ART-Module-prebuilts-to-build-7377750.patch filter=lfs diff=lfs merge=lfs -text

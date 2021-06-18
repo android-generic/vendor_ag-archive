@@ -1,4 +1,4 @@
-From 78c28821e6c163688c9c6eba2f06de0dfc112bb8 Mon Sep 17 00:00:00 2001
+From 400aaa3e1634067eaf2ff84178f3bff8eec9ff9d Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 21 Nov 2017 16:36:30 +0800
 Subject: [PATCH 10/22] input: simulate long press properly

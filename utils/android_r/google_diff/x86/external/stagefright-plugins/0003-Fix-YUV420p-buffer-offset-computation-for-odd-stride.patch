@@ -1,7 +1,7 @@
-From db2c7be9689016ef494c8a081988734542a3a5b0 Mon Sep 17 00:00:00 2001
+From afcc49ca2e8215c2d069aa4cf3bfdbc7a1c8dc99 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Sat, 17 Apr 2021 15:45:41 -0400
-Subject: [PATCH 3/3] Fix YUV420p buffer offset computation for odd stride
+Subject: [PATCH 3/4] Fix YUV420p buffer offset computation for odd stride
  value
 
 Computation of YUV offset within buffer has been changed in AOSP's

@@ -1,4 +1,4 @@
-From fe1fa07b2ea1c35fdefd8a05c00f02831a052ca4 Mon Sep 17 00:00:00 2001
+From 1d364536f815fa931199ee4a0e752b543ea5e118 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Fri, 8 Mar 2019 17:28:25 +0100
 Subject: [PATCH 12/22] fd_utils: fix DEBUG mode booting issue (pie-x86)
@@ -16,10 +16,10 @@ Suggested by Chris Vandomelen <chris@sightworks.com>.
  1 file changed, 2 insertions(+)
 
 diff --git a/core/jni/fd_utils.cpp b/core/jni/fd_utils.cpp
-index c72668f84fb..cf458d1f17b 100644
+index c73aae58fe7..ca4bd2d159c 100644
 --- a/core/jni/fd_utils.cpp
 +++ b/core/jni/fd_utils.cpp
-@@ -265,6 +265,8 @@ FileDescriptorInfo* FileDescriptorInfo::CreateFromFd(int fd, fail_fn_t fail_fn)
+@@ -264,6 +264,8 @@ FileDescriptorInfo* FileDescriptorInfo::CreateFromFd(int fd, fail_fn_t fail_fn)
      fail_fn(android::base::StringPrintf("Could not read fd link %s: %s",
                                          fd_path.c_str(),
                                          strerror(errno)));

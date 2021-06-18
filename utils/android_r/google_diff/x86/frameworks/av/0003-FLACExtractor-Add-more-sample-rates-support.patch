@@ -1,7 +1,7 @@
-From eddaf9a596ef676d6ae7ad5f1bf04614596de487 Mon Sep 17 00:00:00 2001
+From 64b1314b5e2e0cf8bd69aef316f400f2904b7198 Mon Sep 17 00:00:00 2001
 From: Billy <xiaobing.feng@windriver.com>
 Date: Thu, 20 Dec 2012 11:02:55 +0800
-Subject: [PATCH 03/14] FLACExtractor: Add more sample rates support
+Subject: [PATCH 03/15] FLACExtractor: Add more sample rates support
 
 In FLACExtractor.cpp, it has function to check file's sample rate.
 If the input sample rate is not in its list, it will return "unsupported

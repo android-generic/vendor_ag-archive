@@ -1,4 +1,4 @@
-From baf4a91cc8f7a1dac5cac05b0e00da8bc5784025 Mon Sep 17 00:00:00 2001
+From a506391acfa1f786ba8c17e3cd33d847938793b5 Mon Sep 17 00:00:00 2001
 From: Andy Ross <andy.ross@windriver.com>
 Date: Tue, 15 Jan 2013 15:05:38 -0800
 Subject: [PATCH 02/22] GLSurfaceView: Be less picky about EGLConfig alpha

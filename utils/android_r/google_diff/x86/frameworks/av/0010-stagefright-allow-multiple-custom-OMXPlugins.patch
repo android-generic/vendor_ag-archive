@@ -1,7 +1,7 @@
-From 358e55dd5d47dfc570f819f19c5e81febc3571ae Mon Sep 17 00:00:00 2001
+From 7780d12b3a88067bb504e186a70b5f7a1d0e99f4 Mon Sep 17 00:00:00 2001
 From: Jesse Chan <jc@lineageos.org>
 Date: Fri, 3 Mar 2017 20:42:40 +0800
-Subject: [PATCH 10/14] stagefright: allow multiple custom OMXPlugins
+Subject: [PATCH 10/15] stagefright: allow multiple custom OMXPlugins
 
 * Separated by comma(,)
 * Example: media.sf.omx-plugin=libffmpeg_omx.so,libsomxcore.so
@@ -9,16 +9,16 @@ Subject: [PATCH 10/14] stagefright: allow multiple custom OMXPlugins
 Change-Id: I15556a48df282b01f54ca864317eafff5468e739
 Signed-off-by: Jesse Chan <jc@lineageos.org>
 ---
- media/libstagefright/omx/OMXMaster.cpp | 7 ++++++-
+ media/libstagefright/omx/OMXStore.cpp | 7 ++++++-
  1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/media/libstagefright/omx/OMXMaster.cpp b/media/libstagefright/omx/OMXMaster.cpp
-index 3524a60503..3f31aebf4b 100644
---- a/media/libstagefright/omx/OMXMaster.cpp
-+++ b/media/libstagefright/omx/OMXMaster.cpp
-@@ -72,8 +72,13 @@ void OMXMaster::addPlatformPlugin() {
+diff --git a/media/libstagefright/omx/OMXStore.cpp b/media/libstagefright/omx/OMXStore.cpp
+index 0ec8d181bf..6c459546d1 100644
+--- a/media/libstagefright/omx/OMXStore.cpp
++++ b/media/libstagefright/omx/OMXStore.cpp
+@@ -72,8 +72,13 @@ void OMXStore::addPlatformPlugin() {
  
- void OMXMaster::addUserPlugin() {
+ void OMXStore::addUserPlugin() {
      char plugin[PROPERTY_VALUE_MAX];
 +    char *each_plugin;
      if (property_get("media.sf.omx-plugin", plugin, NULL)) {

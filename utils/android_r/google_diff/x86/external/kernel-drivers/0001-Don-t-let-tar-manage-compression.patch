@@ -1,7 +1,7 @@
-From effd4b5e1c1cbc2e30ffd655c8ef835327ebd3b5 Mon Sep 17 00:00:00 2001
+From 8ae5f5574bdc22126e59c0cc7cdf345d3e3f87c2 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Tue, 23 Feb 2021 11:49:59 -0500
-Subject: [PATCH] Don't let "tar" manage compression
+Subject: [PATCH 1/2] Don't let "tar" manage compression
 
 It may end up calling "zcat", which is not allowed in the building
 sandbox. As "gzip" is present int prebuilts, just change the command to
@@ -11,13 +11,13 @@ use "gzip" separately.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/wl/Android.mk b/wl/Android.mk
-index ed7c4b0..e75e872 100644
+index 222d718..fa5e319 100644
 --- a/wl/Android.mk
 +++ b/wl/Android.mk
-@@ -26,7 +26,7 @@ $(WL_SRC):
- 	$(hide) mkdir -p $(@D) && /usr/bin/curl -k https://docs.broadcom.com/docs-and-downloads/docs/linux_sta/$(@F) > $@ || rm -f $@
+@@ -39,7 +39,7 @@ $(WL_SRC):
+ 	$(hide) mkdir -p $(@D) && /usr/bin/curl -k https://docs.broadcom.com/docs-and-downloads/docs/linux_sta/$(@F) > $@
  
- $(WL_LIB): $(WL_SRC) $(WL_PATCHES)
+ $(WL_LIB): $(WL_SRC) $(addprefix $(LOCAL_PATH)/,$(WL_PATCHES))
 -	$(hide) tar zxf $< -C $(@D) --overwrite -m && \
 +	$(hide) gzip -d -c $< | tar xf - -C $(@D) --overwrite -m && \
  		rm -rf $@ && mv $(@D)/lib $@ && touch $@ && \

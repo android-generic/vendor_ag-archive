@@ -1,0 +1,41 @@
+From 74708862a28382612e247d09b092df3b975747c2 Mon Sep 17 00:00:00 2001
+From: Martin Stjernholm <mast@google.com>
+Date: Thu, 11 Feb 2021 07:37:55 +0000
+Subject: [PATCH] Use prebuilts of the ART Module by default.
+
+This means prebuilts located in
+/vendor/unbundled_google/modules/ArtGooglePrebuilt and
+/prebuilts/module_sdk/art are used instead of sources in /art,
+/libcore, and /libnativehelper.
+
+Sanitizer and coverage builds builds are excluded, as are builds using
+the products art_module_*, armv8, arm_krait, and others in
+device/generic/art.
+
+To keep using ART and libcore sources in local builds, set
+SOONG_CONFIG_art_module_source_build=true. See art/build/README.md for
+further info.
+
+Test: presubmits
+Bug: 172480615
+Change-Id: Id719640d17effca107af82de69e45514bf3bd234
+---
+ core/android_soong_config_vars.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/android_soong_config_vars.mk b/core/android_soong_config_vars.mk
+index 74558f56b5..bd8edf5f81 100644
+--- a/core/android_soong_config_vars.mk
++++ b/core/android_soong_config_vars.mk
+@@ -53,7 +53,7 @@ else
+   # This sets the default for building ART APEXes from source rather than
+   # prebuilts (in packages/modules/ArtPrebuilt and prebuilt/module_sdk/art) in
+   # all other platform builds.
+-  SOONG_CONFIG_art_module_source_build ?= true
++  SOONG_CONFIG_art_module_source_build ?= false
+ endif
+ 
+ # Apex build mode variables
+-- 
+2.17.1
+

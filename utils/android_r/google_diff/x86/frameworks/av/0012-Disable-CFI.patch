@@ -1,7 +1,7 @@
-From 20542c5fb6d053fcdcb12f4a71113db1773fdb6f Mon Sep 17 00:00:00 2001
+From 457c32a9980c90255ae78690626c925238cd7485 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Fri, 4 Oct 2019 20:11:48 -0400
-Subject: [PATCH 12/14] Disable CFI
+Subject: [PATCH 12/15] Disable CFI
 
 The presence of CFI sanitizer makes the corresponding libraries to be
 missing from the com.android.media.swcodec APEX, when building for x86.
@@ -14,10 +14,10 @@ missing from the com.android.media.swcodec APEX, when building for x86.
  5 files changed, 7 deletions(-)
 
 diff --git a/media/codec2/components/base/Android.bp b/media/codec2/components/base/Android.bp
-index f10835f366..2932af4f81 100644
+index 160e250235..87d49a3a92 100644
 --- a/media/codec2/components/base/Android.bp
 +++ b/media/codec2/components/base/Android.bp
-@@ -30,7 +30,6 @@ cc_library_shared {
+@@ -39,7 +39,6 @@ cc_library {
              "unsigned-integer-overflow",
              "signed-integer-overflow",
          ],
@@ -25,7 +25,7 @@ index f10835f366..2932af4f81 100644
      },
  
      ldflags: ["-Wl,-Bsymbolic"],
-@@ -78,7 +77,6 @@ cc_defaults {
+@@ -87,7 +86,6 @@ cc_defaults {
              "unsigned-integer-overflow",
              "signed-integer-overflow",
          ],
@@ -33,19 +33,19 @@ index f10835f366..2932af4f81 100644
      },
  }
  
-@@ -91,7 +89,6 @@ cc_defaults {
-         misc_undefined: [
-             "signed-integer-overflow",
-         ],
--        cfi: true,
-     },
- }
+@@ -107,7 +105,6 @@ cc_defaults {
+     name: "libcodec2_soft_sanitize_cfi-defaults",
  
+     sanitize: {
+-        cfi: true,
+         config: {
+             cfi_assembly_support: true,
+         },
 diff --git a/media/codec2/sfplugin/utils/Android.bp b/media/codec2/sfplugin/utils/Android.bp
-index 628722162a..620af14255 100644
+index 74e7ef1de0..edacaeb9d3 100644
 --- a/media/codec2/sfplugin/utils/Android.bp
 +++ b/media/codec2/sfplugin/utils/Android.bp
-@@ -33,7 +33,6 @@ cc_library_shared {
+@@ -42,7 +42,6 @@ cc_library {
      ],
  
      sanitize: {
@@ -54,10 +54,10 @@ index 628722162a..620af14255 100644
              "unsigned-integer-overflow",
              "signed-integer-overflow",
 diff --git a/media/libstagefright/bqhelper/Android.bp b/media/libstagefright/bqhelper/Android.bp
-index 8698d33f9b..3a6a615dd2 100644
+index e4fc128770..81bafbcb88 100644
 --- a/media/libstagefright/bqhelper/Android.bp
 +++ b/media/libstagefright/bqhelper/Android.bp
-@@ -52,7 +52,6 @@ cc_defaults {
+@@ -61,7 +61,6 @@ cc_defaults {
              "signed-integer-overflow",
              "unsigned-integer-overflow",
          ],
@@ -66,10 +66,10 @@ index 8698d33f9b..3a6a615dd2 100644
  }
  
 diff --git a/media/libstagefright/flac/dec/Android.bp b/media/libstagefright/flac/dec/Android.bp
-index 32b207592a..284d7bc1f6 100644
+index 225c930dd1..4b48cc552d 100644
 --- a/media/libstagefright/flac/dec/Android.bp
 +++ b/media/libstagefright/flac/dec/Android.bp
-@@ -16,7 +16,6 @@ cc_library {
+@@ -36,7 +36,6 @@ cc_library {
              "signed-integer-overflow",
              "unsigned-integer-overflow",
          ],
@@ -78,10 +78,10 @@ index 32b207592a..284d7bc1f6 100644
  
      shared_libs: [
 diff --git a/media/libstagefright/foundation/Android.bp b/media/libstagefright/foundation/Android.bp
-index f440e00a5c..23db2ab1d7 100644
+index 407f609c29..27cb234265 100644
 --- a/media/libstagefright/foundation/Android.bp
 +++ b/media/libstagefright/foundation/Android.bp
-@@ -95,7 +95,6 @@ cc_defaults {
+@@ -117,7 +117,6 @@ cc_defaults {
              "unsigned-integer-overflow",
              "signed-integer-overflow",
          ],

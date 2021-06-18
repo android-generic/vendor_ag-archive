@@ -1,7 +1,7 @@
-From 55726ff23e217e38ff1f33b512e5f38cf8c22304 Mon Sep 17 00:00:00 2001
+From 3ea7babb20c096119164309e7c9855d919cade16 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 3 May 2011 15:44:58 +0800
-Subject: [PATCH 02/89] x86: add driver for Lenovo ideapad S10-3T rotate button
+Subject: [PATCH 02/54] x86: add driver for Lenovo ideapad S10-3T rotate button
 
 Provided by Javier S. Pedro.
 ---
@@ -12,18 +12,18 @@ Provided by Javier S. Pedro.
  create mode 100644 drivers/platform/x86/lsrot.c
 
 diff --git a/drivers/platform/x86/Kconfig b/drivers/platform/x86/Kconfig
-index a51a23a68a39..2edc05ef0e40 100644
+index 0d91d136bc3b..0100a3055032 100644
 --- a/drivers/platform/x86/Kconfig
 +++ b/drivers/platform/x86/Kconfig
-@@ -811,6 +811,16 @@ config PEAQ_WMI
- 	help
- 	 Say Y here if you want to support WMI-based hotkeys on PEAQ 2-in-1s.
+@@ -1170,6 +1170,16 @@ config SYSTEM76_ACPI
+ 
+ 	  If you have a System76 laptop running open firmware, say Y or M here.
  
 +config S103T_WMI
 +	tristate "Lenovo S10-3T Rotate Button Support"
 +	depends on ACPI_WMI
 +	depends on INPUT
-+	---help---
++	help
 +	  This is a driver for the Lenovo ideapad S10-3T rotate button.
 +
 +	  To compile this driver as a module, choose M here: the module will
@@ -33,17 +33,17 @@ index a51a23a68a39..2edc05ef0e40 100644
  	tristate "Topstar Laptop Extras"
  	depends on ACPI
 diff --git a/drivers/platform/x86/Makefile b/drivers/platform/x86/Makefile
-index 415104033060..199f0ebcfdb0 100644
+index 5f823f7eff45..0e8c59a9b661 100644
 --- a/drivers/platform/x86/Makefile
 +++ b/drivers/platform/x86/Makefile
-@@ -47,6 +47,7 @@ obj-$(CONFIG_INTEL_MENLOW)	+= intel_menlow.o
- obj-$(CONFIG_ACPI_WMI)		+= wmi.o
- obj-$(CONFIG_MSI_WMI)		+= msi-wmi.o
- obj-$(CONFIG_PEAQ_WMI)		+= peaq-wmi.o
+@@ -118,6 +118,7 @@ obj-$(CONFIG_LG_LAPTOP)		+= lg-laptop.o
+ obj-$(CONFIG_PANASONIC_LAPTOP)	+= panasonic-laptop.o
+ obj-$(CONFIG_SONY_LAPTOP)	+= sony-laptop.o
+ obj-$(CONFIG_SYSTEM76_ACPI)	+= system76_acpi.o
 +obj-$(CONFIG_S103T_WMI)		+= lsrot.o
- obj-$(CONFIG_SURFACE3_WMI)	+= surface3-wmi.o
  obj-$(CONFIG_TOPSTAR_LAPTOP)	+= topstar-laptop.o
- obj-$(CONFIG_WMI_BMOF)		+= wmi-bmof.o
+ 
+ # Platform drivers
 diff --git a/drivers/platform/x86/lsrot.c b/drivers/platform/x86/lsrot.c
 new file mode 100644
 index 000000000000..4d4ef75f6554

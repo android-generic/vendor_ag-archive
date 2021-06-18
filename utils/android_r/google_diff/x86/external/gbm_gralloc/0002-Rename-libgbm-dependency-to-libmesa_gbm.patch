@@ -1,0 +1,28 @@
+From b79d78b1362f1f8cce5c0647709d70696d2491f7 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Wed, 28 Apr 2021 16:12:04 -0400
+Subject: [PATCH 2/2] Rename libgbm dependency to libmesa_gbm
+
+AOSP minigbm now defines its own libgbm module as a shared library,
+which conflicts with the one in mesa. The module has been renamed to
+libmesa_gbm in mesa to avoid conflict.
+---
+ Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.mk b/Android.mk
+index 9452774..b3b1a5f 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -28,7 +28,7 @@ LOCAL_SRC_FILES := \
+ 
+ LOCAL_SHARED_LIBRARIES := \
+ 	libdrm \
+-	libgbm \
++	libmesa_gbm \
+ 	liblog \
+ 	libcutils \
+ 	libhardware \
+-- 
+2.30.2
+

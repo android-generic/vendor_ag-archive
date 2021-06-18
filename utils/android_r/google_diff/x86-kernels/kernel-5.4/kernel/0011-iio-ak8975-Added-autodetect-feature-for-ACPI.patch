@@ -1,7 +1,7 @@
-From 4ce4862042c445ded5281d9873d2a901964c2804 Mon Sep 17 00:00:00 2001
+From d005477ed33cf548ea7df7bced70724800b40b51 Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Mon, 15 Dec 2014 11:53:56 -0800
-Subject: [PATCH 11/89] iio: ak8975: Added autodetect feature for ACPI
+Subject: [PATCH 11/54] iio: ak8975: Added autodetect feature for ACPI
 
 Using i2c auto detect feature and auto device creation feature,
 enumerate ak8975 device, by checking their presence.
@@ -17,10 +17,10 @@ Signed-off-by: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  1 file changed, 35 insertions(+)
 
 diff --git a/drivers/iio/magnetometer/ak8975.c b/drivers/iio/magnetometer/ak8975.c
-index 82af903a765b..941ab72326ea 100644
+index d988b6ac3659..78075b2460a5 100644
 --- a/drivers/iio/magnetometer/ak8975.c
 +++ b/drivers/iio/magnetometer/ak8975.c
-@@ -1078,6 +1078,36 @@ static const struct i2c_device_id ak8975_id[] = {
+@@ -1062,6 +1062,36 @@ static const struct i2c_device_id ak8975_id[] = {
  
  MODULE_DEVICE_TABLE(i2c, ak8975_id);
  
@@ -37,11 +37,11 @@ index 82af903a765b..941ab72326ea 100644
 +	if (!adapter)
 +		return -ENODEV;
 +
-+	for (i = 0; i < AK_MAX_TYPE; ++i) {
-+		ret = ak8975_who_i_am(temp_client, i);
++	for (i = 0; i < ARRAY_SIZE(ak_def_array); ++i) {
++		ret = ak8975_who_i_am(temp_client, ak_def_array[i].type);
 +		if (ret >= 0) {
 +			for (j = 0; j < ARRAY_SIZE(ak8975_id) - 1; ++j) {
-+				if (i == (int)ak8975_id[j].driver_data) {
++				if (ak_def_array[i].type == (int)ak8975_id[j].driver_data) {
 +					strlcpy(info->type, ak8975_id[j].name,
 +						I2C_NAME_SIZE);
 +					return 0;
@@ -57,7 +57,7 @@ index 82af903a765b..941ab72326ea 100644
  static const struct of_device_id ak8975_of_match[] = {
  	{ .compatible = "asahi-kasei,ak8975", },
  	{ .compatible = "ak8975", },
-@@ -1101,6 +1131,11 @@ static struct i2c_driver ak8975_driver = {
+@@ -1085,6 +1115,11 @@ static struct i2c_driver ak8975_driver = {
  	.probe		= ak8975_probe,
  	.remove		= ak8975_remove,
  	.id_table	= ak8975_id,

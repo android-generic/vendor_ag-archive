@@ -1,7 +1,7 @@
-From c2192fa7735dcc1913fed24f5562562ee23a3862 Mon Sep 17 00:00:00 2001
+From 1b51c8fa99d44c32479dac5014ffef6aca02a82f Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 17 Nov 2014 20:14:41 +0800
-Subject: [PATCH 09/89] android-x86: add an empty Android.mk
+Subject: [PATCH 09/54] android-x86: add an empty Android.mk
 
 It prevents findleaves.py from searching into the subdirectories.
 ---

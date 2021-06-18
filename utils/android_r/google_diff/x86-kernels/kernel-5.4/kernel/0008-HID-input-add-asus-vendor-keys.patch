@@ -1,14 +1,14 @@
-From 2347cfc732408abb7b94084f0a6ad05bd6f4093e Mon Sep 17 00:00:00 2001
+From 5d38a0068fd614c49eb1fa948f09d473ae4caf8b Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 12 Sep 2014 21:48:27 +0800
-Subject: [PATCH 08/89] HID: input: add asus vendor keys
+Subject: [PATCH 08/54] HID: input: add asus vendor keys
 
 ---
  drivers/hid/hid-input.c | 14 +++++++++++++-
  1 file changed, 13 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/hid/hid-input.c b/drivers/hid/hid-input.c
-index ec08895e7b1d..6020b5e33774 100644
+index 32024905fd70..456c7de4d02a 100644
 --- a/drivers/hid/hid-input.c
 +++ b/drivers/hid/hid-input.c
 @@ -571,7 +571,8 @@ static void hidinput_configure_usage(struct hid_input *hidinput, struct hid_fiel

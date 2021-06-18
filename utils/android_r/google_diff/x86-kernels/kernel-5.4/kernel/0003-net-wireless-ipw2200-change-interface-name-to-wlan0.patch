@@ -1,17 +1,17 @@
-From f9290b8aad521f1cbc7159fc80948223fa73a75d Mon Sep 17 00:00:00 2001
+From 814343fe7ba74d85a8dc129ff989673efa695f08 Mon Sep 17 00:00:00 2001
 From: Michael Cunningham <commandff@gmail.com>
 Date: Wed, 21 Aug 2013 19:21:28 +0800
-Subject: [PATCH 03/89] net/wireless: ipw2200: change interface name to wlan0
+Subject: [PATCH 03/54] net/wireless: ipw2200: change interface name to wlan0
 
 ---
  drivers/net/wireless/intel/ipw2x00/ipw2200.c | 1 +
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/net/wireless/intel/ipw2x00/ipw2200.c b/drivers/net/wireless/intel/ipw2x00/ipw2200.c
-index ac5f797fb1ad..69e0b335169d 100644
+index ada6ce32c1f1..f63d2400fd3e 100644
 --- a/drivers/net/wireless/intel/ipw2x00/ipw2200.c
 +++ b/drivers/net/wireless/intel/ipw2x00/ipw2200.c
-@@ -11613,6 +11613,7 @@ static int ipw_pci_probe(struct pci_dev *pdev,
+@@ -11601,6 +11601,7 @@ static int ipw_pci_probe(struct pci_dev *pdev,
  		goto out;
  	}
  

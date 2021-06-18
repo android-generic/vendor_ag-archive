@@ -1,0 +1,456 @@
+From e428ee3620e2ff55550478840a56417d1e20637c Mon Sep 17 00:00:00 2001
+From: Victor Chang <vichang@google.com>
+Date: Wed, 6 Jan 2021 18:28:46 +0000
+Subject: [PATCH 2/3] Use 2 new IntraCoreApi provided by ExtendedTimeZone and
+ ExtendedTimeZoneNames
+
+Bug: 139480281
+Test: CtsLibcoreTestCases
+Test: CtsLibcoreOjTestCases
+Change-Id: Ib267668a65632ae8317f69720de2183d80ad6887
+---
+ .../java/text/SimpleDateFormatTest.java       |   7 +
+ .../main/java/java/text/SimpleDateFormat.java |  90 ++-----
+ .../java/time/zone/IcuZoneRulesProvider.java  | 232 +-----------------
+ 3 files changed, 27 insertions(+), 302 deletions(-)
+
+diff --git a/luni/src/test/java/libcore/java/text/SimpleDateFormatTest.java b/luni/src/test/java/libcore/java/text/SimpleDateFormatTest.java
+index 55a84e0693..6cfb2311e7 100644
+--- a/luni/src/test/java/libcore/java/text/SimpleDateFormatTest.java
++++ b/luni/src/test/java/libcore/java/text/SimpleDateFormatTest.java
+@@ -403,6 +403,13 @@ public class SimpleDateFormatTest extends junit.framework.TestCase {
+         new SimpleDateFormat("z", Locale.US).parse("UTC");
+     }
+ 
++    public void testParseMetazoneFallbacksToLocale() throws Exception {
++        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm zzzz", Locale.US);
++        Date date = format.parse("2021-02-08T14:14 Pacific Standard Time"); // 22:14 GMT-8:00
++
++        assertEquals(1612822440000L, date.getTime());
++    }
++
+     // http://code.google.com/p/android/issues/detail?id=36689
+     public void testParseArabic() throws Exception {
+         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", new Locale("ar", "EG"));
+diff --git a/ojluni/src/main/java/java/text/SimpleDateFormat.java b/ojluni/src/main/java/java/text/SimpleDateFormat.java
+index b03ba0a6fe..718c95f0ec 100644
+--- a/ojluni/src/main/java/java/text/SimpleDateFormat.java
++++ b/ojluni/src/main/java/java/text/SimpleDateFormat.java
+@@ -39,27 +39,22 @@
+ 
+ package java.text;
+ 
+-import android.icu.text.TimeZoneFormat;
+ import android.icu.text.TimeZoneNames;
+ import android.icu.util.ULocale;
+ 
++import com.android.icu.text.ExtendedTimeZoneNames;
++import com.android.icu.text.ExtendedTimeZoneNames.MatchedTimeZone;
++
+ import java.io.IOException;
+ import java.io.InvalidObjectException;
+ import java.io.ObjectInputStream;
+-import java.util.Arrays;
+ import java.util.Calendar;
+-import java.util.Collection;
+-import java.util.Collections;
+ import java.util.Date;
+-import java.util.EnumSet;
+ import java.util.GregorianCalendar;
+-import java.util.HashSet;
+ import java.util.Locale;
+ import java.util.Map;
+ import java.util.NavigableMap;
+-import java.util.Set;
+ import java.util.SimpleTimeZone;
+-import java.util.SortedMap;
+ import java.util.TimeZone;
+ import java.util.concurrent.ConcurrentHashMap;
+ import java.util.concurrent.ConcurrentMap;
+@@ -596,7 +591,7 @@ public class SimpleDateFormat extends DateFormat {
+     /**
+      * ICU TimeZoneNames used to format and parse time zone names.
+      */
+-    private transient TimeZoneNames timeZoneNames;
++    private transient ExtendedTimeZoneNames timeZoneNames;
+ 
+     /**
+      * Constructs a <code>SimpleDateFormat</code> using the default pattern and
+@@ -1999,27 +1994,16 @@ public class SimpleDateFormat extends DateFormat {
+         }
+     }
+ 
+-    private TimeZoneNames getTimeZoneNames() {
++    private ExtendedTimeZoneNames getExtendedTimeZoneNames() {
+         if (timeZoneNames == null) {
+-            timeZoneNames = TimeZoneNames.getInstance(locale);
++            timeZoneNames = ExtendedTimeZoneNames.getInstance(ULocale.forLocale(locale));
+         }
+         return timeZoneNames;
+     }
+ 
+-    /**
+-     * The set of name types accepted when parsing time zone names.
+-     */
+-    private static final EnumSet<TimeZoneNames.NameType> NAME_TYPES =
+-            EnumSet.of(TimeZoneNames.NameType.LONG_GENERIC, TimeZoneNames.NameType.LONG_STANDARD,
+-                    TimeZoneNames.NameType.LONG_DAYLIGHT, TimeZoneNames.NameType.SHORT_GENERIC,
+-                    TimeZoneNames.NameType.SHORT_STANDARD, TimeZoneNames.NameType.SHORT_DAYLIGHT);
+-
+-    /**
+-     * Time zone name types that indicate daylight saving time.
+-     */
+-    private static final Set<TimeZoneNames.NameType> DST_NAME_TYPES =
+-            Collections.unmodifiableSet(EnumSet.of(
+-                    TimeZoneNames.NameType.LONG_DAYLIGHT, TimeZoneNames.NameType.SHORT_DAYLIGHT));
++    private TimeZoneNames getTimeZoneNames() {
++        return getExtendedTimeZoneNames().getTimeZoneNames();
++    }
+ 
+     /**
+      * Parses the time zone string using the ICU4J class {@link TimeZoneNames}.
+@@ -2027,71 +2011,27 @@ public class SimpleDateFormat extends DateFormat {
+     private int subParseZoneStringFromICU(String text, int start, CalendarBuilder calb) {
+         String currentTimeZoneID = android.icu.util.TimeZone.getCanonicalID(getTimeZone().getID());
+ 
+-        TimeZoneNames tzNames = getTimeZoneNames();
+-        TimeZoneNames.MatchInfo bestMatch = null;
+-        // The MetaZones associated with the current time zone are needed in two places, both of
+-        // which are avoided in some cases, so they are computed lazily.
+-        Set<String> currentTzMetaZoneIds = null;
+-
+-        Collection<TimeZoneNames.MatchInfo> matches = tzNames.find(text, start, NAME_TYPES);
+-        for (TimeZoneNames.MatchInfo match : matches) {
+-            if (bestMatch == null || bestMatch.matchLength() < match.matchLength()) {
+-                bestMatch = match;
+-            } else if (bestMatch.matchLength() == match.matchLength()) {
+-                if (currentTimeZoneID.equals(match.tzID())) {
+-                    // Prefer the currently set timezone over other matches, even if they are
+-                    // the same length.
+-                    bestMatch = match;
+-                    break;
+-                } else if (match.mzID() != null) {
+-                    if (currentTzMetaZoneIds == null) {
+-                        currentTzMetaZoneIds =
+-                                tzNames.getAvailableMetaZoneIDs(currentTimeZoneID);
+-                    }
+-                    if (currentTzMetaZoneIds.contains(match.mzID())) {
+-                        bestMatch = match;
+-                        break;
+-                    }
+-                }
+-            }
+-        }
+-        if (bestMatch == null) {
++        MatchedTimeZone matchedTimeZone = getExtendedTimeZoneNames().matchName(text, start,
++                currentTimeZoneID);
++        if (matchedTimeZone == null) {
+             // No match found, return error.
+             return -start;
+         }
+ 
+-        String tzId = bestMatch.tzID();
+-        if (tzId == null) {
+-            if (currentTzMetaZoneIds == null) {
+-                currentTzMetaZoneIds = tzNames.getAvailableMetaZoneIDs(currentTimeZoneID);
+-            }
+-            if (currentTzMetaZoneIds.contains(bestMatch.mzID())) {
+-                tzId = currentTimeZoneID;
+-            } else {
+-                // Match was for a meta-zone, find the matching reference zone.
+-                ULocale uLocale = ULocale.forLocale(locale);
+-                String region = uLocale.getCountry();
+-                if (region.length() == 0) {
+-                    uLocale = ULocale.addLikelySubtags(uLocale);
+-                    region = uLocale.getCountry();
+-                }
+-                tzId = tzNames.getReferenceZoneID(bestMatch.mzID(), region);
+-            }
+-        }
+-
++        String tzId = matchedTimeZone.getTzId();
+         TimeZone newTimeZone = TimeZone.getTimeZone(tzId);
+         if (!currentTimeZoneID.equals(tzId)) {
+             setTimeZone(newTimeZone);
+         }
+ 
+         // Same logic as in subParseZoneStringFromSymbols, see below for details.
+-        boolean isDst = DST_NAME_TYPES.contains(bestMatch.nameType());
++        boolean isDst = matchedTimeZone.isDst();
+         int dstAmount = isDst ? newTimeZone.getDSTSavings() : 0;
+         if (!isDst || dstAmount != 0) {
+             calb.clear(Calendar.ZONE_OFFSET).set(Calendar.DST_OFFSET, dstAmount);
+         }
+ 
+-        return bestMatch.matchLength() + start;
++        return matchedTimeZone.getMatchLength() + start;
+     }
+ 
+     /**
+diff --git a/ojluni/src/main/java/java/time/zone/IcuZoneRulesProvider.java b/ojluni/src/main/java/java/time/zone/IcuZoneRulesProvider.java
+index 5a4e37d8d1..a48aa62222 100644
+--- a/ojluni/src/main/java/java/time/zone/IcuZoneRulesProvider.java
++++ b/ojluni/src/main/java/java/time/zone/IcuZoneRulesProvider.java
+@@ -21,25 +21,16 @@
+ 
+ package java.time.zone;
+ 
+-import android.icu.util.AnnualTimeZoneRule;
+-import android.icu.util.BasicTimeZone;
+-import android.icu.util.DateTimeRule;
+-import android.icu.util.InitialTimeZoneRule;
++
+ import android.icu.util.TimeZone;
+-import android.icu.util.TimeZoneRule;
+-import android.icu.util.TimeZoneTransition;
+-import java.time.DayOfWeek;
+-import java.time.LocalTime;
+-import java.time.Month;
+-import java.time.ZoneOffset;
+-import java.util.ArrayList;
++
++import com.android.icu.util.ExtendedTimeZone;
++
+ import java.util.Collections;
+ import java.util.HashSet;
+-import java.util.List;
+ import java.util.NavigableMap;
+ import java.util.Set;
+ import java.util.TreeMap;
+-import java.util.concurrent.TimeUnit;
+ import libcore.util.BasicLruCache;
+ 
+ /**
+@@ -49,11 +40,6 @@ import libcore.util.BasicLruCache;
+  */
+ public class IcuZoneRulesProvider extends ZoneRulesProvider {
+ 
+-    // Arbitrary upper limit to number of transitions including the final rules.
+-    private static final int MAX_TRANSITIONS = 10000;
+-
+-    private static final int SECONDS_IN_DAY = 24 * 60 * 60;
+-
+     private final BasicLruCache<String, ZoneRules> cache = new ZoneRulesCache(8);
+ 
+     @Override
+@@ -80,216 +66,8 @@ public class IcuZoneRulesProvider extends ZoneRulesProvider {
+                         provideRules(zoneId, /* forCaching */ false)));
+     }
+ 
+-    /*
+-     * This implementation is only tested with BasicTimeZone objects and depends on
+-     * implementation details of that class:
+-     *
+-     * 0. TimeZone.getFrozenTimeZone() always returns a BasicTimeZone object.
+-     * 1. The first rule is always an InitialTimeZoneRule (guaranteed by spec).
+-     * 2. AnnualTimeZoneRules are only used as "final rules".
+-     * 3. The final rules are either 0 or 2 AnnualTimeZoneRules
+-     * 4. The final rules have endYear set to MAX_YEAR.
+-     * 5. Each transition generated by the rules changes either the raw offset, the total offset
+-     *    or both.
+-     * 6. There is a non-immense number of transitions for any rule before the final rules apply
+-     *    (enforced via the arbitrary limit defined in MAX_TRANSITIONS).
+-     *
+-     * Assumptions #5 and #6 are not strictly required for this code to work, but hold for the
+-     * the data and code at the time of implementation. If they were broken they would indicate
+-     * an incomplete understanding of how ICU TimeZoneRules are used which would probably mean that
+-     * this code needs to be updated.
+-     *
+-     * These assumptions are verified using the verify() method where appropriate.
+-     */
+     static ZoneRules generateZoneRules(String zoneId) {
+-        TimeZone timeZone = TimeZone.getFrozenTimeZone(zoneId);
+-        // Assumption #0
+-        verify(timeZone instanceof BasicTimeZone, zoneId,
+-                "Unexpected time zone class " + timeZone.getClass());
+-        BasicTimeZone tz = (BasicTimeZone) timeZone;
+-        TimeZoneRule[] rules = tz.getTimeZoneRules();
+-        // Assumption #1
+-        InitialTimeZoneRule initial = (InitialTimeZoneRule) rules[0];
+-
+-        ZoneOffset baseStandardOffset = millisToOffset(initial.getRawOffset());
+-        ZoneOffset baseWallOffset =
+-                millisToOffset((initial.getRawOffset() + initial.getDSTSavings()));
+-
+-        List<ZoneOffsetTransition> standardOffsetTransitionList = new ArrayList<>();
+-        List<ZoneOffsetTransition> transitionList = new ArrayList<>();
+-        List<ZoneOffsetTransitionRule> lastRules = new ArrayList<>();
+-
+-        int preLastDstSavings = 0;
+-        AnnualTimeZoneRule last1 = null;
+-        AnnualTimeZoneRule last2 = null;
+-
+-        TimeZoneTransition transition = tz.getNextTransition(Long.MIN_VALUE, false);
+-        int transitionCount = 1;
+-        // This loop has two possible exit conditions (in normal operation):
+-        // 1. for zones that end with a static value and have no ongoing DST changes, it will exit
+-        //    via the normal condition (transition != null)
+-        // 2. for zones with ongoing DST changes (represented by a "final zone" in ICU4J, and by
+-        //    "last rules" in java.time) the "break transitionLoop" will be used to exit the loop.
+-        transitionLoop:
+-        while (transition != null) {
+-            TimeZoneRule from = transition.getFrom();
+-            TimeZoneRule to = transition.getTo();
+-            boolean hadEffect = false;
+-            if (from.getRawOffset() != to.getRawOffset()) {
+-                standardOffsetTransitionList.add(new ZoneOffsetTransition(
+-                        TimeUnit.MILLISECONDS.toSeconds(transition.getTime()),
+-                        millisToOffset(from.getRawOffset()),
+-                        millisToOffset(to.getRawOffset())));
+-                hadEffect = true;
+-            }
+-            int fromTotalOffset = from.getRawOffset() + from.getDSTSavings();
+-            int toTotalOffset = to.getRawOffset() + to.getDSTSavings();
+-            if (fromTotalOffset != toTotalOffset) {
+-                transitionList.add(new ZoneOffsetTransition(
+-                        TimeUnit.MILLISECONDS.toSeconds(transition.getTime()),
+-                        millisToOffset(fromTotalOffset),
+-                        millisToOffset(toTotalOffset)));
+-                hadEffect = true;
+-            }
+-            // Assumption #5
+-            verify(hadEffect, zoneId, "Transition changed neither total nor raw offset.");
+-            if (to instanceof AnnualTimeZoneRule) {
+-                // The presence of an AnnualTimeZoneRule is taken as an indication of a final rule.
+-                if (last1 == null) {
+-                    preLastDstSavings = from.getDSTSavings();
+-                    last1 = (AnnualTimeZoneRule) to;
+-                    // Assumption #4
+-                    verify(last1.getEndYear() == AnnualTimeZoneRule.MAX_YEAR, zoneId,
+-                            "AnnualTimeZoneRule is not permanent.");
+-                } else {
+-                    last2 = (AnnualTimeZoneRule) to;
+-                    // Assumption #4
+-                    verify(last2.getEndYear() == AnnualTimeZoneRule.MAX_YEAR, zoneId,
+-                            "AnnualTimeZoneRule is not permanent.");
+-
+-                    // Assumption #3
+-                    transition = tz.getNextTransition(transition.getTime(), false);
+-                    verify(transition.getTo() == last1, zoneId,
+-                            "Unexpected rule after 2 AnnualTimeZoneRules.");
+-                    break transitionLoop;
+-                }
+-            } else {
+-                // Assumption #2
+-                verify(last1 == null, zoneId, "Unexpected rule after AnnualTimeZoneRule.");
+-            }
+-            verify(transitionCount <= MAX_TRANSITIONS, zoneId,
+-                    "More than " + MAX_TRANSITIONS + " transitions.");
+-            transition = tz.getNextTransition(transition.getTime(), false);
+-            transitionCount++;
+-        }
+-        if (last1 != null) {
+-            // Assumption #3
+-            verify(last2 != null, zoneId, "Only one AnnualTimeZoneRule.");
+-            lastRules.add(toZoneOffsetTransitionRule(last1, preLastDstSavings));
+-            lastRules.add(toZoneOffsetTransitionRule(last2, last1.getDSTSavings()));
+-        }
+-
+-        return ZoneRules.of(baseStandardOffset, baseWallOffset, standardOffsetTransitionList,
+-                transitionList, lastRules);
+-    }
+-
+-    /**
+-     * Verify an assumption about the zone rules.
+-     *
+-     * @param check
+-     *         {@code true} if the assumption holds, {@code false} otherwise.
+-     * @param zoneId
+-     *         Zone ID for which to check.
+-     * @param message
+-     *         Error description of a failed check.
+-     * @throws ZoneRulesException
+-     *         If and only if {@code check} is {@code false}.
+-     */
+-    private static void verify(boolean check, String zoneId, String message) {
+-        if (!check) {
+-            throw new ZoneRulesException(
+-                    String.format("Failed verification of zone %s: %s", zoneId, message));
+-        }
+-    }
+-
+-    /**
+-     * Transform an {@link AnnualTimeZoneRule} into an equivalent {@link ZoneOffsetTransitionRule}.
+-     * This is only used for the "final rules".
+-     *
+-     * @param rule
+-     *         The rule to transform.
+-     * @param dstSavingMillisBefore
+-     *         The DST offset before the first transition in milliseconds.
+-     */
+-    private static ZoneOffsetTransitionRule toZoneOffsetTransitionRule(
+-            AnnualTimeZoneRule rule, int dstSavingMillisBefore) {
+-        DateTimeRule dateTimeRule = rule.getRule();
+-        // Calendar.JANUARY is 0, transform it into a proper Month.
+-        Month month = Month.JANUARY.plus(dateTimeRule.getRuleMonth());
+-        int dayOfMonthIndicator;
+-        // Calendar.SUNDAY is 1, transform it into a proper DayOfWeek.
+-        DayOfWeek dayOfWeek = DayOfWeek.SATURDAY.plus(dateTimeRule.getRuleDayOfWeek());
+-        switch (dateTimeRule.getDateRuleType()) {
+-            case DateTimeRule.DOM:
+-                // Transition always on a specific day of the month.
+-                dayOfMonthIndicator = dateTimeRule.getRuleDayOfMonth();
+-                dayOfWeek = null;
+-                break;
+-            case DateTimeRule.DOW_GEQ_DOM:
+-                // ICU representation matches java.time representation.
+-                dayOfMonthIndicator = dateTimeRule.getRuleDayOfMonth();
+-                break;
+-            case DateTimeRule.DOW_LEQ_DOM:
+-                // java.time uses a negative dayOfMonthIndicator to represent "Sun<=X" or "lastSun"
+-                // rules. ICU uses this constant and the normal day. So "lastSun" in January would
+-                // ruleDayOfMonth = 31 in ICU and dayOfMonthIndicator = -1 in java.time.
+-                dayOfMonthIndicator = -month.maxLength() + dateTimeRule.getRuleDayOfMonth() - 1;
+-                break;
+-            case DateTimeRule.DOW:
+-                // DOW is unspecified in the documentation and seems to never be used.
+-                throw new ZoneRulesException("Date rule type DOW is unsupported");
+-            default:
+-                throw new ZoneRulesException(
+-                        "Unexpected date rule type: " + dateTimeRule.getDateRuleType());
+-        }
+-        // Cast to int is save, as input is int.
+-        int secondOfDay = (int) TimeUnit.MILLISECONDS.toSeconds(dateTimeRule.getRuleMillisInDay());
+-        LocalTime time;
+-        boolean timeEndOfDay;
+-        if (secondOfDay == SECONDS_IN_DAY) {
+-            time = LocalTime.MIDNIGHT;
+-            timeEndOfDay = true;
+-        } else {
+-            time = LocalTime.ofSecondOfDay(secondOfDay);
+-            timeEndOfDay = false;
+-        }
+-        ZoneOffsetTransitionRule.TimeDefinition timeDefinition;
+-        switch (dateTimeRule.getTimeRuleType()) {
+-            case DateTimeRule.WALL_TIME:
+-                timeDefinition = ZoneOffsetTransitionRule.TimeDefinition.WALL;
+-                break;
+-            case DateTimeRule.STANDARD_TIME:
+-                timeDefinition = ZoneOffsetTransitionRule.TimeDefinition.STANDARD;
+-                break;
+-            case DateTimeRule.UTC_TIME:
+-                timeDefinition = ZoneOffsetTransitionRule.TimeDefinition.UTC;
+-                break;
+-            default:
+-                throw new ZoneRulesException(
+-                        "Unexpected time rule type " + dateTimeRule.getTimeRuleType());
+-        }
+-        ZoneOffset standardOffset = millisToOffset(rule.getRawOffset());
+-        ZoneOffset offsetBefore = millisToOffset(rule.getRawOffset() + dstSavingMillisBefore);
+-        ZoneOffset offsetAfter = millisToOffset(
+-                rule.getRawOffset() + rule.getDSTSavings());
+-        return ZoneOffsetTransitionRule.of(
+-                month, dayOfMonthIndicator, dayOfWeek, time, timeEndOfDay, timeDefinition,
+-                standardOffset, offsetBefore, offsetAfter);
+-    }
+-
+-    private static ZoneOffset millisToOffset(int offset) {
+-        // Cast to int is save, as input is int.
+-        return ZoneOffset.ofTotalSeconds((int) TimeUnit.MILLISECONDS.toSeconds(offset));
++        return ExtendedTimeZone.getInstance(zoneId).createZoneRules();
+     }
+ 
+     private static class ZoneRulesCache extends BasicLruCache<String, ZoneRules> {
+-- 
+2.30.2
+

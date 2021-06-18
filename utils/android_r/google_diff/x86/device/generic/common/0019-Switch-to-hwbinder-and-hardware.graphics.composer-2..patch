@@ -1,0 +1,40 @@
+From dddf00933259af0f0e1f1d2b025157f47949561a Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 13 May 2021 19:24:15 -0400
+Subject: [PATCH 2/5] Switch to hwbinder and
+ hardware.graphics.composer@2.1-service
+
+---
+ manifest.xml | 2 +-
+ treble.mk    | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/manifest.xml b/manifest.xml
+index 5ed527b..23b002a 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -64,7 +64,7 @@
+     </hal>
+     <hal format="hidl">
+         <name>android.hardware.graphics.composer</name>
+-        <transport arch="32+64">passthrough</transport>
++        <transport>hwbinder</transport>
+         <version>2.1</version>
+         <interface>
+             <name>IComposer</name>
+diff --git a/treble.mk b/treble.mk
+index c94126d..2d1ddbd 100644
+--- a/treble.mk
++++ b/treble.mk
+@@ -5,7 +5,7 @@ PRODUCT_PACKAGES += \
+ 
+ # HWComposer HAL
+ PRODUCT_PACKAGES += \
+-    android.hardware.graphics.composer@2.1-impl
++    android.hardware.graphics.composer@2.1-service
+ 
+ # Audio HAL
+ PRODUCT_PACKAGES += \
+-- 
+2.17.1
+

@@ -1,4 +1,4 @@
-From aca3d9315109e08cd123a79b9c642387049e23f6 Mon Sep 17 00:00:00 2001
+From 7d00329f8b921a3000cb862750b53f4037cf0718 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Fri, 10 Aug 2018 01:12:22 +0200
 Subject: [PATCH 18/22] Modify color inversion matrix to swap Red and Blue

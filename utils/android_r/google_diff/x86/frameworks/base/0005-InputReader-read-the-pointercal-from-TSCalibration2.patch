@@ -1,4 +1,4 @@
-From f8e11423edd392a9d677ec10c46a200cd1fbf730 Mon Sep 17 00:00:00 2001
+From da34b92502928339112f734e066351f918b39bfe Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 18 May 2014 02:20:32 +0800
 Subject: [PATCH 05/22] InputReader: read the pointercal from TSCalibration2

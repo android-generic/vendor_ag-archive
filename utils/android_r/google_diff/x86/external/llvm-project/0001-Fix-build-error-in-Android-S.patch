@@ -1,0 +1,55 @@
+From 7e5c426d78f4e60e078934cc39cd665df0b8c504 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Wed, 28 Apr 2021 16:16:47 -0400
+Subject: [PATCH] Fix build error in Android S
+
+- android_mips/android_mips64 variants do no exist anymore
+- use -Wno-error=unreachable-code-loop-increment, required to compile
+  llvm/lib/Target/AMDGPU/SIFormMemoryClauses.cpp
+- add "vendor_available: true" to llvm12-amdgpu-headers module
+---
+ llvm/Android.bp                   | 8 ++------
+ llvm/lib/Target/AMDGPU/Android.bp | 1 +
+ 2 files changed, 3 insertions(+), 6 deletions(-)
+
+diff --git a/llvm/Android.bp b/llvm/Android.bp
+index 023d71e94e9..a72a075aad8 100644
+--- a/llvm/Android.bp
++++ b/llvm/Android.bp
+@@ -39,6 +39,8 @@ llvm_defaults {
+         // Temporarily suppress the warnings http://b/37867503
+         "-Wno-error=unused-lambda-capture",
+         "-Wno-error=user-defined-warnings",
++        // Avoid build error for llvm/lib/Target/AMDGPU/SIFormMemoryClauses.cpp (Android S)
++        "-Wno-error=unreachable-code-loop-increment",
+     ],
+ 
+     header_libs: ["llvm12-headers-no-generated-headers"],
+@@ -381,12 +383,6 @@ cc_library_shared {
+                 llvm_arm_static_libraries +
+                 llvm_aarch64_static_libraries,
+         },
+-        android_mips: {
+-            whole_static_libs: llvm_mips_static_libraries,
+-        },
+-        android_mips64: {
+-            whole_static_libs: llvm_mips_static_libraries,
+-        },
+         android_arm64: {
+             whole_static_libs: llvm_aarch64_static_libraries +
+                 llvm_arm_static_libraries,
+diff --git a/llvm/lib/Target/AMDGPU/Android.bp b/llvm/lib/Target/AMDGPU/Android.bp
+index c9f94b5f112..56624384548 100644
+--- a/llvm/lib/Target/AMDGPU/Android.bp
++++ b/llvm/lib/Target/AMDGPU/Android.bp
+@@ -20,6 +20,7 @@ cc_defaults {
+ 
+ cc_library_static {
+     name: "llvm12-amdgpu-headers",
++    vendor_available: true,
+     host_supported: true,
+     target: {
+         windows: {
+-- 
+2.30.2
+

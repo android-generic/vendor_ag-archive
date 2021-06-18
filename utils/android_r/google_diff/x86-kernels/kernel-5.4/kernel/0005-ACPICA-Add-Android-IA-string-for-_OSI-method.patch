@@ -1,7 +1,7 @@
-From f0630e94707caf007390e53bcb208d33b3ef7afc Mon Sep 17 00:00:00 2001
+From fc0491f0f9647b33ca262dfa24d61d0db93ef194 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 1 Nov 2013 18:52:32 +0800
-Subject: [PATCH 05/89] ACPICA: Add Android-IA string for _OSI method
+Subject: [PATCH 05/54] ACPICA: Add Android-IA string for _OSI method
 
 This change adds a new _OSI string "Android-IA" for ASUS BIOS
 to query if the OS supports Android features.
@@ -10,7 +10,7 @@ to query if the OS supports Android features.
  1 file changed, 1 insertion(+)
 
 diff --git a/drivers/acpi/acpica/utosi.c b/drivers/acpi/acpica/utosi.c
-index ad2b218039d0..f31b1f920e30 100644
+index 0a01c08dad8a..703612a134e9 100644
 --- a/drivers/acpi/acpica/utosi.c
 +++ b/drivers/acpi/acpica/utosi.c
 @@ -73,6 +73,7 @@ static struct acpi_interface_info acpi_default_supported_interfaces[] = {

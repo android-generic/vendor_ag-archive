@@ -1,4 +1,4 @@
-From 630861ea6edaae5f995c8188058319ea3ab93e76 Mon Sep 17 00:00:00 2001
+From 6288baeb185f6f4d016ad3861320f92d4bd9657a Mon Sep 17 00:00:00 2001
 From: Jon Doe <tuksgig@gmail.com>
 Date: Sun, 23 Dec 2018 22:50:00 +0800
 Subject: [PATCH 14/16] inputflinger: treat tablet-style inputs as absolute
@@ -11,9 +11,9 @@ Instead, this patch classifies them as a regular mouse pointer
 (INPUT_DEVICE_CLASS_CURSOR), which is more intuitive to work with.
 ---
  services/inputflinger/reader/EventHub.cpp     |   8 +-
- .../reader/mapper/CursorInputMapper.cpp       | 122 ++++++++++++++----
+ .../reader/mapper/CursorInputMapper.cpp       | 126 ++++++++++++++----
  .../reader/mapper/CursorInputMapper.h         |  10 ++
- 3 files changed, 115 insertions(+), 25 deletions(-)
+ 3 files changed, 115 insertions(+), 29 deletions(-)
 
 diff --git a/services/inputflinger/reader/EventHub.cpp b/services/inputflinger/reader/EventHub.cpp
 index fb83e5f55..e52c94026 100644
@@ -42,10 +42,10 @@ index fb83e5f55..e52c94026 100644
          // Is this a BT stylus?
      } else if ((test_bit(ABS_PRESSURE, device->absBitmask) ||
 diff --git a/services/inputflinger/reader/mapper/CursorInputMapper.cpp b/services/inputflinger/reader/mapper/CursorInputMapper.cpp
-index 887ab53c7..058844fe9 100644
+index 55c1a1dca..9ddb891df 100644
 --- a/services/inputflinger/reader/mapper/CursorInputMapper.cpp
 +++ b/services/inputflinger/reader/mapper/CursorInputMapper.cpp
-@@ -44,15 +44,29 @@ void CursorMotionAccumulator::process(const RawEvent* rawEvent) {
+@@ -45,15 +45,29 @@ void CursorMotionAccumulator::process(const RawEvent* rawEvent) {
          switch (rawEvent->code) {
              case REL_X:
                  mRelX = rawEvent->value;
@@ -75,7 +75,7 @@ index 887ab53c7..058844fe9 100644
      clearRelativeAxes();
  }
  
-@@ -128,6 +142,10 @@ void CursorInputMapper::configure(nsecs_t when, const InputReaderConfiguration*
+@@ -133,6 +147,10 @@ void CursorInputMapper::configure(nsecs_t when, const InputReaderConfiguration*
                  [[fallthrough]];
              case Parameters::MODE_POINTER:
                  mSource = AINPUT_SOURCE_MOUSE;
@@ -86,7 +86,7 @@ index 887ab53c7..058844fe9 100644
                  mXPrecision = 1.0f;
                  mYPrecision = 1.0f;
                  mXScale = 1.0f;
-@@ -181,11 +199,20 @@ void CursorInputMapper::configure(nsecs_t when, const InputReaderConfiguration*
+@@ -186,11 +204,20 @@ void CursorInputMapper::configure(nsecs_t when, const InputReaderConfiguration*
  
      if (!changes || (changes & InputReaderConfiguration::CHANGE_DISPLAY_INFO)) {
          mOrientation = DISPLAY_ORIENTATION_0;
@@ -108,7 +108,7 @@ index 887ab53c7..058844fe9 100644
              }
          }
  
-@@ -213,6 +240,11 @@ void CursorInputMapper::configureParameters() {
+@@ -218,6 +245,11 @@ void CursorInputMapper::configureParameters() {
      if (mParameters.mode == Parameters::MODE_POINTER || mParameters.orientationAware) {
          mParameters.hasAssociatedDisplay = true;
      }
@@ -120,7 +120,7 @@ index 887ab53c7..058844fe9 100644
  }
  
  void CursorInputMapper::dumpParameters(std::string& dump) {
-@@ -235,6 +267,7 @@ void CursorInputMapper::dumpParameters(std::string& dump) {
+@@ -240,6 +272,7 @@ void CursorInputMapper::dumpParameters(std::string& dump) {
      }
  
      dump += StringPrintf(INDENT4 "OrientationAware: %s\n", toString(mParameters.orientationAware));
@@ -128,7 +128,7 @@ index 887ab53c7..058844fe9 100644
  }
  
  void CursorInputMapper::reset(nsecs_t when) {
-@@ -262,6 +295,28 @@ void CursorInputMapper::process(const RawEvent* rawEvent) {
+@@ -267,6 +300,28 @@ void CursorInputMapper::process(const RawEvent* rawEvent) {
      }
  }
  
@@ -157,7 +157,7 @@ index 887ab53c7..058844fe9 100644
  void CursorInputMapper::sync(nsecs_t when) {
      int32_t lastButtonState = mButtonState;
      int32_t currentButtonState = mCursorButtonAccumulator.getButtonState();
-@@ -283,17 +338,7 @@ void CursorInputMapper::sync(nsecs_t when) {
+@@ -288,17 +343,7 @@ void CursorInputMapper::sync(nsecs_t when) {
      int32_t buttonsPressed = currentButtonState & ~lastButtonState;
      int32_t buttonsReleased = lastButtonState & ~currentButtonState;
  
@@ -176,7 +176,7 @@ index 887ab53c7..058844fe9 100644
      PointerProperties pointerProperties;
      pointerProperties.clear();
      pointerProperties.id = 0;
-@@ -302,6 +347,47 @@ void CursorInputMapper::sync(nsecs_t when) {
+@@ -307,6 +352,47 @@ void CursorInputMapper::sync(nsecs_t when) {
      PointerCoords pointerCoords;
      pointerCoords.clear();
  
@@ -224,18 +224,18 @@ index 887ab53c7..058844fe9 100644
      float vscroll = mCursorScrollAccumulator.getRelativeVWheel();
      float hscroll = mCursorScrollAccumulator.getRelativeHWheel();
      bool scrolled = vscroll != 0 || hscroll != 0;
-@@ -309,8 +395,6 @@ void CursorInputMapper::sync(nsecs_t when) {
+@@ -314,8 +400,6 @@ void CursorInputMapper::sync(nsecs_t when) {
      mWheelYVelocityControl.move(when, nullptr, &vscroll);
      mWheelXVelocityControl.move(when, &hscroll, nullptr);
  
 -    mPointerVelocityControl.move(when, &deltaX, &deltaY);
 -
-     int32_t displayId;
+     int32_t displayId = ADISPLAY_ID_NONE;
      float xCursorPosition = AMOTION_EVENT_INVALID_CURSOR_POSITION;
      float yCursorPosition = AMOTION_EVENT_INVALID_CURSOR_POSITION;
-@@ -318,10 +402,6 @@ void CursorInputMapper::sync(nsecs_t when) {
+@@ -323,10 +407,6 @@ void CursorInputMapper::sync(nsecs_t when) {
          if (moved || scrolled || buttonsChanged) {
-             mPointerController->setPresentation(PointerControllerInterface::PRESENTATION_POINTER);
+             mPointerController->setPresentation(PointerControllerInterface::Presentation::POINTER);
  
 -            if (moved) {
 -                mPointerController->move(deltaX, deltaY);
@@ -244,7 +244,7 @@ index 887ab53c7..058844fe9 100644
              if (buttonsChanged) {
                  mPointerController->setButtonState(currentButtonState);
              }
-@@ -330,14 +410,8 @@ void CursorInputMapper::sync(nsecs_t when) {
+@@ -335,17 +415,7 @@ void CursorInputMapper::sync(nsecs_t when) {
          }
  
          mPointerController->getPosition(&xCursorPosition, &yCursorPosition);
@@ -253,14 +253,17 @@ index 887ab53c7..058844fe9 100644
 -        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_X, deltaX);
 -        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_Y, deltaY);
          displayId = mPointerController->getDisplayId();
-     } else {
+-    } else if (mSource == AINPUT_SOURCE_MOUSE_RELATIVE) {
+-        // Pointer capture mode
 -        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_X, deltaX);
 -        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_Y, deltaY);
-         displayId = ADISPLAY_ID_NONE;
+-        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_X, deltaX);
+-        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_Y, deltaY);
      }
  
+     pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_PRESSURE, down ? 1.0f : 0.0f);
 diff --git a/services/inputflinger/reader/mapper/CursorInputMapper.h b/services/inputflinger/reader/mapper/CursorInputMapper.h
-index f65ac3934..a81c80654 100644
+index 05bbb2671..0388a60f7 100644
 --- a/services/inputflinger/reader/mapper/CursorInputMapper.h
 +++ b/services/inputflinger/reader/mapper/CursorInputMapper.h
 @@ -43,10 +43,16 @@ public:

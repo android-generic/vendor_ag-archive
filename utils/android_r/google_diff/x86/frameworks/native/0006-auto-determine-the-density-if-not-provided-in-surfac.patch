@@ -1,4 +1,4 @@
-From 1c490279120a80fd70895f77ce8fda915ec698ef Mon Sep 17 00:00:00 2001
+From ec6c03d2108c52cc103fae0e891c650e3506b3b5 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 26 Oct 2014 15:39:53 +0800
 Subject: [PATCH 06/16] auto determine the density if not provided in
@@ -11,10 +11,10 @@ So adjust the density according to the resolution.
  1 file changed, 19 insertions(+)
 
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index f7b00cf6a..80588ec78 100644
+index 64e75c277..bd39d512f 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -320,6 +320,25 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory, SkipInitializationTag)
+@@ -319,6 +319,25 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory, SkipInitializationTag)
          mInternalDisplayDensity(getDensityFromProperty("ro.sf.lcd_density", true)),
          mEmulatedDisplayDensity(getDensityFromProperty("qemu.sf.lcd_density", false)) {}
  

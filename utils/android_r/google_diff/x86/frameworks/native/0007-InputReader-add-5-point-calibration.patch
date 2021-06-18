@@ -1,4 +1,4 @@
-From bfb270c03241a89ff48961bce26447fec0b71d8c Mon Sep 17 00:00:00 2001
+From 1d13cf242e0de2daf113ae4ec8d8be362f64e36c Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 2 Nov 2014 01:21:12 +0800
 Subject: [PATCH 07/16] InputReader: add 5-point calibration
@@ -10,10 +10,10 @@ Updated for Android 5.0.
  2 files changed, 41 insertions(+), 3 deletions(-)
 
 diff --git a/services/inputflinger/reader/mapper/TouchInputMapper.cpp b/services/inputflinger/reader/mapper/TouchInputMapper.cpp
-index 986efd17d..43fff3de1 100644
+index e981b0c19..8fdf57be8 100644
 --- a/services/inputflinger/reader/mapper/TouchInputMapper.cpp
 +++ b/services/inputflinger/reader/mapper/TouchInputMapper.cpp
-@@ -383,6 +383,19 @@ void TouchInputMapper::configure(nsecs_t when, const InputReaderConfiguration* c
+@@ -406,6 +406,19 @@ void TouchInputMapper::configure(nsecs_t when, const InputReaderConfiguration* c
          configureSurface(when, &resetNeeded);
      }
  
@@ -33,7 +33,7 @@ index 986efd17d..43fff3de1 100644
      if (changes && resetNeeded) {
          // Send reset, unless this is the first time the device has been configured,
          // in which case the reader will call reset itself after all mappers are ready.
-@@ -2194,13 +2207,29 @@ void TouchInputMapper::cookPointerData() {
+@@ -2227,13 +2240,29 @@ void TouchInputMapper::cookPointerData() {
          // TODO: Adjust coverage coords?
          float xTransformed = in.x, yTransformed = in.y;
          mAffineTransform.applyTo(xTransformed, yTransformed);
@@ -64,7 +64,7 @@ index 986efd17d..43fff3de1 100644
                  left = float(rawTop - mRawPointerAxes.y.minValue) * mYScale + mYTranslate;
                  right = float(rawBottom - mRawPointerAxes.y.minValue) * mYScale + mYTranslate;
                  bottom = float(mRawPointerAxes.x.maxValue - rawLeft) * mXScale + mXTranslate;
-@@ -2213,6 +2242,8 @@ void TouchInputMapper::cookPointerData() {
+@@ -2246,6 +2275,8 @@ void TouchInputMapper::cookPointerData() {
                  }
                  break;
              case DISPLAY_ORIENTATION_180:
@@ -73,7 +73,7 @@ index 986efd17d..43fff3de1 100644
                  left = float(mRawPointerAxes.x.maxValue - rawRight) * mXScale;
                  right = float(mRawPointerAxes.x.maxValue - rawLeft) * mXScale;
                  bottom = float(mRawPointerAxes.y.maxValue - rawTop) * mYScale + mYTranslate;
-@@ -2225,6 +2256,8 @@ void TouchInputMapper::cookPointerData() {
+@@ -2258,6 +2289,8 @@ void TouchInputMapper::cookPointerData() {
                  }
                  break;
              case DISPLAY_ORIENTATION_270:
@@ -82,7 +82,7 @@ index 986efd17d..43fff3de1 100644
                  left = float(mRawPointerAxes.y.maxValue - rawBottom) * mYScale;
                  right = float(mRawPointerAxes.y.maxValue - rawTop) * mYScale;
                  bottom = float(rawRight - mRawPointerAxes.x.minValue) * mXScale + mXTranslate;
-@@ -2237,6 +2270,8 @@ void TouchInputMapper::cookPointerData() {
+@@ -2270,6 +2303,8 @@ void TouchInputMapper::cookPointerData() {
                  }
                  break;
              default:
@@ -91,7 +91,7 @@ index 986efd17d..43fff3de1 100644
                  left = float(rawLeft - mRawPointerAxes.x.minValue) * mXScale + mXTranslate;
                  right = float(rawRight - mRawPointerAxes.x.minValue) * mXScale + mXTranslate;
                  bottom = float(rawBottom - mRawPointerAxes.y.minValue) * mYScale + mYTranslate;
-@@ -2247,8 +2282,8 @@ void TouchInputMapper::cookPointerData() {
+@@ -2280,8 +2315,8 @@ void TouchInputMapper::cookPointerData() {
          // Write output coords.
          PointerCoords& out = mCurrentCookedState.cookedPointerData.pointerCoords[i];
          out.clear();
@@ -103,10 +103,10 @@ index 986efd17d..43fff3de1 100644
          out.setAxisValue(AMOTION_EVENT_AXIS_SIZE, size);
          out.setAxisValue(AMOTION_EVENT_AXIS_TOUCH_MAJOR, touchMajor);
 diff --git a/services/inputflinger/reader/mapper/TouchInputMapper.h b/services/inputflinger/reader/mapper/TouchInputMapper.h
-index f68374193..4bc7e5c03 100644
+index 57ff1bc33..8390dcd31 100644
 --- a/services/inputflinger/reader/mapper/TouchInputMapper.h
 +++ b/services/inputflinger/reader/mapper/TouchInputMapper.h
-@@ -288,6 +288,9 @@ protected:
+@@ -290,6 +290,9 @@ protected:
                  *outSize = 0;
              }
          }

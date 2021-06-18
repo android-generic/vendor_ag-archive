@@ -1,7 +1,7 @@
-From 9da7d437bf32047b477b844ee1a5fdae17c92eca Mon Sep 17 00:00:00 2001
+From e24d59598f425b866a6b8162cb2d489389fbfa59 Mon Sep 17 00:00:00 2001
 From: Andrew Boie <andrew.p.boie@intel.com>
 Date: Thu, 10 Nov 2011 17:58:05 -0800
-Subject: [PATCH 07/22] diskconfig: Fix disk_layout.conf size parsing
+Subject: [PATCH 07/21] diskconfig: Fix disk_layout.conf size parsing
 
 If the user was appending 'K' to their lengths (which is valid
 but redundant) it was being treated as megabytes instead of
@@ -26,5 +26,5 @@ index c7e1b4374..70ce85c1d 100644
          *plen *= multiple;
  
 -- 
-2.30.2
+2.17.1
 

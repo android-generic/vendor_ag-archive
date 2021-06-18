@@ -1,0 +1,34 @@
+From 3ba4ed9248b4c23b05ec04116850c69f528a77bd Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Wed, 28 Apr 2021 16:52:57 -0400
+Subject: [PATCH] Disable bool-operations and xor-used-as pow errors
+
+Android S marks those a non-overridable errors, but these are still
+needed in ffmpeg and other android-x86 specific modules.
+---
+ cc/config/global.go | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/cc/config/global.go b/cc/config/global.go
+index e60bb3d51..27874f3d6 100644
+--- a/cc/config/global.go
++++ b/cc/config/global.go
+@@ -117,13 +117,13 @@ var (
+ 	}
+ 
+ 	noOverrideGlobalCflags = []string{
+-		"-Werror=bool-operation",
++		//"-Werror=bool-operation",
+ 		"-Werror=implicit-int-float-conversion",
+ 		"-Werror=int-in-bool-context",
+ 		"-Werror=int-to-pointer-cast",
+ 		"-Werror=pointer-to-int-cast",
+ 		"-Werror=string-compare",
+-		"-Werror=xor-used-as-pow",
++		//"-Werror=xor-used-as-pow",
+ 		// http://b/161386391 for -Wno-void-pointer-to-enum-cast
+ 		"-Wno-void-pointer-to-enum-cast",
+ 		// http://b/161386391 for -Wno-void-pointer-to-int-cast
+-- 
+2.30.2
+

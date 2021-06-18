@@ -1,4 +1,4 @@
-From 7d1e74ee686d83d80451a04924a79d74c5dc957e Mon Sep 17 00:00:00 2001
+From a0451bc48cbf838f1305a2a54b79466a57a3102b Mon Sep 17 00:00:00 2001
 From: Zhao Liang <leo.zhao@intel.com>
 Date: Fri, 20 Jul 2012 11:56:51 +0800
 Subject: [PATCH 01/22] import YuvToEncoder R3 patches, BZ 18528, 19092, 19696

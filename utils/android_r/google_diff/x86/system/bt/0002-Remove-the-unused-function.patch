@@ -1,7 +1,7 @@
-From 62ae8603783a9482bb5c108ba1dcaf3c254f4d4f Mon Sep 17 00:00:00 2001
+From 58ea8161665161df1ec2dd65d20b0615c021f909 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 10 Jun 2018 17:46:25 +0800
-Subject: [PATCH 2/7] Remove the unused function
+Subject: [PATCH 2/6] Remove the unused function
 
 ---
  vendor_libs/linux/interface/hci_packetizer.cc | 2 ++

@@ -1,4 +1,4 @@
-From bf4d9eb38ffde83d46badf8ea52d76bae362d7d0 Mon Sep 17 00:00:00 2001
+From c9478df450e999d4653b498b3fd93cb3418c7e02 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 16 Mar 2018 14:50:39 +0800
 Subject: [PATCH 11/22] Camera: ignore exceptions from

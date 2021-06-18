@@ -1,7 +1,7 @@
-From 25f810fcd983d1ea1dce999edf44354c09f10ff7 Mon Sep 17 00:00:00 2001
+From a14f480bda681156b516b3a66903560e7ef438dd Mon Sep 17 00:00:00 2001
 From: Robert Crabtree <robertx.l.crabtree@intel.com>
 Date: Wed, 25 Jul 2012 17:53:12 -0700
-Subject: [PATCH 01/14] SW encode: Fix output buffer size
+Subject: [PATCH 01/15] SW encode: Fix output buffer size
 
 The output buffer size needs to be updated if the resolution is updated.
 The output buffer was configured for QCIF resolution when the actual

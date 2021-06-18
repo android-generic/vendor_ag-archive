@@ -1,0 +1,61 @@
+From 2556e42fc122fbfe327d06b2e25896ec752df65e Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 19 May 2021 15:47:36 -0400
+Subject: [PATCH] remove libnfc_nci_jni from cts tests
+
+---
+ .../securityPatch/CVE-2019-2133/Android.bp          | 13 -------------
+ .../securityPatch/CVE-2019-2134/Android.bp          | 13 -------------
+ 2 files changed, 26 deletions(-)
+
+diff --git a/hostsidetests/securitybulletin/securityPatch/CVE-2019-2133/Android.bp b/hostsidetests/securitybulletin/securityPatch/CVE-2019-2133/Android.bp
+index 5d006c34cdc..79bfca38767 100644
+--- a/hostsidetests/securitybulletin/securityPatch/CVE-2019-2133/Android.bp
++++ b/hostsidetests/securitybulletin/securityPatch/CVE-2019-2133/Android.bp
+@@ -30,19 +30,6 @@ cc_test {
+             suffix: "32",
+         },
+         lib64: {
+-            include_dirs: [
+-                "packages/apps/Nfc/nci/jni/extns/pn54x/src/mifare/",
+-                "packages/apps/Nfc/nci/jni/extns/pn54x/src/common/",
+-                "packages/apps/Nfc/nci/jni/extns/pn54x/inc/",
+-                "system/nfc/src/nfa/include/",
+-                "system/nfc/src/gki/common/",
+-                "system/nfc/src/include/",
+-                "system/nfc/src/gki/ulinux/",
+-                "system/nfc/src/nfc/include/",
+-            ],
+-            shared_libs: [
+-               "libnfc_nci_jni",
+-            ],
+             suffix: "64",
+         },
+     },
+diff --git a/hostsidetests/securitybulletin/securityPatch/CVE-2019-2134/Android.bp b/hostsidetests/securitybulletin/securityPatch/CVE-2019-2134/Android.bp
+index 763772fc066..1093d1f5cd8 100644
+--- a/hostsidetests/securitybulletin/securityPatch/CVE-2019-2134/Android.bp
++++ b/hostsidetests/securitybulletin/securityPatch/CVE-2019-2134/Android.bp
+@@ -30,19 +30,6 @@ cc_test {
+             suffix: "32",
+         },
+         lib64: {
+-            include_dirs: [
+-                "packages/apps/Nfc/nci/jni/extns/pn54x/src/mifare/",
+-                "packages/apps/Nfc/nci/jni/extns/pn54x/src/common/",
+-                "packages/apps/Nfc/nci/jni/extns/pn54x/inc/",
+-                "system/nfc/src/nfa/include/",
+-                "system/nfc/src/gki/common/",
+-                "system/nfc/src/include/",
+-                "system/nfc/src/gki/ulinux/",
+-                "system/nfc/src/nfc/include/",
+-            ],
+-            shared_libs: [
+-                "libnfc_nci_jni",
+-            ],
+             suffix: "64",
+         },
+     },
+-- 
+2.17.1
+

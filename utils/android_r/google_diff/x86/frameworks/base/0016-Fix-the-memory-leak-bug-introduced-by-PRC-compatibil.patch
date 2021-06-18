@@ -1,4 +1,4 @@
-From bb0828a583264fba2a09871dc5f0f50f6168c02c Mon Sep 17 00:00:00 2001
+From c802c420bc057b2ea41d6dd465227f9dbc9c277c Mon Sep 17 00:00:00 2001
 From: jgu21 <jinghui.gu@intel.com>
 Date: Fri, 1 Apr 2016 00:40:31 -0400
 Subject: [PATCH 16/22] Fix the memory leak bug introduced by PRC compatibility

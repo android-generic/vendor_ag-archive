@@ -1,4 +1,4 @@
-From a41fb31936f92b086b5e88a0929c5f4194b0f933 Mon Sep 17 00:00:00 2001
+From c219887f5b5066f130493abfb8a743f6bdc69e82 Mon Sep 17 00:00:00 2001
 From: xiajiang <xia1.jiang@intel.com>
 Date: Wed, 17 Feb 2016 13:59:14 -0500
 Subject: [PATCH 13/22] Enable the PRC compatibility package feature for PRC
@@ -135,10 +135,10 @@ index 476198b5311..5a616664e9d 100644
      public static void removeNativeBinariesLI(String nativeLibraryPath) {
          if (nativeLibraryPath == null) return;
 diff --git a/core/jni/Android.bp b/core/jni/Android.bp
-index 0797b18f12d..eb0c6faff1c 100644
+index 7f9544cfe16..622d01f4334 100644
 --- a/core/jni/Android.bp
 +++ b/core/jni/Android.bp
-@@ -12,6 +12,7 @@ cc_library_shared {
+@@ -29,6 +29,7 @@ cc_library_shared {
          "-DEGL_EGLEXT_PROTOTYPES",
  
          "-DU_USING_ICU_NAMESPACE=0",
@@ -146,7 +146,7 @@ index 0797b18f12d..eb0c6faff1c 100644
  
          "-Wall",
          "-Werror",
-@@ -67,6 +68,7 @@ cc_library_shared {
+@@ -84,6 +85,7 @@ cc_library_shared {
                  "com_android_internal_content_NativeLibraryHelper.cpp",
                  "com_google_android_gles_jni_EGLImpl.cpp",
                  "com_google_android_gles_jni_GLImpl.cpp", // TODO: .arm
@@ -1075,10 +1075,10 @@ index be82879c841..627adbf7c4f 100644
              (void *)com_android_internal_content_NativeLibraryHelper_hasRenderscriptBitcode},
  };
 diff --git a/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java b/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
-index a6f02e7842d..122020ff39b 100644
+index 24d49a3cfef..4ecac45eee5 100644
 --- a/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
 +++ b/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
-@@ -136,7 +136,8 @@ public class AndroidPackageUtils {
+@@ -138,7 +138,8 @@ public class AndroidPackageUtils {
                  AndroidPackageUtils.getAllCodePaths(pkg),
                  pkg.isMultiArch(),
                  pkg.isExtractNativeLibs(),

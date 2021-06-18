@@ -1,4 +1,4 @@
-From 96e4b44f98fb1591251182f71a21545007c79ad1 Mon Sep 17 00:00:00 2001
+From 6df0c424655ec97775857aa23095816a3f2cd506 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 8 Mar 2018 12:30:36 +0800
 Subject: [PATCH 3/3] We need text relocations
@@ -9,18 +9,18 @@ Don't show annoying warnings.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/linker/linker.cpp b/linker/linker.cpp
-index d4802904b..1fd631efa 100644
+index 99352399b..fffb870da 100644
 --- a/linker/linker.cpp
 +++ b/linker/linker.cpp
-@@ -3265,7 +3265,6 @@ bool soinfo::link_image(const SymbolLookupList& lookup_list, soinfo* local_group
-                      "Enforced-for-API-level-23)", get_realpath());
+@@ -3261,7 +3261,6 @@ bool soinfo::link_image(const SymbolLookupList& lookup_list, soinfo* local_group
+                      get_realpath(), kBionicChangesUrl);
        return false;
      }
 -#endif
      // Make segments writable to allow text relocations to work properly. We will later call
      // phdr_table_protect_segments() after all of them are applied.
      DL_WARN_documented_change(23,
-@@ -3273,6 +3272,7 @@ bool soinfo::link_image(const SymbolLookupList& lookup_list, soinfo* local_group
+@@ -3269,6 +3268,7 @@ bool soinfo::link_image(const SymbolLookupList& lookup_list, soinfo* local_group
                                "\"%s\" has text relocations",
                                get_realpath());
      add_dlwarning(get_realpath(), "text relocations");

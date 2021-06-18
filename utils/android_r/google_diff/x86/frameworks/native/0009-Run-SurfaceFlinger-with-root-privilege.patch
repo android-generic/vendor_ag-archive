@@ -1,4 +1,4 @@
-From 5712c8ce19bc1f4638a02e4a901d5b0dfd145c33 Mon Sep 17 00:00:00 2001
+From 0e879be25b624d531544bf7075e13679308966c2 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 4 Aug 2016 01:38:50 +0800
 Subject: [PATCH 09/16] Run SurfaceFlinger with root privilege

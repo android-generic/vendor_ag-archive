@@ -1,23 +1,17 @@
-From 17cb2b7f3789248b839c2afa35608c31a9d9218c Mon Sep 17 00:00:00 2001
+From 810030fc8330adf363294bb1e2f1cb69f61511aa Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 12 Jun 2018 14:32:03 +0800
-Subject: [PATCH 3/7] Avoid annoying crashing on VMware
+Subject: [PATCH 3/6] Avoid annoying crashing on VMware
 
 ---
- device/src/controller.cc | 18 ------------------
- 1 file changed, 18 deletions(-)
+ device/src/controller.cc | 28 ----------------------------
+ 1 file changed, 28 deletions(-)
 
 diff --git a/device/src/controller.cc b/device/src/controller.cc
-index a260b98c6..49a3ffa34 100644
+index 0cc86676d..a72afc6fb 100644
 --- a/device/src/controller.cc
 +++ b/device/src/controller.cc
-@@ -332,13 +332,11 @@ static uint8_t* get_local_supported_codecs(uint8_t* number_of_codecs) {
- 
- static const bt_device_features_t* get_features_ble(void) {
-   CHECK(readable);
--  CHECK(ble_supported);
-   return &features_ble;
- }
+@@ -354,7 +354,6 @@ static uint8_t* get_local_supported_codecs(uint8_t* number_of_codecs) {
  
  static const uint8_t* get_ble_supported_states(void) {
    CHECK(readable);
@@ -25,7 +19,7 @@ index a260b98c6..49a3ffa34 100644
    return ble_supported_states;
  }
  
-@@ -399,50 +397,42 @@ static bool supports_ble(void) {
+@@ -525,100 +524,84 @@ static bool supports_ble(void) {
  
  static bool supports_ble_privacy(void) {
    CHECK(readable);
@@ -76,7 +70,57 @@ index a260b98c6..49a3ffa34 100644
    return HCI_LE_PERIODIC_ADVERTISING_SUPPORTED(features_ble.as_array);
  }
  
-@@ -453,7 +443,6 @@ static uint16_t get_acl_data_size_classic(void) {
+ static bool supports_ble_peripheral_initiated_feature_exchange(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_PERIPHERAL_INIT_FEAT_EXC_SUPPORTED(features_ble.as_array);
+ }
+ 
+ static bool supports_ble_connection_parameter_request(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_CONN_PARAM_REQ_SUPPORTED(features_ble.as_array);
+ }
+ 
+ static bool supports_ble_periodic_advertising_sync_transfer_sender(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_PERIODIC_ADVERTISING_SYNC_TRANSFER_SENDER(
+       features_ble.as_array);
+ }
+ 
+ static bool supports_ble_periodic_advertising_sync_transfer_recipient(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_PERIODIC_ADVERTISING_SYNC_TRANSFER_RECIPIENT(
+       features_ble.as_array);
+ }
+ 
+ static bool supports_ble_connected_isochronous_stream_central(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_CIS_CENTRAL(features_ble.as_array);
+ }
+ 
+ static bool supports_ble_connected_isochronous_stream_peripheral(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_CIS_PERIPHERAL(features_ble.as_array);
+ }
+ 
+ static bool supports_ble_isochronous_broadcaster(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_ISO_BROADCASTER(features_ble.as_array);
+ }
+ 
+ static bool supports_ble_synchronized_receiver(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return HCI_LE_SYNCHRONIZED_RECEIVER(features_ble.as_array);
+ }
+ 
+@@ -629,7 +612,6 @@ static uint16_t get_acl_data_size_classic(void) {
  
  static uint16_t get_acl_data_size_ble(void) {
    CHECK(readable);
@@ -84,7 +128,7 @@ index a260b98c6..49a3ffa34 100644
    return acl_data_size_ble;
  }
  
-@@ -469,7 +458,6 @@ static uint16_t get_acl_packet_size_ble(void) {
+@@ -655,31 +637,26 @@ static uint16_t get_iso_packet_size(void) {
  
  static uint16_t get_ble_suggested_default_data_length(void) {
    CHECK(readable);
@@ -92,7 +136,11 @@ index a260b98c6..49a3ffa34 100644
    return ble_suggested_default_data_length;
  }
  
-@@ -481,13 +469,11 @@ static uint16_t get_ble_maximum_tx_data_length(void) {
+ static uint16_t get_ble_maximum_tx_data_length(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return ble_supported_max_tx_octets;
+ }
  
  static uint16_t get_ble_maxium_advertising_data_length(void) {
    CHECK(readable);
@@ -106,7 +154,13 @@ index a260b98c6..49a3ffa34 100644
    return ble_number_of_supported_advertising_sets;
  }
  
-@@ -498,19 +484,16 @@ static uint16_t get_acl_buffer_count_classic(void) {
+ static uint8_t get_ble_periodic_advertiser_list_size(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return ble_periodic_advertiser_list_size;
+ }
+ 
+@@ -690,25 +667,21 @@ static uint16_t get_acl_buffer_count_classic(void) {
  
  static uint8_t get_acl_buffer_count_ble(void) {
    CHECK(readable);
@@ -114,10 +168,16 @@ index a260b98c6..49a3ffa34 100644
    return acl_buffer_count_ble;
  }
  
- static uint8_t get_ble_white_list_size(void) {
+ static uint8_t get_iso_buffer_count(void) {
    CHECK(readable);
 -  CHECK(ble_supported);
-   return ble_white_list_size;
+   return iso_buffer_count;
+ }
+ 
+ static uint8_t get_ble_acceptlist_size(void) {
+   CHECK(readable);
+-  CHECK(ble_supported);
+   return ble_acceptlist_size;
  }
  
  static uint8_t get_ble_resolving_list_max_size(void) {
@@ -126,7 +186,7 @@ index a260b98c6..49a3ffa34 100644
    return ble_resolving_list_max_size;
  }
  
-@@ -520,7 +503,6 @@ static void set_ble_resolving_list_max_size(int resolving_list_max_size) {
+@@ -718,7 +691,6 @@ static void set_ble_resolving_list_max_size(int resolving_list_max_size) {
    if (resolving_list_max_size != 0) {
      CHECK(readable);
    }

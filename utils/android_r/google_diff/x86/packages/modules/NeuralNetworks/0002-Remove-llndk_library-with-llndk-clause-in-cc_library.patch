@@ -1,0 +1,36 @@
+From d73d1a55deef8c6740f29d17e973421f5c19cb2d Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 20 May 2021 12:09:22 -0400
+Subject: [PATCH 2/3] Remove llndk_library with llndk clause in cc_library
+
+Remove the llndk_library and replace it with properties
+in the llndk clause of the implementation cc_library.
+---
+ runtime/Android.bp | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/runtime/Android.bp b/runtime/Android.bp
+index 107124a29..bef7f3ff4 100644
+--- a/runtime/Android.bp
++++ b/runtime/Android.bp
+@@ -160,7 +160,6 @@ cc_defaults {
+ 
+ cc_library_shared {
+     name: "libneuralnetworks",
+-    llndk_stubs: "libneuralnetworks.llndk",
+     defaults: [
+         "libneuralnetworks_defaults",
+         "neuralnetworks_defaults",
+@@ -243,9 +242,3 @@ ndk_library {
+     // Android O-MR1
+     first_version: "27",
+ }
+-
+-llndk_library {
+-    name: "libneuralnetworks.llndk",
+-    symbol_file: "libneuralnetworks.map.txt",
+-    export_include_dirs: ["include"],
+-}
+-- 
+2.17.1
+

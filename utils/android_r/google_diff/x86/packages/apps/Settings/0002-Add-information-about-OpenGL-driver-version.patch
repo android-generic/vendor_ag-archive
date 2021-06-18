@@ -1,4 +1,4 @@
-From f4a9ff96a5f1069994790e0e46e140f41e7c7276 Mon Sep 17 00:00:00 2001
+From 0693d46f71b7e770a4cf04ce16c03c2087b99fd9 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Wed, 13 Dec 2017 01:23:34 +0800
 Subject: [PATCH 2/4] Add information about OpenGL driver version
@@ -15,7 +15,7 @@ Without it, GLES20.glGetString returns NULL.
  create mode 100644 src/com/android/settings/deviceinfo/firmwareversion/OpenGLVersionPreferenceController.java
 
 diff --git a/res/values-zh-rCN/strings.xml b/res/values-zh-rCN/strings.xml
-index 2c83d04c49..fb1a990553 100644
+index 10265d54b1..72c2524b0a 100644
 --- a/res/values-zh-rCN/strings.xml
 +++ b/res/values-zh-rCN/strings.xml
 @@ -1336,6 +1336,7 @@
@@ -27,7 +27,7 @@ index 2c83d04c49..fb1a990553 100644
      <string name="module_version" msgid="1787518340082046658">"Google Play 系统更新"</string>
      <string name="device_info_not_available" msgid="4804474466616712326">"无法获取"</string>
 diff --git a/res/values-zh-rTW/strings.xml b/res/values-zh-rTW/strings.xml
-index 4133472cb4..3762d4019e 100644
+index bc72471e16..c1d923c11f 100644
 --- a/res/values-zh-rTW/strings.xml
 +++ b/res/values-zh-rTW/strings.xml
 @@ -1336,6 +1336,7 @@
@@ -39,7 +39,7 @@ index 4133472cb4..3762d4019e 100644
      <string name="module_version" msgid="1787518340082046658">"Google Play 系統更新"</string>
      <string name="device_info_not_available" msgid="4804474466616712326">"無法取得"</string>
 diff --git a/res/values/strings.xml b/res/values/strings.xml
-index 2dba7c4a36..46a383fff2 100644
+index e57334089c..5042c006f2 100644
 --- a/res/values/strings.xml
 +++ b/res/values/strings.xml
 @@ -3069,6 +3069,8 @@

@@ -1,4 +1,4 @@
-From a1bbf386e0e513806a8d6d02f7f8e2d5124f298f Mon Sep 17 00:00:00 2001
+From b1ea7fb6500e46d7535ebb3ee9af43c80300d905 Mon Sep 17 00:00:00 2001
 From: juntingwang <Junting.Wang@windriver.com>
 Date: Fri, 1 Mar 2013 16:02:56 +0800
 Subject: [PATCH 04/16] Set PS2 Keyboard controller as not a ketboard type

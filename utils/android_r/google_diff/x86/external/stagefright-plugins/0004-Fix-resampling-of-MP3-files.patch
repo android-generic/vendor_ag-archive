@@ -1,4 +1,4 @@
-From aecda404a0b812bbafd0d0ca377a559ae1515296 Mon Sep 17 00:00:00 2001
+From 5ec8fff79ba0e0895adeafea79ff3d851cd443eb Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Sun, 18 Apr 2021 15:17:37 -0400
 Subject: [PATCH 4/4] Fix resampling of MP3 files

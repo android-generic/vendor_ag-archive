@@ -1,4 +1,4 @@
-From 9cef4f255585b2252e095cee0431dd55c9943d11 Mon Sep 17 00:00:00 2001
+From d3693fb9bae88e60601f97e096448608598aa6ec Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 29 Nov 2019 19:46:31 +0800
 Subject: [PATCH 21/22] Set forceDesktopMode to true

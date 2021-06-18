@@ -1,0 +1,213 @@
+From 92af05ef4f45ab33b3e68bf735d6e8d119615e54 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Wed, 1 Apr 2020 17:51:01 -0400
+Subject: [PATCH 01/17] Port to Android 11
+
+---
+ BoardConfig.mk          |  4 +++-
+ build/tasks/system.mk   |  1 -
+ device.mk               |  1 +
+ init.sh                 |  2 +-
+ manifest.xml            | 48 ++++++++++++++++++++++++++++++++++++++++-
+ modules.blacklist       |  4 ++--
+ nativebridge/Android.mk |  2 +-
+ treble.mk               |  7 +++++-
+ 8 files changed, 61 insertions(+), 8 deletions(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index f0b0a57..8580206 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -60,7 +60,6 @@ USE_OPENGL_RENDERER := true
+ NUM_FRAMEBUFFER_SURFACE_BUFFERS ?= 3
+ BOARD_USES_DRM_GRALLOC := true
+ BOARD_USES_DRM_HWCOMPOSER ?= true
+-SF_START_GRAPHICS_ALLOCATOR_SERVICE := true
+ 
+ USE_CAMERA_STUB ?= false
+ 
+@@ -95,3 +94,6 @@ BOARD_SYSTEMIMAGE_PARTITION_RESERVED_SIZE := 33554432
+ BOARD_USES_OEMIMAGE := true
+ BUILD_BROKEN_USES_NETWORK := true
+ USE_XML_AUDIO_POLICY_CONF := 1
++
++BUILD_BROKEN_USES_BUILD_HOST_EXECUTABLE := true
++BUILD_BROKEN_USES_BUILD_HOST_STATIC_LIBRARY := true
+diff --git a/build/tasks/system.mk b/build/tasks/system.mk
+index c81b995..794bf0c 100644
+--- a/build/tasks/system.mk
++++ b/build/tasks/system.mk
+@@ -1,5 +1,4 @@
+ $(PRODUCT_OUT)/build.prop: $(INSTALLED_BUILD_PROP_TARGET) $(INSTALLED_VENDOR_BUILD_PROP_TARGET)
+-	ln -sf ../system/bin/modprobe $(TARGET_ROOT_OUT_SBIN) && \
+ 	sed -i -E '/ro.product.*manufacturer|ro.product.*model/d' $^ && touch $@
+ 
+ $(BUILT_SYSTEMIMAGE): $(PRODUCT_OUT)/build.prop
+diff --git a/device.mk b/device.mk
+index 7a26cf8..7f69fc5 100644
+--- a/device.mk
++++ b/device.mk
+@@ -90,6 +90,7 @@ PRODUCT_COPY_FILES += \
+ 
+ PRODUCT_TAGS += dalvik.gc.type-precise
+ 
++PRODUCT_ENFORCE_VINTF_MANIFEST_OVERRIDE := true
+ PRODUCT_CHARACTERISTICS := tablet
+ 
+ PRODUCT_AAPT_CONFIG := normal large xlarge mdpi hdpi
+diff --git a/init.sh b/init.sh
+index 8ecd243..c46b159 100644
+--- a/init.sh
++++ b/init.sh
+@@ -174,7 +174,7 @@ function init_uvesafb()
+ 			;;
+ 	esac
+ 
+-	modprobe uvesafb mode_option=${UVESA_MODE:-1024x768}-32 ${UVESA_OPTION:-mtrr=3 scroll=redraw}
++	modprobe uvesafb mode_option=${UVESA_MODE:-1024x768}-32 ${UVESA_OPTION:-mtrr=3 scroll=redraw} v86d=/system/bin/v86d
+ }
+ 
+ function init_hal_gralloc()
+diff --git a/manifest.xml b/manifest.xml
+index fc07597..eab267b 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -38,7 +38,7 @@
+     <hal format="hidl">
+         <name>android.hardware.configstore</name>
+         <transport>hwbinder</transport>
+-        <version>1.0</version>
++        <version>1.1</version>
+         <interface>
+             <name>ISurfaceFlingerConfigs</name>
+             <instance>default</instance>
+@@ -62,6 +62,15 @@
+             <instance>default</instance>
+         </interface>
+     </hal>
++    <hal format="hidl">
++        <name>android.hardware.graphics.composer</name>
++        <transport arch="32+64">passthrough</transport>
++        <version>2.1</version>
++        <interface>
++            <name>IComposer</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
+     <hal format="hidl">
+         <name>android.hardware.graphics.mapper</name>
+         <transport arch="32+64">passthrough</transport>
+@@ -71,6 +80,15 @@
+             <instance>default</instance>
+         </interface>
+     </hal>
++    <hal format="hidl">
++        <name>android.hardware.keymaster</name>
++        <transport arch="32+64">passthrough</transport>
++        <version>3.0</version>
++        <interface>
++            <name>IKeymasterDevice</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
+     <hal format="hidl">
+         <name>android.hardware.light</name>
+         <transport>hwbinder</transport>
+@@ -80,6 +98,15 @@
+             <instance>default</instance>
+         </interface>
+     </hal>
++    <hal format="hidl">
++        <name>android.hardware.memtrack</name>
++        <transport>hwbinder</transport>
++        <version>1.0</version>
++        <interface>
++            <name>IMemtrack</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
+     <hal format="hidl">
+         <name>android.hardware.media.omx</name>
+         <transport>hwbinder</transport>
+@@ -120,6 +147,16 @@
+             <instance>default</instance>
+         </interface>
+     </hal>
++    <hal format="hidl">
++        <name>android.hardware.soundtrigger</name>
++        <transport>hwbinder</transport>
++        <version>2.0</version>
++        <interface>
++            <name>ISoundTriggerHw</name>
++            <instance>default</instance>
++        </interface>
++        <fqname>@2.0::ISoundTriggerHw/default</fqname>
++    </hal>
+     <hal format="hidl">
+         <name>android.hardware.usb</name>
+         <transport>hwbinder</transport>
+@@ -129,6 +166,15 @@
+             <instance>default</instance>
+         </interface>
+     </hal>
++    <hal format="hidl">
++        <name>android.hardware.wifi</name>
++        <transport>hwbinder</transport>
++        <version>1.3</version>
++        <interface>
++            <name>IWifi</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
+     <hal format="hidl">
+         <name>android.hardware.wifi.supplicant</name>
+         <transport>hwbinder</transport>
+diff --git a/modules.blacklist b/modules.blacklist
+index 6303827..44987ab 100644
+--- a/modules.blacklist
++++ b/modules.blacklist
+@@ -1,4 +1,4 @@
+ blacklist evbug
+-deferred  amdgpu
+ blacklist nouveau
+-deferred  radeon
++deferred amdgpu
++deferred radeon
+diff --git a/nativebridge/Android.mk b/nativebridge/Android.mk
+index 0e4922d..5516935 100644
+--- a/nativebridge/Android.mk
++++ b/nativebridge/Android.mk
+@@ -17,7 +17,7 @@ LOCAL_SRC_FILES := src/libnb.cpp
+ LOCAL_CFLAGS := -Werror -Wall
+ LOCAL_CPPFLAGS := -std=c++11
+ LOCAL_SHARED_LIBRARIES := libcutils libdl liblog
+-LOCAL_C_INCLUDES := system/core/libnativebridge/include
++LOCAL_C_INCLUDES := art/libnativebridge/include
+ LOCAL_MULTILIB := both
+ LOCAL_POST_INSTALL_CMD := $(hide) \
+     rm -rf $(TARGET_OUT)/{bin,lib}/{arm*,*houdini*} {$(TARGET_OUT),$(PRODUCT_OUT)}/vendor/{bin,lib}/{arm*,*houdini*}; \
+diff --git a/treble.mk b/treble.mk
+index 920ff8d..9e85df1 100644
+--- a/treble.mk
++++ b/treble.mk
+@@ -41,7 +41,8 @@ PRODUCT_PACKAGES += \
+ 
+ # Health HAL
+ PRODUCT_PACKAGES += \
+-    android.hardware.health@1.0-impl
++    android.hardware.health@2.1-impl \
++    android.hardware.health@2.1-service
+ 
+ # Keymaster HAL
+ PRODUCT_PACKAGES += \
+@@ -90,3 +91,7 @@ PRODUCT_PACKAGES += \
+ PRODUCT_PACKAGES += \
+     android.hardware.gnss@1.0-impl \
+     android.hardware.gnss@1.0-service
++
++# ConfigStore HAL
++PRODUCT_PACKAGES += \
++    android.hardware.configstore@1.1-service
+-- 
+2.30.2
+

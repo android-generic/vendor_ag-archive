@@ -1,0 +1,187 @@
+From 41cea5d94313cf405fd05cba165450c98f669325 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 19 May 2021 13:29:06 -0400
+Subject: [PATCH 18/21] Revert "libmodprobe: refactor blocklist functionality"
+
+This reverts commit 87b2ef0edfab63e0482c3adc58332a9fcb865fc5.
+---
+ libmodprobe/include/modprobe/modprobe.h |  5 ++--
+ libmodprobe/libmodprobe.cpp             | 31 +++++++++++--------------
+ libmodprobe/libmodprobe_test.cpp        | 30 ++----------------------
+ toolbox/modprobe.cpp                    |  5 +++-
+ 4 files changed, 21 insertions(+), 50 deletions(-)
+
+diff --git a/libmodprobe/include/modprobe/modprobe.h b/libmodprobe/include/modprobe/modprobe.h
+index c934860ec..baee4f930 100644
+--- a/libmodprobe/include/modprobe/modprobe.h
++++ b/libmodprobe/include/modprobe/modprobe.h
+@@ -24,8 +24,7 @@
+ 
+ class Modprobe {
+   public:
+-    Modprobe(const std::vector<std::string>&, const std::string load_file = "modules.load",
+-             bool use_blocklist = true);
++    Modprobe(const std::vector<std::string>&, const std::string load_file = "modules.load");
+ 
+     bool LoadListedModules(bool strict = true);
+     bool LoadWithAliases(const std::string& module_name, bool strict,
+@@ -37,6 +36,7 @@ class Modprobe {
+                             std::vector<std::string>* post_dependencies);
+     void ResetModuleCount() { module_count_ = 0; }
+     int GetModuleCount() { return module_count_; }
++    void EnableBlocklist(bool enable);
+ 
+   private:
+     std::string MakeCanonical(const std::string& module_path);
+@@ -48,7 +48,6 @@ class Modprobe {
+     void AddOption(const std::string& module_name, const std::string& option_name,
+                    const std::string& value);
+     std::string GetKernelCmdline();
+-    bool IsBlocklisted(const std::string& module_name);
+ 
+     bool ParseDepCallback(const std::string& base_path, const std::vector<std::string>& args);
+     bool ParseAliasCallback(const std::vector<std::string>& args);
+diff --git a/libmodprobe/libmodprobe.cpp b/libmodprobe/libmodprobe.cpp
+index 1a9d3642c..b3ae93785 100644
+--- a/libmodprobe/libmodprobe.cpp
++++ b/libmodprobe/libmodprobe.cpp
+@@ -313,9 +313,7 @@ void Modprobe::ParseKernelCmdlineOptions(void) {
+     }
+ }
+ 
+-Modprobe::Modprobe(const std::vector<std::string>& base_paths, const std::string load_file,
+-                   bool use_blocklist)
+-    : blocklist_enabled(use_blocklist) {
++Modprobe::Modprobe(const std::vector<std::string>& base_paths, const std::string load_file) {
+     using namespace std::placeholders;
+ 
+     for (const auto& base_path : base_paths) {
+@@ -341,6 +339,10 @@ Modprobe::Modprobe(const std::vector<std::string>& base_paths, const std::string
+     ParseKernelCmdlineOptions();
+ }
+ 
++void Modprobe::EnableBlocklist(bool enable) {
++    blocklist_enabled = enable;
++}
++
+ std::vector<std::string> Modprobe::GetDependencies(const std::string& module) {
+     auto it = module_deps_.find(module);
+     if (it == module_deps_.end()) {
+@@ -425,23 +427,10 @@ bool Modprobe::LoadWithAliases(const std::string& module_name, bool strict,
+     return true;
+ }
+ 
+-bool Modprobe::IsBlocklisted(const std::string& module_name) {
+-    if (!blocklist_enabled) return false;
+-
+-    auto canonical_name = MakeCanonical(module_name);
+-    auto dependencies = GetDependencies(canonical_name);
+-    for (auto dep = dependencies.begin(); dep != dependencies.end(); ++dep) {
+-        if (module_blocklist_.count(MakeCanonical(*dep))) return true;
+-    }
+-
+-    return module_blocklist_.count(canonical_name) > 0;
+-}
+-
+ bool Modprobe::LoadListedModules(bool strict) {
+     auto ret = true;
+     for (const auto& module : module_load_) {
+         if (!LoadWithAliases(module, true)) {
+-            if (IsBlocklisted(module)) continue;
+             ret = false;
+             if (strict) break;
+         }
+@@ -451,10 +440,16 @@ bool Modprobe::LoadListedModules(bool strict) {
+ 
+ bool Modprobe::Remove(const std::string& module_name) {
+     auto dependencies = GetDependencies(MakeCanonical(module_name));
+-    for (auto dep = dependencies.begin(); dep != dependencies.end(); ++dep) {
++    if (dependencies.empty()) {
++        LOG(ERROR) << "Empty dependencies for module " << module_name;
++        return false;
++    }
++    if (!Rmmod(dependencies[0])) {
++        return false;
++    }
++    for (auto dep = dependencies.begin() + 1; dep != dependencies.end(); ++dep) {
+         Rmmod(*dep);
+     }
+-    Rmmod(module_name);
+     return true;
+ }
+ 
+diff --git a/libmodprobe/libmodprobe_test.cpp b/libmodprobe/libmodprobe_test.cpp
+index f960b6139..d50c10d8f 100644
+--- a/libmodprobe/libmodprobe_test.cpp
++++ b/libmodprobe/libmodprobe_test.cpp
+@@ -78,18 +78,6 @@ TEST(libmodprobe, Test) {
+             "/test13.ko",
+     };
+ 
+-    std::vector<std::string> expected_modules_blocklist_enabled = {
+-            "/test1.ko option1=50 option2=60",
+-            "/test6.ko",
+-            "/test2.ko",
+-            "/test5.ko option1=",
+-            "/test8.ko",
+-            "/test7.ko param1=4",
+-            "/test12.ko",
+-            "/test11.ko",
+-            "/test13.ko",
+-    };
+-
+     const std::string modules_dep =
+             "test1.ko:\n"
+             "test2.ko:\n"
+@@ -158,7 +146,7 @@ TEST(libmodprobe, Test) {
+         *i = dir.path + *i;
+     }
+ 
+-    Modprobe m({dir.path}, "modules.load", false);
++    Modprobe m({dir.path});
+     EXPECT_TRUE(m.LoadListedModules());
+ 
+     GTEST_LOG_(INFO) << "Expected modules loaded (in order):";
+@@ -188,22 +176,8 @@ TEST(libmodprobe, Test) {
+ 
+     EXPECT_TRUE(modules_loaded == expected_after_remove);
+ 
+-    m = Modprobe({dir.path});
++    m.EnableBlocklist(true);
+     EXPECT_FALSE(m.LoadWithAliases("test4", true));
+-    while (modules_loaded.size() > 0) EXPECT_TRUE(m.Remove(modules_loaded.front()));
+-    EXPECT_TRUE(m.LoadListedModules());
+-
+-    GTEST_LOG_(INFO) << "Expected modules loaded after enabling blocklist (in order):";
+-    for (auto i = expected_modules_blocklist_enabled.begin();
+-         i != expected_modules_blocklist_enabled.end(); ++i) {
+-        *i = dir.path + *i;
+-        GTEST_LOG_(INFO) << "\"" << *i << "\"";
+-    }
+-    GTEST_LOG_(INFO) << "Actual modules loaded with blocklist enabled (in order):";
+-    for (auto i = modules_loaded.begin(); i != modules_loaded.end(); ++i) {
+-        GTEST_LOG_(INFO) << "\"" << *i << "\"";
+-    }
+-    EXPECT_TRUE(modules_loaded == expected_modules_blocklist_enabled);
+ }
+ 
+ TEST(libmodprobe, ModuleDepLineWithoutColonIsSkipped) {
+diff --git a/toolbox/modprobe.cpp b/toolbox/modprobe.cpp
+index 711586a98..7df7b71a9 100644
+--- a/toolbox/modprobe.cpp
++++ b/toolbox/modprobe.cpp
+@@ -215,7 +215,10 @@ extern "C" int modprobe_main(int argc, char** argv) {
+         return EXIT_FAILURE;
+     }
+ 
+-    Modprobe m(mod_dirs, "modules.load", blocklist);
++    Modprobe m(mod_dirs);
++    if (blocklist) {
++        m.EnableBlocklist(true);
++    }
+ 
+     for (const auto& module : modules) {
+         switch (mode) {
+-- 
+2.17.1
+

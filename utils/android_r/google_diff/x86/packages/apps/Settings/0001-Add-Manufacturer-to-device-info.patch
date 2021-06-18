@@ -1,7 +1,7 @@
-From 7b2ef1a9b5737f0627a353e196ee4bfc53300e42 Mon Sep 17 00:00:00 2001
+From b4aa7b850f4a29cd335ecaa12ff5efb7d16e0772 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 8 Dec 2017 17:08:43 +0800
-Subject: [PATCH 1/4] Add Manufacturer to device info
+Subject: [PATCH] Add Manufacturer to device info
 
 Add an item to display manufacturer in hardware info page.
 ---
@@ -92,7 +92,7 @@ Add an item to display manufacturer in hardware info page.
  create mode 100644 src/com/android/settings/deviceinfo/hardwareinfo/DeviceManufacturerPreferenceController.java
 
 diff --git a/res/values-af/strings.xml b/res/values-af/strings.xml
-index 54cbcf2f20..cd4c6cb3c5 100644
+index f1fc2046ca..76b0f8cdaf 100644
 --- a/res/values-af/strings.xml
 +++ b/res/values-af/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -104,7 +104,7 @@ index 54cbcf2f20..cd4c6cb3c5 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model en hardeware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Hardewareweergawe"</string>
 diff --git a/res/values-am/strings.xml b/res/values-am/strings.xml
-index 26e99a85f7..195017ba43 100644
+index fef874a0d2..f926a60c1a 100644
 --- a/res/values-am/strings.xml
 +++ b/res/values-am/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -116,7 +116,7 @@ index 26e99a85f7..195017ba43 100644
      <string name="hardware_info" msgid="7035211991066637019">"ሞዴል እና ሃርድዌር"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"የሃርድዌር ስሪት"</string>
 diff --git a/res/values-ar/strings.xml b/res/values-ar/strings.xml
-index bdb62506e8..562c9fa341 100644
+index f253b48049..e6c467825d 100644
 --- a/res/values-ar/strings.xml
 +++ b/res/values-ar/strings.xml
 @@ -1413,6 +1413,7 @@
@@ -128,7 +128,7 @@ index bdb62506e8..562c9fa341 100644
      <string name="hardware_info" msgid="7035211991066637019">"الطراز والجهاز"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"إصدار الجهاز"</string>
 diff --git a/res/values-as/strings.xml b/res/values-as/strings.xml
-index 2f41b4c560..68482d627b 100644
+index 8181cc397a..c7bf1833f9 100644
 --- a/res/values-as/strings.xml
 +++ b/res/values-as/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -140,19 +140,19 @@ index 2f41b4c560..68482d627b 100644
      <string name="hardware_info" msgid="7035211991066637019">"মডেল আৰু হাৰ্ডৱেৰ"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"হাৰ্ডৱেৰৰ সংস্কৰণ"</string>
 diff --git a/res/values-az/strings.xml b/res/values-az/strings.xml
-index ef9e4cdcf7..0a73c64037 100644
+index e28aae6b88..4e7fccd023 100644
 --- a/res/values-az/strings.xml
 +++ b/res/values-az/strings.xml
 @@ -1329,6 +1329,7 @@
      <string name="system_update_settings_list_item_summary" msgid="6703752298349642101"></string>
      <string name="firmware_version" msgid="1606901586501447275">"Android versiyası"</string>
-     <string name="security_patch" msgid="4071756145347865382">"Android güvənlik güncəlləməsi"</string>
+     <string name="security_patch" msgid="4071756145347865382">"Android güvənlik güncəllənməsi"</string>
 +    <string name="device_manufacturer" msgid="3516742885166545865">"İstehsalçı"</string>
      <string name="model_info" msgid="8997566254717810904">"Model"</string>
      <string name="hardware_info" msgid="7035211991066637019">"Model və avadanlıq"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Avadanlıq versiyası"</string>
 diff --git a/res/values-b+sr+Latn/strings.xml b/res/values-b+sr+Latn/strings.xml
-index f4d69d5f95..ad1e06ee67 100644
+index e6829ebe3b..90bd4b40bf 100644
 --- a/res/values-b+sr+Latn/strings.xml
 +++ b/res/values-b+sr+Latn/strings.xml
 @@ -1350,6 +1350,7 @@
@@ -164,7 +164,7 @@ index f4d69d5f95..ad1e06ee67 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model i hardver"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Verzija hardvera"</string>
 diff --git a/res/values-be/strings.xml b/res/values-be/strings.xml
-index c017edc2b8..75bea253a8 100644
+index 01154b46a0..794feb5350 100644
 --- a/res/values-be/strings.xml
 +++ b/res/values-be/strings.xml
 @@ -1371,6 +1371,7 @@
@@ -176,7 +176,7 @@ index c017edc2b8..75bea253a8 100644
      <string name="hardware_info" msgid="7035211991066637019">"Мадэль і апаратнае забеспячэнне"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Версія апаратнага забеспячэння"</string>
 diff --git a/res/values-bg/strings.xml b/res/values-bg/strings.xml
-index 6cd62a4b7f..7bd50fca3a 100644
+index a9efebe398..2e31d6190a 100644
 --- a/res/values-bg/strings.xml
 +++ b/res/values-bg/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -188,7 +188,7 @@ index 6cd62a4b7f..7bd50fca3a 100644
      <string name="hardware_info" msgid="7035211991066637019">"Модел и хардуер"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Версия на хардуера"</string>
 diff --git a/res/values-bn/strings.xml b/res/values-bn/strings.xml
-index 7dfc5b6222..77aa6ccf17 100644
+index 6c1ef938f2..e95c578600 100644
 --- a/res/values-bn/strings.xml
 +++ b/res/values-bn/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -200,7 +200,7 @@ index 7dfc5b6222..77aa6ccf17 100644
      <string name="hardware_info" msgid="7035211991066637019">"মডেল ও হার্ডওয়্যার"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"হার্ডওয়্যার ভার্সন"</string>
 diff --git a/res/values-bs/strings.xml b/res/values-bs/strings.xml
-index d06b13fefc..e8f6f3c111 100644
+index 5c130819da..4a16973e40 100644
 --- a/res/values-bs/strings.xml
 +++ b/res/values-bs/strings.xml
 @@ -1350,6 +1350,7 @@
@@ -212,7 +212,7 @@ index d06b13fefc..e8f6f3c111 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model i hardver"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Verzija hardvera"</string>
 diff --git a/res/values-ca/strings.xml b/res/values-ca/strings.xml
-index a040f4d15a..95499d7f1d 100644
+index e45d775e36..07847b8b11 100644
 --- a/res/values-ca/strings.xml
 +++ b/res/values-ca/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -224,7 +224,7 @@ index a040f4d15a..95499d7f1d 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model i maquinari"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Versió del maquinari"</string>
 diff --git a/res/values-cs/strings.xml b/res/values-cs/strings.xml
-index 1d240ede4b..53133dca9f 100644
+index 683fdc0cd0..bece810392 100644
 --- a/res/values-cs/strings.xml
 +++ b/res/values-cs/strings.xml
 @@ -1371,6 +1371,7 @@
@@ -236,7 +236,7 @@ index 1d240ede4b..53133dca9f 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model a hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Verze hardwaru"</string>
 diff --git a/res/values-da/strings.xml b/res/values-da/strings.xml
-index 03cd9c7083..c7ff8b47c6 100644
+index e31b5ab4cc..ce0a42c5db 100644
 --- a/res/values-da/strings.xml
 +++ b/res/values-da/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -248,7 +248,7 @@ index 03cd9c7083..c7ff8b47c6 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model og hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Hardwareversion"</string>
 diff --git a/res/values-de/strings.xml b/res/values-de/strings.xml
-index 4fd7b0a4e1..ec16861824 100644
+index 9a67c64052..419311eeec 100644
 --- a/res/values-de/strings.xml
 +++ b/res/values-de/strings.xml
 @@ -1330,6 +1330,7 @@
@@ -260,7 +260,7 @@ index 4fd7b0a4e1..ec16861824 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modell und Hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Hardwareversion"</string>
 diff --git a/res/values-el/strings.xml b/res/values-el/strings.xml
-index 52e39c59f1..d847438134 100644
+index 3cd457dd18..aac8c5ef6f 100644
 --- a/res/values-el/strings.xml
 +++ b/res/values-el/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -272,7 +272,7 @@ index 52e39c59f1..d847438134 100644
      <string name="hardware_info" msgid="7035211991066637019">"Μοντέλο και εξοπλισμός"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Έκδοση εξοπλισμού"</string>
 diff --git a/res/values-es-rUS/strings.xml b/res/values-es-rUS/strings.xml
-index 9160f934ff..4702bc046b 100644
+index 8728d59267..9fc648c187 100644
 --- a/res/values-es-rUS/strings.xml
 +++ b/res/values-es-rUS/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -284,7 +284,7 @@ index 9160f934ff..4702bc046b 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modelo y hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Versión de hardware"</string>
 diff --git a/res/values-es/strings.xml b/res/values-es/strings.xml
-index 9d2e500de9..988162a05c 100644
+index 92e58a021e..f759a845ee 100644
 --- a/res/values-es/strings.xml
 +++ b/res/values-es/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -296,7 +296,7 @@ index 9d2e500de9..988162a05c 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modelo y hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Versión de hardware"</string>
 diff --git a/res/values-et/strings.xml b/res/values-et/strings.xml
-index 23b84a566f..8e382943fd 100644
+index 50208b7630..d70423c55b 100644
 --- a/res/values-et/strings.xml
 +++ b/res/values-et/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -308,7 +308,7 @@ index 23b84a566f..8e382943fd 100644
      <string name="hardware_info" msgid="7035211991066637019">"Mudel ja riistvara"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Riistvara versioon"</string>
 diff --git a/res/values-eu/strings.xml b/res/values-eu/strings.xml
-index f99b4ad9fb..fd53efe673 100644
+index cb7f2d9207..3341bdc3d6 100644
 --- a/res/values-eu/strings.xml
 +++ b/res/values-eu/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -320,7 +320,7 @@ index f99b4ad9fb..fd53efe673 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modeloa eta hardwarea"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Hardware-bertsioa"</string>
 diff --git a/res/values-fa/strings.xml b/res/values-fa/strings.xml
-index b45ee4ba3e..e84b2932e9 100644
+index fc8ccb18c6..04b122b744 100644
 --- a/res/values-fa/strings.xml
 +++ b/res/values-fa/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -332,7 +332,7 @@ index b45ee4ba3e..e84b2932e9 100644
      <string name="hardware_info" msgid="7035211991066637019">"مدل و سخت‌افزار"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"نسخه سخت‌افزار"</string>
 diff --git a/res/values-fi/strings.xml b/res/values-fi/strings.xml
-index eb143f9d41..36e6829200 100644
+index c4860fbd28..36d6f9035b 100644
 --- a/res/values-fi/strings.xml
 +++ b/res/values-fi/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -344,7 +344,7 @@ index eb143f9d41..36e6829200 100644
      <string name="hardware_info" msgid="7035211991066637019">"Malli ja laitteisto"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Laitteistoversio"</string>
 diff --git a/res/values-fr-rCA/strings.xml b/res/values-fr-rCA/strings.xml
-index 7c734f1c07..39495419d9 100644
+index 4289d1d02d..e190fd79bd 100644
 --- a/res/values-fr-rCA/strings.xml
 +++ b/res/values-fr-rCA/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -356,7 +356,7 @@ index 7c734f1c07..39495419d9 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modèle et matériel"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Version du matériel"</string>
 diff --git a/res/values-fr/strings.xml b/res/values-fr/strings.xml
-index fd63998d3c..fe8b7c496f 100644
+index 724abf28f9..455476ffb9 100644
 --- a/res/values-fr/strings.xml
 +++ b/res/values-fr/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -368,7 +368,7 @@ index fd63998d3c..fe8b7c496f 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modèle et matériel"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Version du matériel"</string>
 diff --git a/res/values-gl/strings.xml b/res/values-gl/strings.xml
-index 142f21cab6..40e868bb3d 100644
+index 6d27eb4376..59687f9736 100644
 --- a/res/values-gl/strings.xml
 +++ b/res/values-gl/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -380,7 +380,7 @@ index 142f21cab6..40e868bb3d 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modelo e hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Versión de hardware"</string>
 diff --git a/res/values-gu/strings.xml b/res/values-gu/strings.xml
-index d866da41a9..349945e134 100644
+index 3f628f4271..78101f1c13 100644
 --- a/res/values-gu/strings.xml
 +++ b/res/values-gu/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -388,11 +388,11 @@ index d866da41a9..349945e134 100644
      <string name="firmware_version" msgid="1606901586501447275">"Android વર્ઝન"</string>
      <string name="security_patch" msgid="4071756145347865382">"Android માટે સુરક્ષા અપડેટ"</string>
 +    <string name="device_manufacturer" msgid="3516742885166545865">"નિર્માતા"</string>
-     <string name="model_info" msgid="8997566254717810904">"મોડલ"</string>
+     <string name="model_info" msgid="8997566254717810904">"મૉડલ"</string>
      <string name="hardware_info" msgid="7035211991066637019">"મૉડલ અને હાર્ડવેર"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"હાર્ડવેર વર્ઝન"</string>
 diff --git a/res/values-hi/strings.xml b/res/values-hi/strings.xml
-index 0fb42cffbc..ce77b60a36 100644
+index 7f1548c4ca..22bb12d052 100644
 --- a/res/values-hi/strings.xml
 +++ b/res/values-hi/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -404,7 +404,7 @@ index 0fb42cffbc..ce77b60a36 100644
      <string name="hardware_info" msgid="7035211991066637019">"मॉडल और हार्डवेयर"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"हार्डवेयर वर्शन"</string>
 diff --git a/res/values-hr/strings.xml b/res/values-hr/strings.xml
-index c4f4353841..a858b951e2 100644
+index 1592b14f1c..fe95e60596 100644
 --- a/res/values-hr/strings.xml
 +++ b/res/values-hr/strings.xml
 @@ -1350,6 +1350,7 @@
@@ -416,7 +416,7 @@ index c4f4353841..a858b951e2 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model i hardver"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Verzija hardvera"</string>
 diff --git a/res/values-hu/strings.xml b/res/values-hu/strings.xml
-index 4f504845fb..cfaace9d84 100644
+index 046ef026c5..00b9a00aff 100644
 --- a/res/values-hu/strings.xml
 +++ b/res/values-hu/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -428,7 +428,7 @@ index 4f504845fb..cfaace9d84 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modell és hardver"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Hardververzió"</string>
 diff --git a/res/values-hy/strings.xml b/res/values-hy/strings.xml
-index db360285eb..3d44831fb1 100644
+index 38242621dc..8ac8ae815e 100644
 --- a/res/values-hy/strings.xml
 +++ b/res/values-hy/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -440,7 +440,7 @@ index db360285eb..3d44831fb1 100644
      <string name="hardware_info" msgid="7035211991066637019">"Մոդել և սարքակազմ"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Սարքակազմի տարբերակը"</string>
 diff --git a/res/values-in/strings.xml b/res/values-in/strings.xml
-index c19f818242..382e1d535c 100644
+index cd99686945..473ba1c153 100644
 --- a/res/values-in/strings.xml
 +++ b/res/values-in/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -452,7 +452,7 @@ index c19f818242..382e1d535c 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model &amp; hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Versi hardware"</string>
 diff --git a/res/values-is/strings.xml b/res/values-is/strings.xml
-index 873b27ee2c..87314c7e03 100644
+index 98565c8f24..00171108fd 100644
 --- a/res/values-is/strings.xml
 +++ b/res/values-is/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -464,7 +464,7 @@ index 873b27ee2c..87314c7e03 100644
      <string name="hardware_info" msgid="7035211991066637019">"Gerð og vélbúnaður"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Vélbúnaðarútgáfa"</string>
 diff --git a/res/values-it/strings.xml b/res/values-it/strings.xml
-index 6b842efbbc..36e7cd2c17 100644
+index c5281bb1bf..64935beaa5 100644
 --- a/res/values-it/strings.xml
 +++ b/res/values-it/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -476,19 +476,19 @@ index 6b842efbbc..36e7cd2c17 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modello e hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Versione hardware"</string>
 diff --git a/res/values-iw/strings.xml b/res/values-iw/strings.xml
-index 3176722549..dac1e33caf 100644
+index 6b55639062..00254c1b65 100644
 --- a/res/values-iw/strings.xml
 +++ b/res/values-iw/strings.xml
 @@ -1371,6 +1371,7 @@
      <string name="system_update_settings_list_item_summary" msgid="6703752298349642101"></string>
      <string name="firmware_version" msgid="1606901586501447275">"‏גרסת Android"</string>
-     <string name="security_patch" msgid="4071756145347865382">"‏עדכון אבטחה ל-Android"</string>
+     <string name="security_patch" msgid="4071756145347865382">"‏עדכון אבטחה ל-‏Android"</string>
 +    <string name="device_manufacturer" msgid="3516742885166545865">"יצרן"</string>
      <string name="model_info" msgid="8997566254717810904">"דגם"</string>
      <string name="hardware_info" msgid="7035211991066637019">"דגם וחומרה"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"גרסת חומרה"</string>
 diff --git a/res/values-ja/strings.xml b/res/values-ja/strings.xml
-index 8f3f0ec4ee..fc712cb256 100644
+index 5054a8dbff..2a5eddbbc2 100644
 --- a/res/values-ja/strings.xml
 +++ b/res/values-ja/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -500,7 +500,7 @@ index 8f3f0ec4ee..fc712cb256 100644
      <string name="hardware_info" msgid="7035211991066637019">"モデルとハードウェア"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"ハードウェア バージョン"</string>
 diff --git a/res/values-ka/strings.xml b/res/values-ka/strings.xml
-index 06b857cd68..25c8bcb01c 100644
+index f3a530212f..343187e517 100644
 --- a/res/values-ka/strings.xml
 +++ b/res/values-ka/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -512,7 +512,7 @@ index 06b857cd68..25c8bcb01c 100644
      <string name="hardware_info" msgid="7035211991066637019">"მოდელი და აპარატურა"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"აპარატურის ვერსია"</string>
 diff --git a/res/values-kk/strings.xml b/res/values-kk/strings.xml
-index 7b8dc07e2b..d67d73425c 100644
+index 19bb4c1734..e6ac24392b 100644
 --- a/res/values-kk/strings.xml
 +++ b/res/values-kk/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -524,7 +524,7 @@ index 7b8dc07e2b..d67d73425c 100644
      <string name="hardware_info" msgid="7035211991066637019">"Үлгі және жабдық"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Жабдық нұсқасы"</string>
 diff --git a/res/values-km/strings.xml b/res/values-km/strings.xml
-index ad5a5a42ea..3af9abf1a1 100644
+index d94f5d335c..c16a634fa3 100644
 --- a/res/values-km/strings.xml
 +++ b/res/values-km/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -536,7 +536,7 @@ index ad5a5a42ea..3af9abf1a1 100644
      <string name="hardware_info" msgid="7035211991066637019">"ម៉ូដែល និងហាតវែរ"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"កំណែ​ហាតវែរ"</string>
 diff --git a/res/values-kn/strings.xml b/res/values-kn/strings.xml
-index 0d4494ed29..ea0b113781 100644
+index 366c6d7391..c9bb31a062 100644
 --- a/res/values-kn/strings.xml
 +++ b/res/values-kn/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -548,7 +548,7 @@ index 0d4494ed29..ea0b113781 100644
      <string name="hardware_info" msgid="7035211991066637019">"ಮಾಡೆಲ್ ಮತ್ತು ಹಾರ್ಡ್‌ವೇರ್"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"ಹಾರ್ಡ್‌ವೇರ್ ಆವೃತ್ತಿ"</string>
 diff --git a/res/values-ko/strings.xml b/res/values-ko/strings.xml
-index 199249dee8..8a44ce1d83 100644
+index ddcc78d3de..b360e84137 100644
 --- a/res/values-ko/strings.xml
 +++ b/res/values-ko/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -560,19 +560,19 @@ index 199249dee8..8a44ce1d83 100644
      <string name="hardware_info" msgid="7035211991066637019">"모델 및 하드웨어"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"하드웨어 버전"</string>
 diff --git a/res/values-ky/strings.xml b/res/values-ky/strings.xml
-index e43894adbe..a41da5464c 100644
+index 1370fe210a..972f445b77 100644
 --- a/res/values-ky/strings.xml
 +++ b/res/values-ky/strings.xml
 @@ -1329,6 +1329,7 @@
      <string name="system_update_settings_list_item_summary" msgid="6703752298349642101"></string>
      <string name="firmware_version" msgid="1606901586501447275">"Android версиясы"</string>
-     <string name="security_patch" msgid="4071756145347865382">"Android\'дин коопсуздукту жаңыртуусу"</string>
+     <string name="security_patch" msgid="4071756145347865382">"Android\'дин коопсуздук тутумун жаңыртуу"</string>
 +    <string name="device_manufacturer" msgid="3516742885166545865">"Өндүрүүчү"</string>
      <string name="model_info" msgid="8997566254717810904">"Үлгүсү"</string>
      <string name="hardware_info" msgid="7035211991066637019">"Түзмөктүн үлгүсү/аппараттык камсыздалышы"</string>
-     <string name="hardware_revision" msgid="3454709180861965025">"Аппараттык камсыздоонун версиясы"</string>
+     <string name="hardware_revision" msgid="3454709180861965025">"Аппараттын версиясы"</string>
 diff --git a/res/values-lo/strings.xml b/res/values-lo/strings.xml
-index cd47ae99ad..46e6d82830 100644
+index 0d09a938a0..5693b99d7d 100644
 --- a/res/values-lo/strings.xml
 +++ b/res/values-lo/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -584,7 +584,7 @@ index cd47ae99ad..46e6d82830 100644
      <string name="hardware_info" msgid="7035211991066637019">"ໂມເດວ ແລະ ຮາດແວ"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"ເວີຊັນຂອງຮາດແວ"</string>
 diff --git a/res/values-lt/strings.xml b/res/values-lt/strings.xml
-index 70656da5cf..5405a146d8 100644
+index b504884ebc..1f817b813a 100644
 --- a/res/values-lt/strings.xml
 +++ b/res/values-lt/strings.xml
 @@ -1371,6 +1371,7 @@
@@ -596,7 +596,7 @@ index 70656da5cf..5405a146d8 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modelis, aparat. įranga"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Aparatinės įrangos versija"</string>
 diff --git a/res/values-lv/strings.xml b/res/values-lv/strings.xml
-index b5ae8995f1..888249ca38 100644
+index d6b4337234..c85b4f5175 100644
 --- a/res/values-lv/strings.xml
 +++ b/res/values-lv/strings.xml
 @@ -1350,6 +1350,7 @@
@@ -608,7 +608,7 @@ index b5ae8995f1..888249ca38 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modelis un aparatūra"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Aparatūras versija"</string>
 diff --git a/res/values-mk/strings.xml b/res/values-mk/strings.xml
-index 7e03a1563c..d079da1b12 100644
+index ed11c5cc35..6cdb8f0184 100644
 --- a/res/values-mk/strings.xml
 +++ b/res/values-mk/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -620,7 +620,7 @@ index 7e03a1563c..d079da1b12 100644
      <string name="hardware_info" msgid="7035211991066637019">"Модел и хардвер"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Верзија на хардвер"</string>
 diff --git a/res/values-ml/strings.xml b/res/values-ml/strings.xml
-index ccb085d8e9..5cd88f0957 100644
+index 028adbeebe..845ff6afb9 100644
 --- a/res/values-ml/strings.xml
 +++ b/res/values-ml/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -632,7 +632,7 @@ index ccb085d8e9..5cd88f0957 100644
      <string name="hardware_info" msgid="7035211991066637019">"മോഡലും ഹാർഡ്‌വെയറും"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"ഹാർഡ്‌വെയർ പതിപ്പ്"</string>
 diff --git a/res/values-mn/strings.xml b/res/values-mn/strings.xml
-index 9a9b7210d9..c9281f17ce 100644
+index 303f1ffdac..9bdce54439 100644
 --- a/res/values-mn/strings.xml
 +++ b/res/values-mn/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -644,7 +644,7 @@ index 9a9b7210d9..c9281f17ce 100644
      <string name="hardware_info" msgid="7035211991066637019">"Загвар, техник хангамж"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Техник хангамжийн хувилбар"</string>
 diff --git a/res/values-mr/strings.xml b/res/values-mr/strings.xml
-index f832f0729d..5838d942b7 100644
+index 86b4fd2302..7a87c84bc3 100644
 --- a/res/values-mr/strings.xml
 +++ b/res/values-mr/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -656,7 +656,7 @@ index f832f0729d..5838d942b7 100644
      <string name="hardware_info" msgid="7035211991066637019">"मॉडेल आणि हार्डवेअर"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"हार्डवेअर आवृत्‍ती"</string>
 diff --git a/res/values-ms/strings.xml b/res/values-ms/strings.xml
-index dd5b3ff4cd..83e3158931 100644
+index 49fe0b7c7e..8e1f4d1a4e 100644
 --- a/res/values-ms/strings.xml
 +++ b/res/values-ms/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -668,7 +668,7 @@ index dd5b3ff4cd..83e3158931 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model &amp; perkakasan"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Versi perkakasan"</string>
 diff --git a/res/values-my/strings.xml b/res/values-my/strings.xml
-index e8ac4e4b11..70d910fe43 100644
+index 2b20214e10..a9b9105702 100644
 --- a/res/values-my/strings.xml
 +++ b/res/values-my/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -680,7 +680,7 @@ index e8ac4e4b11..70d910fe43 100644
      <string name="hardware_info" msgid="7035211991066637019">"မော်ဒယ်နှင့် စက်ပစ္စည်း"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"စက်ပစ္စည်းဗားရှင်း"</string>
 diff --git a/res/values-nb/strings.xml b/res/values-nb/strings.xml
-index d310e76f1a..65080d0044 100644
+index a7137f7afd..bf1d93e547 100644
 --- a/res/values-nb/strings.xml
 +++ b/res/values-nb/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -692,19 +692,19 @@ index d310e76f1a..65080d0044 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modell og maskinvare"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Maskinvareversjon"</string>
 diff --git a/res/values-ne/strings.xml b/res/values-ne/strings.xml
-index c9bed39f0d..e969cb26a7 100644
+index 3aa63280e7..7dc5fb149c 100644
 --- a/res/values-ne/strings.xml
 +++ b/res/values-ne/strings.xml
 @@ -1329,6 +1329,7 @@
      <string name="system_update_settings_list_item_summary" msgid="6703752298349642101"></string>
-     <string name="firmware_version" msgid="1606901586501447275">"एन्ड्रोइड संस्करण"</string>
-     <string name="security_patch" msgid="4071756145347865382">"Android को सुरक्षासम्बन्धी अद्यावधिक"</string>
+     <string name="firmware_version" msgid="1606901586501447275">"Android संस्करण"</string>
+     <string name="security_patch" msgid="4071756145347865382">"Android को सुरक्षासम्बन्धी अपडेट"</string>
 +    <string name="device_manufacturer" msgid="3516742885166545865">"निर्माता"</string>
      <string name="model_info" msgid="8997566254717810904">"मोडेल"</string>
      <string name="hardware_info" msgid="7035211991066637019">"मोडेल तथा हार्डवेयर"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"हार्डवेयरको संस्करण"</string>
 diff --git a/res/values-nl/strings.xml b/res/values-nl/strings.xml
-index 0a8dc47165..2fa797b0d5 100644
+index 0fde2b3bcc..bd6c31a029 100644
 --- a/res/values-nl/strings.xml
 +++ b/res/values-nl/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -716,7 +716,7 @@ index 0a8dc47165..2fa797b0d5 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model en hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Hardwareversie"</string>
 diff --git a/res/values-or/strings.xml b/res/values-or/strings.xml
-index 09f30a91b4..a96ab4fcec 100644
+index d09f4f4b81..aa072df6b7 100644
 --- a/res/values-or/strings.xml
 +++ b/res/values-or/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -728,7 +728,7 @@ index 09f30a91b4..a96ab4fcec 100644
      <string name="hardware_info" msgid="7035211991066637019">"ମଡେଲ୍‌ ଓ ହାର୍ଡୱେର୍"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"ହାର୍ଡୱେର୍‌ ଭର୍ସନ୍‌"</string>
 diff --git a/res/values-pa/strings.xml b/res/values-pa/strings.xml
-index 5ecdf7ef3f..b9994359b1 100644
+index 6e31b7262d..ffdfade952 100644
 --- a/res/values-pa/strings.xml
 +++ b/res/values-pa/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -740,7 +740,7 @@ index 5ecdf7ef3f..b9994359b1 100644
      <string name="hardware_info" msgid="7035211991066637019">"ਮਾਡਲ ਅਤੇ ਹਾਰਡਵੇਅਰ"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"ਹਾਰਡਵੇਅਰ ਵਰਜਨ"</string>
 diff --git a/res/values-pl/strings.xml b/res/values-pl/strings.xml
-index 8d9c5fac83..f20eee3894 100644
+index f2ec18e5f5..a030724459 100644
 --- a/res/values-pl/strings.xml
 +++ b/res/values-pl/strings.xml
 @@ -1371,6 +1371,7 @@
@@ -752,7 +752,7 @@ index 8d9c5fac83..f20eee3894 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model i sprzęt"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Wersja sprzętu"</string>
 diff --git a/res/values-pt-rBR/strings.xml b/res/values-pt-rBR/strings.xml
-index ccfa74b966..19e233e384 100644
+index 5da1a99c90..89480a26ee 100644
 --- a/res/values-pt-rBR/strings.xml
 +++ b/res/values-pt-rBR/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -764,7 +764,7 @@ index ccfa74b966..19e233e384 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modelo e hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Versão do hardware"</string>
 diff --git a/res/values-pt-rPT/strings.xml b/res/values-pt-rPT/strings.xml
-index 2ae94c2313..7d39f030d9 100644
+index d209abdbd5..33037ecd36 100644
 --- a/res/values-pt-rPT/strings.xml
 +++ b/res/values-pt-rPT/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -776,7 +776,7 @@ index 2ae94c2313..7d39f030d9 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modelo e hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Versão do hardware"</string>
 diff --git a/res/values-pt/strings.xml b/res/values-pt/strings.xml
-index ccfa74b966..19e233e384 100644
+index 5da1a99c90..89480a26ee 100644
 --- a/res/values-pt/strings.xml
 +++ b/res/values-pt/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -788,7 +788,7 @@ index ccfa74b966..19e233e384 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modelo e hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Versão do hardware"</string>
 diff --git a/res/values-ro/strings.xml b/res/values-ro/strings.xml
-index 16ed3949ba..ed5ba6b91b 100644
+index 5d23497777..4216ca13f3 100644
 --- a/res/values-ro/strings.xml
 +++ b/res/values-ro/strings.xml
 @@ -1350,6 +1350,7 @@
@@ -800,7 +800,7 @@ index 16ed3949ba..ed5ba6b91b 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model și hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Versiune de hardware"</string>
 diff --git a/res/values-ru/strings.xml b/res/values-ru/strings.xml
-index 8d88a66d45..05b7315f3e 100644
+index b56fa27e20..5f3c4b53d7 100644
 --- a/res/values-ru/strings.xml
 +++ b/res/values-ru/strings.xml
 @@ -1371,6 +1371,7 @@
@@ -812,7 +812,7 @@ index 8d88a66d45..05b7315f3e 100644
      <string name="hardware_info" msgid="7035211991066637019">"Модель и аппаратное обеспечение"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Версия аппаратного обеспечения"</string>
 diff --git a/res/values-si/strings.xml b/res/values-si/strings.xml
-index cc96b33f40..053054a2dd 100644
+index e327f88fae..8b1002ea3c 100644
 --- a/res/values-si/strings.xml
 +++ b/res/values-si/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -824,19 +824,19 @@ index cc96b33f40..053054a2dd 100644
      <string name="hardware_info" msgid="7035211991066637019">"මාදිලිය සහ දෘඨාංග"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"දෘඨාංග අනුවාදය"</string>
 diff --git a/res/values-sk/strings.xml b/res/values-sk/strings.xml
-index fb8a26e404..ea7c67b642 100644
+index da3b46d014..48a749ece5 100644
 --- a/res/values-sk/strings.xml
 +++ b/res/values-sk/strings.xml
 @@ -1371,6 +1371,7 @@
      <string name="system_update_settings_list_item_summary" msgid="6703752298349642101"></string>
-     <string name="firmware_version" msgid="1606901586501447275">"Verzia systému Android"</string>
+     <string name="firmware_version" msgid="1606901586501447275">"Verzia Androidu"</string>
      <string name="security_patch" msgid="4071756145347865382">"Aktualizácia zabezpečenia Androidu"</string>
 +    <string name="device_manufacturer" msgid="3516742885166545865">"Výrobca"</string>
      <string name="model_info" msgid="8997566254717810904">"Model"</string>
      <string name="hardware_info" msgid="7035211991066637019">"Model a hardvér"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Hardvérová verzia"</string>
 diff --git a/res/values-sl/strings.xml b/res/values-sl/strings.xml
-index 6d847653f8..efa5db01b8 100644
+index 0f76821f7f..cc93f8be22 100644
 --- a/res/values-sl/strings.xml
 +++ b/res/values-sl/strings.xml
 @@ -1371,6 +1371,7 @@
@@ -848,19 +848,19 @@ index 6d847653f8..efa5db01b8 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model in strojna oprema"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Različica strojne opreme"</string>
 diff --git a/res/values-sq/strings.xml b/res/values-sq/strings.xml
-index e3726206a2..a1380eb5ba 100644
+index 4662d1e8a6..3688999081 100644
 --- a/res/values-sq/strings.xml
 +++ b/res/values-sq/strings.xml
 @@ -1329,6 +1329,7 @@
      <string name="system_update_settings_list_item_summary" msgid="6703752298349642101"></string>
      <string name="firmware_version" msgid="1606901586501447275">"Versioni i Android"</string>
-     <string name="security_patch" msgid="4071756145347865382">"Përditësim sigurie për Android:"</string>
+     <string name="security_patch" msgid="4071756145347865382">"Përditësim sigurie për Android"</string>
 +    <string name="device_manufacturer" msgid="3516742885166545865">"Prodhuesi"</string>
      <string name="model_info" msgid="8997566254717810904">"Modeli"</string>
      <string name="hardware_info" msgid="7035211991066637019">"Modeli dhe hardueri"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Versioni i harduerit"</string>
 diff --git a/res/values-sr/strings.xml b/res/values-sr/strings.xml
-index 5f8de8b974..4fe708b269 100644
+index b69f369584..805113c298 100644
 --- a/res/values-sr/strings.xml
 +++ b/res/values-sr/strings.xml
 @@ -1350,6 +1350,7 @@
@@ -872,7 +872,7 @@ index 5f8de8b974..4fe708b269 100644
      <string name="hardware_info" msgid="7035211991066637019">"Модел и хардвер"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Верзија хардвера"</string>
 diff --git a/res/values-sv/strings.xml b/res/values-sv/strings.xml
-index 3650d01ff6..370567c180 100644
+index bf295b86e8..19d8d9c834 100644
 --- a/res/values-sv/strings.xml
 +++ b/res/values-sv/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -884,7 +884,7 @@ index 3650d01ff6..370567c180 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modell och maskinvara"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Maskinvaruversion"</string>
 diff --git a/res/values-sw/strings.xml b/res/values-sw/strings.xml
-index 79ef34f5a1..172ef0d1ae 100644
+index 4141906c4c..82f793ea30 100644
 --- a/res/values-sw/strings.xml
 +++ b/res/values-sw/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -896,7 +896,7 @@ index 79ef34f5a1..172ef0d1ae 100644
      <string name="hardware_info" msgid="7035211991066637019">"Muundo na maunzi"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Toleo la maunzi"</string>
 diff --git a/res/values-ta/strings.xml b/res/values-ta/strings.xml
-index cc6cf2c338..5ce050ae9c 100644
+index d33b988151..30288557e1 100644
 --- a/res/values-ta/strings.xml
 +++ b/res/values-ta/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -908,19 +908,19 @@ index cc6cf2c338..5ce050ae9c 100644
      <string name="hardware_info" msgid="7035211991066637019">"மாடல் &amp; வன்பொருள்"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"வன்பொருள் பதிப்பு"</string>
 diff --git a/res/values-te/strings.xml b/res/values-te/strings.xml
-index b3ed3cc271..a21dfc705e 100644
+index c04c567880..6b6d7f2bb2 100644
 --- a/res/values-te/strings.xml
 +++ b/res/values-te/strings.xml
 @@ -1329,6 +1329,7 @@
      <string name="system_update_settings_list_item_summary" msgid="6703752298349642101"></string>
      <string name="firmware_version" msgid="1606901586501447275">"Android వెర్షన్"</string>
-     <string name="security_patch" msgid="4071756145347865382">"Android భద్రతా అప్‌డేట్"</string>
+     <string name="security_patch" msgid="4071756145347865382">"Android సెక్యూరిటీ అప్‌డేట్"</string>
 +    <string name="device_manufacturer" msgid="3516742885166545865">"తయారీదారు"</string>
      <string name="model_info" msgid="8997566254717810904">"మోడల్"</string>
      <string name="hardware_info" msgid="7035211991066637019">"మోడల్ &amp; హార్డ్‌వేర్"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"హార్డ్‌వేర్ వెర్షన్"</string>
 diff --git a/res/values-th/strings.xml b/res/values-th/strings.xml
-index 5da06a37bc..dd4d52c91f 100644
+index a79be16a99..1aca536302 100644
 --- a/res/values-th/strings.xml
 +++ b/res/values-th/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -932,7 +932,7 @@ index 5da06a37bc..dd4d52c91f 100644
      <string name="hardware_info" msgid="7035211991066637019">"โมเดลและฮาร์ดแวร์"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"เวอร์ชันฮาร์ดแวร์"</string>
 diff --git a/res/values-tl/strings.xml b/res/values-tl/strings.xml
-index e20925671e..843b68c3f3 100644
+index 93b74239b1..07ce4a42ad 100644
 --- a/res/values-tl/strings.xml
 +++ b/res/values-tl/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -944,7 +944,7 @@ index e20925671e..843b68c3f3 100644
      <string name="hardware_info" msgid="7035211991066637019">"Modelo at hardware"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Bersyon ng hardware"</string>
 diff --git a/res/values-tr/strings.xml b/res/values-tr/strings.xml
-index 297576e597..3be1045cbc 100644
+index 8dda4cddda..85eca18707 100644
 --- a/res/values-tr/strings.xml
 +++ b/res/values-tr/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -956,7 +956,7 @@ index 297576e597..3be1045cbc 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model ve donanım"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Donanım sürümü"</string>
 diff --git a/res/values-uk/strings.xml b/res/values-uk/strings.xml
-index 20e4df7ed5..f55fff8d85 100644
+index 0cd268f6ec..152fd8bfe1 100644
 --- a/res/values-uk/strings.xml
 +++ b/res/values-uk/strings.xml
 @@ -1371,6 +1371,7 @@
@@ -968,7 +968,7 @@ index 20e4df7ed5..f55fff8d85 100644
      <string name="hardware_info" msgid="7035211991066637019">"Модель і апаратне забезпечення"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Версія апаратного забезпечення"</string>
 diff --git a/res/values-ur/strings.xml b/res/values-ur/strings.xml
-index 31a574f48a..10c52d20b7 100644
+index 17565c6d4c..9fbd0c2af1 100644
 --- a/res/values-ur/strings.xml
 +++ b/res/values-ur/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -980,7 +980,7 @@ index 31a574f48a..10c52d20b7 100644
      <string name="hardware_info" msgid="7035211991066637019">"ماڈل اور ہارڈ ویئر"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"ہارڈ ویئر کا ورژن"</string>
 diff --git a/res/values-uz/strings.xml b/res/values-uz/strings.xml
-index 2bd35b7abd..62b6b9e7cb 100644
+index cdba3d6cce..3ba34f090f 100644
 --- a/res/values-uz/strings.xml
 +++ b/res/values-uz/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -992,7 +992,7 @@ index 2bd35b7abd..62b6b9e7cb 100644
      <string name="hardware_info" msgid="7035211991066637019">"Model va qurilma"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Apparat versiyasi"</string>
 diff --git a/res/values-vi/strings.xml b/res/values-vi/strings.xml
-index f1497695b6..b5312ccf26 100644
+index 7a1da707e3..5c646bb313 100644
 --- a/res/values-vi/strings.xml
 +++ b/res/values-vi/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -1004,7 +1004,7 @@ index f1497695b6..b5312ccf26 100644
      <string name="hardware_info" msgid="7035211991066637019">"Kiểu máy và phần cứng"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Phiên bản phần cứng"</string>
 diff --git a/res/values-zh-rCN/strings.xml b/res/values-zh-rCN/strings.xml
-index 3dd1e1ee9c..2c83d04c49 100644
+index 7ff1126a3d..323e3cd8cf 100644
 --- a/res/values-zh-rCN/strings.xml
 +++ b/res/values-zh-rCN/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -1016,7 +1016,7 @@ index 3dd1e1ee9c..2c83d04c49 100644
      <string name="hardware_info" msgid="7035211991066637019">"型号和硬件"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"硬件版本"</string>
 diff --git a/res/values-zh-rHK/strings.xml b/res/values-zh-rHK/strings.xml
-index ae0ffdce67..fb49e9e419 100644
+index 4057ea51ca..d1755958b7 100644
 --- a/res/values-zh-rHK/strings.xml
 +++ b/res/values-zh-rHK/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -1028,7 +1028,7 @@ index ae0ffdce67..fb49e9e419 100644
      <string name="hardware_info" msgid="7035211991066637019">"型號和硬件"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"硬件版本"</string>
 diff --git a/res/values-zh-rTW/strings.xml b/res/values-zh-rTW/strings.xml
-index c1ac3bba7a..4133472cb4 100644
+index e0845f9974..2305ccc207 100644
 --- a/res/values-zh-rTW/strings.xml
 +++ b/res/values-zh-rTW/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -1040,7 +1040,7 @@ index c1ac3bba7a..4133472cb4 100644
      <string name="hardware_info" msgid="7035211991066637019">"型號與硬體"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"硬體版本"</string>
 diff --git a/res/values-zu/strings.xml b/res/values-zu/strings.xml
-index cb46408942..791fed238c 100644
+index e436a75e2b..30bd96f13e 100644
 --- a/res/values-zu/strings.xml
 +++ b/res/values-zu/strings.xml
 @@ -1329,6 +1329,7 @@
@@ -1052,7 +1052,7 @@ index cb46408942..791fed238c 100644
      <string name="hardware_info" msgid="7035211991066637019">"Imodeli nezingxenyekazi zekhompuyutha"</string>
      <string name="hardware_revision" msgid="3454709180861965025">"Inguqulo yezingxenyekazi zekhompuyutha"</string>
 diff --git a/res/values/strings.xml b/res/values/strings.xml
-index 226398ea5e..2dba7c4a36 100644
+index 7e3591fdac..cf1a86c8d9 100644
 --- a/res/values/strings.xml
 +++ b/res/values/strings.xml
 @@ -3055,6 +3055,8 @@
@@ -1143,5 +1143,5 @@ index 0000000000..96c0d5188a
 +    }
 +}
 -- 
-2.30.2
+2.17.1
 

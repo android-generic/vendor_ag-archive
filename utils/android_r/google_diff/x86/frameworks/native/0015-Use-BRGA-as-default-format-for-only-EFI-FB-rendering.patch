@@ -1,4 +1,4 @@
-From 18915245144101a8b5f01f5f577e1e9ceb99fc6f Mon Sep 17 00:00:00 2001
+From d973877bcda4063f80355ac8f18824f378f342bb Mon Sep 17 00:00:00 2001
 From: "Fan, Yugang" <yugang.fan@intel.com>
 Date: Tue, 20 Aug 2019 20:52:43 +0800
 Subject: [PATCH 15/16] Use BRGA as default format for only EFI FB rendering.

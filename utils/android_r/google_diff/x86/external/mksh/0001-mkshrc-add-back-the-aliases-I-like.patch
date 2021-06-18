@@ -1,4 +1,4 @@
-From b634489d8348cd36bac52647ec0036cddbc74ee9 Mon Sep 17 00:00:00 2001
+From 6a7f0ecd5aac2b12b1b1ef94c165f5b7d8fbfc28 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 2 Jul 2015 00:07:20 +0800
 Subject: [PATCH] mkshrc: add back the aliases I like

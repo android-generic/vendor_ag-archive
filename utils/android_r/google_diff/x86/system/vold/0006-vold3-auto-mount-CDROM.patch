@@ -1,4 +1,4 @@
-From 87ee90dd19b240c861da2fa6f77e5aef2400ce5b Mon Sep 17 00:00:00 2001
+From 559e629d6fd127f5f341440f8d6f2e44a0b5cdfa Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 26 Mar 2017 00:45:41 +0800
 Subject: [PATCH 6/8] vold3: auto mount CDROM
@@ -13,7 +13,7 @@ need to handle block devices with major number of CDROM.
  4 files changed, 14 insertions(+), 2 deletions(-)
 
 diff --git a/VolumeManager.cpp b/VolumeManager.cpp
-index cdbc341..4ca3817 100644
+index 4031f3d..aa22b14 100644
 --- a/VolumeManager.cpp
 +++ b/VolumeManager.cpp
 @@ -104,6 +104,7 @@ static const std::string kEmptyString("");
@@ -24,7 +24,7 @@ index cdbc341..4ca3817 100644
  static const unsigned int kMajorBlockMmc = 179;
  
  using ScanProcCallback = bool(*)(uid_t uid, pid_t pid, int nsFd, const char* name, void* params);
-@@ -236,6 +237,8 @@ void VolumeManager::handleBlockEvent(NetlinkEvent* evt) {
+@@ -226,6 +227,8 @@ void VolumeManager::handleBlockEvent(NetlinkEvent* evt) {
                      int flags = source->getFlags();
                      if (major == kMajorBlockMmc || IsVirtioBlkDevice(major)) {
                          flags |= android::vold::Disk::Flags::kSd;
@@ -75,20 +75,20 @@ index 6880341..295e114 100644
              // Per Documentation/devices.txt this is dynamic
              std::string tmp;
 diff --git a/model/Disk.h b/model/Disk.h
-index d13ca88..cf23d76 100644
+index cb2ee9a..4dcef57 100644
 --- a/model/Disk.h
 +++ b/model/Disk.h
-@@ -58,6 +58,8 @@ class Disk {
-         kStub = 1 << 5,
+@@ -61,6 +61,8 @@ class Disk {
+         kStubVisible = 1 << 6,
          /* Flag that disk is non-removable */
-         kNonRemovable = 1 << 6,
+         kNonRemovable = 1 << 7,
 +        /* Flag that disk is CDROM */
-+        kCdrom = 1 << 7,
++        kCdrom = 1 << 8,
      };
  
      const std::string& getId() const { return mId; }
 diff --git a/model/PublicVolume.cpp b/model/PublicVolume.cpp
-index 63d064b..bc08920 100644
+index 29671f1..1fd6286 100644
 --- a/model/PublicVolume.cpp
 +++ b/model/PublicVolume.cpp
 @@ -154,7 +154,7 @@ status_t PublicVolume::doMount() {

@@ -1,7 +1,7 @@
-From efa6f9446bdca67b20d37d4fedd6e31333d95031 Mon Sep 17 00:00:00 2001
+From d1ccaa38c9f1ce2f06206dd7cc9347fc904820ca Mon Sep 17 00:00:00 2001
 From: Alexander Gavrilenko <Alexander.Gavrilenko@gmail.com>
 Date: Fri, 21 Nov 2014 10:23:54 +0300
-Subject: [PATCH 10/89] sony-laptop: Added support for multi-flip screen
+Subject: [PATCH 10/54] sony-laptop: Added support for multi-flip screen
  transfromations.
 
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH 10/89] sony-laptop: Added support for multi-flip screen
  1 file changed, 126 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/platform/x86/sony-laptop.c b/drivers/platform/x86/sony-laptop.c
-index fb088dd8529e..5aa48ade8ee3 100644
+index e5a1b5533408..c934e2043b20 100644
 --- a/drivers/platform/x86/sony-laptop.c
 +++ b/drivers/platform/x86/sony-laptop.c
 @@ -122,6 +122,13 @@ MODULE_PARM_DESC(kbd_backlight_timeout,
@@ -38,7 +38,7 @@ index fb088dd8529e..5aa48ade8ee3 100644
  enum sony_nc_rfkill {
  	SONY_WIFI,
  	SONY_BLUETOOTH,
-@@ -1184,7 +1196,8 @@ static int sony_nc_hotkeys_decode(u32 event, unsigned int handle)
+@@ -1177,7 +1189,8 @@ static int sony_nc_hotkeys_decode(u32 event, unsigned int handle)
  enum event_types {
  	HOTKEY = 1,
  	KILLSWITCH,
@@ -48,7 +48,7 @@ index fb088dd8529e..5aa48ade8ee3 100644
  };
  static void sony_nc_notify(struct acpi_device *device, u32 event)
  {
-@@ -1260,6 +1273,10 @@ static void sony_nc_notify(struct acpi_device *device, u32 event)
+@@ -1253,6 +1266,10 @@ static void sony_nc_notify(struct acpi_device *device, u32 event)
  			ev_type = GFX_SWITCH;
  			real_ev = __sony_nc_gfx_switch_status_get();
  			break;
@@ -59,7 +59,7 @@ index fb088dd8529e..5aa48ade8ee3 100644
  		default:
  			dprintk("Unknown event 0x%x for handle 0x%x\n",
  					event, handle);
-@@ -1416,6 +1433,13 @@ static void sony_nc_function_setup(struct acpi_device *device,
+@@ -1409,6 +1426,13 @@ static void sony_nc_function_setup(struct acpi_device *device,
  				pr_err("couldn't set up smart connect support (%d)\n",
  						result);
  			break;
@@ -73,7 +73,7 @@ index fb088dd8529e..5aa48ade8ee3 100644
  		default:
  			continue;
  		}
-@@ -1499,6 +1523,9 @@ static void sony_nc_function_cleanup(struct platform_device *pd)
+@@ -1492,6 +1516,9 @@ static void sony_nc_function_cleanup(struct platform_device *pd)
  		case 0x0168:
  			sony_nc_smart_conn_cleanup(pd);
  			break;
@@ -83,7 +83,7 @@ index fb088dd8529e..5aa48ade8ee3 100644
  		default:
  			continue;
  		}
-@@ -1539,6 +1566,12 @@ static void sony_nc_function_resume(void)
+@@ -1532,6 +1559,12 @@ static void sony_nc_function_resume(void)
  		case 0x0135:
  			sony_nc_rfkill_update();
  			break;
@@ -96,7 +96,7 @@ index fb088dd8529e..5aa48ade8ee3 100644
  		default:
  			continue;
  		}
-@@ -3161,6 +3194,98 @@ static void sony_nc_backlight_cleanup(void)
+@@ -3159,6 +3192,98 @@ static void sony_nc_backlight_cleanup(void)
  	backlight_device_unregister(sony_bl_props.dev);
  }
  

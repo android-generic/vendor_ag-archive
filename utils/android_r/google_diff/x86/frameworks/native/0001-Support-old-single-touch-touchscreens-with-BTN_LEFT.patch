@@ -1,4 +1,4 @@
-From 7668a72daf170085537b53c357f89e9c8a2bc629 Mon Sep 17 00:00:00 2001
+From 0343a1291db05f2e60bf24d7a1ab92952527c976 Mon Sep 17 00:00:00 2001
 From: DanielK <daniel.kenzelmann@googlemail.com>
 Date: Tue, 20 Mar 2012 14:28:43 +0800
 Subject: [PATCH 01/16] Support old single-touch touchscreens with BTN_LEFT

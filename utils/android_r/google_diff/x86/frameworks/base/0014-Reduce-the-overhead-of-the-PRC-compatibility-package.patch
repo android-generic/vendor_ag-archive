@@ -1,4 +1,4 @@
-From e90e7c5317b3634db464873d79ead3411d80b32a Mon Sep 17 00:00:00 2001
+From 44f468602527032c49714a3a617b643a1aedb504 Mon Sep 17 00:00:00 2001
 From: xiajiang <xia1.jiang@intel.com>
 Date: Mon, 21 Mar 2016 12:26:06 -0400
 Subject: [PATCH 14/22] Reduce the overhead of the PRC compatibility package
@@ -510,10 +510,10 @@ index 627adbf7c4f..36eac3b46b1 100644
      {"hasRenderscriptBitcode", "(J)I",
              (void *)com_android_internal_content_NativeLibraryHelper_hasRenderscriptBitcode},
 diff --git a/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java b/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
-index 122020ff39b..bc2163ffb31 100644
+index 4ecac45eee5..a3fa5473bf2 100644
 --- a/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
 +++ b/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
-@@ -137,7 +137,8 @@ public class AndroidPackageUtils {
+@@ -139,7 +139,8 @@ public class AndroidPackageUtils {
                  pkg.isMultiArch(),
                  pkg.isExtractNativeLibs(),
                  pkg.isDebuggable(),

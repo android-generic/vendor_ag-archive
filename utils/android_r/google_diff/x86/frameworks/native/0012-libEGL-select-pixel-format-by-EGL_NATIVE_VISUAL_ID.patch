@@ -1,4 +1,4 @@
-From f6ec0dcef0aaf88c5d755b0baa0d9ca14f55e03d Mon Sep 17 00:00:00 2001
+From 3257486a015164fa99052175b4f6d8a153aeffae Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 4 Sep 2017 19:26:33 +0800
 Subject: [PATCH 12/16] libEGL: select pixel format by EGL_NATIVE_VISUAL_ID

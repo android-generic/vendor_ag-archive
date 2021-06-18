@@ -1,4 +1,4 @@
-From 4c1998506b79a7e4e082bf924a2324e3f828b9c3 Mon Sep 17 00:00:00 2001
+From 598ea5874ad2d8b1a93c194d214b420550f50f02 Mon Sep 17 00:00:00 2001
 From: jgu21 <jinghui.gu@intel.com>
 Date: Wed, 30 Mar 2016 02:57:38 -0400
 Subject: [PATCH 15/22] Fix KW issues on PRC compatibility

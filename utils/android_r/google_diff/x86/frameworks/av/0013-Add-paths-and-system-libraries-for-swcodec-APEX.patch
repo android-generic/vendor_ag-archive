@@ -1,7 +1,7 @@
-From 1d33bb4ada23d8b0d4d2002f35648371f6c09b1f Mon Sep 17 00:00:00 2001
+From 1c4697ad9440df2bf0cd50930beb2c03895af693 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Fri, 4 Oct 2019 20:12:57 -0400
-Subject: [PATCH 13/14] Add paths and system libraries for swcodec APEX
+Subject: [PATCH 13/15] Add paths and system libraries for swcodec APEX
 
 - libdrm.so, libhardware_legacy.so: required by drm_gralloc
 - libashmemd_client.so: suppress recurring error messages in logcat,

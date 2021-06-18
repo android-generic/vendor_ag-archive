@@ -1,0 +1,90 @@
+From a27f1ee7d8274e736c0b133372c47a46f984cbc0 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 20 May 2021 08:46:46 -0400
+Subject: [PATCH 3/5] Include a few configs from cuttlefish updates
+
+---
+ device.mk                                            |  6 ++++++
+ idc/Crosvm_Virtio_Multitouch_Touchscreen.idc         |  6 ++++++
+ .../frameworks/base/core/res/res/values/config.xml   | 12 ++++++++----
+ .../SettingsProvider/res/values/defaults.xml         |  6 +++++-
+ 4 files changed, 25 insertions(+), 5 deletions(-)
+ create mode 100644 idc/Crosvm_Virtio_Multitouch_Touchscreen.idc
+
+diff --git a/device.mk b/device.mk
+index 94243fb..c589f9f 100644
+--- a/device.mk
++++ b/device.mk
+@@ -84,6 +84,7 @@ PRODUCT_COPY_FILES += \
+     frameworks/native/data/etc/android.software.sip.voip.xml:system/etc/permissions/android.software.sip.voip.xml \
+     frameworks/native/data/etc/android.software.sip.xml:system/etc/permissions/android.software.sip.xml \
+     frameworks/native/data/etc/android.software.webview.xml:system/etc/permissions/android.software.webview.xml \
++    frameworks/native/data/etc/pc_core_hardware.xml:system/etc/permissions/pc_core_hardware.xml \
+     $(foreach f,$(wildcard $(LOCAL_PATH)/alsa/*),$(f):$(subst $(LOCAL_PATH),system/etc,$(f))) \
+     $(foreach f,$(wildcard $(LOCAL_PATH)/idc/*.idc $(LOCAL_PATH)/keylayout/*.kl),$(f):$(subst $(LOCAL_PATH),system/usr,$(f)))
+ 
+@@ -132,3 +133,8 @@ $(call inherit-product-if-exists,$(if $(wildcard vendor/google/products/gms.mk),
+ $(call inherit-product-if-exists,$(LOCAL_PATH)/nativebridge/nativebridge.mk)
+ 
+ $(call inherit-product,$(if $(wildcard $(PRODUCT_DIR)packages.mk),$(PRODUCT_DIR),$(LOCAL_PATH)/)packages.mk)
++
++$(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_vendor.mk)
++
++$(call inherit-product, frameworks/native/build/tablet-7in-xhdpi-2048-dalvik-heap.mk)
++
+diff --git a/idc/Crosvm_Virtio_Multitouch_Touchscreen.idc b/idc/Crosvm_Virtio_Multitouch_Touchscreen.idc
+new file mode 100644
+index 0000000..662f467
+--- /dev/null
++++ b/idc/Crosvm_Virtio_Multitouch_Touchscreen.idc
+@@ -0,0 +1,6 @@
++device.internal = 1
++
++touch.deviceType = touchScreen
++touch.orientationAware = 1
++
++# touch.displayId = local:0
+diff --git a/overlay/frameworks/base/core/res/res/values/config.xml b/overlay/frameworks/base/core/res/res/values/config.xml
+index 3e0fe2b..646ffa7 100644
+--- a/overlay/frameworks/base/core/res/res/values/config.xml
++++ b/overlay/frameworks/base/core/res/res/values/config.xml
+@@ -90,13 +90,17 @@
+     <!-- Sets whether menu shortcuts should be displayed on panel menus when
+                   a keyboard is present. -->
+     <bool name="config_showMenuShortcutsWhenKeyboardPresent">true</bool>
+-
++    
+     <!-- Whether a software navigation bar should be shown. NOTE: in the future this may be
+          autodetected from the Configuration. -->
+-    <bool name="config_showNavigationBar">true</bool>
++    <bool name="config_showNavigationBar" translatable="false">true</bool>
++	<!--  Maximum number of supported users -->
++	<integer name="config_multiuserMaximumUsers" translatable="false">4</integer>
++	<!-- Restricting eth2 -->
++	<string-array translatable="false" name="config_ethernet_interfaces">
++	<item>eth2;11,12,14;;</item>
++	</string-array>
+ 
+-    <!--  Maximum number of supported users -->
+-    <integer name="config_multiuserMaximumUsers">8</integer>
+     <!--  Whether UI for multi user should be shown -->
+     <bool name="config_enableMultiUserUI">true</bool>
+ 
+diff --git a/overlay/frameworks/base/packages/SettingsProvider/res/values/defaults.xml b/overlay/frameworks/base/packages/SettingsProvider/res/values/defaults.xml
+index 652cbe7..bc1fbee 100644
+--- a/overlay/frameworks/base/packages/SettingsProvider/res/values/defaults.xml
++++ b/overlay/frameworks/base/packages/SettingsProvider/res/values/defaults.xml
+@@ -19,5 +19,9 @@
+ <resources>
+     <bool name="def_bluetooth_on">false</bool>
+     <bool name="def_lockscreen_disabled">true</bool>
+-    <integer name="def_screen_off_timeout">600000</integer>
++    <integer name="def_screen_off_timeout">600000</integer>    
++    <bool name="def_stay_on_while_plugged_in">true</bool>
++    <bool name="def_install_non_market_apps">true</bool>
++    <bool name="def_package_verifier_enable">false</bool>
++    <bool name="def_accelerometer_rotation">true</bool>
+ </resources>
+-- 
+2.17.1
+

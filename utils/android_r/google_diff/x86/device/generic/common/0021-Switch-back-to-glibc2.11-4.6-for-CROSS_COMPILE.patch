@@ -1,0 +1,26 @@
+From 3b64860a0eb0fd4ab6ba3878d6dce53ab2f26a0d Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 20 May 2021 11:46:34 -0400
+Subject: [PATCH 4/5] Switch back to glibc2.11-4.6 for CROSS_COMPILE
+
+---
+ build/tasks/kernel.mk | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/build/tasks/kernel.mk b/build/tasks/kernel.mk
+index 70cacb7..a363aea 100644
+--- a/build/tasks/kernel.mk
++++ b/build/tasks/kernel.mk
+@@ -20,7 +20,8 @@ TARGET_KERNEL_CONFIG ?= android-$(TARGET_KERNEL_ARCH)_defconfig
+ KERNEL_CONFIG_DIR := arch/x86/configs
+ 
+ ifeq ($(TARGET_KERNEL_ARCH),x86_64)
+-CROSS_COMPILE := $(abspath $(TARGET_TOOLS_PREFIX))
++#~ CROSS_COMPILE := $(abspath $(TARGET_TOOLS_PREFIX))
++CROSS_COMPILE := $(abspath prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6/bin)/x86_64-linux- 
+ KERNEL_CLANG_FLAGS := \
+         LLVM=1 \
+         CC=$(abspath $(LLVM_PREBUILTS_PATH)/clang) \
+-- 
+2.17.1
+

@@ -1,7 +1,7 @@
-From 46c9395b9961f9325d8cd097c04d7ec0efd81bad Mon Sep 17 00:00:00 2001
+From 45ae8193dd4fa66e5d9f61e3373885cdc9b4e33c Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 15 Aug 2017 12:45:48 +0800
-Subject: [PATCH 08/14] nuplayer: skip bad SAR values
+Subject: [PATCH 08/15] nuplayer: skip bad SAR values
 
 Historically there are two definitions of SAR:
 
@@ -35,10 +35,10 @@ Storage Aspect Ratio.
  1 file changed, 7 insertions(+), 1 deletion(-)
 
 diff --git a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
-index c1c4b55400..d9937c6602 100644
+index 47362ef1c8..0d975f8577 100644
 --- a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
 +++ b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
-@@ -2068,7 +2068,13 @@ void NuPlayer::updateVideoSize(
+@@ -2092,7 +2092,13 @@ void NuPlayer::updateVideoSize(
              && sarWidth > 0 && sarHeight > 0) {
          ALOGV("Sample aspect ratio %d : %d", sarWidth, sarHeight);
  

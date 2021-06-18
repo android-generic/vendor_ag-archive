@@ -1,4 +1,4 @@
-From 9c4d471c7aef8c48c06f60d52796bea5d142fb0a Mon Sep 17 00:00:00 2001
+From fe4702c4fec94244cf776634570c80e0ade1ecb5 Mon Sep 17 00:00:00 2001
 From: Daniel Leung <daniel.leung@intel.com>
 Date: Thu, 13 Sep 2012 13:43:41 -0700
 Subject: [PATCH 03/16] Prevent EventHub from adding input device twice
@@ -54,7 +54,7 @@ index eb440f382..89308828e 100644
                      ALOGI("Removing device '%s' due to inotify event\n", filename.c_str());
                      closeDeviceByPathLocked(filename.c_str());
 diff --git a/services/inputflinger/reader/include/EventHub.h b/services/inputflinger/reader/include/EventHub.h
-index c17f3a184..42394d6c5 100644
+index f5451d7fe..9c669fbcb 100644
 --- a/services/inputflinger/reader/include/EventHub.h
 +++ b/services/inputflinger/reader/include/EventHub.h
 @@ -374,6 +374,7 @@ private:

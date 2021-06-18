@@ -1,4 +1,4 @@
-From c24833ced9b753284a6fe336071e65cad4b12952 Mon Sep 17 00:00:00 2001
+From efc483a41b573e5f93fd765fa3112aeecb5fb919 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sun, 3 Mar 2019 16:28:41 +0100
 Subject: [PATCH 20/22] android_graphics_HardwareRenderer: prevent Null Pointer
@@ -30,7 +30,7 @@ backtrace:
  1 file changed, 4 insertions(+)
 
 diff --git a/libs/hwui/jni/android_graphics_HardwareRenderer.cpp b/libs/hwui/jni/android_graphics_HardwareRenderer.cpp
-index 49c7fcd468e..97e70c87e81 100644
+index 9815e85db88..49761bebcd0 100644
 --- a/libs/hwui/jni/android_graphics_HardwareRenderer.cpp
 +++ b/libs/hwui/jni/android_graphics_HardwareRenderer.cpp
 @@ -547,6 +547,10 @@ static jobject android_view_ThreadedRenderer_createHardwareBitmapFromRenderNode(

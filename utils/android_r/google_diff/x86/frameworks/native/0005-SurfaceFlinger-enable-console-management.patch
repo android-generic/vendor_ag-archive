@@ -1,4 +1,4 @@
-From f6c4a13c0db996cb4df11e222ea9399e5c6e991e Mon Sep 17 00:00:00 2001
+From 67345a9fb6bbf385461e85a9a7880c2c9ebe8526 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 26 Oct 2014 15:38:15 +0800
 Subject: [PATCH 05/16] SurfaceFlinger: enable console management
@@ -9,18 +9,18 @@ DisplayHardwareBase.
 ---
  services/inputflinger/Android.bp           |   2 +
  services/inputflinger/reader/EventHub.cpp  |  16 ++
- services/surfaceflinger/Android.bp         |   6 +
+ services/surfaceflinger/Android.bp         |   8 +
  services/surfaceflinger/DisplayDevice.cpp  | 263 +++++++++++++++++++++
  services/surfaceflinger/DisplayDevice.h    |   5 +
  services/surfaceflinger/SurfaceFlinger.cpp |  14 ++
  services/surfaceflinger/SurfaceFlinger.h   |   3 +
- 7 files changed, 309 insertions(+)
+ 7 files changed, 311 insertions(+)
 
 diff --git a/services/inputflinger/Android.bp b/services/inputflinger/Android.bp
-index f67c9d006..bff8f2793 100644
+index 861073724..46eaeef52 100644
 --- a/services/inputflinger/Android.bp
 +++ b/services/inputflinger/Android.bp
-@@ -62,6 +62,8 @@ cc_library_shared {
+@@ -71,6 +71,8 @@ cc_library_shared {
          "libinputflinger_defaults",
      ],
      cflags: [
@@ -71,10 +71,10 @@ index a8072f7b2..fb83e5f55 100644
  
                      size_t count = size_t(readSize) / sizeof(struct input_event);
 diff --git a/services/surfaceflinger/Android.bp b/services/surfaceflinger/Android.bp
-index a790d0b74..cf8db43a8 100644
+index aa59f850e..938c2479c 100644
 --- a/services/surfaceflinger/Android.bp
 +++ b/services/surfaceflinger/Android.bp
-@@ -43,6 +43,7 @@ cc_defaults {
+@@ -51,6 +51,7 @@ cc_defaults {
          "libGLESv1_CM",
          "libGLESv2",
          "libgui",
@@ -82,18 +82,14 @@ index a790d0b74..cf8db43a8 100644
          "libhidlbase",
          "liblayers_proto",
          "liblog",
-@@ -200,6 +201,8 @@ cc_library_shared {
+@@ -197,7 +198,14 @@ cc_library_shared {
+         // can be easily replaced.
+         "SurfaceFlingerFactory.cpp",
      ],
-     cflags: [
-         "-DUSE_VR_COMPOSER=1",
++    cflags: [
 +        "-DCONSOLE_MANAGER",
 +        "-DANDROID_VT=7",
-     ],
-     // VrComposer is not used when building surfaceflinger for vendors
-     target: {
-@@ -210,6 +213,9 @@ cc_library_shared {
-         },
-     },
++    ],
      logtags: ["EventLog/EventLogTags.logtags"],
 +    include_dirs: [
 +        "external/drm_gralloc",
@@ -415,7 +411,7 @@ index 730f29744..13699ccf7 100644
          transformOrientation = ui::Transform::toRotationFlags(orientation);
      }
 diff --git a/services/surfaceflinger/DisplayDevice.h b/services/surfaceflinger/DisplayDevice.h
-index cb467ea29..ffface2d8 100644
+index ca7119e2c..05e8f363d 100644
 --- a/services/surfaceflinger/DisplayDevice.h
 +++ b/services/surfaceflinger/DisplayDevice.h
 @@ -50,6 +50,7 @@ class HWComposer;
@@ -438,23 +434,23 @@ index cb467ea29..ffface2d8 100644
      const bool mIsPrimary;
  };
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index 79f99cc5d..f7b00cf6a 100644
+index 4698ac619..64e75c277 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -1550,6 +1550,20 @@ sp<IDisplayEventConnection> SurfaceFlinger::createDisplayEventConnection(
+@@ -1515,6 +1515,20 @@ sp<IDisplayEventConnection> SurfaceFlinger::createDisplayEventConnection(
      return mScheduler->createDisplayEventConnection(handle, configChanged);
  }
  
 +#ifdef CONSOLE_MANAGER
 +void SurfaceFlinger::screenReleased(const sp<IBinder>& display) {
 +    // this may be called by a signal handler, we can't do too much in here
-+    setPowerMode(display, HWC_POWER_MODE_OFF);
++    setPowerMode(display, static_cast<int32_t>(hal::PowerMode::OFF));
 +    signalLayerUpdate();
 +}
 +
 +void SurfaceFlinger::screenAcquired(const sp<IBinder>& display) {
 +    // this may be called by a signal handler, we can't do too much in here
-+    setPowerMode(display, HWC_POWER_MODE_NORMAL);
++    setPowerMode(display, static_cast<int32_t>(hal::PowerMode::ON));
 +    signalLayerUpdate();
 +}
 +#endif
@@ -463,10 +459,10 @@ index 79f99cc5d..f7b00cf6a 100644
      mScheduler->resetIdleTimer();
      mPowerAdvisor.notifyDisplayUpdateImminent();
 diff --git a/services/surfaceflinger/SurfaceFlinger.h b/services/surfaceflinger/SurfaceFlinger.h
-index c72757478..5840492e1 100644
+index 90ac85627..a594877c2 100644
 --- a/services/surfaceflinger/SurfaceFlinger.h
 +++ b/services/surfaceflinger/SurfaceFlinger.h
-@@ -332,6 +332,9 @@ public:
+@@ -328,6 +328,9 @@ public:
      // Inherit from ClientCache::ErasedRecipient
      void bufferErased(const client_cache_t& clientCacheId) override;
  

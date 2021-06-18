@@ -1,7 +1,7 @@
-From 8c503b232e5193572fbf5694b35ac0062ef2924a Mon Sep 17 00:00:00 2001
+From 9bc1645e47e8e1e6e3bfadb89ac61647836bca03 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@gmail.com>
 Date: Sun, 2 Jun 2019 18:55:36 -0400
-Subject: [PATCH 11/14] libstagefright: Extended media support via FFMPEG
+Subject: [PATCH] libstagefright: Extended media support via FFMPEG
 
  * Original work by Michael Chen - https://github.com/omxcodec
  * Original Kitkat port by Chih-Wei Huang / Android X86 project
@@ -28,12 +28,12 @@ Change-Id: Ie871b56f6f6d895a87de8c8920e9e8692382b420
  .../libstagefright/MediaExtractorFactory.cpp  |    6 +
  media/libstagefright/Utils.cpp                |   32 +-
  media/libstagefright/foundation/MediaDefs.cpp |   33 +
- .../media/stagefright/foundation/MediaDefs.h  |   71 +
+ .../media/stagefright/foundation/MediaDefs.h  |   75 +
  .../include/media/stagefright/ACodec.h        |   10 +-
  .../media/stagefright/FFMPEGSoftCodec.h       |  138 ++
  .../include/media/stagefright/MetaDataBase.h  |   50 +
  media/libstagefright/omx/OMXUtils.cpp         |   44 +
- 16 files changed, 1876 insertions(+), 18 deletions(-)
+ 16 files changed, 1880 insertions(+), 18 deletions(-)
  create mode 100644 media/libstagefright/FFMPEGSoftCodec.cpp
  create mode 100644 media/libstagefright/include/media/stagefright/FFMPEGSoftCodec.h
 
@@ -137,7 +137,7 @@ index 41b6f72a0d..d87ef9bf4d 100644
          if (decoder->init(timeUs, option, colorFormat) == OK) {
              sp<IMemory> frame = decoder->extractFrame();
 diff --git a/media/libmediaplayerservice/nuplayer/NuPlayerDecoder.cpp b/media/libmediaplayerservice/nuplayer/NuPlayerDecoder.cpp
-index f73443929d..32ae480315 100644
+index 5b60bbfad6..abcc5361eb 100644
 --- a/media/libmediaplayerservice/nuplayer/NuPlayerDecoder.cpp
 +++ b/media/libmediaplayerservice/nuplayer/NuPlayerDecoder.cpp
 @@ -40,6 +40,9 @@
@@ -170,7 +170,7 @@ index f73443929d..32ae480315 100644
      if (format->findInt32("secure", &secure) && secure != 0) {
          if (mCodec != NULL) {
 diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
-index 3163316403..4edc14a40a 100644
+index 2c1befb92d..a56cef3e88 100644
 --- a/media/libstagefright/ACodec.cpp
 +++ b/media/libstagefright/ACodec.cpp
 @@ -40,10 +40,13 @@
@@ -187,7 +187,7 @@ index 3163316403..4edc14a40a 100644
  #include <media/hardware/HardwareAPI.h>
  #include <media/MediaBufferHolder.h>
  #include <media/OMXBuffer.h>
-@@ -604,6 +607,15 @@ ACodec::ACodec()
+@@ -615,6 +618,15 @@ ACodec::ACodec()
  ACodec::~ACodec() {
  }
  
@@ -203,7 +203,7 @@ index 3163316403..4edc14a40a 100644
  void ACodec::initiateSetup(const sp<AMessage> &msg) {
      msg->setWhat(kWhatSetup);
      msg->setTarget(this);
-@@ -2067,7 +2079,7 @@ status_t ACodec::configureCodec(
+@@ -2078,7 +2090,7 @@ status_t ACodec::configureCodec(
                  requiresSwRenderer = true;
              }
  
@@ -212,7 +212,7 @@ index 3163316403..4edc14a40a 100644
                  usingSwRenderer = true;
                  haveNativeWindow = false;
                  (void)setPortMode(kPortIndexOutput, IOMX::kPortModePresetByteBuffer);
-@@ -2150,7 +2162,7 @@ status_t ACodec::configureCodec(
+@@ -2161,7 +2173,7 @@ status_t ACodec::configureCodec(
              err = setupRawAudioFormat(
                      encoder ? kPortIndexInput : kPortIndexOutput,
                      sampleRate,
@@ -221,7 +221,7 @@ index 3163316403..4edc14a40a 100644
          }
      } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AAC)) {
          int32_t numChannels, sampleRate;
-@@ -2276,14 +2288,15 @@ status_t ACodec::configureCodec(
+@@ -2293,14 +2305,15 @@ status_t ACodec::configureCodec(
          } else {
              err = setupRawAudioFormat(kPortIndexInput, sampleRate, numChannels, pcmEncoding);
          }
@@ -239,7 +239,7 @@ index 3163316403..4edc14a40a 100644
          }
      } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_EAC3)) {
          int32_t numChannels;
-@@ -2292,7 +2305,7 @@ status_t ACodec::configureCodec(
+@@ -2309,7 +2322,7 @@ status_t ACodec::configureCodec(
                  || !msg->findInt32("sample-rate", &sampleRate)) {
              err = INVALID_OPERATION;
          } else {
@@ -248,7 +248,7 @@ index 3163316403..4edc14a40a 100644
          }
       } else if (!strcasecmp(mime, MEDIA_MIMETYPE_AUDIO_AC4)) {
          int32_t numChannels;
-@@ -2303,6 +2316,8 @@ status_t ACodec::configureCodec(
+@@ -2320,6 +2333,8 @@ status_t ACodec::configureCodec(
          } else {
              err = setupAC4Codec(encoder, numChannels, sampleRate);
          }
@@ -257,7 +257,7 @@ index 3163316403..4edc14a40a 100644
      }
  
      if (err != OK) {
-@@ -2933,9 +2948,9 @@ status_t ACodec::setupAACCodec(
+@@ -2957,9 +2972,9 @@ status_t ACodec::setupAACCodec(
  }
  
  status_t ACodec::setupAC3Codec(
@@ -269,7 +269,7 @@ index 3163316403..4edc14a40a 100644
  
      if (err != OK) {
          return err;
-@@ -2965,9 +2980,9 @@ status_t ACodec::setupAC3Codec(
+@@ -2989,9 +3004,9 @@ status_t ACodec::setupAC3Codec(
  }
  
  status_t ACodec::setupEAC3Codec(
@@ -281,7 +281,7 @@ index 3163316403..4edc14a40a 100644
  
      if (err != OK) {
          return err;
-@@ -3452,6 +3467,9 @@ status_t ACodec::setupVideoDecoder(
+@@ -3496,6 +3511,9 @@ status_t ACodec::setupVideoDecoder(
      OMX_VIDEO_CODINGTYPE compressionFormat;
      status_t err = GetVideoCodingTypeFromMime(mime, &compressionFormat);
  
@@ -291,7 +291,7 @@ index 3163316403..4edc14a40a 100644
      if (err != OK) {
          return err;
      }
-@@ -5201,6 +5219,14 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
+@@ -5268,6 +5286,14 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
  
                  default:
                  {
@@ -306,7 +306,7 @@ index 3163316403..4edc14a40a 100644
                      if (mIsEncoder ^ (portIndex == kPortIndexOutput)) {
                          // should be CodingUnused
                          ALOGE("Raw port video compression format is %s(%d)",
-@@ -5358,6 +5384,13 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
+@@ -5425,6 +5451,13 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
  
                  case OMX_AUDIO_CodingFLAC:
                  {
@@ -320,7 +320,7 @@ index 3163316403..4edc14a40a 100644
                      OMX_AUDIO_PARAM_FLACTYPE params;
                      InitOMXParams(&params);
                      params.nPortIndex = portIndex;
-@@ -5371,6 +5404,7 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
+@@ -5438,6 +5471,7 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
                      notify->setString("mime", MEDIA_MIMETYPE_AUDIO_FLAC);
                      notify->setInt32("channel-count", params.nChannels);
                      notify->setInt32("sample-rate", params.nSampleRate);
@@ -328,7 +328,7 @@ index 3163316403..4edc14a40a 100644
                      break;
                  }
  
-@@ -5532,6 +5566,14 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
+@@ -5599,6 +5633,14 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
                  }
  
                  default:
@@ -343,7 +343,7 @@ index 3163316403..4edc14a40a 100644
                      ALOGE("Unsupported audio coding: %s(%d)\n",
                              asString(audioDef->eEncoding), audioDef->eEncoding);
                      return BAD_TYPE;
-@@ -6953,8 +6995,79 @@ bool ACodec::LoadedState::onConfigureComponent(
+@@ -7060,8 +7102,79 @@ bool ACodec::LoadedState::onConfigureComponent(
          ALOGE("[%s] configureCodec returning error %d",
                mCodec->mComponentName.c_str(), err);
  
@@ -426,10 +426,10 @@ index 3163316403..4edc14a40a 100644
  
      mCodec->mCallback->onComponentConfigured(mCodec->mInputFormat, mCodec->mOutputFormat);
 diff --git a/media/libstagefright/Android.bp b/media/libstagefright/Android.bp
-index 3bccb7be7a..bb1ef96208 100644
+index 5d959cb6ba..5ba9074450 100644
 --- a/media/libstagefright/Android.bp
 +++ b/media/libstagefright/Android.bp
-@@ -117,6 +117,7 @@ cc_library_static {
+@@ -155,6 +155,7 @@ cc_library_static {
      min_sdk_version: "29",
  
      srcs: [
@@ -437,7 +437,7 @@ index 3bccb7be7a..bb1ef96208 100644
          "Utils.cpp",
          "MediaSource.cpp",
          "HevcUtils.cpp",
-@@ -124,6 +125,9 @@ cc_library_static {
+@@ -162,6 +163,9 @@ cc_library_static {
  
      shared_libs: [
          "liblog",
@@ -447,7 +447,7 @@ index 3bccb7be7a..bb1ef96208 100644
      ],
  
      export_include_dirs: [
-@@ -143,6 +147,11 @@ cc_library_static {
+@@ -183,6 +187,11 @@ cc_library_static {
          "-Wall",
      ],
  
@@ -459,7 +459,7 @@ index 3bccb7be7a..bb1ef96208 100644
      sanitize: {
          cfi: true,
          misc_undefined: [
-@@ -215,6 +224,7 @@ cc_library {
+@@ -267,6 +276,7 @@ cc_library {
          "CameraSource.cpp",
          "CameraSourceTimeLapse.cpp",
          "DataConverter.cpp",
@@ -467,7 +467,7 @@ index 3bccb7be7a..bb1ef96208 100644
          "FrameDecoder.cpp",
          "HevcUtils.cpp",
          "InterfaceUtils.cpp",
-@@ -306,6 +316,11 @@ cc_library {
+@@ -358,6 +368,11 @@ cc_library {
          "media_ndk_headers",
      ],
  
@@ -1794,10 +1794,10 @@ index 0000000000..2a1689abce
 +
 +}
 diff --git a/media/libstagefright/MediaCodec.cpp b/media/libstagefright/MediaCodec.cpp
-index 4d617ae02e..abded8856b 100644
+index 6bf7612055..632e17a1d3 100644
 --- a/media/libstagefright/MediaCodec.cpp
 +++ b/media/libstagefright/MediaCodec.cpp
-@@ -2314,7 +2314,7 @@ void MediaCodec::onMessageReceived(const sp<AMessage> &msg) {
+@@ -2416,7 +2416,7 @@ void MediaCodec::onMessageReceived(const sp<AMessage> &msg) {
                      }
  
                      const char *owner = mCodecInfo ? mCodecInfo->getOwnerName() : "";
@@ -1807,7 +1807,7 @@ index 4d617ae02e..abded8856b 100644
                          mFlags |= kFlagUsesSoftwareRenderer;
                      } else {
 diff --git a/media/libstagefright/MediaExtractorFactory.cpp b/media/libstagefright/MediaExtractorFactory.cpp
-index c6e753d63d..fa11f33ece 100644
+index 7c981b3c5c..51dd868375 100644
 --- a/media/libstagefright/MediaExtractorFactory.cpp
 +++ b/media/libstagefright/MediaExtractorFactory.cpp
 @@ -308,6 +308,12 @@ void MediaExtractorFactory::LoadExtractors() {
@@ -1824,19 +1824,19 @@ index c6e753d63d..fa11f33ece 100644
      gPlugins = newList;
  
 diff --git a/media/libstagefright/Utils.cpp b/media/libstagefright/Utils.cpp
-index ece79c4b02..2c0e52fd2c 100644
+index bd9a694308..5cdf3388f8 100644
 --- a/media/libstagefright/Utils.cpp
 +++ b/media/libstagefright/Utils.cpp
-@@ -47,6 +47,8 @@
- #include <media/AudioParameter.h>
- #include <system/audio.h>
+@@ -57,6 +57,8 @@
+ #define AMEDIAFORMAT_KEY_MPEGH_COMPATIBLE_SETS \
+   "mpegh-compatible-sets"
  
 +#include <media/stagefright/FFMPEGSoftCodec.h>
 +
  namespace android {
  
  static status_t copyNALUToABuffer(sp<ABuffer> *buffer, const uint8_t *ptr, size_t length) {
-@@ -716,6 +718,8 @@ static std::vector<std::pair<const char *, uint32_t>> stringMappings {
+@@ -726,6 +728,8 @@ static std::vector<std::pair<const char *, uint32_t>> stringMappings {
          { "manufacturer", kKeyManufacturer },
          { "title", kKeyTitle },
          { "year", kKeyYear },
@@ -1845,7 +1845,7 @@ index ece79c4b02..2c0e52fd2c 100644
      }
  };
  
-@@ -753,6 +757,21 @@ static std::vector<std::pair<const char *, uint32_t>> int32Mappings {
+@@ -763,6 +767,21 @@ static std::vector<std::pair<const char *, uint32_t>> int32Mappings {
          { "thumbnail-height", kKeyThumbnailHeight },
          { "track-id", kKeyTrackID },
          { "valid-samples", kKeyValidSamples },
@@ -1867,7 +1867,7 @@ index ece79c4b02..2c0e52fd2c 100644
      }
  };
  
-@@ -769,6 +788,8 @@ static std::vector<std::pair<const char *, uint32_t>> bufferMappings {
+@@ -779,6 +798,8 @@ static std::vector<std::pair<const char *, uint32_t>> bufferMappings {
          { "sei", kKeySEI },
          { "text-format-data", kKeyTextFormatData },
          { "thumbnail-csd-hevc", kKeyThumbnailHVCC },
@@ -1876,7 +1876,7 @@ index ece79c4b02..2c0e52fd2c 100644
      }
  };
  
-@@ -1474,8 +1495,15 @@ status_t convertMetaDataToMessage(
+@@ -1503,8 +1524,15 @@ status_t convertMetaDataToMessage(
          parseDolbyVisionProfileLevelFromDvcc(ptr, size, msg);
      }
  
@@ -1892,7 +1892,7 @@ index ece79c4b02..2c0e52fd2c 100644
      return OK;
  }
  
-@@ -1992,8 +2020,10 @@ status_t convertMessageToMetaData(const sp<AMessage> &msg, sp<MetaData> &meta) {
+@@ -2038,8 +2066,10 @@ status_t convertMessageToMetaData(const sp<AMessage> &msg, sp<MetaData> &meta) {
      }
      // XXX TODO add whatever other keys there are
  
@@ -1905,10 +1905,10 @@ index ece79c4b02..2c0e52fd2c 100644
  #endif
      return OK;
 diff --git a/media/libstagefright/foundation/MediaDefs.cpp b/media/libstagefright/foundation/MediaDefs.cpp
-index a08fed19a4..4883ad0206 100644
+index 1493406770..3552fec56d 100644
 --- a/media/libstagefright/foundation/MediaDefs.cpp
 +++ b/media/libstagefright/foundation/MediaDefs.cpp
-@@ -80,4 +80,37 @@ const char *MEDIA_MIMETYPE_TEXT_CEA_608 = "text/cea-608";
+@@ -82,4 +82,37 @@ const char *MEDIA_MIMETYPE_TEXT_CEA_608 = "text/cea-608";
  const char *MEDIA_MIMETYPE_TEXT_CEA_708 = "text/cea-708";
  const char *MEDIA_MIMETYPE_DATA_TIMED_ID3 = "application/x-id3v4";
  
@@ -1947,7 +1947,7 @@ index a08fed19a4..4883ad0206 100644
 +
  }  // namespace android
 diff --git a/media/libstagefright/foundation/include/media/stagefright/foundation/MediaDefs.h b/media/libstagefright/foundation/include/media/stagefright/foundation/MediaDefs.h
-index 1f9e636b8d..29dea04eac 100644
+index 97458c319a..47b8879731 100644
 --- a/media/libstagefright/foundation/include/media/stagefright/foundation/MediaDefs.h
 +++ b/media/libstagefright/foundation/include/media/stagefright/foundation/MediaDefs.h
 @@ -18,6 +18,8 @@
@@ -1959,7 +1959,7 @@ index 1f9e636b8d..29dea04eac 100644
  namespace android {
  
  extern const char *MEDIA_MIMETYPE_IMAGE_JPEG;
-@@ -82,15 +84,84 @@ extern const char *MEDIA_MIMETYPE_TEXT_CEA_608;
+@@ -84,10 +86,53 @@ extern const char *MEDIA_MIMETYPE_TEXT_CEA_608;
  extern const char *MEDIA_MIMETYPE_TEXT_CEA_708;
  extern const char *MEDIA_MIMETYPE_DATA_TIMED_ID3;
  
@@ -2009,10 +2009,12 @@ index 1f9e636b8d..29dea04eac 100644
  // frameworks/base/media/java/android/media/AudioFormat.java. Unfortunately,
  // they are not defined in frameworks/av, so defining them here.
  enum AudioEncoding {
-+    kAudioEncodingInvalid = 0,
++	kAudioEncodingInvalid = 0,
      kAudioEncodingPcm16bit = 2,
      kAudioEncodingPcm8bit = 3,
      kAudioEncodingPcmFloat = 4,
+@@ -95,6 +140,36 @@ enum AudioEncoding {
+     kAudioEncodingPcm32bit = 22,
  };
  
 +static inline AudioEncoding bitsToAudioEncoding(int32_t bits) {
@@ -2022,7 +2024,7 @@ index 1f9e636b8d..29dea04eac 100644
 +        case 16:
 +            return kAudioEncodingPcm16bit;
 +        case 32:
-+            return kAudioEncodingPcmFloat;
++            return kAudioEncodingPcm32bit;
 +    }
 +    return kAudioEncodingInvalid;
 +}
@@ -2033,9 +2035,13 @@ index 1f9e636b8d..29dea04eac 100644
 +            return 0;
 +        case kAudioEncodingPcm8bit:
 +            return 8;
++        case kAudioEncodingPcmFloat:
++            return 12;
 +        case kAudioEncodingPcm16bit:
 +            return 16;
-+        case kAudioEncodingPcmFloat:
++        case kAudioEncodingPcm24bitPacked:
++            return 24;
++        case kAudioEncodingPcm32bit:
 +            return 32;
 +    }
 +    return 0;
@@ -2045,7 +2051,7 @@ index 1f9e636b8d..29dea04eac 100644
  
  #endif  // MEDIA_DEFS_H_
 diff --git a/media/libstagefright/include/media/stagefright/ACodec.h b/media/libstagefright/include/media/stagefright/ACodec.h
-index 83e92b9f43..5776ad0348 100644
+index 4c97b4d4fc..40c6905bae 100644
 --- a/media/libstagefright/include/media/stagefright/ACodec.h
 +++ b/media/libstagefright/include/media/stagefright/ACodec.h
 @@ -34,6 +34,8 @@
@@ -2066,7 +2072,7 @@ index 83e92b9f43..5776ad0348 100644
  
  private:
      struct BaseState;
-@@ -487,9 +491,11 @@ private:
+@@ -490,9 +494,11 @@ private:
              int32_t maxOutputChannelCount, const drcParams_t& drc,
              int32_t pcmLimiterEnable);
  
@@ -2225,7 +2231,7 @@ index 0000000000..9a51908b22
 +}
 +#endif
 diff --git a/media/libstagefright/include/media/stagefright/MetaDataBase.h b/media/libstagefright/include/media/stagefright/MetaDataBase.h
-index 64eb8b460c..c6da9c0dae 100644
+index aae5ef94aa..49efbb99ea 100644
 --- a/media/libstagefright/include/media/stagefright/MetaDataBase.h
 +++ b/media/libstagefright/include/media/stagefright/MetaDataBase.h
 @@ -55,6 +55,11 @@ enum {
@@ -2264,7 +2270,7 @@ index 64eb8b460c..c6da9c0dae 100644
      // An indication that a video buffer has been rendered.
      kKeyRendered          = 'rend',  // bool (int32_t)
  
-@@ -239,6 +261,8 @@ enum {
+@@ -243,6 +265,8 @@ enum {
  
      kKeyHapticChannelCount = 'hapC',
  
@@ -2273,8 +2279,8 @@ index 64eb8b460c..c6da9c0dae 100644
      /* MediaRecorder.h, error notifications can represent track ids with 4 bits only.
       * | track id | reserved |     error or info type     |
       * 31         28         16                           0
-@@ -258,6 +282,32 @@ enum {
-     kTypeD263        = 'd263',
+@@ -272,6 +296,32 @@ enum {
+     kTypeHCOS        = 'hcos',
  };
  
 +enum {
@@ -2307,7 +2313,7 @@ index 64eb8b460c..c6da9c0dae 100644
      kCryptoModeUnencrypted = 0,
      kCryptoModeAesCtr      = 1,
 diff --git a/media/libstagefright/omx/OMXUtils.cpp b/media/libstagefright/omx/OMXUtils.cpp
-index 1b8493acc6..2887bdb710 100644
+index d6d280f6cb..1c7065ba7d 100644
 --- a/media/libstagefright/omx/OMXUtils.cpp
 +++ b/media/libstagefright/omx/OMXUtils.cpp
 @@ -172,6 +172,50 @@ const char *GetComponentRole(bool isEncoder, const char *mime) {
@@ -2362,5 +2368,5 @@ index 1b8493acc6..2887bdb710 100644
  
      static const size_t kNumMimeToRole =
 -- 
-2.30.2
+2.17.1
 

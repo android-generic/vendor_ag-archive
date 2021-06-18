@@ -1,10 +1,10 @@
-From 0214ef8d5a43fc76a2f8c7b4a897862007e63f9e Mon Sep 17 00:00:00 2001
+From 9a9b693d4f6222ae8828ed2c933aee6d23155772 Mon Sep 17 00:00:00 2001
 From: Steve Kondik <steve@cyngn.com>
 Date: Wed, 8 Jul 2015 09:56:01 -0700
-Subject: [PATCH 09/14] stagefright: Add support for loading a custom OMXPlugin
+Subject: [PATCH 09/15] stagefright: Add support for loading a custom OMXPlugin
 
  * To facilitate moving the stagefright-plugins glue out of the
-   framework, support is added to OMXMaster to load multiple
+   framework, support is added to OMXStore to load multiple
    external plugins besides internal/vendor versions.
  * This is currently limited to one plugin, defined by the
    "mm.sf.omx-plugin" system property. The code will allow any
@@ -13,15 +13,15 @@ Subject: [PATCH 09/14] stagefright: Add support for loading a custom OMXPlugin
 
 Change-Id: I27d7e16ad56baa17754d8ea47a8c608a0d73d6f1
 ---
- media/libstagefright/omx/OMXMaster.cpp                 | 10 ++++++++++
+ media/libstagefright/omx/OMXStore.cpp                  | 10 ++++++++++
  media/libstagefright/omx/SoftOMXPlugin.cpp             |  6 +++++-
- .../omx/include/media/stagefright/omx/OMXMaster.h      |  1 +
+ .../omx/include/media/stagefright/omx/OMXStore.h       |  1 +
  3 files changed, 16 insertions(+), 1 deletion(-)
 
-diff --git a/media/libstagefright/omx/OMXMaster.cpp b/media/libstagefright/omx/OMXMaster.cpp
-index 094b1f5d60..3524a60503 100644
---- a/media/libstagefright/omx/OMXMaster.cpp
-+++ b/media/libstagefright/omx/OMXMaster.cpp
+diff --git a/media/libstagefright/omx/OMXStore.cpp b/media/libstagefright/omx/OMXStore.cpp
+index e8fee42a6e..0ec8d181bf 100644
+--- a/media/libstagefright/omx/OMXStore.cpp
++++ b/media/libstagefright/omx/OMXStore.cpp
 @@ -28,6 +28,8 @@
  #include <dlfcn.h>
  #include <fcntl.h>
@@ -30,27 +30,27 @@ index 094b1f5d60..3524a60503 100644
 +
  namespace android {
  
- OMXMaster::OMXMaster() {
-@@ -53,6 +55,7 @@ OMXMaster::OMXMaster() {
+ OMXStore::OMXStore() {
+@@ -53,6 +55,7 @@ OMXStore::OMXStore() {
  
      addVendorPlugin();
      addPlatformPlugin();
 +    addUserPlugin();
  }
  
- OMXMaster::~OMXMaster() {
-@@ -67,6 +70,13 @@ void OMXMaster::addPlatformPlugin() {
+ OMXStore::~OMXStore() {
+@@ -67,6 +70,13 @@ void OMXStore::addPlatformPlugin() {
      addPlugin("libstagefright_softomx_plugin.so");
  }
  
-+void OMXMaster::addUserPlugin() {
++void OMXStore::addUserPlugin() {
 +    char plugin[PROPERTY_VALUE_MAX];
 +    if (property_get("media.sf.omx-plugin", plugin, NULL)) {
 +        addPlugin(plugin);
 +    }
 +}
 +
- void OMXMaster::addPlugin(const char *libname) {
+ void OMXStore::addPlugin(const char *libname) {
      if (::android::base::GetIntProperty("vendor.media.omx", int64_t(1)) == 0) {
          return;
 diff --git a/media/libstagefright/omx/SoftOMXPlugin.cpp b/media/libstagefright/omx/SoftOMXPlugin.cpp
@@ -84,10 +84,10 @@ index 8c186c90f8..e93c8528be 100644
              dlclose(libHandle);
              libHandle = NULL;
  
-diff --git a/media/libstagefright/omx/include/media/stagefright/omx/OMXMaster.h b/media/libstagefright/omx/include/media/stagefright/omx/OMXMaster.h
-index 93eaef1569..a7996b6acd 100644
---- a/media/libstagefright/omx/include/media/stagefright/omx/OMXMaster.h
-+++ b/media/libstagefright/omx/include/media/stagefright/omx/OMXMaster.h
+diff --git a/media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h b/media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h
+index 5d6c3ed29d..aaaefdaaad 100644
+--- a/media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h
++++ b/media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h
 @@ -62,6 +62,7 @@ private:
  
      void addVendorPlugin();

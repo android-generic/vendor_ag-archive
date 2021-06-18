@@ -1,4 +1,4 @@
-From a209a59fde40b95ca2d013178739886860cf0fea Mon Sep 17 00:00:00 2001
+From c346f28f1497adc0e0c0165e138dbdf688ceeb15 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sat, 13 Aug 2016 01:58:29 +0800
 Subject: [PATCH 4/8] vold3: support the old SDCARD=xxx function
@@ -12,7 +12,7 @@ still like and use it.
  1 file changed, 31 insertions(+)
 
 diff --git a/main.cpp b/main.cpp
-index 7fa43f4..4d514fa 100644
+index c136bd3..158b99a 100644
 --- a/main.cpp
 +++ b/main.cpp
 @@ -23,6 +23,7 @@
@@ -23,7 +23,7 @@ index 7fa43f4..4d514fa 100644
  #include <android-base/logging.h>
  #include <android-base/properties.h>
  #include <android-base/stringprintf.h>
-@@ -263,5 +264,35 @@ static int process_config(VolumeManager* vm, bool* has_adoptable, bool* has_quot
+@@ -271,5 +272,35 @@ static int process_config(VolumeManager* vm, VoldConfigs* configs) {
                                  flags, entry.fs_type, entry.fs_options)));
          }
      }
@@ -51,7 +51,7 @@ index 7fa43f4..4d514fa 100644
 +                vm->addDiskSource(std::shared_ptr<VolumeManager::DiskSource>(
 +                        new VolumeManager::DiskSource("/devices/*/" + sdcard, sdcard,
 +                        partnum, android::vold::Disk::Flags::kAdoptable, "auto", "")));
-+                *has_adoptable = true;
++                configs->has_adoptable = true;
 +                LOG(INFO) << "Add SDCARD=" << sdcard << " partnum=" << partnum;
 +            }
 +        }

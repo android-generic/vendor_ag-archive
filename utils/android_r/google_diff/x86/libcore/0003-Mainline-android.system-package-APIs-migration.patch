@@ -1,0 +1,280 @@
+From 80bfd6fd03868cb52e39325189fbe1ad650a915c Mon Sep 17 00:00:00 2001
+From: Serik Beketayev <serikb@google.com>
+Date: Mon, 1 Feb 2021 17:13:29 -0800
+Subject: [PATCH 3/3] [Mainline] android.system package APIs migration
+
+By removing Int32Ref.
+
+Bug: 177619520
+Bug: 179703584
+Test: mma
+Change-Id: I934bcdf0dc81b03116fc674901c0a01886a29ef3
+Merged-In: I934bcdf0dc81b03116fc674901c0a01886a29ef3
+(cherry picked from commit b45c914416207497703ea2797084e41746924ef5)
+---
+ .../main/java/android/system/Int32Ref.java    |  3 ---
+ luni/src/main/java/android/system/Os.java     | 12 +++++------
+ .../main/java/libcore/io/ForwardingOs.java    |  2 +-
+ luni/src/main/java/libcore/io/IoBridge.java   | 10 ++++-----
+ luni/src/main/java/libcore/io/Linux.java      |  2 +-
+ luni/src/main/java/libcore/io/Os.java         |  2 +-
+ luni/src/main/native/libcore_io_Linux.cpp     | 16 ++++++--------
+ .../libcore/java/io/FileInputStreamTest.java  | 21 +++++++++----------
+ .../libcore/libcore/io/BlockGuardOsTest.java  |  2 +-
+ .../api/legacy_platform/current.txt           |  7 +------
+ 10 files changed, 31 insertions(+), 46 deletions(-)
+
+diff --git a/luni/src/main/java/android/system/Int32Ref.java b/luni/src/main/java/android/system/Int32Ref.java
+index c43c796229..70c4876c4f 100644
+--- a/luni/src/main/java/android/system/Int32Ref.java
++++ b/luni/src/main/java/android/system/Int32Ref.java
+@@ -24,13 +24,10 @@ import android.compat.annotation.UnsupportedAppUsage;
+  * @hide
+  * A signed 32bit integer reference suitable for passing to lower-level system calls.
+  */
+-@libcore.api.CorePlatformApi
+ public class Int32Ref {
+     @UnsupportedAppUsage
+-    @libcore.api.CorePlatformApi
+     public int value;
+ 
+-    @libcore.api.CorePlatformApi
+     public Int32Ref(int value) {
+         this.value = value;
+     }
+diff --git a/luni/src/main/java/android/system/Os.java b/luni/src/main/java/android/system/Os.java
+index 8afcc71952..1ae0e760b2 100644
+--- a/luni/src/main/java/android/system/Os.java
++++ b/luni/src/main/java/android/system/Os.java
+@@ -18,6 +18,10 @@ package android.system;
+ 
+ import android.compat.annotation.UnsupportedAppUsage;
+ 
++import libcore.io.Libcore;
++import libcore.util.NonNull;
++import libcore.util.Nullable;
++
+ import java.io.FileDescriptor;
+ import java.io.InterruptedIOException;
+ import java.net.InetAddress;
+@@ -25,9 +29,6 @@ import java.net.InetSocketAddress;
+ import java.net.SocketAddress;
+ import java.net.SocketException;
+ import java.nio.ByteBuffer;
+-import libcore.io.Libcore;
+-import libcore.util.NonNull;
+-import libcore.util.Nullable;
+ 
+ /**
+  * Access to low-level system functionality. Most of these are system calls. Most users will want
+@@ -314,11 +315,10 @@ public final class Os {
+     /** @hide */
+     public static InetAddress ioctlInetAddress(FileDescriptor fd, int cmd, String interfaceName) throws ErrnoException { return Libcore.os.ioctlInetAddress(fd, cmd, interfaceName); }
+ 
+-
+     /** @hide */
+     @libcore.api.CorePlatformApi
+-    public static int ioctlInt(FileDescriptor fd, int cmd, Int32Ref arg) throws ErrnoException {
+-        return Libcore.os.ioctlInt(fd, cmd, arg);
++    public static int ioctlInt(FileDescriptor fd, int cmd) throws ErrnoException {
++        return Libcore.os.ioctlInt(fd, cmd);
+     }
+ 
+     /**
+diff --git a/luni/src/main/java/libcore/io/ForwardingOs.java b/luni/src/main/java/libcore/io/ForwardingOs.java
+index f9fb2d43dd..7e8a40ea45 100644
+--- a/luni/src/main/java/libcore/io/ForwardingOs.java
++++ b/luni/src/main/java/libcore/io/ForwardingOs.java
+@@ -137,7 +137,7 @@ public class ForwardingOs implements Os {
+     public InetAddress inet_pton(int family, String address) { return os.inet_pton(family, address); }
+     public int ioctlFlags(FileDescriptor fd, String interfaceName) throws ErrnoException { return os.ioctlFlags(fd, interfaceName); };
+     public InetAddress ioctlInetAddress(FileDescriptor fd, int cmd, String interfaceName) throws ErrnoException { return os.ioctlInetAddress(fd, cmd, interfaceName); }
+-    public int ioctlInt(FileDescriptor fd, int cmd, Int32Ref arg) throws ErrnoException { return os.ioctlInt(fd, cmd, arg); }
++    public int ioctlInt(FileDescriptor fd, int cmd) throws ErrnoException { return os.ioctlInt(fd, cmd); }
+     public int ioctlMTU(FileDescriptor fd, String interfaceName) throws ErrnoException { return os.ioctlMTU(fd, interfaceName); };
+     public boolean isatty(FileDescriptor fd) { return os.isatty(fd); }
+     public void kill(int pid, int signal) throws ErrnoException { os.kill(pid, signal); }
+diff --git a/luni/src/main/java/libcore/io/IoBridge.java b/luni/src/main/java/libcore/io/IoBridge.java
+index 3bde78c545..7d4ca81fd5 100644
+--- a/luni/src/main/java/libcore/io/IoBridge.java
++++ b/luni/src/main/java/libcore/io/IoBridge.java
+@@ -18,7 +18,6 @@ package libcore.io;
+ 
+ import android.compat.annotation.UnsupportedAppUsage;
+ import android.system.ErrnoException;
+-import android.system.Int32Ref;
+ import android.system.StructGroupReq;
+ import android.system.StructLinger;
+ import android.system.StructPollfd;
+@@ -61,18 +60,17 @@ public final class IoBridge {
+ 
+     public static int available(FileDescriptor fd) throws IOException {
+         try {
+-            Int32Ref available = new Int32Ref(0);
+-            Libcore.os.ioctlInt(fd, FIONREAD, available);
+-            if (available.value < 0) {
++            int available = Libcore.os.ioctlInt(fd, FIONREAD);
++            if (available < 0) {
+                 // If the fd refers to a regular file, the result is the difference between
+                 // the file size and the file position. This may be negative if the position
+                 // is past the end of the file. If the fd refers to a special file masquerading
+                 // as a regular file, the result may be negative because the special file
+                 // may appear to have zero size and yet a previous read call may have
+                 // read some amount of data and caused the file position to be advanced.
+-                available.value = 0;
++                available = 0;
+             }
+-            return available.value;
++            return available;
+         } catch (ErrnoException errnoException) {
+             if (errnoException.errno == ENOTTY) {
+                 // The fd is unwilling to opine about its read buffer.
+diff --git a/luni/src/main/java/libcore/io/Linux.java b/luni/src/main/java/libcore/io/Linux.java
+index 74608d392a..37e5f5ea5a 100644
+--- a/luni/src/main/java/libcore/io/Linux.java
++++ b/luni/src/main/java/libcore/io/Linux.java
+@@ -111,7 +111,7 @@ public final class Linux implements Os {
+     public native InetAddress inet_pton(int family, String address);
+     public native int ioctlFlags(FileDescriptor fd, String interfaceName) throws ErrnoException;
+     public native InetAddress ioctlInetAddress(FileDescriptor fd, int cmd, String interfaceName) throws ErrnoException;
+-    public native int ioctlInt(FileDescriptor fd, int cmd, Int32Ref arg) throws ErrnoException;
++    public native int ioctlInt(FileDescriptor fd, int cmd) throws ErrnoException;
+     public native int ioctlMTU(FileDescriptor fd, String interfaceName) throws ErrnoException;
+     public native boolean isatty(FileDescriptor fd);
+     public native void kill(int pid, int signal) throws ErrnoException;
+diff --git a/luni/src/main/java/libcore/io/Os.java b/luni/src/main/java/libcore/io/Os.java
+index 4953186d45..87e5d78e8c 100644
+--- a/luni/src/main/java/libcore/io/Os.java
++++ b/luni/src/main/java/libcore/io/Os.java
+@@ -113,7 +113,7 @@ public interface Os {
+     public InetAddress inet_pton(int family, String address);
+     public int ioctlFlags(FileDescriptor fd, String interfaceName) throws ErrnoException;
+     public InetAddress ioctlInetAddress(FileDescriptor fd, int cmd, String interfaceName) throws ErrnoException;
+-    public int ioctlInt(FileDescriptor fd, int cmd, Int32Ref arg) throws ErrnoException;
++    public int ioctlInt(FileDescriptor fd, int cmd) throws ErrnoException;
+     public int ioctlMTU(FileDescriptor fd, String interfaceName) throws ErrnoException;
+     public boolean isatty(FileDescriptor fd);
+     public void kill(int pid, int signal) throws ErrnoException;
+diff --git a/luni/src/main/native/libcore_io_Linux.cpp b/luni/src/main/native/libcore_io_Linux.cpp
+index 91d8cdbb8f..9b82b48d3b 100644
+--- a/luni/src/main/native/libcore_io_Linux.cpp
++++ b/luni/src/main/native/libcore_io_Linux.cpp
+@@ -1752,16 +1752,12 @@ static jobject Linux_ioctlInetAddress(JNIEnv* env, jobject, jobject javaFd, jint
+     return sockaddrToInetAddress(env, reinterpret_cast<sockaddr_storage&>(req.ifr_addr), NULL);
+ }
+ 
+-static jint Linux_ioctlInt(JNIEnv* env, jobject, jobject javaFd, jint cmd, jobject javaArg) {
+-    // This is complicated because ioctls may return their result by updating their argument
+-    // or via their return value, so we need to support both.
++static jint Linux_ioctlInt(JNIEnv* env, jobject, jobject javaFd, jint cmd) {
++    // Result is being stored in arg, thus simply returning it
+     int fd = jniGetFDFromFileDescriptor(env, javaFd);
+-    jint arg = env->GetIntField(javaArg, int32RefValueFid);
+-    int rc = throwIfMinusOne(env, "ioctl", TEMP_FAILURE_RETRY(ioctl(fd, cmd, &arg)));
+-    if (!env->ExceptionCheck()) {
+-        env->SetIntField(javaArg, int32RefValueFid, arg);
+-    }
+-    return rc;
++    jint arg = 0;
++    throwIfMinusOne(env, "ioctl", TEMP_FAILURE_RETRY(ioctl(fd, cmd, &arg)));
++    return arg;
+ }
+ 
+ static jint Linux_ioctlMTU(JNIEnv* env, jobject, jobject javaFd, jstring javaInterfaceName) {
+@@ -2642,7 +2638,7 @@ static JNINativeMethod gMethods[] = {
+     NATIVE_METHOD(Linux, inet_pton, "(ILjava/lang/String;)Ljava/net/InetAddress;"),
+     NATIVE_METHOD(Linux, ioctlFlags, "(Ljava/io/FileDescriptor;Ljava/lang/String;)I"),
+     NATIVE_METHOD(Linux, ioctlInetAddress, "(Ljava/io/FileDescriptor;ILjava/lang/String;)Ljava/net/InetAddress;"),
+-    NATIVE_METHOD(Linux, ioctlInt, "(Ljava/io/FileDescriptor;ILandroid/system/Int32Ref;)I"),
++    NATIVE_METHOD(Linux, ioctlInt, "(Ljava/io/FileDescriptor;I)I"),
+     NATIVE_METHOD(Linux, ioctlMTU, "(Ljava/io/FileDescriptor;Ljava/lang/String;)I"),
+     NATIVE_METHOD(Linux, isatty, "(Ljava/io/FileDescriptor;)Z"),
+     NATIVE_METHOD(Linux, kill, "(II)V"),
+diff --git a/luni/src/test/java/libcore/java/io/FileInputStreamTest.java b/luni/src/test/java/libcore/java/io/FileInputStreamTest.java
+index e722b4f8c0..dbc8a023f7 100644
+--- a/luni/src/test/java/libcore/java/io/FileInputStreamTest.java
++++ b/luni/src/test/java/libcore/java/io/FileInputStreamTest.java
+@@ -16,17 +16,7 @@
+ 
+ package libcore.java.io;
+ 
+-import java.io.File;
+-import java.io.FileDescriptor;
+-import java.io.FileInputStream;
+-import java.io.FileNotFoundException;
+-import java.io.FileOutputStream;
+-import java.io.IOException;
+-import java.util.ArrayList;
+-import java.util.List;
+-
+ import android.system.ErrnoException;
+-import android.system.Int32Ref;
+ import android.system.Os;
+ import android.system.OsConstants;
+ import android.system.StructStatVfs;
+@@ -40,6 +30,15 @@ import libcore.testing.io.TestIoUtils;
+ import org.junit.Rule;
+ import org.junit.rules.TestRule;
+ 
++import java.io.File;
++import java.io.FileDescriptor;
++import java.io.FileInputStream;
++import java.io.FileNotFoundException;
++import java.io.FileOutputStream;
++import java.io.IOException;
++import java.util.ArrayList;
++import java.util.List;
++
+ public final class FileInputStreamTest extends TestCaseWithRules {
+     @Rule
+     public TestRule guardRule = ResourceLeakageDetector.getRule();
+@@ -224,7 +223,7 @@ public final class FileInputStreamTest extends TestCaseWithRules {
+         }
+ 
+         try (FileInputStream input = new FileInputStream(file)) {
+-            android.system.Os.ioctlInt(input.getFD(), OsConstants.FIONREAD, new Int32Ref(0));
++            android.system.Os.ioctlInt(input.getFD(), OsConstants.FIONREAD);
+             fail();
+         } catch (ErrnoException expected) {
+             assertEquals("FIONREAD should have returned ENOTTY for the file. If it doesn't return"
+diff --git a/luni/src/test/java/libcore/libcore/io/BlockGuardOsTest.java b/luni/src/test/java/libcore/libcore/io/BlockGuardOsTest.java
+index 928739a3f5..adbf3992e8 100644
+--- a/luni/src/test/java/libcore/libcore/io/BlockGuardOsTest.java
++++ b/luni/src/test/java/libcore/libcore/io/BlockGuardOsTest.java
+@@ -269,7 +269,7 @@ public class BlockGuardOsTest {
+                 "inet_pton(int,java.lang.String)",
+                 "ioctlFlags(java.io.FileDescriptor,java.lang.String)",
+                 "ioctlInetAddress(java.io.FileDescriptor,int,java.lang.String)",
+-                "ioctlInt(java.io.FileDescriptor,int,android.system.Int32Ref)",
++                "ioctlInt(java.io.FileDescriptor,int)",
+                 "ioctlMTU(java.io.FileDescriptor,java.lang.String)",
+                 "isatty(java.io.FileDescriptor)",
+                 "kill(int,int)",
+diff --git a/mmodules/core_platform_api/api/legacy_platform/current.txt b/mmodules/core_platform_api/api/legacy_platform/current.txt
+index a4a2899bc6..adb757a6f5 100644
+--- a/mmodules/core_platform_api/api/legacy_platform/current.txt
++++ b/mmodules/core_platform_api/api/legacy_platform/current.txt
+@@ -30,11 +30,6 @@ package android.compat {
+ 
+ package android.system {
+ 
+-  public class Int32Ref {
+-    ctor public Int32Ref(int);
+-    field public int value;
+-  }
+-
+   public final class NetlinkSocketAddress extends java.net.SocketAddress {
+     ctor public NetlinkSocketAddress(int, int);
+     method public int getGroupsMask();
+@@ -48,7 +43,7 @@ package android.system {
+     method public static android.system.StructRlimit getrlimit(int) throws android.system.ErrnoException;
+     method public static int getsockoptInt(java.io.FileDescriptor, int, int) throws android.system.ErrnoException;
+     method public static android.system.StructLinger getsockoptLinger(java.io.FileDescriptor, int, int) throws android.system.ErrnoException;
+-    method public static int ioctlInt(java.io.FileDescriptor, int, android.system.Int32Ref) throws android.system.ErrnoException;
++    method public static int ioctlInt(java.io.FileDescriptor, int) throws android.system.ErrnoException;
+     method public static java.io.FileDescriptor[] pipe2(int) throws android.system.ErrnoException;
+     method public static String realpath(String) throws android.system.ErrnoException;
+     method public static void setpgid(int, int) throws android.system.ErrnoException;
+-- 
+2.30.2
+

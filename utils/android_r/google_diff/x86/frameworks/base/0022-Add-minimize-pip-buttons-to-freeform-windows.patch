@@ -1,13 +1,13 @@
-From 576ca2cfaee07031a6bfd2d1ff4416e834d4a65c Mon Sep 17 00:00:00 2001
-From: Jon West <electrikjesus@gmail.com>
-Date: Sat, 8 Feb 2020 15:06:39 -0500
+From a14a93dc56adf53e132d396b73e2ae3d27847a80 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Sun, 25 Apr 2021 16:08:32 -0400
 Subject: [PATCH 22/22] Add minimize & pip buttons to freeform windows
 
 Thanks to @farmerbb for assistance and @rogerdott for the graphics
 
 Change-Id: I8ddad6eab27f52574ee1c10e8006612fb46a83c5
 ---
- config/hiddenapi-greylist-max-o.txt           |  4 ++
+ config/hiddenapi-max-target-o.txt             |  4 ++
  core/java/android/app/Activity.java           | 17 ++++++---
  core/java/android/view/Window.java            |  2 +
  .../android/internal/policy/DecorView.java    |  8 ++++
@@ -26,10 +26,10 @@ Change-Id: I8ddad6eab27f52574ee1c10e8006612fb46a83c5
  create mode 100644 core/res/res/drawable/decor_pip_button_dark.xml
  create mode 100644 core/res/res/drawable/decor_pip_button_light.xml
 
-diff --git a/config/hiddenapi-greylist-max-o.txt b/config/hiddenapi-greylist-max-o.txt
+diff --git a/config/hiddenapi-max-target-o.txt b/config/hiddenapi-max-target-o.txt
 index 023bf387622..66547dfa57c 100644
---- a/config/hiddenapi-greylist-max-o.txt
-+++ b/config/hiddenapi-greylist-max-o.txt
+--- a/config/hiddenapi-max-target-o.txt
++++ b/config/hiddenapi-max-target-o.txt
 @@ -91764,6 +91764,10 @@ Lcom/android/internal/R$drawable;->decor_close_button_dark:I
  Lcom/android/internal/R$drawable;->decor_close_button_light:I
  Lcom/android/internal/R$drawable;->decor_maximize_button_dark:I
@@ -42,7 +42,7 @@ index 023bf387622..66547dfa57c 100644
  Lcom/android/internal/R$drawable;->default_wallpaper:I
  Lcom/android/internal/R$drawable;->dialog_frame:I
 diff --git a/core/java/android/app/Activity.java b/core/java/android/app/Activity.java
-index e123af728b2..7a7f43487c3 100644
+index 4c16072cefd..1e0614d1726 100644
 --- a/core/java/android/app/Activity.java
 +++ b/core/java/android/app/Activity.java
 @@ -1006,6 +1006,16 @@ public class Activity extends ContextThemeWrapper
@@ -77,7 +77,7 @@ index e123af728b2..7a7f43487c3 100644
  
      /**
 diff --git a/core/java/android/view/Window.java b/core/java/android/view/Window.java
-index 446e7aa67bc..100f00fd790 100644
+index fb2412bd51e..3ec863fa848 100644
 --- a/core/java/android/view/Window.java
 +++ b/core/java/android/view/Window.java
 @@ -653,6 +653,8 @@ public abstract class Window {
@@ -404,10 +404,10 @@ index 8f2d6c3e02f..168ca7917c6 100644
  
      <!-- Used in LocalePicker -->
 diff --git a/core/res/res/values/strings.xml b/core/res/res/values/strings.xml
-index 88886df132c..1c2bf272789 100644
+index d208f9cfc9d..315dbe099f6 100644
 --- a/core/res/res/values/strings.xml
 +++ b/core/res/res/values/strings.xml
-@@ -4984,6 +4984,10 @@
+@@ -4993,6 +4993,10 @@
      <string name="floating_toolbar_close_overflow_description">Close overflow</string>
  
      <!-- Free style window strings -->
@@ -419,10 +419,10 @@ index 88886df132c..1c2bf272789 100644
      <string name="maximize_button_text">Maximize</string>
      <!-- Accessibility text for the close window button -->
 diff --git a/core/res/res/values/symbols.xml b/core/res/res/values/symbols.xml
-index 232bd2d04c6..b23ec8ace14 100644
+index 927b9db4113..23bbe91cb7d 100644
 --- a/core/res/res/values/symbols.xml
 +++ b/core/res/res/values/symbols.xml
-@@ -2264,14 +2264,20 @@
+@@ -2268,14 +2268,20 @@
  
    <!-- From Phone -->
    <java-symbol type="bool" name="config_built_in_sip_phone" />

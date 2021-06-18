@@ -1,4 +1,4 @@
-From dd15ad77a9c9de87fca621bb35d76cef6ce878ca Mon Sep 17 00:00:00 2001
+From f43464316066234eba8c449683133c427a5cdbf2 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 27 Jun 2017 14:21:26 +0800
 Subject: [PATCH 10/16] installd: a workaround for 9p filesystem
@@ -12,7 +12,7 @@ TEST: be able to boot to Home on QEMU with shared 'data' folder.
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/cmds/installd/InstalldNativeService.cpp b/cmds/installd/InstalldNativeService.cpp
-index 01eb3fe44..3b9abbc03 100644
+index c55fc6af8..85bc986c3 100644
 --- a/cmds/installd/InstalldNativeService.cpp
 +++ b/cmds/installd/InstalldNativeService.cpp
 @@ -333,7 +333,7 @@ static int restorecon_app_data_lazy(const std::string& path, const std::string&
@@ -24,7 +24,7 @@ index 01eb3fe44..3b9abbc03 100644
      }
      if (lgetfilecon(path.c_str(), &after) < 0) {
          PLOG(ERROR) << "Failed after getfilecon for " << path;
-@@ -557,7 +557,7 @@ binder::Status InstalldNativeService::migrateAppData(const std::unique_ptr<std::
+@@ -562,7 +562,7 @@ binder::Status InstalldNativeService::migrateAppData(const std::optional<std::st
      auto target = (flags & FLAG_STORAGE_DE) ? de_path : ce_path;
      auto source = (flags & FLAG_STORAGE_DE) ? ce_path : de_path;
  

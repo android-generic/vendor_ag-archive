@@ -1,4 +1,4 @@
-From dec50b4f1ec7c2a868e95a463c1d939c5411d1f9 Mon Sep 17 00:00:00 2001
+From 2d5c33dc6a385b3b5aeab80c609fce185e585854 Mon Sep 17 00:00:00 2001
 From: Dan Pasanen <dan.pasanen@gmail.com>
 Date: Tue, 27 Oct 2015 22:52:37 -0500
 Subject: [PATCH 1/8] vold: add support for more filesystems for public storage
@@ -41,10 +41,10 @@ Change-Id: I0a83761cefd97791e3ec84a18e199dfd27a5ed0b
  create mode 100644 fs/Ntfs.h
 
 diff --git a/Android.bp b/Android.bp
-index b033647..6bc78b4 100644
+index fa8f249..70c4f34 100644
 --- a/Android.bp
 +++ b/Android.bp
-@@ -138,6 +138,7 @@ cc_library_static {
+@@ -142,6 +142,7 @@ cc_library_static {
          "fs/Exfat.cpp",
          "fs/Ext4.cpp",
          "fs/F2fs.cpp",
@@ -53,10 +53,10 @@ index b033647..6bc78b4 100644
          "model/Disk.cpp",
          "model/EmulatedVolume.cpp",
 diff --git a/Utils.cpp b/Utils.cpp
-index 17921e8..8ce1370 100644
+index d5648f7..d9c039c 100644
 --- a/Utils.cpp
 +++ b/Utils.cpp
-@@ -1000,6 +1000,10 @@ bool IsFilesystemSupported(const std::string& fsType) {
+@@ -997,6 +997,10 @@ bool IsFilesystemSupported(const std::string& fsType) {
          PLOG(ERROR) << "Failed to read supported filesystems";
          return false;
      }
@@ -223,10 +223,10 @@ index 0000000..2f002b2
 +
 +#endif
 diff --git a/main.cpp b/main.cpp
-index ebe5510..a6cb640 100644
+index 1f85fb5..7f9c21b 100644
 --- a/main.cpp
 +++ b/main.cpp
-@@ -61,8 +61,10 @@ int main(int argc, char** argv) {
+@@ -67,8 +67,10 @@ int main(int argc, char** argv) {
      ATRACE_BEGIN("main");
  
      LOG(DEBUG) << "Detected support for:"
@@ -250,7 +250,7 @@ index 4df4e9d..4788c17 100644
                          break;
                  }
 diff --git a/model/PublicVolume.cpp b/model/PublicVolume.cpp
-index d40e3e3..91fb56d 100644
+index 12e31ff..6f7c6dc 100644
 --- a/model/PublicVolume.cpp
 +++ b/model/PublicVolume.cpp
 @@ -20,6 +20,9 @@
@@ -339,7 +339,7 @@ index d40e3e3..91fb56d 100644
      }
  
      if (getMountFlags() & MountFlags::kPrimary) {
-@@ -313,7 +332,7 @@ status_t PublicVolume::doUnmount() {
+@@ -310,7 +329,7 @@ status_t PublicVolume::doUnmount() {
  status_t PublicVolume::doFormat(const std::string& fsType) {
      bool useVfat = vfat::IsSupported();
      bool useExfat = exfat::IsSupported();
@@ -348,7 +348,7 @@ index d40e3e3..91fb56d 100644
  
      // Resolve the target filesystem type
      if (fsType == "auto" && useVfat && useExfat) {
-@@ -337,7 +356,7 @@ status_t PublicVolume::doFormat(const std::string& fsType) {
+@@ -334,7 +353,7 @@ status_t PublicVolume::doFormat(const std::string& fsType) {
          useVfat = false;
      }
  
@@ -357,7 +357,7 @@ index d40e3e3..91fb56d 100644
          LOG(ERROR) << "Unsupported filesystem " << fsType;
          return -EINVAL;
      }
-@@ -350,6 +369,15 @@ status_t PublicVolume::doFormat(const std::string& fsType) {
+@@ -347,6 +366,15 @@ status_t PublicVolume::doFormat(const std::string& fsType) {
          res = vfat::Format(mDevPath, 0);
      } else if (useExfat) {
          res = exfat::Format(mDevPath);

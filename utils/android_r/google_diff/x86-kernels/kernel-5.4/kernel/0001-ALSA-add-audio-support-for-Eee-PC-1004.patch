@@ -1,17 +1,17 @@
-From 400b9d6d045c5bca180a31db25bb69fdf0439e69 Mon Sep 17 00:00:00 2001
+From 3c134662b213a1b63c6c82297787d3f9ade5268d Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 16 Jul 2009 14:43:09 +0800
-Subject: [PATCH 01/89] ALSA: add audio support for Eee PC 1004
+Subject: [PATCH 01/54] ALSA: add audio support for Eee PC 1004
 
 ---
  sound/pci/hda/patch_realtek.c | 1 +
  1 file changed, 1 insertion(+)
 
 diff --git a/sound/pci/hda/patch_realtek.c b/sound/pci/hda/patch_realtek.c
-index e3fab993b339..297659e478a5 100644
+index a7544b77d3f7..e41b3b1488e5 100644
 --- a/sound/pci/hda/patch_realtek.c
 +++ b/sound/pci/hda/patch_realtek.c
-@@ -7963,6 +7963,7 @@ static const struct snd_pci_quirk alc269_fixup_tbl[] = {
+@@ -8118,6 +8118,7 @@ static const struct snd_pci_quirk alc269_fixup_tbl[] = {
  	SND_PCI_QUIRK(0x1043, 0x3030, "ASUS ZN270IE", ALC256_FIXUP_ASUS_AIO_GPIO2),
  	SND_PCI_QUIRK(0x1043, 0x831a, "ASUS P901", ALC269_FIXUP_STEREO_DMIC),
  	SND_PCI_QUIRK(0x1043, 0x834a, "ASUS S101", ALC269_FIXUP_STEREO_DMIC),

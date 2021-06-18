@@ -1,4 +1,4 @@
-From 26bd3c272d2af70a3451ebce6d9172270a7b8d00 Mon Sep 17 00:00:00 2001
+From e84bd41fea5ef8c20d31a8b4b6ec690d2ad83d68 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 28 Jul 2017 19:44:57 +0800
 Subject: [PATCH 11/16] RenderEngine: support non-RGBA_8888 format
@@ -13,7 +13,7 @@ RGBA_8888.
  1 file changed, 10 insertions(+), 4 deletions(-)
 
 diff --git a/libs/renderengine/gl/GLESRenderEngine.cpp b/libs/renderengine/gl/GLESRenderEngine.cpp
-index 0285c2f6f..cbc09e8b2 100644
+index 56d470eec..60c7f9b15 100644
 --- a/libs/renderengine/gl/GLESRenderEngine.cpp
 +++ b/libs/renderengine/gl/GLESRenderEngine.cpp
 @@ -283,7 +283,7 @@ std::unique_ptr<GLESRenderEngine> GLESRenderEngine::create(const RenderEngineCre

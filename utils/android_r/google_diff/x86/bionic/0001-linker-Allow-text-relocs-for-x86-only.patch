@@ -1,4 +1,4 @@
-From 2f9dfe9e5baa88fc561b6101facb60d2f9fe64cf Mon Sep 17 00:00:00 2001
+From 0cd76ed95bc77a820c9aee8481ca3275a6f78336 Mon Sep 17 00:00:00 2001
 From: "Christopher R. Palmer" <crpalmer@gmail.com>
 Date: Sun, 7 Feb 2016 06:46:05 -0500
 Subject: [PATCH 1/3] linker: Allow text-relocs for x86 (only)
@@ -20,10 +20,10 @@ Change-Id: I68397f4d62f4f6acd8e0d41b7ecdc115969b890a
  1 file changed, 2 insertions(+)
 
 diff --git a/linker/linker.cpp b/linker/linker.cpp
-index f24167722..d4802904b 100644
+index 3488f5cc7..99352399b 100644
 --- a/linker/linker.cpp
 +++ b/linker/linker.cpp
-@@ -3256,6 +3256,7 @@ bool soinfo::link_image(const SymbolLookupList& lookup_list, soinfo* local_group
+@@ -3253,6 +3253,7 @@ bool soinfo::link_image(const SymbolLookupList& lookup_list, soinfo* local_group
  
  #if !defined(__LP64__)
    if (has_text_relocations) {
@@ -31,8 +31,8 @@ index f24167722..d4802904b 100644
      // Fail if app is targeting M or above.
      int app_target_api_level = get_application_target_sdk_version();
      if (app_target_api_level >= 23) {
-@@ -3264,6 +3265,7 @@ bool soinfo::link_image(const SymbolLookupList& lookup_list, soinfo* local_group
-                      "Enforced-for-API-level-23)", get_realpath());
+@@ -3260,6 +3261,7 @@ bool soinfo::link_image(const SymbolLookupList& lookup_list, soinfo* local_group
+                      get_realpath(), kBionicChangesUrl);
        return false;
      }
 +#endif

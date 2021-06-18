@@ -1,0 +1,27 @@
+From d080086e3c74bbf4fca9a4230995e69d0dcde577 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 20 May 2021 12:35:28 -0400
+Subject: [PATCH 3/3] Disable nn getDevices for PC builds.
+
+---
+ runtime/Manager.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/runtime/Manager.cpp b/runtime/Manager.cpp
+index b18171a1e..e248b0832 100644
+--- a/runtime/Manager.cpp
++++ b/runtime/Manager.cpp
+@@ -1012,7 +1012,9 @@ std::shared_ptr<Device> DeviceManager::forTest_makeDriverDevice(const SharedDevi
+ 
+ #ifndef NN_COMPATIBILITY_LIBRARY_BUILD
+ std::vector<SharedDevice> getDevices() {
+-    return hal::getDevices();
++    //~ return hal::getDevices();
++    VLOG(MANAGER) << "getDevices is not implemented";
++    return {nullptr};
+ }
+ #endif  // NN_COMPATIBILITY_LIBRARY_BUILD
+ 
+-- 
+2.17.1
+

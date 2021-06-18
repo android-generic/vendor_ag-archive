@@ -1,0 +1,30 @@
+From 82b3257dd1d4051622e45ed859a503ea904c7e54 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Sun, 18 Oct 2020 21:47:16 -0400
+Subject: [PATCH 08/17] Remove wifi HAL
+
+There is no wifi HAL and declaring one prevents the wifi service to work
+properly (as it's checking the device manifest for a wifi HAL and fails
+to initialize the corresponding stubs).
+---
+ treble.mk | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/treble.mk b/treble.mk
+index 7416071..885c24a 100644
+--- a/treble.mk
++++ b/treble.mk
+@@ -77,10 +77,6 @@ PRODUCT_PACKAGES += \
+     android.hardware.usb@1.0-impl \
+     android.hardware.usb@1.0-service
+ 
+-# Wifi HAL
+-PRODUCT_PACKAGES += \
+-    android.hardware.wifi@1.0-service
+-
+ # Drm HAL
+ PRODUCT_PACKAGES += \
+     android.hardware.drm@1.0-impl \
+-- 
+2.30.2
+

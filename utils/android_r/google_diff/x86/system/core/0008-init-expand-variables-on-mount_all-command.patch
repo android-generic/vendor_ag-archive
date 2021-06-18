@@ -1,7 +1,7 @@
-From 5fb6f02d915ee53ed59dda0ccbf8c6087b4ac2f1 Mon Sep 17 00:00:00 2001
+From 70046b4c8dba736c9aa79aa53557d7c328a53c3b Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 23 Nov 2015 17:57:37 +0800
-Subject: [PATCH 08/22] init: expand variables on mount_all command
+Subject: [PATCH 08/21] init: expand variables on mount_all command
 
 This allows mount_all to handle fstab.${ro.hardware} instead
 of hardcoding the file name.
@@ -12,10 +12,10 @@ Change-Id: Ia7fb4e5a84dd50a46afdd4239b9b06204f449cfe
  1 file changed, 11 insertions(+), 2 deletions(-)
 
 diff --git a/init/util.cpp b/init/util.cpp
-index 255434a1b..a38aaa1bc 100644
+index a40d10416..0de4841f0 100644
 --- a/init/util.cpp
 +++ b/init/util.cpp
-@@ -599,7 +599,11 @@ Result<MountAllOptions> ParseMountAll(const std::vector<std::string>& args) {
+@@ -621,7 +621,11 @@ Result<MountAllOptions> ParseMountAll(const std::vector<std::string>& args) {
  
      std::string fstab_path;
      if (first_option_arg > 1) {
@@ -28,7 +28,7 @@ index 255434a1b..a38aaa1bc 100644
      } else if (compat_mode) {
          return Error() << "mount_all argument 1 must be the fstab path";
      }
-@@ -669,7 +673,12 @@ Result<std::string> ParseUmountAll(const std::vector<std::string>& args) {
+@@ -691,7 +695,12 @@ Result<std::string> ParseUmountAll(const std::vector<std::string>& args) {
          }
          return {};
      }
@@ -43,5 +43,5 @@ index 255434a1b..a38aaa1bc 100644
  
  static void InitAborter(const char* abort_message) {
 -- 
-2.30.2
+2.17.1
 

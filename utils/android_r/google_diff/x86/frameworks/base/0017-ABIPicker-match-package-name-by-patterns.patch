@@ -1,4 +1,4 @@
-From cd4371e8fbb31615c32af4a5c221d8347af6d644 Mon Sep 17 00:00:00 2001
+From c4d3890415c0bf28333d40c2b00cf52359170ce2 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 18 Jul 2016 22:32:13 +0800
 Subject: [PATCH 17/22] ABIPicker: match package name by patterns
