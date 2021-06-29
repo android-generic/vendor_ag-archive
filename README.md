@@ -20,6 +20,8 @@ Telegram:
 
 AG Artwork:  
 [Android-Generic Artwork](https://github.com/android-generic/artwork)
+
+AG Documentation:
 [Android-Generic Project Documentation](https://android-generic-project.gitbook.io/documentation/)
 
 Source & Troubleshooting Documentation:  
@@ -32,8 +34,9 @@ Source & Troubleshooting Documentation:
 - **TOC**
 
 ## Documentation:
-Our documentation has moved to it's own repo.
+Our documentation has moved to it's own repo:
 [AG Documentation Repo](https://github.com/android-generic/documentation)
+
 [Android-Generic Project Documentation Site](https://android-generic-project.gitbook.io/documentation/)
 
 
