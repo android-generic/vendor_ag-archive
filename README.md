@@ -33,7 +33,9 @@ Source & Troubleshooting Documentation:
 
 ## Documentation:
 Our documentation has moved to it's own repo.
-[Android-Generic Project Documentation](https://android-generic-project.gitbook.io/documentation/)
+[AG Documentation Repo](https://github.com/android-generic/documentation)
+[Android-Generic Project Documentation Site](https://android-generic-project.gitbook.io/documentation/)
+
 
 # Credits
 
