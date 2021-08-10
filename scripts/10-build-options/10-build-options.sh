@@ -105,8 +105,9 @@ appsType() {
 	selection=("FOSS"
 		"GMS"
 		"EMU-Gapps"
+		"OpenGapps"
 		"Vanilla")
-	menu "FOSS" "GMS" "EMU-Gapps" "Vanilla"
+	menu "FOSS" "GMS" "EMU-Gapps" "OpenGapps" "Vanilla"
 	echo "Timeout in $TMOUT sec."${CL_RST}
 	answer=$(0< "${dir_tmp}/${file_tmp}" )
 	if [ "${answer}" = "FOSS" ]; then
@@ -197,6 +198,14 @@ appsType() {
 				rm -rf $rompath/vendor/foss/apps.mk
 			fi
 			apps="&& export USE_EMU_GAPPS=true"
+			echo -e ${apps} > $temp_path/apps.config
+		fi
+	elif [ "${answer}" = "OpenGapps" ]; then
+		echo "you chose ${answer}"
+		if [ ! -d $rompath/vendor/opengapps ]; then
+			echo -e "You will need to clone the gms into $rompath/vendor/opengapps first"
+		else
+			apps="&& export USE_OPENGAPPS=true "
 			echo -e ${apps} > $temp_path/apps.config
 		fi
 	elif [ "${answer}" = "Vanilla" ]; then
