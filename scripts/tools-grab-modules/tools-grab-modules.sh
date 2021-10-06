@@ -66,7 +66,7 @@ ask() {
 # Run the functions
 
 if [ "$1" == "" ]; then
-	echo "You must specify a target type (pc, gsi, emu)"
+	echo "You must specify a target type (pc, waydroid)"
 fi
 echo -e ${reset}"$1 specified"${reset}
 
@@ -75,6 +75,10 @@ privprefix="$rompath/vendor/$vendor_path/private-scripts/"
 
 if [ "$1" == "pc" ]; then
 	config_type_prefix="$rompath/vendor/$vendor_path/pc_scripts/"
+fi
+
+if [ "$1" == "waydroid" ]; then
+	config_type_prefix="$rompath/vendor/$vendor_path/waydroid_scripts/"
 fi
 
 if [ -f $temp_path/modules.lst ]; then

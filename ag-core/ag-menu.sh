@@ -1,13 +1,14 @@
 #!/bin/bash
 rompath="$PWD"
-vendor_path="ag"
-temp_path="$rompath/vendor/$vendor_path/tmp"
-config_type="$1"
-modulepath="$rompath/vendor/$vendor_path/scripts"
-privmodulepath="$rompath/vendor/$vendor_path/private-scripts"
+ag_vendor_path="ag"
+temp_path="$rompath/vendor/$ag_vendor_path/tmp"
+config_type="waydroid"
+modulepath="$rompath/vendor/$ag_vendor_path/scripts"
+config_type_modulepath="$rompath/vendor/$ag_vendor_path/waydroid_scripts"
+privmodulepath="$rompath/vendor/$ag_vendor_path/private-scripts"
 export supertitle="Android Generic Project - Main Menu"
-export supericon="$rompath/vendor/$vendor_path/ag-core/includes/ag-logo.png"
-source $rompath/vendor/$vendor_path/ag-core/gui/easybashgui
+export supericon="$rompath/vendor/$ag_vendor_path/ag-core/includes/ag-logo.png"
+source $rompath/vendor/$ag_vendor_path/ag-core/gui/easybashgui
 
 #setup colors
 red=`tput setaf 1`
@@ -43,7 +44,7 @@ Version=1.0
 Name=ag-$config_type
 Comment=AG for $rompath
 Exec=sh -c 'cd $rompath && bash vendor/ag/ag-core/ag-menu.sh $config_type;$shell_cmd'
-Icon=$rompath/vendor/$vendor_path/ag-core/includes/ag-logo.png
+Icon=$rompath/vendor/$ag_vendor_path/ag-core/includes/ag-logo.png
 Terminal=true
 Type=Application
 Categories=Application;
@@ -82,6 +83,8 @@ while :
 			echo -e ${reset}""${reset} 
 			if [ -d $modulepath/${i} ];then
 				bash $modulepath/${i}/${i}.sh $config_type
+			elif [ -d $config_type_modulepath/${i} ];then
+				bash $config_type_modulepath/${i}/${i}.sh $config_type
 			elif [ -d $privmodulepath/${i} ];then
 				bash $privmodulepath/${i}/${i}.sh $config_type
 			fi
