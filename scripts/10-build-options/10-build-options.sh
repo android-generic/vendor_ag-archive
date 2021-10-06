@@ -49,6 +49,7 @@ magisk=""
 gearlock=""
 # - Make Command (iso_img, efi_img, rpm)
 make_type=""
+desktop_mode=""
 
 productType() {
 	# Device type selection	
@@ -324,6 +325,36 @@ extraOptions() {
 	done
 }
 
+desktopMode() {
+	# Apps type selection	
+	alert_message 'Which make type of Desktop Mode do you want?'
+	echo -e ${CL_CYN}"(default is 'Taskbar')"
+	TMOUT=10
+	title="Choose a type"
+	selection=("Taskbar" "Smart-Dock" "None")
+	menu "Taskbar" "Smart-Dock" "None"
+	echo "Timeout in $TMOUT sec."${CL_RST}
+	answer=$(0< "${dir_tmp}/${file_tmp}" )
+	if [ "${answer}" = "Taskbar" ]; then
+		echo "you chose ${answer}"
+		desktop_mode="&& export USE_TASKBAR_UI=true "
+		echo -e ${desktop_mode} > $temp_path/desktop_mode.config
+	elif [ "${answer}" = "Smart-Dock" ]; then
+		echo "you chose ${answer}"
+		desktop_mode="&& export USE_SMARTDOCK=true "
+		echo -e ${desktop_mode} > $temp_path/desktop_mode.config
+	elif [ "${answer}" = "None" ]; then
+		echo "you chose ${answer}"
+		desktop_mode=""
+		echo -e ${desktop_mode} > $temp_path/desktop_mode.config
+	else
+		echo "invalid option ${answer}"
+		exit
+	fi
+	
+}
+
+
 runMakeClean() {
 	alert_message 'Are you sure you want to make clean? It will wipe your compile progress and start over'
 	
@@ -429,7 +460,7 @@ runBuild() {
 		
 		lunchtype="$product-$variant"
 		echo -e ${lunchtype} > $temp_path/lunch.config
-		full_command="$env && lunch $lunchtype $clean $apps $nb_type $nkcc && make -j$(nproc --all) $make_type"
+		full_command="$env && lunch $lunchtype $clean $apps $nb_type $desktop_mode $nkcc && make -j$(nproc --all) $make_type"
 		echo -e ${full_command} > $temp_path/command.sh 
 		chmod -x $temp_path/command.sh
 		echo -e "Full Command saved"
@@ -480,6 +511,10 @@ if [ -f $temp_path/clean.config ]; then
 	clean=$(cat $temp_path/clean.config)
 	echo "clean command loaded: ${clean}"
 fi
+if [ -f $temp_path/desktop_mode.config ]; then
+	desktop_mode=$(cat $temp_path/desktop_mode.config)
+	echo "desktop_mode command loaded: ${desktop_mode}"
+fi
 if [ -f $temp_path/make_type.config ]; then
 	make_type=$(cat $temp_path/make_type.config)
 	echo "make_type command loaded: ${make_type}"
@@ -491,7 +526,7 @@ fi
 
 while :
 	do
-	menu "Select Product Type" "Select Variant Type" "Select Apps Type" "Select Native-Bridge Type" "Select make type" "Select Extra Options" "Run Make Clean" "Enable Rusty-Magisk" "Start the Build" 
+	menu "Select Product Type" "Select Variant Type" "Select Apps Type" "Select Native-Bridge Type" "Select make type" "Select Desktop Mode integration" "Select Extra Options" "Run Make Clean" "Enable Rusty-Magisk" "Start the Build" 
 	answer=$(0< "${dir_tmp}/${file_tmp}" )
 	if [ "${answer}" = "" ]; then
 		exit
@@ -523,6 +558,10 @@ while :
 	if [ "${answer}" = "Select make type" ]; then
 		echo "Selected ${answer}"
 		makeType
+	fi
+	if [ "${answer}" = "Select Desktop Mode integration" ]; then
+		echo "Selected ${answer}"
+		desktopMode
 	fi
 	if [ "${answer}" = "Run Make Clean" ]; then
 		echo "Selected ${answer}"
