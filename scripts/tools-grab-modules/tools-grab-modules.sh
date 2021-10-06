@@ -73,6 +73,10 @@ echo -e ${reset}"$1 specified"${reset}
 prefix="$rompath/vendor/$vendor_path/scripts/"
 privprefix="$rompath/vendor/$vendor_path/private-scripts/"
 
+if [ "$1" == "pc" ]; then
+	config_type_prefix="$rompath/vendor/$vendor_path/pc_scripts/"
+fi
+
 if [ -f $temp_path/modules.lst ]; then
 	echo -e ${reset}""${reset}
 	echo -e ${teal}"Modules List Already Created, cleaning up"${reset}
@@ -83,6 +87,12 @@ fi
 echo -e ${reset}""${reset}
 echo -e ${ltgreen}"AG Modules Found:"${reset}
 echo -e ${reset}""${reset}
+
+ls -d $config_type_prefix* | grep -oP "^$config_type_prefix\K.*" | while read d
+do
+	echo -e ${green}"\t$d"${reset}
+	echo -e "$d" >> "$temp_path/modules.lst"
+done
 
 ls -d $prefix* | grep -oP "^$prefix\K.*" | while read d
 do

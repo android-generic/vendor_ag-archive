@@ -1,24 +1,24 @@
 rompath=$(pwd)
-vendor_path="ag"
+ag_vendor_path="ag"
 
 function apply-x86-patches
 {
 
-	vendor/${vendor_path}/utils/autopatch.sh
+	vendor/${ag_vendor_path}/utils/autopatch.sh
 
 }
 
 function apply-x86-extras
 {
 
-	vendor/${vendor_path}/utils/ap_extras.sh
+	vendor/${ag_vendor_path}/utils/ap_extras.sh
 
 }
 
-function apply-kernel-patches()
+function apply-x86-kernel-patches()
 {
 
-	vendor/${vendor_path}/utils/ap_kernel.sh $1
+	vendor/${ag_vendor_path}/utils/ap_kernel.sh $1
 
 }
 
@@ -31,7 +31,7 @@ function ag-menu()
 	elif [ "$1" == "emu" ]; then
 		echo -e "You must wait for that target type to become available. Check repo for updates"
 	else
-		bash vendor/${vendor_path}/ag-core/ag-menu.sh $1 $2 $3 $4
+		bash vendor/${ag_vendor_path}/ag-core/ag-menu.sh $1 $2 $3 $4
 	fi
 }
 
@@ -44,13 +44,13 @@ function ag-menu-l()
 	elif [ "$1" == "emu" ]; then
 		echo -e "You must wait for that target type to become available. Check repo for updates"
 	else
-		. vendor/${vendor_path}/ag-core/ag-menu.sh $1 $2 $3 $4
+		. vendor/${ag_vendor_path}/ag-core/ag-menu.sh $1 $2 $3 $4
 	fi
 }
 
 function manifest-backup
 {
-	bash vendor/${vendor_path}/scripts/manifest-backup/manifest-backup.sh
+	bash vendor/${ag_vendor_path}/scripts/manifest-backup/manifest-backup.sh
 }
 
 function get-cros-files-x86
