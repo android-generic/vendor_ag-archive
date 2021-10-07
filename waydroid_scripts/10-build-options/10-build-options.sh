@@ -48,9 +48,10 @@ _contains () {
 }
 
 echo "loading build menu"
+echo "Project Working Directory: $rompath"
 
 # Build Command Parts
-# . build/envsetup.sh && make clean && lunch android_x86-userdebug && export BLISS_BUILD_VARIANT=foss && export USE_CROS_HOUDINI_NB=true && export NO_KERNEL_CROSS_COMPILE=true && export IS_VBOX_x86_BUILD=false && mka iso_img
+# . build/envsetup.sh && make clean && lunch bliss_waydroid_x86-userdebug && export BLISS_BUILD_VARIANT=foss && export USE_CROS_HOUDINI_NB=true && export NO_KERNEL_CROSS_COMPILE=true && export IS_VBOX_x86_BUILD=false && mka iso_img
 # - Envsetup
 env=". build/envsetup.sh "
 # - Clean Steps
@@ -74,7 +75,7 @@ wd_rom_type="lineage"
 product_variant=""
 prefix=""
 
-if [ =d vendor/bliss ]; then
+if [ -d vendor/bliss ]; then
 	wd_rom_type=bliss
 	wd_rom_name="Bliss-12"
 fi
@@ -451,7 +452,7 @@ runBuild() {
 			rm -rf vendor2.img && \
 			export WAYDROID_DATE=$(date +%Y%m%d%H%M) && \
 			7zz a $wd_rom_name-${product_variant}-$WAYDROID_DATE.zip system.img vendor.img && \
-			cd $(PWD)
+			cd $(rompath)
 		fi
 	fi
 }
