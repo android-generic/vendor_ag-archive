@@ -71,6 +71,8 @@ desktop_mode=""
 wd_package=""
 wd_rom_name="Lineage-17.1"
 wd_rom_type="lineage"
+product_variant=""
+prefix=""
 
 if [ =d vendor/bliss ]; then
 	wd_rom_type=bliss
@@ -80,7 +82,7 @@ fi
 productType() {
 	# Device type selection	
 	alert_message 'Which device type do you plan on building?'
-	echo -e ${CL_CYN}"(default is 'android_x86_64')"
+	echo -e ${CL_CYN}"(default is 'waydroid_x86_64')"
 	TMOUT=10
 	title="Choose a device type"
 	selection=("${wd_rom_type}_waydroid_x86_64" 
@@ -91,7 +93,10 @@ productType() {
 	echo "Timeout in $TMOUT sec."${CL_RST}
 	answer=$(0< "${dir_tmp}/${file_tmp}" )
 	product="${answer}"
+	prefix="${wd_rom_type}_"
+	product_variant=$(echo ${product} | sed -e "s/^$prefix//")
 	echo -e ${product} > $temp_path/product.config
+	echo -e ${product_variant} > $temp_path/product_variant.config
 	
 }
 
@@ -437,7 +442,7 @@ runBuild() {
 		
 		if [[ $wd_package = "true" ]]
 		then
-			cd out/target/product/waydroid_$WaydroidArch && \
+			cd out/target/product/${product_variant} && \
 			mv system.img system2.img && \
 			mv vendor.img vendor2.img && \
 			simg2img system2.img system.img && \
@@ -445,7 +450,7 @@ runBuild() {
 			rm -rf system2.img && \
 			rm -rf vendor2.img && \
 			export WAYDROID_DATE=$(date +%Y%m%d%H%M) && \
-			7zz a $wd_rom_name-waydroid_$WaydroidArch-$WAYDROID_DATE.zip system.img vendor.img && \
+			7zz a $wd_rom_name-${product_variant}-$WAYDROID_DATE.zip system.img vendor.img && \
 			cd $(PWD)
 		fi
 	fi
