@@ -82,7 +82,7 @@ fi
 
 productType() {
 	# Device type selection	
-	alert_message 'Which device type do you plan on building?'
+	#~ alert_message 'Which device type do you plan on building?'
 	echo -e ${CL_CYN}"(default is 'waydroid_x86_64')"
 	TMOUT=10
 	title="Choose a device type"
@@ -103,7 +103,7 @@ productType() {
 
 variantType() {
 	# Device type selection	
-	alert_message 'Which variant type do you plan on building?'
+	#~ alert_message 'Which variant type do you plan on building?'
 	echo -e ${CL_CYN}"(default is 'userdebug')"
 	TMOUT=10
 	title="Choose a device type"
@@ -133,7 +133,7 @@ variantType() {
 
 appsType() {
 	# Apps type selection	
-	alert_message 'Which app variant would you like to include?'
+	#~ alert_message 'Which app variant would you like to include?'
 	echo -e ${CL_CYN}"(default is 'foss')"
 	TMOUT=10
 	title="Choose an apps type"
@@ -256,8 +256,8 @@ appsType() {
 		fi
 	elif [ "${answer}" = "Vanilla" ]; then
 		echo "you chose ${answer}"
-		apps="None"
-		echo -e "None" > $temp_path/apps.config
+		apps="none"
+		echo -e "none" > $temp_path/apps.config
 	else
 		echo "invalid option ${answer}"
 		exit
@@ -269,7 +269,7 @@ appsType() {
 
 nbType() {
 	# Apps type selection	
-	alert_message 'Which type of native-bridge would you like to include?'
+	#~ alert_message 'Which type of native-bridge would you like to include?'
 	echo -e ${CL_CYN}"(default is 'None')"
 	TMOUT=10
 	title="Choose an apps type"
@@ -355,7 +355,7 @@ extraOptions() {
 
 desktopMode() {
 	# Apps type selection	
-	alert_message 'Which make type of Desktop Mode do you want?'
+	#~ alert_message 'Which make type of Desktop Mode do you want?'
 	echo -e ${CL_CYN}"(default is 'Taskbar')"
 	TMOUT=10
 	title="Choose a type"
@@ -384,7 +384,7 @@ desktopMode() {
 
 
 runMakeClean() {
-	alert_message 'Are you sure you want to make clean? It will wipe your compile progress and start over'
+	#~ alert_message 'Are you sure you want to make clean? It will wipe your compile progress and start over'
 	
 	# Apps type selection	
 	alert_message 'Which make type do you want?'
@@ -420,6 +420,11 @@ runBuild() {
 	if [ "$product" == "" ]; then
 		alert_message 'you need to select a product type'
 	fi
+	if [ "$product_variant" == "" ]; then
+		alert_message 'you need to select a product type'
+	fi
+	
+	product_variant
 	if [ ! "$variant" == "" ] | [ ! "$product" == "" ] ; then
 		if [ "$apps" = "none" ]; then
 			apps=""
@@ -452,7 +457,7 @@ runBuild() {
 			rm -rf vendor2.img && \
 			export WAYDROID_DATE=$(date +%Y%m%d%H%M) && \
 			7zz a $wd_rom_name-${product_variant}-$WAYDROID_DATE.zip system.img vendor.img && \
-			cd $(rompath)
+			cd $rompath
 		fi
 	fi
 }
