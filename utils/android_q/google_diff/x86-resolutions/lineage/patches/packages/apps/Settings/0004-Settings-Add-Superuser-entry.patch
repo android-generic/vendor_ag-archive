@@ -1,0 +1,334 @@
+From d3a36d150429cec85fc5c7a579c13153cfa4cd88 Mon Sep 17 00:00:00 2001
+From: Koushik Dutta <koushd@gmail.com>
+Date: Thu, 28 Feb 2013 14:49:24 -0800
+Subject: [PATCH 3/4] Settings: Add Superuser entry
+
+Amended for oreo-x86 porting by cwhuang.
+
+Squashed commit of the following:
+
+Author: Koushik Dutta <koushd@gmail.com>
+Switch to new Superuser
+Change-Id: I9d91392ad6fbc9953d19059ab59b91d214c00e0c
+
+Author: Danny Baumann <dannybaumann@web.de>
+Hide Superuser entry if root access for apps is disabled.
+Change-Id: Ibb77ba5a0fccf22564a26b8b1e13f7762c65718e
+
+Author: Ricardo Cerqueira <cyanogenmod@cerqueira.org>
+Development: Root for apps is unavailable if the su daemon isn't running
+
+The superuser options are tied to the Superuser app variant we use,
+which in turn is tied to the su daemon. No daemon, no menu options.
+Change-Id: I41d58e62986759336ab38e67f26a558c2eed5aa3
+
+Change-Id: I9d91392ad6fbc9953d19059ab59b91d214c00e0c
+---
+ Android.mk                                    | 13 ++-
+ AndroidManifest.xml                           | 88 +++++++++++++++++++
+ proguard.flags                                |  2 +
+ src/com/android/settings/Settings.java        |  1 +
+ .../android/settings/SettingsActivity.java    |  6 ++
+ .../core/gateway/SettingsGateway.java         |  2 +
+ .../superuser/MultitaskSuRequestActivity.java |  4 +
+ .../cyanogenmod/superuser/NotifyActivity.java |  4 +
+ .../superuser/PolicyNativeFragment.java       |  4 +
+ .../superuser/RequestActivity.java            |  4 +
+ .../cyanogenmod/superuser/SuReceiver.java     |  4 +
+ .../RootAccessPreferenceController.java       |  7 ++
+ 12 files changed, 138 insertions(+), 1 deletion(-)
+ create mode 100644 src/com/android/settings/cyanogenmod/superuser/MultitaskSuRequestActivity.java
+ create mode 100644 src/com/android/settings/cyanogenmod/superuser/NotifyActivity.java
+ create mode 100644 src/com/android/settings/cyanogenmod/superuser/PolicyNativeFragment.java
+ create mode 100644 src/com/android/settings/cyanogenmod/superuser/RequestActivity.java
+ create mode 100644 src/com/android/settings/cyanogenmod/superuser/SuReceiver.java
+
+diff --git a/Android.mk b/Android.mk
+index 9ac6434e9e..02a98ae470 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -20,7 +20,9 @@ LOCAL_REQUIRED_MODULES := privapp_whitelist_com.android.settings
+ LOCAL_MODULE_TAGS := optional
+ LOCAL_USE_AAPT2 := true
+ 
+-LOCAL_SRC_FILES := $(call all-java-files-under, src)
++LOCAL_SRC_FILES := $(call all-java-files-under, src) \
++    $(call all-java-files-under,../../../external/koush/Widgets/Widgets/src) \
++    $(call all-java-files-under,../../../external/koush/Superuser/Superuser/src)
+ 
+ LOCAL_STATIC_ANDROID_LIBRARIES := \
+     androidx-constraintlayout_constraintlayout \
+@@ -55,6 +57,15 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
+ 
+ LOCAL_PROGUARD_FLAG_FILES := proguard.flags
+ 
++LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res \
++    external/koush/Widgets/Widgets/res \
++    external/koush/Superuser/Superuser/res
++
++LOCAL_AAPT_INCLUDE_ALL_RESOURCES := true
++
++LOCAL_AAPT_FLAGS := --auto-add-overlay \
++    --extra-packages com.koushikdutta.superuser:com.koushikdutta.widgets
++
+ ifneq ($(INCREMENTAL_BUILDS),)
+     LOCAL_PROGUARD_ENABLED := disabled
+     LOCAL_JACK_ENABLED := incremental
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 30edeaaa19..3f0233e824 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -102,6 +102,30 @@
+     <uses-permission android:name="android.permission.CAMERA" />
+     <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
+ 
++    <permission
++        android:name="android.permission.REQUEST_SUPERUSER"
++        android:protectionLevel="signature" />
++
++    <permission
++        android:name="android.permission.REPORT_SUPERUSER"
++        android:protectionLevel="signature" />
++
++    <permission-group
++        android:name="android.permission-group.SUPERUSER"
++        android:description="@string/superuser_description_more"
++        android:icon="@drawable/ic_action_permission"
++        android:label="@string/superuser"
++        android:priority="10000" />
++
++    <permission
++        android:name="android.permission.ACCESS_SUPERUSER"
++        android:description="@string/superuser_description_more"
++        android:icon="@drawable/ic_action_permission"
++        android:label="@string/superuser_description"
++        android:logo="@drawable/ic_action_permission"
++        android:permissionGroup="android.permission-group.SUPERUSER"
++        android:protectionLevel="dangerous" />
++
+     <application android:label="@string/settings_label"
+             android:icon="@mipmap/ic_launcher"
+             android:theme="@style/Theme.Settings"
+@@ -115,6 +139,48 @@
+             android:appComponentFactory="androidx.core.app.CoreComponentFactory">
+ 
+         <uses-library android:name="org.apache.http.legacy" />
++
++        <!-- Only system/su can open this activity -->
++        <!-- This activity will then call the MultitaskSuRequestActivity to create a new task stack -->
++        <activity
++            android:name=".cyanogenmod.superuser.RequestActivity"
++            android:configChanges="keyboardHidden|orientation|screenSize"
++            android:label="@string/superuser"
++            android:launchMode="singleTask"
++            android:excludeFromRecents="true"
++            android:permission="android.permission.REQUEST_SUPERUSER"
++            android:process=":superuser"
++            android:taskAffinity="com.android.settings.superuser"
++            android:theme="@style/RequestThemeDark" />
++        <!-- Only system/su can open this activity -->
++        <!-- This is activity is started in multiuser mode when the user invoking su -->
++        <!-- is not the device owner (user id 0). -->
++        <activity
++            android:name=".cyanogenmod.superuser.NotifyActivity"
++            android:configChanges="keyboardHidden|orientation|screenSize"
++            android:label="@string/superuser"
++            android:launchMode="singleTask"
++            android:excludeFromRecents="true"
++            android:permission="android.permission.REQUEST_SUPERUSER"
++            android:process=":superuser"
++            android:taskAffinity="com.android.settings.superuser"
++            android:theme="@style/RequestThemeDark" />
++
++        <!-- Multiple instances of this activity can be running for multiple su requests -->
++        <activity
++            android:name=".cyanogenmod.superuser.MultitaskSuRequestActivity"
++            android:configChanges="keyboardHidden|orientation|screenSize"
++            android:excludeFromRecents="true"
++            android:exported="false"
++            android:label="@string/request"
++            android:process=":superuser"
++            android:taskAffinity="com.android.settings.superuser"
++            android:theme="@style/RequestThemeDark" />
++
++        <receiver
++            android:name=".cyanogenmod.superuser.SuReceiver"
++            android:permission="android.permission.REPORT_SUPERUSER" />
++
+         <!-- Settings -->
+ 
+         <activity android:name=".homepage.SettingsHomepageActivity"
+@@ -1994,6 +2060,28 @@
+                 android:value="com.android.settings.print.PrintJobSettingsFragment" />
+         </activity>
+ 
++        <activity android:name="Settings$SuperuserActivity"
++                android:label="@string/superuser"
++                android:icon="@drawable/ic_action_permission"
++                android:taskAffinity="com.android.settings"
++                android:parentActivityName="Settings$AccountDashboardActivity">
++            <intent-filter>
++                <action android:name="android.intent.action.MAIN" />
++                <category android:name="android.intent.category.DEFAULT" />
++            </intent-filter>
++            <intent-filter android:priority="3">
++                <action android:name="com.android.settings.action.SETTINGS" />
++            </intent-filter>
++            <meta-data android:name="com.android.settings.summary"
++                android:resource="@string/superuser_description"/>
++            <meta-data android:name="com.android.settings.category"
++                android:value="com.android.settings.category.ia.accounts" />
++            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
++                android:value="com.android.settings.cyanogenmod.superuser.PolicyNativeFragment" />
++            <meta-data android:name="com.android.settings.PRIMARY_PROFILE_CONTROLLED"
++                android:value="true" />
++        </activity>
++
+         <activity android:name=".development.AppPicker"
+                   android:label="@string/select_application"
+                   android:theme="@android:style/Theme.DeviceDefault.Light.Dialog" />
+diff --git a/proguard.flags b/proguard.flags
+index b66a7862df..a27ed2e40e 100644
+--- a/proguard.flags
++++ b/proguard.flags
+@@ -7,6 +7,8 @@
+ 
+ # Keep all Fragments in this package, which are used by reflection.
+ -keep public class com.android.settings.** extends androidx.fragment.app.Fragment
++-keep public class com.android.settings.cyanogenmod.superuser.**
++-keep public class com.koushikdutta.**
+ 
+ # Keep all preference controllers needed by slice and DashboardFragment.
+ -keep class * extends com.android.settings.core.BasePreferenceController {
+diff --git a/src/com/android/settings/Settings.java b/src/com/android/settings/Settings.java
+index 36f40ebad4..f1d0577c9a 100644
+--- a/src/com/android/settings/Settings.java
++++ b/src/com/android/settings/Settings.java
+@@ -110,6 +110,7 @@ public class Settings extends SettingsActivity {
+     public static class PaymentSettingsActivity extends SettingsActivity { /* empty */ }
+     public static class PrintSettingsActivity extends SettingsActivity { /* empty */ }
+     public static class PrintJobSettingsActivity extends SettingsActivity { /* empty */ }
++    public static class SuperuserActivity extends SettingsActivity { /* empty */ }
+     public static class ZenModeSettingsActivity extends SettingsActivity { /* empty */ }
+     public static class ZenModeBehaviorSettingsActivity extends SettingsActivity { /* empty */ }
+     public static class ZenModeBlockedEffectsSettingsActivity extends SettingsActivity { /* empty */ }
+diff --git a/src/com/android/settings/SettingsActivity.java b/src/com/android/settings/SettingsActivity.java
+index 322529ee72..aabd12ce04 100644
+--- a/src/com/android/settings/SettingsActivity.java
++++ b/src/com/android/settings/SettingsActivity.java
+@@ -56,6 +56,7 @@ import com.android.settings.core.SettingsBaseActivity;
+ import com.android.settings.core.SubSettingLauncher;
+ import com.android.settings.core.gateway.SettingsGateway;
+ import com.android.settings.dashboard.DashboardFeatureProvider;
++import com.android.settings.development.RootAccessPreferenceController;
+ import com.android.settings.homepage.TopLevelSettings;
+ import com.android.settings.overlay.FeatureFactory;
+ import com.android.settings.wfd.WifiDisplaySettings;
+@@ -625,6 +626,11 @@ public class SettingsActivity extends SettingsBaseActivity
+                         && !Utils.isMonkeyRunning(), isAdmin)
+                 || somethingChanged;
+ 
++        somethingChanged = setTileEnabled(changedList, new ComponentName(packageName,
++                        Settings.SuperuserActivity.class.getName()),
++                RootAccessPreferenceController.isRootForAppsEnabled(), isAdmin)
++                || somethingChanged;
++
+         final boolean showDev = DevelopmentSettingsEnabler.isDevelopmentSettingsEnabled(this)
+                 && !Utils.isMonkeyRunning();
+         somethingChanged = setTileEnabled(changedList, new ComponentName(packageName,
+diff --git a/src/com/android/settings/core/gateway/SettingsGateway.java b/src/com/android/settings/core/gateway/SettingsGateway.java
+index dc227a3791..5df05fc4b3 100644
+--- a/src/com/android/settings/core/gateway/SettingsGateway.java
++++ b/src/com/android/settings/core/gateway/SettingsGateway.java
+@@ -60,6 +60,7 @@ import com.android.settings.connecteddevice.AdvancedConnectedDeviceDashboardFrag
+ import com.android.settings.connecteddevice.ConnectedDeviceDashboardFragment;
+ import com.android.settings.connecteddevice.PreviouslyConnectedDeviceDashboardFragment;
+ import com.android.settings.connecteddevice.usb.UsbDetailsFragment;
++import com.android.settings.cyanogenmod.superuser.PolicyNativeFragment;
+ import com.android.settings.datausage.DataSaverSummary;
+ import com.android.settings.datausage.DataUsageList;
+ import com.android.settings.datausage.DataUsageSummary;
+@@ -223,6 +224,7 @@ public class SettingsGateway {
+             ZenAccessSettings.class.getName(),
+             ZenAccessDetails.class.getName(),
+             ZenModeAutomationSettings.class.getName(),
++            PolicyNativeFragment.class.getName(),
+             PrintSettingsFragment.class.getName(),
+             PrintJobSettingsFragment.class.getName(),
+             TrustedCredentialsSettings.class.getName(),
+diff --git a/src/com/android/settings/cyanogenmod/superuser/MultitaskSuRequestActivity.java b/src/com/android/settings/cyanogenmod/superuser/MultitaskSuRequestActivity.java
+new file mode 100644
+index 0000000000..0103076368
+--- /dev/null
++++ b/src/com/android/settings/cyanogenmod/superuser/MultitaskSuRequestActivity.java
+@@ -0,0 +1,4 @@
++package com.android.settings.cyanogenmod.superuser;
++
++public class MultitaskSuRequestActivity extends com.koushikdutta.superuser.MultitaskSuRequestActivity {
++}
+\ No newline at end of file
+diff --git a/src/com/android/settings/cyanogenmod/superuser/NotifyActivity.java b/src/com/android/settings/cyanogenmod/superuser/NotifyActivity.java
+new file mode 100644
+index 0000000000..23aa6a720d
+--- /dev/null
++++ b/src/com/android/settings/cyanogenmod/superuser/NotifyActivity.java
+@@ -0,0 +1,4 @@
++package com.android.settings.cyanogenmod.superuser;
++
++public class NotifyActivity extends com.koushikdutta.superuser.NotifyActivity {
++}
+\ No newline at end of file
+diff --git a/src/com/android/settings/cyanogenmod/superuser/PolicyNativeFragment.java b/src/com/android/settings/cyanogenmod/superuser/PolicyNativeFragment.java
+new file mode 100644
+index 0000000000..1c74543bfc
+--- /dev/null
++++ b/src/com/android/settings/cyanogenmod/superuser/PolicyNativeFragment.java
+@@ -0,0 +1,4 @@
++package com.android.settings.cyanogenmod.superuser;
++
++public class PolicyNativeFragment extends com.koushikdutta.superuser.PolicyNativeFragment {
++}
+\ No newline at end of file
+diff --git a/src/com/android/settings/cyanogenmod/superuser/RequestActivity.java b/src/com/android/settings/cyanogenmod/superuser/RequestActivity.java
+new file mode 100644
+index 0000000000..e6deca49cd
+--- /dev/null
++++ b/src/com/android/settings/cyanogenmod/superuser/RequestActivity.java
+@@ -0,0 +1,4 @@
++package com.android.settings.cyanogenmod.superuser;
++
++public class RequestActivity extends com.koushikdutta.superuser.RequestActivity {
++}
+\ No newline at end of file
+diff --git a/src/com/android/settings/cyanogenmod/superuser/SuReceiver.java b/src/com/android/settings/cyanogenmod/superuser/SuReceiver.java
+new file mode 100644
+index 0000000000..c4f9174b04
+--- /dev/null
++++ b/src/com/android/settings/cyanogenmod/superuser/SuReceiver.java
+@@ -0,0 +1,4 @@
++package com.android.settings.cyanogenmod.superuser;
++
++public class SuReceiver extends com.koushikdutta.superuser.SuReceiver {
++}
+\ No newline at end of file
+diff --git a/src/com/android/settings/development/RootAccessPreferenceController.java b/src/com/android/settings/development/RootAccessPreferenceController.java
+index c6c1d2b891..04bd24ffc5 100644
+--- a/src/com/android/settings/development/RootAccessPreferenceController.java
++++ b/src/com/android/settings/development/RootAccessPreferenceController.java
+@@ -108,6 +108,13 @@ public class RootAccessPreferenceController extends DeveloperOptionsPreferenceCo
+         updatePreference();
+     }
+ 
++    public static boolean isRootForAppsEnabled() {
++        int value = SystemProperties.getInt(ROOT_ACCESS_PROPERTY, 0);
++        boolean daemonState =
++                SystemProperties.get("init.svc.su_daemon", "absent").equals("running");
++        return daemonState && (value == 1 || value == 3);
++    }
++
+     private void writeRootAccessOptions(Object newValue) {
+         String oldValue = SystemProperties.get(ROOT_ACCESS_PROPERTY, "0");
+         SystemProperties.set(ROOT_ACCESS_PROPERTY, newValue.toString());
+-- 
+2.17.1
+

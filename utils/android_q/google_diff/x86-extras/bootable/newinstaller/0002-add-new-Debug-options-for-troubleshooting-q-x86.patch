@@ -1,0 +1,91 @@
+From b32743178f06702d1f0d3b0e14f4bc82c8805511 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Thu, 24 Sep 2020 22:25:32 +0200
+Subject: [PATCH 02/11] add new Debug options for troubleshooting (q-x86)
+
+---
+ boot/isolinux/isolinux.cfg         | 30 ++++++++++++++++++++++++++++++
+ install/grub2/efi/boot/android.cfg |  8 +++++++-
+ install/scripts/1-install          |  6 ++++++
+ 3 files changed, 43 insertions(+), 1 deletion(-)
+
+diff --git a/boot/isolinux/isolinux.cfg b/boot/isolinux/isolinux.cfg
+index f8f8c2d5..22e9e485 100644
+--- a/boot/isolinux/isolinux.cfg
++++ b/boot/isolinux/isolinux.cfg
+@@ -21,6 +21,36 @@ label debug
+ 	kernel /kernel
+ 	append initrd=/initrd.img CMDLINE DEBUG=2 SRC= DATA=
+ 
++label debug_gbm
++	menu label Live CD - Debug mode gralloc.gbm
++	kernel /kernel
++	append initrd=/initrd.img CMDLINE DEBUG=2 SRC= DATA= GRALLOC=gbm
++
++label debug_drmfb-composer
++	menu label Live CD - Debug mode drmfb-composer gralloc.gbm
++	kernel /kernel
++	append initrd=/initrd.img CMDLINE DEBUG=2 SRC= DATA= HWC=drmfb GRALLOC=gbm
++
++label debug_hwc_gbm
++	menu label Live CD - Debug mode hwcomposer.drm gralloc.gbm
++	kernel /kernel
++	append initrd=/initrd.img CMDLINE DEBUG=2 SRC= DATA= HWC=drm GRALLOC=gbm
++
++label debug_minigbm
++	menu label Live CD - Debug mode gralloc.minigbm
++	kernel /kernel
++	append initrd=/initrd.img CMDLINE DEBUG=2 SRC= DATA= GRALLOC=minigbm
++
++label debug_hwc_minigbm
++	menu label Live CD - Debug mode hwcomposer.drm_minigbm gralloc.minigbm
++	kernel /kernel
++	append initrd=/initrd.img CMDLINE DEBUG=2 SRC= DATA= HWC=drm_minigbm GRALLOC=minigbm
++
++label debug_intel
++	menu label Live CD - Debug mode hwcomposer.intel gralloc.intel
++	kernel /kernel
++	append initrd=/initrd.img CMDLINE DEBUG=2 SRC= DATA= HWC=intel GRALLOC=intel
++
+ label install
+ 	menu label ^Installation - Install OS_TITLE to harddisk
+ 	kernel /kernel
+diff --git a/install/grub2/efi/boot/android.cfg b/install/grub2/efi/boot/android.cfg
+index 8eb26cde..927825eb 100644
+--- a/install/grub2/efi/boot/android.cfg
++++ b/install/grub2/efi/boot/android.cfg
+@@ -84,7 +84,13 @@ export android bootefi grub kdir live src
+ 
+ # Create main menu
+ add_entry "$live" quiet
+-add_entry "$debug_mode" DEBUG=2
++add_entry "$live - Debug" DEBUG=2
++add_entry "$live - Debug gralloc.gbm" DEBUG=2 GRALLOC=gbm
++add_entry "$live - Debug drmfb-composer" DEBUG=2 HWC=drmfb GRALLOC=gbm
++add_entry "$live - Debug hwcomposer.drm" DEBUG=2 HWC=drm GRALLOC=gbm
++add_entry "$live - Debug gralloc.minigbm" DEBUG=2 GRALLOC=minigbm
++add_entry "$live - Debug hwcomposer.drm_minigbm" DEBUG=2 HWC=drm_minigbm GRALLOC=minigbm
++add_entry "$live - Debug hwcomposer.intel" DEBUG=2 HWC=intel GRALLOC=intel
+ if [ -s ($android)$kdir/install.img ]; then
+ 	add_entry "Installation" INSTALL=1
+ fi
+diff --git a/install/scripts/1-install b/install/scripts/1-install
+index 951f282b..7a625dba 100644
+--- a/install/scripts/1-install
++++ b/install/scripts/1-install
+@@ -256,6 +256,12 @@ create_menulst()
+ 
+ 	create_entry "$OS_TITLE $VER" quiet $cmdline
+ 	create_entry "$OS_TITLE $VER (Debug mode)" $cmdline DEBUG=2
++	create_entry "$OS_TITLE $VER (Debug mode) gralloc.gbm" $cmdline DEBUG=2 GRALLOC=gbm
++	create_entry "$OS_TITLE $VER (Debug mode) drmfb-composer gralloc.gbm" $cmdline DEBUG=2 HWC=drmfb GRALLOC=gbm
++	create_entry "$OS_TITLE $VER (Debug mode) hwcomposer.drm gralloc.gbm" $cmdline DEBUG=2 HWC=drm GRALLOC=gbm
++	create_entry "$OS_TITLE $VER (Debug mode) gralloc.minigbm" DEBUG=2 GRALLOC=minigbm
++	create_entry "$OS_TITLE $VER (Debug mode) hwcomposer.drm_minigbm gralloc.minigbm" DEBUG=2 HWC=drm_minigbm GRALLOC=minigbm
++	create_entry "$OS_TITLE $VER (Debug mode) hwcomposer.intel gralloc.intel" DEBUG=2 HWC=intel GRALLOC=intel
+ 	create_entry "$OS_TITLE $VER (Debug nomodeset)" nomodeset $cmdline DEBUG=2
+ 	create_entry "$OS_TITLE $VER (Debug video=LVDS-1:d)" video=LVDS-1:d $cmdline DEBUG=2
+ }
+-- 
+2.17.1
+

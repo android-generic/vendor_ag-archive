@@ -1,0 +1,55 @@
+From 40a38bf3d30257715928478e37030ff62bd8fce1 Mon Sep 17 00:00:00 2001
+From: Yongqin Liu <yongqin.liu@linaro.org>
+Date: Wed, 12 Feb 2020 17:35:25 +0800
+Subject: [PATCH 021/100] ANDROID: sdcardfs: use fsparam_flag to replace
+ fsparam_bool
+
+for mount options definition.
+
+fsparam_bool is used for format like "multiuser=no",
+here we keep only supporting the old format of "multiuser,"
+
+Test: with hikey960 board
+      no output of "sdcardfs: Bad value for 'multiuser'"
+      and multiuser is in the output of mount command
+
+Fixes: problems related to 328de5287b10 ("turn fs_param_is_... into functions")
+       and 48ce73b1bef2 ("fs_parse: handle optional arguments sanely")
+
+Reported-by: youling257 <youling257@gmail.com>
+
+Change-Id: Iac3f537afa9d138801815bbcdeca073e9d002a96
+Signed-off-by: Yongqin Liu <yongqin.liu@linaro.org>
+---
+ fs/sdcardfs/main.c | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/fs/sdcardfs/main.c b/fs/sdcardfs/main.c
+index 34b41071c379..200513b757b2 100644
+--- a/fs/sdcardfs/main.c
++++ b/fs/sdcardfs/main.c
+@@ -45,15 +45,15 @@ static const struct fs_parameter_spec sdcardfs_fs_specs[] = {
+ 	fsparam_u32("fsuid", Opt_fsuid),
+ 	fsparam_u32("fsgid", Opt_fsgid),
+ 	fsparam_u32("gid", Opt_gid),
+-	fsparam_bool("debug", Opt_debug),
++	fsparam_flag("debug", Opt_debug),
+ 	fsparam_u32("mask", Opt_mask),
+ 	fsparam_u32("userid", Opt_userid),
+-	fsparam_bool("multiuser", Opt_multiuser),
+-	fsparam_bool("derive_gid", Opt_gid_derivation),
+-	fsparam_bool("default_normal", Opt_default_normal),
+-	fsparam_bool("unshared_obb", Opt_unshared_obb),
++	fsparam_flag("multiuser", Opt_multiuser),
++	fsparam_flag("derive_gid", Opt_gid_derivation),
++	fsparam_flag("default_normal", Opt_default_normal),
++	fsparam_flag("unshared_obb", Opt_unshared_obb),
+ 	fsparam_u32("reserved_mb", Opt_reserved_mb),
+-	fsparam_bool("nocache", Opt_nocache),
++	fsparam_flag("nocache", Opt_nocache),
+ 	{}
+ };
+ 
+-- 
+2.17.1
+

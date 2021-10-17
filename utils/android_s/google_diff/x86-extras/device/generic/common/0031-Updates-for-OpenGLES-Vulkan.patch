@@ -1,0 +1,38 @@
+From d58fbe98a12bb0da581d94ebae69482a8a1ea04d Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 30 Apr 2021 22:34:14 -0400
+Subject: [PATCH 31/36] Updates for OpenGLES & Vulkan
+
+Change-Id: I3f5b1059a9a297a6ee9f4c6b21f8961ea7c23350
+---
+ gpu/gpu_mesa.mk | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/gpu/gpu_mesa.mk b/gpu/gpu_mesa.mk
+index 8c158ce..6ae521d 100644
+--- a/gpu/gpu_mesa.mk
++++ b/gpu/gpu_mesa.mk
+@@ -15,6 +15,7 @@ PRODUCT_PACKAGES := \
+     libGLES_mesa    \
+     libtxc_dxtn     \
+     modetest
++    
+ PRODUCT_PACKAGES += \
+     libEGL_swiftshader \
+     libGLESv1_CM_swiftshader \
+@@ -25,8 +26,11 @@ PRODUCT_PACKAGES += \
+ PRODUCT_PROPERTY_OVERRIDES := \
+     ro.opengles.version = 196608 \
+     ro.hardware.vulkan.level = 1 \
+-    ro.hardware.vulkan.version = 4194307
++    ro.hardware.vulkan.version = 4194307 \
++    ro.hardware.egl=mesa
+ 
+ PRODUCT_COPY_FILES += \
++    frameworks/native/data/etc/android.hardware.opengles.aep.xml:system/etc/permissions/android.hardware.opengles.aep.xml \
++    frameworks/native/data/etc/android.hardware.vulkan.compute-0.xml:system/etc/permissions/android.hardware.vulkan.compute.xml \
+     frameworks/native/data/etc/android.hardware.vulkan.level-1.xml:system/etc/permissions/android.hardware.vulkan.level.xml \
+     frameworks/native/data/etc/android.hardware.vulkan.version-1_1.xml:system/etc/permissions/android.hardware.vulkan.version.xml
+-- 
+2.17.1
+

@@ -1,0 +1,51 @@
+From bb15cc757ce562bbdb43aad7e9662cea4f019d43 Mon Sep 17 00:00:00 2001
+From: Madhusudhan S <madhusudhan.s@intel.com>
+Date: Mon, 12 Nov 2018 13:18:34 +0530
+Subject: [PATCH 33/41] Enabling suspend on IVI after clicking sleep from the
+ power button menu.
+
+Tracked-on: OAM-56502
+
+Change-Id: Ib8e5f351815474d8e99739938ac5845227f711ff
+Signed-off-by: Madhusudhan S <madhusudhan.s@intel.com>
+
+Conflicts:
+	services/core/java/com/android/server/power/PowerManagerService.java
+
+Conflicts:
+	services/core/java/com/android/server/power/PowerManagerService.java
+
+Conflicts:
+	services/core/java/com/android/server/power/PowerManagerService.java
+---
+ .../java/com/android/server/power/PowerManagerService.java | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
+index 1cb7880ff81..eeccf92335b 100644
+--- a/services/core/java/com/android/server/power/PowerManagerService.java
++++ b/services/core/java/com/android/server/power/PowerManagerService.java
+@@ -108,6 +108,7 @@ import java.lang.annotation.RetentionPolicy;
+ import java.util.ArrayList;
+ import java.util.Arrays;
+ import java.util.Objects;
++import android.os.FileUtils;
+ 
+ /**
+  * The power manager service is responsible for coordinating power management
+@@ -1518,6 +1519,12 @@ public final class PowerManagerService extends SystemService
+                     Math.max(reason, PowerManager.GO_TO_SLEEP_REASON_MIN));
+             Slog.i(TAG, "Going to sleep due to " + PowerManager.sleepReasonToString(reason)
+                     + " (uid " + uid + ")...");
++			// Adding force suspend code to enter S3 after pressing sleep button
++			try {
++				FileUtils.stringToFile("/sys/power/state", "mem");
++			} catch (IOException e) {
++				Slog.v(TAG, "IOException: " + e);
++			}
+ 
+             mLastSleepTime = eventTime;
+             mLastSleepReason = reason;
+-- 
+2.17.1
+

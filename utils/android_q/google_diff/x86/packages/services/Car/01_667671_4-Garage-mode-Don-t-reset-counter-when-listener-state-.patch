@@ -1,0 +1,51 @@
+From 6034549f46bde00ac8e82748e74d74e3b69ed7d0 Mon Sep 17 00:00:00 2001
+From: xichen12 <xi.a.chen@intel.com>
+Date: Tue, 30 Apr 2019 14:01:46 +0800
+Subject: [PATCH 5/5] [Garage mode]Don't reset counter when listener state is
+ SUSPEND_ENTER and reset counter when listener state in ON.
+
+If reset counter(mIndex) on SUSPEND_ENTER, sytem will wake up
+every 15 minutes forvever. So reset counter only when listener state is
+changed to be ON.
+
+Change-Id: Id05b70b63969d1929b692b2a1fd546b97f60f594
+Tracked-On:
+Signed-off-by: xichen12 <xi.a.chen@intel.com>
+---
+ service/src/com/android/car/garagemode/Controller.java | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/service/src/com/android/car/garagemode/Controller.java b/service/src/com/android/car/garagemode/Controller.java
+index d7235dd3c..b357fc223 100644
+--- a/service/src/com/android/car/garagemode/Controller.java
++++ b/service/src/com/android/car/garagemode/Controller.java
+@@ -90,9 +90,9 @@ public class Controller implements CarPowerStateListenerWithCompletion {
+                 LOG.d("CPM state changed to SUSPEND_ENTER");
+                 handleSuspendEnter();
+                 break;
+-            case CarPowerStateListener.SUSPEND_EXIT:
+-                LOG.d("CPM state changed to SUSPEND_EXIT");
+-                handleSuspendExit();
++            case CarPowerStateListener.ON:
++                LOG.d("CPM state changed to ON");
++                handleOn();
+                 break;
+             default:
+         }
+@@ -172,12 +172,12 @@ public class Controller implements CarPowerStateListenerWithCompletion {
+         mCarPowerManager.scheduleNextWakeupTime(seconds);
+     }
+
+-    private void handleSuspendExit() {
++    private void handleOn() {
+         resetGarageMode();
+     }
+
+     private void handleSuspendEnter() {
+-        resetGarageMode();
++        mGarageMode.cancel();
+     }
+
+     private void handleShutdownEnter() {
+--
+2.21.0

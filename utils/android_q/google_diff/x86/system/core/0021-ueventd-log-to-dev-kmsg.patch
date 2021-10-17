@@ -1,0 +1,162 @@
+From 6003889cfba76cf46070a3b3afcdef0b23ee6244 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Fri, 4 Oct 2019 10:48:44 -0400
+Subject: [PATCH 21/21] ueventd: log to /dev/kmsg
+
+---
+ init/firmware_handler.cpp | 27 +++++++++++++++++++++++++++
+ init/modalias_handler.cpp | 23 +++++++++++++++++++++++
+ 2 files changed, 50 insertions(+)
+
+diff --git a/init/firmware_handler.cpp b/init/firmware_handler.cpp
+index 740e82c99..8f6feffd7 100644
+--- a/init/firmware_handler.cpp
++++ b/init/firmware_handler.cpp
+@@ -27,6 +27,9 @@
+ #include <android-base/file.h>
+ #include <android-base/logging.h>
+ #include <android-base/unique_fd.h>
++#if defined(__ANDROID__)
++#include <cutils/klog.h>
++#endif
+ 
+ using android::base::Timer;
+ using android::base::unique_fd;
+@@ -43,8 +46,12 @@ static void LoadFirmware(const Uevent& uevent, const std::string& root, int fw_f
+     // Copy the firmware.
+     int rc = sendfile(data_fd, fw_fd, nullptr, fw_size);
+     if (rc == -1) {
++#if defined(__ANDROID__)
++        KLOG_ERROR("firmware", "firmware: sendfile failed { '%s', '%s', }", root.c_str(), uevent.firmware.c_str());
++#else
+         PLOG(ERROR) << "firmware: sendfile failed { '" << root << "', '" << uevent.firmware
+                     << "' }";
++#endif
+     }
+ 
+     // Tell the firmware whether to abort or commit.
+@@ -62,7 +69,11 @@ FirmwareHandler::FirmwareHandler(std::vector<std::string> firmware_directories)
+ void FirmwareHandler::ProcessFirmwareEvent(const Uevent& uevent) {
+     int booting = IsBooting();
+ 
++#if defined(__ANDROID__)
++    KLOG_INFO("firmware", "firmware: loading '%s' for '%s'", uevent.firmware.c_str(), uevent.path.c_str());
++#else
+     LOG(INFO) << "firmware: loading '" << uevent.firmware << "' for '" << uevent.path << "'";
++#endif
+ 
+     std::string root = "/sys" + uevent.path;
+     std::string loading = root + "/loading";
+@@ -70,13 +81,21 @@ void FirmwareHandler::ProcessFirmwareEvent(const Uevent& uevent) {
+ 
+     unique_fd loading_fd(open(loading.c_str(), O_WRONLY | O_CLOEXEC));
+     if (loading_fd == -1) {
++#if defined(__ANDROID__)
++        KLOG_ERROR("firmware", "couldn't open firmware loading fd for %s", uevent.firmware.c_str());
++#else
+         PLOG(ERROR) << "couldn't open firmware loading fd for " << uevent.firmware;
++#endif
+         return;
+     }
+ 
+     unique_fd data_fd(open(data.c_str(), O_WRONLY | O_CLOEXEC));
+     if (data_fd == -1) {
++#if defined(__ANDROID__)
++        KLOG_ERROR("firmware", "couldn't open firmware data fd for %s", uevent.firmware.c_str());
++#else
+         PLOG(ERROR) << "couldn't open firmware data fd for " << uevent.firmware;
++#endif
+         return;
+     }
+ 
+@@ -99,7 +118,11 @@ try_loading_again:
+         goto try_loading_again;
+     }
+ 
++#if defined(__ANDROID__)
++    KLOG_ERROR("firmware", "could not find firmware for %s", uevent.firmware.c_str());
++#else
+     LOG(ERROR) << "firmware: could not find firmware for " << uevent.firmware;
++#endif
+ 
+     // Write "-1" as our response to the kernel's firmware request, since we have nothing for it.
+     write(loading_fd, "-1", 2);
+@@ -116,7 +139,11 @@ void FirmwareHandler::HandleUevent(const Uevent& uevent) {
+     if (pid == 0) {
+         Timer t;
+         ProcessFirmwareEvent(uevent);
++#if defined(__ANDROID__)
++        KLOG_INFO("firmware", "loading %s took %lldms", uevent.path.c_str(), t.duration().count());
++#else
+         LOG(INFO) << "loading " << uevent.path << " took " << t;
++#endif
+         _exit(EXIT_SUCCESS);
+     }
+ }
+diff --git a/init/modalias_handler.cpp b/init/modalias_handler.cpp
+index 163f035bf..ef33d40a6 100644
+--- a/init/modalias_handler.cpp
++++ b/init/modalias_handler.cpp
+@@ -29,6 +29,9 @@
+ #include <android-base/chrono_utils.h>
+ #include <android-base/logging.h>
+ #include <android-base/unique_fd.h>
++#if defined(__ANDROID__)
++#include <cutils/klog.h>
++#endif
+ 
+ #include "parser.h"
+ 
+@@ -157,7 +160,11 @@ Result<Success> ModaliasHandler::Insmod(const std::string& path_name, const std:
+         return ErrnoError() << "Failed to insmod '" << path_name << "' with args '" << args << "'";
+     }
+ 
++#if defined(__ANDROID__)
++    KLOG_INFO("modalias", "Loaded kernel module %s", path_name.c_str());
++#else
+     LOG(INFO) << "Loaded kernel module " << path_name;
++#endif
+     return Success();
+ }
+ 
+@@ -199,11 +206,19 @@ void ModaliasHandler::HandleUevent(const Uevent& uevent) {
+             continue;
+         }
+ 
++#if defined(__ANDROID__)
++        KLOG_INFO("modalias", "Loading kernel module '%s' for alias '%s'", module.c_str(), uevent.modalias.c_str());
++#else
+         LOG(DEBUG) << "Loading kernel module '" << module << "' for alias '" << uevent.modalias
+                    << "'";
++#endif
+ 
+         if (auto result = InsmodWithDeps(module, ""); !result) {
++#if defined(__ANDROID__)
++            KLOG_ERROR("modalias", "Cannot load module: %s", result.error_string().c_str());
++#else
+             LOG(ERROR) << "Cannot load module: " << result.error();
++#endif
+             // try another one since there may be another match
+             continue;
+         }
+@@ -214,9 +229,17 @@ void ModaliasHandler::HandleUevent(const Uevent& uevent) {
+ 
+ void ModaliasHandler::ColdbootDone() {
+     for (const auto& module : deferred_modules_) {
++#if defined(__ANDROID__)
++        KLOG_INFO("modalias", "Loading kernel module '%s' [deferred]", module.c_str());
++#else
+         LOG(INFO) << "Loading kernel module '" << module << "' [deferred]";
++#endif
+         if (auto result = InsmodWithDeps(module, ""); !result) {
++#if defined(__ANDROID__)
++            KLOG_ERROR("modalias", "Cannot load module: %s", result.error_string().c_str());
++#else
+             LOG(ERROR) << "Cannot load module: " << result.error();
++#endif
+         }
+     }
+     modules_to_defer_.clear();
+-- 
+2.21.0
+

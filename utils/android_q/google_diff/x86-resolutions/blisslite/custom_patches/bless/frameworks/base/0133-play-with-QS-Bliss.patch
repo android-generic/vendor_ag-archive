@@ -1,0 +1,46 @@
+From e5a98678e3d9172a26eae30f78c9446516b6cbc1 Mon Sep 17 00:00:00 2001
+From: Victor Bo <bvoid@yandex.ru>
+Date: Sun, 8 Mar 2020 15:26:13 +0200
+Subject: [PATCH 133/140] play with QS (Bliss)
+
+	modified:   packages/SystemUI/res/values/dimens.xml
+
+Change-Id: Iacf532a332f30e8d19ccd5e286a46c53657b421e
+---
+ packages/SystemUI/res/values/dimens.xml | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/packages/SystemUI/res/values/dimens.xml b/packages/SystemUI/res/values/dimens.xml
+index e4164e44936..59b14a9651a 100644
+--- a/packages/SystemUI/res/values/dimens.xml
++++ b/packages/SystemUI/res/values/dimens.xml
+@@ -435,7 +435,7 @@
+     <dimen name="qs_tile_height">106dp</dimen>
+     <dimen name="qs_tile_layout_margin_side">6dp</dimen>
+     <dimen name="qs_tile_margin_horizontal">10dp</dimen>
+-    <dimen name="qs_tile_margin_vertical">16dp</dimen>
++    <dimen name="qs_tile_margin_vertical">0dp</dimen>
+     <dimen name="qs_tile_margin_top_bottom">12dp</dimen>
+     <dimen name="qs_tile_margin_top_bottom_negative">-12dp</dimen>
+     <!-- The height of the qs customize header. Should be
+@@ -443,7 +443,7 @@
+          (Toolbar_minWidth (56dp) + qs_tile_margin_top_bottom (12dp))
+     -->
+     <dimen name="qs_customize_header_min_height">46dp</dimen>
+-    <dimen name="qs_tile_margin_top">14dp</dimen>
++    <dimen name="qs_tile_margin_top">8dp</dimen>
+     <dimen name="qs_tile_background_size">44dp</dimen>
+     <dimen name="qs_quick_tile_size">52dp</dimen>
+     <dimen name="qs_quick_tile_padding">16dp</dimen>
+@@ -475,7 +475,7 @@
+     <dimen name="qs_detail_item_primary_text_size">16sp</dimen>
+     <dimen name="qs_detail_item_secondary_text_size">14sp</dimen>
+     <dimen name="qs_detail_empty_text_size">14sp</dimen>
+-    <dimen name="qs_detail_margin_top">28dp</dimen>
++    <dimen name="qs_detail_margin_top">0dp</dimen>
+     <dimen name="qs_detail_back_margin_end">16dp</dimen>
+     <dimen name="qs_detail_header_text_padding">16dp</dimen>
+     <dimen name="qs_data_usage_text_size">14sp</dimen>
+-- 
+2.25.1
+

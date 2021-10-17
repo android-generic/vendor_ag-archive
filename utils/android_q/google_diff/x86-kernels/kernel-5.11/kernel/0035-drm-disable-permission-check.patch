@@ -1,0 +1,43 @@
+From abeb238848a9b50ad2008b04d2ffe02598702c71 Mon Sep 17 00:00:00 2001
+From: meijjaa <jjmeijer88@gmail.com>
+Date: Wed, 4 Nov 2015 22:50:45 +0100
+Subject: [PATCH 035/106] drm: disable permission check
+
+Signed-off-by: youling257 <youling257@gmail.com>
+---
+ drivers/gpu/drm/drm_ioctl.c | 19 -------------------
+ 1 file changed, 19 deletions(-)
+
+diff --git a/drivers/gpu/drm/drm_ioctl.c b/drivers/gpu/drm/drm_ioctl.c
+index d273d1a8603a..3940b2dc2906 100644
+--- a/drivers/gpu/drm/drm_ioctl.c
++++ b/drivers/gpu/drm/drm_ioctl.c
+@@ -536,25 +536,6 @@ int drm_version(struct drm_device *dev, void *data,
+  */
+ int drm_ioctl_permit(u32 flags, struct drm_file *file_priv)
+ {
+-	/* ROOT_ONLY is only for CAP_SYS_ADMIN */
+-	if (unlikely((flags & DRM_ROOT_ONLY) && !capable(CAP_SYS_ADMIN)))
+-		return -EACCES;
+-
+-	/* AUTH is only for authenticated or render client */
+-	if (unlikely((flags & DRM_AUTH) && !drm_is_render_client(file_priv) &&
+-		     !file_priv->authenticated))
+-		return -EACCES;
+-
+-	/* MASTER is only for master or control clients */
+-	if (unlikely((flags & DRM_MASTER) &&
+-		     !drm_is_current_master(file_priv)))
+-		return -EACCES;
+-
+-	/* Render clients must be explicitly allowed */
+-	if (unlikely(!(flags & DRM_RENDER_ALLOW) &&
+-		     drm_is_render_client(file_priv)))
+-		return -EACCES;
+-
+ 	return 0;
+ }
+ EXPORT_SYMBOL(drm_ioctl_permit);
+-- 
+2.17.1
+

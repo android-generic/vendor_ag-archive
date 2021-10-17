@@ -1,0 +1,236 @@
+From ddf9ca13828c9770512ebf1da0bf210af1823289 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 9 Apr 2021 17:01:38 -0400
+Subject: [PATCH 16/36] emu-x86_64_26-12-2020
+
+---
+ device.mk                            |  4 ++-
+ gpu/gpu_mesa.mk                      |  2 +-
+ nativebridge/bin/enable_nativebridge | 42 +++++++++++++++-------------
+ nativebridge/nativebridge.mk         |  8 ++++--
+ nativebridge/src/libnb.cpp           | 13 +++++++--
+ packages.mk                          |  9 ++++++
+ 6 files changed, 52 insertions(+), 26 deletions(-)
+
+diff --git a/device.mk b/device.mk
+index 9ad7f0d..2fe1207 100644
+--- a/device.mk
++++ b/device.mk
+@@ -66,6 +66,7 @@ PRODUCT_COPY_FILES += \
+     frameworks/native/data/etc/android.hardware.ethernet.xml:system/etc/permissions/android.hardware.ethernet.xml \
+     frameworks/native/data/etc/android.hardware.location.xml:system/etc/permissions/android.hardware.location.xml \
+     frameworks/native/data/etc/android.hardware.location.gps.xml:system/etc/permissions/android.hardware.location.gps.xml \
++    frameworks/native/data/etc/android.hardware.opengles.aep.xml:system/etc/permissions/android.hardware.opengles.aep.xml \
+     frameworks/native/data/etc/android.hardware.sensor.accelerometer.xml:system/etc/permissions/android.hardware.sensor.accelerometer.xml \
+     frameworks/native/data/etc/android.hardware.sensor.barometer.xml:system/etc/permissions/android.hardware.sensor.barometer.xml \
+     frameworks/native/data/etc/android.hardware.sensor.compass.xml:system/etc/permissions/android.hardware.sensor.compass.xml \
+@@ -128,9 +129,10 @@ $(call inherit-product,frameworks/native/build/tablet-10in-xhdpi-2048-dalvik-hea
+ 
+ # Get GMS
+ GAPPS_VARIANT ?= pico
+-$(call inherit-product-if-exists,$(if $(wildcard vendor/google/products/gms.mk),vendor/google/products/gms.mk,vendor/opengapps/build/opengapps-packages.mk))
++$(call inherit-product-if-exists,$(if $(wildcard vendor/google/products/gms.mk),vendor/google/products/gms.mk,vendor/gapps/common/common-vendor.mk))
+ 
+ # Get native bridge settings
+ $(call inherit-product-if-exists,$(LOCAL_PATH)/nativebridge/nativebridge.mk)
++$(call inherit-product-if-exists, vendor/google/emu-x86/target/libndk_translation.mk)
+ 
+ $(call inherit-product,$(if $(wildcard $(PRODUCT_DIR)packages.mk),$(PRODUCT_DIR),$(LOCAL_PATH)/)packages.mk)
+diff --git a/gpu/gpu_mesa.mk b/gpu/gpu_mesa.mk
+index a4055b8..8c158ce 100644
+--- a/gpu/gpu_mesa.mk
++++ b/gpu/gpu_mesa.mk
+@@ -14,7 +14,7 @@ PRODUCT_PACKAGES := \
+     gralloc.gbm gralloc.minigbm gralloc.intel \
+     libGLES_mesa    \
+     libtxc_dxtn     \
+-
++    modetest
+ PRODUCT_PACKAGES += \
+     libEGL_swiftshader \
+     libGLESv1_CM_swiftshader \
+diff --git a/nativebridge/bin/enable_nativebridge b/nativebridge/bin/enable_nativebridge
+index 5dff00b..6187f1d 100644
+--- a/nativebridge/bin/enable_nativebridge
++++ b/nativebridge/bin/enable_nativebridge
+@@ -2,7 +2,7 @@
+ 
+ PATH=/system/bin:/system/xbin
+ 
+-houdini_bin=0
++ndk_translation_bin=0
+ dest_dir=/system/lib$1/arm$1
+ binfmt_misc_dir=/proc/sys/fs/binfmt_misc
+ 
+@@ -27,10 +27,10 @@ else
+ 	u=2
+ fi
+ 
+-if [ -s /system/lib$1/libhoudini.so ]; then
+-	log -pi -thoudini "found /system/lib$1/libhoudini.so"
+-elif [ -e /system/etc/houdini$v.sfs ]; then
+-	mount_sfs /system/etc/houdini$v.sfs $dest_dir
++if [ -s /system/lib$1/libndk_translation.so ]; then
++	log -pi -tndk_translation "found /system/lib$1/libndk_translation.so"
++elif [ -e /system/etc/ndk_translation$v.sfs ]; then
++	mount_sfs /system/etc/ndk_translation$v.sfs $dest_dir
+ else
+ 	if mountpoint -q $dest_dir; then
+ 		kill -9 `fuser -m $dest_dir`
+@@ -41,16 +41,16 @@ else
+ 		chown 1023.1023 /data/media/0/arm
+ 	fi
+ 	cd /data/media/0/arm
+-	[ -s /data/arm/houdini$v.sfs ] && mv /data/arm/houdini$v.sfs .
+-	while ! mount_sfs houdini$v.sfs $dest_dir; do
++	[ -s /data/arm/ndk_translation$v.sfs ] && mv /data/arm/ndk_translation$v.sfs .
++	while ! mount_sfs ndk_translation$v.sfs $dest_dir; do
+ 		while [ "$(getprop net.dns1)" = "" ]; do
+ 			sleep 10
+ 		done
+-		[ -s houdini$v.sfs ] && sleep 10 || sleep 30
++		[ -s ndk_translation$v.sfs ] && sleep 10 || sleep 30
+ 	done
+ fi
+ 
+-[ -s /system/lib$1/libhoudini.so ] || mount --bind $dest_dir/libhoudini.so /system/lib$1/libhoudini.so
++[ -s /system/lib$1/libndk_translation.so ] || mount --bind $dest_dir/libndk_translation.so /system/lib$1/libndk_translation.so
+ 
+ # this is to add the supported binary formats via binfmt_misc
+ 
+@@ -61,26 +61,28 @@ fi
+ 
+ cd $binfmt_misc_dir
+ if [ -e register ]; then
+-	[ -e /system/bin/houdini$1 ] && dest_dir=/system/bin
+-	# register Houdini for arm binaries
++	[ -e /system/bin/ndk_translation_program_runner_binfmt_misc_arm$1 ] && dest_dir=/system/bin
++	# register ndk_translation for arm binaries
+ 	if [ -z "$1" ]; then
+-		echo ':arm_exe:M::\\x7f\\x45\\x4c\\x46\\x01\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02\\x00\\x28::'"$dest_dir/houdini:P" > register
+-		echo ':arm_dyn:M::\\x7f\\x45\\x4c\\x46\\x01\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x03\\x00\\x28::'"$dest_dir/houdini:P" > register
++		echo ':arm_exe:M::\\x7f\\x45\\x4c\\x46\\x01\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02\\x00\\x28::'"$dest_dir/ndk_translation_program_runner_binfmt_misc_arm:P" > register
++		echo ':arm_dyn:M::\\x7f\\x45\\x4c\\x46\\x01\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x03\\x00\\x28::'"$dest_dir/ndk_translation_program_runner_binfmt_misc_arm:P" > register
+ 	else
+-		echo ':arm64_exe:M::\\x7f\\x45\\x4c\\x46\\x02\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02\\x00\\xb7::'"$dest_dir/houdini64:P" > register
+-		echo ':arm64_dyn:M::\\x7f\\x45\\x4c\\x46\\x02\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x03\\x00\\xb7::'"$dest_dir/houdini64:P" > register
++		echo ':arm64_exe:M::\\x7f\\x45\\x4c\\x46\\x02\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x02\\x00\\xb7::'"$dest_dir/ndk_translation_program_runner_binfmt_misc_arm64:P" > register
++		echo ':arm64_dyn:M::\\x7f\\x45\\x4c\\x46\\x02\\x01\\x01\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x03\\x00\\xb7::'"$dest_dir/ndk_translation_program_runner_binfmt_misc_arm64:P" > register
+ 	fi
+ 	if [ -e arm${1}_exe ]; then
+-		houdini_bin=1
++		ndk_translation_bin=1
+ 	fi
+ else
+-	log -pe -thoudini "No binfmt_misc support"
++	log -pe -tndk_translation "No binfmt_misc support"
+ fi
+ 
+-if [ $houdini_bin -eq 0 ]; then
+-	log -pe -thoudini "houdini$1 enabling failed!"
++if [ $ndk_translation_bin -eq 0 ]; then
++	log -pe -tndk_translation "ndk_translation_program_runner_binfmt_misc_arm$1 enabling failed!"
+ else
+-	log -pi -thoudini "houdini$1 enabled"
++	log -pi -tndk_translation "ndk_translation_program_runner_binfmt_misc_arm$1 enabled"
+ fi
+ 
++[ "$(getprop ro.zygote)" = "zygote64_32" -a -z "$1" ] && exec $0 64
++
+ exit 0
+diff --git a/nativebridge/nativebridge.mk b/nativebridge/nativebridge.mk
+index 1fa831e..244cb92 100644
+--- a/nativebridge/nativebridge.mk
++++ b/nativebridge/nativebridge.mk
+@@ -13,6 +13,7 @@ WITH_NATIVE_BRIDGE := true
+ 
+ # Native Bridge ABI List
+ NATIVE_BRIDGE_ABI_LIST_32_BIT := armeabi-v7a armeabi
++NATIVE_BRIDGE_ABI_LIST_64_BIT := arm64-v8a
+ 
+ LOCAL_SRC_FILES := bin/enable_nativebridge
+ 
+@@ -31,10 +32,13 @@ PRODUCT_PROPERTY_OVERRIDES += \
+     ro.enable.native.bridge.exec64=1
+ endif
+ 
+-ifneq ($(HOUDINI_PREINSTALL),intel)
++ifneq ($(NDK_TRANSLATION_PREINSTALL),google)
+ PRODUCT_PROPERTY_OVERRIDES := ro.dalvik.vm.native.bridge=libnb.so
+ 
+ PRODUCT_PACKAGES := libnb
++else
++PRODUCT_PROPERTY_OVERRIDES += persist.sys.nativebridge=1
++PRODUCT_PROPERTY_OVERRIDES += ro.dalvik.vm.native.bridge=libndk_translation.so
+ endif
+ 
+-$(call inherit-product-if-exists,vendor/intel/houdini/houdini.mk)
++$(call inherit-product-if-exists,vendor/google/emu-x86/target/libndk_translation.mk)
+diff --git a/nativebridge/src/libnb.cpp b/nativebridge/src/libnb.cpp
+index aad369e..09f9e29 100644
+--- a/nativebridge/src/libnb.cpp
++++ b/nativebridge/src/libnb.cpp
+@@ -37,7 +37,7 @@ static NativeBridgeCallbacks *get_callbacks()
+ #ifdef __LP64__
+                 "64"
+ #endif
+-                "/libhoudini.so";
++                "/libndk_translation.so";
+         if (!native_handle) {
+             native_handle = dlopen(libnb, RTLD_LAZY);
+             if (!native_handle) {
+@@ -188,6 +188,13 @@ static native_bridge_namespace_t *native_bridge4_getVendorNamespace()
+     return cb ? cb->getVendorNamespace() : nullptr;
+ }
+ 
++static native_bridge_namespace_t *native_bridge5_getExportedNamespace()
++{
++    LOGV("enter native_bridge5_getExportedNamespace");
++    NativeBridgeCallbacks *cb = get_callbacks();
++    return cb ? cb->getExportedNamespace() : nullptr;
++}
++
+ static void __attribute__ ((destructor)) on_dlclose()
+ {
+     if (native_handle) {
+@@ -200,7 +207,7 @@ extern "C" {
+ 
+ NativeBridgeCallbacks NativeBridgeItf = {
+     // v1
+-    .version = 4,
++    .version = 5,
+     .initialize = native_bridge2_initialize,
+     .loadLibrary = native_bridge2_loadLibrary,
+     .getTrampoline = native_bridge2_getTrampoline,
+@@ -219,6 +226,8 @@ NativeBridgeCallbacks NativeBridgeItf = {
+     .loadLibraryExt = native_bridge3_loadLibraryExt,
+     // v4
+     .getVendorNamespace = native_bridge4_getVendorNamespace,
++    // v5
++    .getExportedNamespace = native_bridge5_getExportedNamespace,
+ };
+ 
+ } // extern "C"
+diff --git a/packages.mk b/packages.mk
+index 915a885..8d376de 100644
+--- a/packages.mk
++++ b/packages.mk
+@@ -99,6 +99,15 @@ PRODUCT_PACKAGES += \
+ PRODUCT_PACKAGES += \
+     Eleven \
+     TSCalibration2 \
++    native_bridge_stub_library_defaults \
++    libnativebridge-headers \
++    libnativeloader-headers \
++    libqemupipe \
++    libandroidemu
++
++PRODUCT_HOST_PACKAGES, += \
++    libnativebridge \
++    libnativeloader
+ 
+ # Debug tools
+ PRODUCT_PACKAGES_DEBUG := \
+-- 
+2.17.1
+

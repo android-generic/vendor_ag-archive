@@ -1,0 +1,41 @@
+From bbf303ecd36473dfe90350e9f53d8d5bf43bada9 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 16 Aug 2020 11:52:07 +0200
+Subject: [PATCH 086/107] x86: Kconfig: replace '---help---' with 'help'
+
+Fixes the following building errors happenign with kernel 5.9:
+
+drivers/platform/x86/Kconfig:461: syntax error
+drivers/platform/x86/Kconfig:460: unknown statement "---help---"
+...
+drivers/platform/x86/Kconfig:762: syntax error
+drivers/platform/x86/Kconfig:761: unknown statement "---help---"
+---
+ drivers/platform/x86/Kconfig | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/platform/x86/Kconfig b/drivers/platform/x86/Kconfig
+index 6aa9b2f5cc80..a1ccb4ffd5de 100644
+--- a/drivers/platform/x86/Kconfig
++++ b/drivers/platform/x86/Kconfig
+@@ -457,7 +457,7 @@ config DELL_WMI_LED
+ config DV11P_TABLET
+ 	tristate "Dell Venue 11 Pro Tablet support"
+ 	depends on ACPI
+-	---help---
++	help
+ 	  This driver provides power button support and docking events for the Dell Venue 11 Pro tablet.
+ 
+ config AMILO_RFKILL
+@@ -759,7 +759,7 @@ config S103T_WMI
+ 	tristate "Lenovo S10-3T Rotate Button Support"
+ 	depends on ACPI_WMI
+ 	depends on INPUT
+-	---help---
++	help
+ 	  This is a driver for the Lenovo ideapad S10-3T rotate button.
+ 
+ 	  To compile this driver as a module, choose M here: the module will
+-- 
+2.17.1
+

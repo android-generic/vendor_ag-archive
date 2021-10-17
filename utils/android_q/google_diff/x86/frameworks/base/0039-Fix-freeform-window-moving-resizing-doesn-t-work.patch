@@ -1,0 +1,74 @@
+From 3392f20df6ed8904f30f6a16b241e7c92bd2e1c8 Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@gmail.com>
+Date: Fri, 8 May 2020 12:29:53 +0800
+Subject: [PATCH 05/17] Fix freeform window moving/resizing doesn't work
+
+When window moving/resizing, TaskPositioner.register will call
+InputMonitor.updateInputWindowsImmediately to add mDragWindowHandle
+to InputDispatcher, and call InputManager.transferTouchFocus to transfer
+touch focus to mDragWindowHandle. But old updateInputWindowsImmediately
+implementation needs mUpdateInputWindowsPending being true before
+updating input window handles. The mUpdateInputWindowsPending can only
+be true when someone call InputMonitor.updateInputWindowsLw but
+InputMonitor doesn't start to do it. So when the system is stable, there
+is no pending updateInputWindowsLw operation, the
+mUpdateInputWindowsPending is false. If we start to move/resize
+freeform window, the mDragWindowHandle won't be added to
+InputDispatcher, and it will cause InputManager.transferTouchFocus
+failed. The failed touch focus transferring will cause window
+moving/resizing not working correctly.
+
+So the patch add an InputMonitor.updateInputWindowsImmediately variant
+to ignore pending state, and update input windows immediately for
+TaskPositioner. Ohter codes use the old
+InputMonitor.updateInputWindowsImmediately without ignoring to keep the
+compatibility.
+
+Test: Manually moving and resizing correctly after modification.
+Test: atest WindowFocusTests
+
+Change-Id: Ia2fec8ca45a420607b3112cbd221cdae4a9a7e6b
+Signed-off-by: utzcoz <utzcoz@gmail.com>
+(cherry picked from commit 131f5c61a651c4fd2fed6f51b4e4744fc835efd1)
+---
+ services/core/java/com/android/server/wm/InputMonitor.java  | 6 +++++-
+ .../core/java/com/android/server/wm/TaskPositioner.java     | 6 +++++-
+ 2 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/wm/InputMonitor.java b/services/core/java/com/android/server/wm/InputMonitor.java
+index d3dba90fe4e6..9301bf120df0 100644
+--- a/services/core/java/com/android/server/wm/InputMonitor.java
++++ b/services/core/java/com/android/server/wm/InputMonitor.java
+@@ -321,7 +321,11 @@ final class InputMonitor {
+     }
+ 
+     void updateInputWindowsImmediately() {
+-        if (mUpdateInputWindowsPending) {
++        updateInputWindowsImmediately(false);
++    }
++
++    void updateInputWindowsImmediately(boolean ignorePending) {
++        if (ignorePending || mUpdateInputWindowsPending) {
+             mApplyImmediately = true;
+             mUpdateInputWindows.run();
+             mApplyImmediately = false;
+diff --git a/services/core/java/com/android/server/wm/TaskPositioner.java b/services/core/java/com/android/server/wm/TaskPositioner.java
+index 7d50ac668740..be9756889ff7 100644
+--- a/services/core/java/com/android/server/wm/TaskPositioner.java
++++ b/services/core/java/com/android/server/wm/TaskPositioner.java
+@@ -308,7 +308,11 @@ class TaskPositioner implements IBinder.DeathRecipient {
+         mDisplayContent.pauseRotationLocked();
+ 
+         // Notify InputMonitor to take mDragWindowHandle.
+-        mDisplayContent.getInputMonitor().updateInputWindowsImmediately();
++        // We must add mDragWindowHandle to InputManager immediately although
++        // there is pending for updateInputWindows. Otherwise, the
++        // InputManager.transferTouchFocus will fail because of not-found
++        // mDragWindowHandle(to window).
++        mDisplayContent.getInputMonitor().updateInputWindowsImmediately(true);
+         new SurfaceControl.Transaction().syncInputWindows().apply();
+ 
+         mSideMargin = dipToPixel(SIDE_MARGIN_DIP, mDisplayMetrics);
+-- 
+2.17.1
+

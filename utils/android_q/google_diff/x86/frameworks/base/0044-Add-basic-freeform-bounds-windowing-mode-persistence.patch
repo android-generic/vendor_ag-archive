@@ -1,0 +1,370 @@
+From 1d485cebae4433c836a16c9df3fff98902cdf4fb Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@outlook.com>
+Date: Tue, 28 Jul 2020 23:05:24 +0800
+Subject: [PATCH 08/17] Add basic freeform bounds/windowing mode persistence
+
+Signed-off-by: utzcoz <utzcoz@outlook.com>
+---
+ .../android/internal/policy/PhoneWindow.java  |   4 +
+ .../com/android/server/wm/ActivityStack.java  |  14 ++
+ .../android/server/wm/ActivityStarter.java    |  13 +-
+ .../server/wm/RootActivityContainer.java      |  21 +++
+ .../com/android/server/wm/TaskRecord.java     |  52 ++++++++
+ .../server/wm/WindowManagerService.java       | 126 ++++++++++++++++++
+ 6 files changed, 229 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/com/android/internal/policy/PhoneWindow.java b/core/java/com/android/internal/policy/PhoneWindow.java
+index daa57e05aef6..8a89705e2b45 100644
+--- a/core/java/com/android/internal/policy/PhoneWindow.java
++++ b/core/java/com/android/internal/policy/PhoneWindow.java
+@@ -58,6 +58,7 @@ import android.os.Parcel;
+ import android.os.Parcelable;
+ import android.os.RemoteException;
+ import android.os.ServiceManager;
++import android.os.SystemProperties;
+ import android.provider.Settings;
+ import android.text.TextUtils;
+ import android.transition.Scene;
+@@ -346,6 +347,9 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
+         // an user can force using it through developer options.
+         boolean forceResizable = Settings.Global.getInt(context.getContentResolver(),
+                 DEVELOPMENT_FORCE_RESIZABLE_ACTIVITIES, 0) != 0;
++        // region @boringdroidd
++        forceResizable |= SystemProperties.getBoolean("persist.sys.systemuiplugin.enabled", false);
++        // endregion
+         mSupportsPictureInPicture = forceResizable || context.getPackageManager().hasSystemFeature(
+                 PackageManager.FEATURE_PICTURE_IN_PICTURE);
+         mActivityConfigCallback = activityConfigCallback;
+diff --git a/services/core/java/com/android/server/wm/ActivityStack.java b/services/core/java/com/android/server/wm/ActivityStack.java
+index 1a9b11cd62d5..cff6129f5000 100644
+--- a/services/core/java/com/android/server/wm/ActivityStack.java
++++ b/services/core/java/com/android/server/wm/ActivityStack.java
+@@ -798,6 +798,12 @@ class ActivityStack extends ConfigurationContainer {
+             // setWindowingMode triggers an onConfigurationChanged cascade which can result in a
+             // different resolved windowing mode (usually when preferredWindowingMode is UNDEFINED).
+             windowingMode = getWindowingMode();
++            // region @boringdroid
++            // When stack's windowing mode changed, we will persist this windowing mode for top activity.
++            if (topActivity != null) {
++                mWindowManager.savePackageWindowingMode(topActivity.appInfo.packageName, windowingMode);
++            }
++            // endregion
+ 
+             if (creating) {
+                 // Nothing else to do if we don't have a window container yet. E.g. call from ctor.
+@@ -3140,6 +3146,14 @@ class ActivityStack extends ConfigurationContainer {
+             boolean newTask, boolean keepCurTransition, ActivityOptions options) {
+         TaskRecord rTask = r.getTaskRecord();
+         final int taskId = rTask.taskId;
++        // region @boringdroid
++        // When creating task, the topActivity is null when invoking setWindowingMode,
++        // so we should save package windowing mode after task created. And saving
++        // windowing mode in setWindowingMode will be used to save windowing mode when
++        // changing windowing mode dynamically after task created, for example clicking
++        // maximize button to move task to fullscreen stack from freefrom stack.
++        mWindowManager.savePackageWindowingMode(r.packageName, getWindowingMode());
++        // endregion
+         final boolean allowMoveToFront = options == null || !options.getAvoidMoveToFront();
+         // mLaunchTaskBehind tasks get placed at the back of the task stack.
+         if (!r.mLaunchTaskBehind && allowMoveToFront
+diff --git a/services/core/java/com/android/server/wm/ActivityStarter.java b/services/core/java/com/android/server/wm/ActivityStarter.java
+index f37698de34d5..0aaef9cba518 100644
+--- a/services/core/java/com/android/server/wm/ActivityStarter.java
++++ b/services/core/java/com/android/server/wm/ActivityStarter.java
+@@ -1477,7 +1477,18 @@ class ActivityStarter {
+             ActivityRecord[] outActivity, boolean restrictedBgActivity) {
+         setInitialState(r, options, inTask, doResume, startFlags, sourceRecord, voiceSession,
+                 voiceInteractor, restrictedBgActivity);
+-
++        // region @boringdroid
++        if (mOptions == null) {
++            mOptions = ActivityOptions.makeBasic();
++        }
++        if (mOptions.getLaunchWindowingMode() == WINDOWING_MODE_UNDEFINED) {
++            mOptions.setLaunchWindowingMode(
++                    WindowManagerService
++                            .getWMSInstance()
++                            .getPackageWindowingMode(mStartActivity.info.packageName)
++            );
++        }
++        // endregion
+         final int preferredWindowingMode = mLaunchParams.mWindowingMode;
+ 
+         computeLaunchingTaskFlags();
+diff --git a/services/core/java/com/android/server/wm/RootActivityContainer.java b/services/core/java/com/android/server/wm/RootActivityContainer.java
+index ffbf68813d35..57295b777d36 100644
+--- a/services/core/java/com/android/server/wm/RootActivityContainer.java
++++ b/services/core/java/com/android/server/wm/RootActivityContainer.java
+@@ -23,6 +23,7 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+ import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
+ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
+ import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
++import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
+ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
+ import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+@@ -2249,6 +2250,26 @@ class RootActivityContainer extends ConfigurationContainer
+         }
+ 
+         // Implicitly, this case is MATCH_TASK_IN_STACKS_OR_RECENT_TASKS_AND_RESTORE
++        // region @boringdroid
++        int windowingMode = WINDOWING_MODE_UNDEFINED;
++        if (aOptions == null) {
++            aOptions = ActivityOptions.makeBasic();
++        }
++        Intent intent = task.intent;
++        ComponentName realActivity = task.realActivity;
++        String packageName = null;
++        if (realActivity != null) {
++            packageName = realActivity.getPackageName();
++        }
++        if (packageName == null && intent != null && intent.getComponent() != null) {
++            packageName = intent.getComponent().getPackageName();
++        }
++        windowingMode = packageName == null
++                ? windowingMode : mWindowManager.getPackageWindowingMode(packageName);
++        if (windowingMode == WINDOWING_MODE_FREEFORM) {
++            aOptions.setLaunchWindowingMode(windowingMode);
++        }
++        // endregion
+         if (!mStackSupervisor.restoreRecentTaskLocked(task, aOptions, onTop)) {
+             if (DEBUG_RECENTS) Slog.w(TAG_RECENTS,
+                     "Couldn't restore task id=" + id + " found in recents");
+diff --git a/services/core/java/com/android/server/wm/TaskRecord.java b/services/core/java/com/android/server/wm/TaskRecord.java
+index 3fd4e83b9494..6bdc5ad6f1f4 100644
+--- a/services/core/java/com/android/server/wm/TaskRecord.java
++++ b/services/core/java/com/android/server/wm/TaskRecord.java
+@@ -609,6 +609,10 @@ class TaskRecord extends ConfigurationContainer {
+                 }
+             }
+             mTask.resize(kept, forced);
++            // region @boringdroid
++            // After window resizes its bounds (real resize and move), we should save the window bounds.
++            saveTaskBounds();
++            // endregion
+ 
+             saveLaunchingStateIfNeeded();
+ 
+@@ -622,8 +626,32 @@ class TaskRecord extends ConfigurationContainer {
+     // TODO: Investigate combining with the resize() method above.
+     void resizeWindowContainer() {
+         mTask.resize(false /* relayout */, false /* forced */);
++        // region @boringdroid
++        // After window resizes its bounds (real resize and move), we should save the window bounds.
++        saveTaskBounds();
++        // endregion
+     }
+ 
++    // region @boringdroid
++    private void saveTaskBounds() {
++        Rect savedBounds = new Rect();
++        if (mTask != null) {
++            mTask.getBounds(savedBounds);
++        }
++        String packageName = null;
++        if (realActivity != null) {
++            packageName = realActivity.getPackageName();
++        } else if (getRootActivity() != null) {
++            packageName = getRootActivity().packageName;
++        }
++        if (mStack != null
++                && mStack.getWindowingMode() == WINDOWING_MODE_FREEFORM
++                && !savedBounds.isEmpty()
++                && packageName != null) {
++            WindowManagerService.getWMSInstance().savePackageWindowBounds(packageName, savedBounds);
++        }
++    }
++    // endregion
+     void getWindowContainerBounds(Rect bounds) {
+         if (mTask != null) {
+             mTask.getBounds(bounds);
+@@ -2347,6 +2375,30 @@ class TaskRecord extends ConfigurationContainer {
+         } else if (!getWindowConfiguration().persistTaskBounds()) {
+             return mStack.getRequestedOverrideBounds();
+         }
++        // region @boringdroid
++        if (mLastNonFullscreenBounds == null) {
++            String packageName = null;
++            if (realActivity != null) {
++                packageName = realActivity.getPackageName();
++            } else if (getRootActivity() != null) {
++                packageName = getRootActivity().packageName;
++            }
++            mLastNonFullscreenBounds =
++                    packageName != null
++                            ? WindowManagerService.getWMSInstance().getPackageWindowBounds(packageName)
++                            : new Rect();
++            if (!mLastNonFullscreenBounds.isEmpty()) {
++                return mLastNonFullscreenBounds;
++            }
++            getParent().getBounds(mLastNonFullscreenBounds);
++            int width = mLastNonFullscreenBounds.width() / 2;
++            int height = mLastNonFullscreenBounds.height() / 2;
++            int left = mLastNonFullscreenBounds.left + width / 2;
++            int top = mLastNonFullscreenBounds.top + height / 2;
++            mLastNonFullscreenBounds.set(left, top, left + width, top + height);
++            adjustForMinimalTaskDimensions(mLastNonFullscreenBounds, new Rect());
++        }
++        // endregion
+         return mLastNonFullscreenBounds;
+     }
+ 
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index a9f157d985a6..06eea73924f3 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -133,6 +133,7 @@ import android.content.ContentResolver;
+ import android.content.Context;
+ import android.content.Intent;
+ import android.content.IntentFilter;
++import android.content.SharedPreferences;
+ import android.content.pm.ApplicationInfo;
+ import android.content.pm.PackageManager;
+ import android.content.pm.PackageManagerInternal;
+@@ -157,6 +158,7 @@ import android.os.Binder;
+ import android.os.Build;
+ import android.os.Bundle;
+ import android.os.Debug;
++import android.os.Environment;
+ import android.os.Handler;
+ import android.os.HandlerExecutor;
+ import android.os.IBinder;
+@@ -179,6 +181,7 @@ import android.os.SystemProperties;
+ import android.os.SystemService;
+ import android.os.Trace;
+ import android.os.UserHandle;
++import android.os.UserManager;
+ import android.os.WorkSource;
+ import android.provider.DeviceConfig;
+ import android.provider.Settings;
+@@ -7821,4 +7824,127 @@ public class WindowManagerService extends IWindowManager.Stub
+                     0 /* configChanges */, !PRESERVE_WINDOWS, true /* notifyClients */);
+         }
+     }
++    // region @boringdroid
++    private static final String PACKAGE_WINDOWING_MODE_NAME = "package-windowing-mode";
++    private static final String PACKAGE_WINDOW_BOUNDS_NAME = "package-window-bounds";
++
++    private static boolean isDataSystemDirNotReady(Context context) {
++        UserManager userManager = context.getSystemService(UserManager.class);
++        return !(userManager != null && userManager.isUserUnlockingOrUnlocked(UserHandle.myUserId()));
++    }
++
++    private static File getPackageWindowingModeFile() {
++        return new File(
++                Environment.getDataSystemCeDirectory(UserHandle.myUserId())
++                        + File.separator + PACKAGE_WINDOWING_MODE_NAME
++        );
++    }
++
++    private static File getPackageWindowBoundsName() {
++        return new File(
++                Environment.getDataSystemCeDirectory(UserHandle.myUserId())
++                        + File.separator + PACKAGE_WINDOW_BOUNDS_NAME
++        );
++    }
++
++    /**
++     * @hide
++     */
++    public static WindowManagerService getWMSInstance() {
++        return getInstance();
++    }
++
++    /**
++     * @hide
++     */
++    public void savePackageWindowingMode(String packageName,
++                                         @WindowConfiguration.WindowingMode int windowingMode) {
++
++        if (isDataSystemDirNotReady(mContext)) {
++            Slog.e(TAG, "Calling savePackageWindowingMode with package " + packageName
++                    + ", and mode " + windowingMode + ", before file is ready");
++            return;
++        }
++        SharedPreferences sharedPreferences =
++                mContext.getSharedPreferences(getPackageWindowingModeFile(), Context.MODE_PRIVATE);
++        sharedPreferences.edit().putInt(packageName, windowingMode).apply();
++    }
++
++    /**
++     * @hide
++     */
++    public @WindowConfiguration.WindowingMode int getPackageWindowingMode(String packageName) {
++        if (isDataSystemDirNotReady(mContext)) {
++            Slog.e(TAG, "Calling getPackageWindowingMode with package " + packageName
++                    + ", before file is ready");
++            return WindowConfiguration.WINDOWING_MODE_UNDEFINED;
++        }
++        // We only enable freeform when systemui plugin enabled.
++        if (!SystemProperties.getBoolean("persist.sys.pcmode.enabled", false)) {
++            return WindowConfiguration.WINDOWING_MODE_UNDEFINED;
++        }
++        // If the package is in the multi window black list, it will run in default
++        // windowing mode.
++        if (isInMultiWindowDisallowList(packageName)) {
++            return WindowConfiguration.WINDOWING_MODE_UNDEFINED;
++        }
++        SharedPreferences sharedPreferences =
++                mContext.getSharedPreferences(getPackageWindowingModeFile(), Context.MODE_PRIVATE);
++        // We hope the default windowing mode is freeform.
++        return sharedPreferences.getInt(packageName, WindowConfiguration.WINDOWING_MODE_FREEFORM);
++    }
++
++    /**
++     * @hide
++     */
++    public void savePackageWindowBounds(String packageName, Rect bounds) {
++        if (isDataSystemDirNotReady(mContext)) {
++            Slog.e(TAG, "Calling savePackageWindowBounds with package " + packageName
++                    + ", and bounds " + bounds + ", before file is ready");
++            return;
++        }
++        SharedPreferences sharedPreferences =
++                mContext.getSharedPreferences(getPackageWindowBoundsName(), Context.MODE_PRIVATE);
++        Rect tempBounds = new Rect(bounds);
++        sharedPreferences
++                .edit()
++                .putInt(packageName + "-left", tempBounds.left)
++                .putInt(packageName + "-top", tempBounds.top)
++                .putInt(packageName + "-right", tempBounds.right)
++                .putInt(packageName + "-bottom", tempBounds.bottom)
++                .apply();
++    }
++
++    /**
++     * @hide
++     */
++    public Rect getPackageWindowBounds(String packageName) {
++        if (isDataSystemDirNotReady(mContext)) {
++            Slog.e(TAG, "Calling getPackageWindowBounds with package " + packageName
++                    + ", before file is ready");
++            return new Rect();
++        }
++        SharedPreferences sharedPreferences =
++                mContext.getSharedPreferences(getPackageWindowBoundsName(), Context.MODE_PRIVATE);
++        return new Rect(
++                sharedPreferences.getInt(packageName + "-left", 0),
++                sharedPreferences.getInt(packageName + "-top", 0),
++                sharedPreferences.getInt(packageName + "-right", 0),
++                sharedPreferences.getInt(packageName + "-bottom", 0)
++        );
++    }
++
++    private boolean isInMultiWindowDisallowList(String packageName) {
++        if (packageName == null) {
++            return false;
++        }
++        if (packageName.equals("android")) {
++            return true;
++        }
++        if (packageName.contains("com.android.systemui")) {
++            return true;
++        }
++        return false;
++    }
++    // endregion
+ }
+-- 
+2.17.1
+

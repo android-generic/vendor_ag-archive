@@ -1,0 +1,32 @@
+From 370da0ff9191b1704a6ac1cd3f51c76546047073 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Mon, 10 Aug 2020 22:20:26 -0400
+Subject: [PATCH] Fix conflicts with ROM settings
+
+---
+ Android.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index 31da58fdb0..2b3d1d3009 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -65,13 +65,13 @@ LOCAL_PROGUARD_FLAG_FILES := proguard.flags
+ LOCAL_AAPT_FLAGS := --auto-add-overlay \
+     --extra-packages org.carbonrom.carbonfibers
+ 
+-LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res \
++LOCAL_RESOURCE_DIR += \
+     external/koush/Widgets/Widgets/res \
+     external/koush/Superuser/Superuser/res
+ 
+ LOCAL_AAPT_INCLUDE_ALL_RESOURCES := true
+ 
+-LOCAL_AAPT_FLAGS := --auto-add-overlay \
++LOCAL_AAPT_FLAGS +=  \
+     --extra-packages com.koushikdutta.superuser:com.koushikdutta.widgets
+ 
+ ifneq ($(INCREMENTAL_BUILDS),)
+-- 
+2.17.1
+

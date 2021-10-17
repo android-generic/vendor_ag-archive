@@ -1,0 +1,144 @@
+From 67c78f07ed94b1cc0e6c0c0dc924a0ad6f779b2d Mon Sep 17 00:00:00 2001
+From: saranya <saranya.gopal@intel.com>
+Date: Tue, 17 Apr 2018 15:52:08 +0530
+Subject: [PATCH] GlobalActions: Handle 'sleep' action
+
+Some Intel platforms do not provide separate
+events for power key press and release. This
+makes it impossible to detect long press of
+power button. So, the solution is to handle
+only short press and add 'sleep' also as an
+option in GlobalActions menu. This patch
+handles 'sleep' option.
+
+Change-Id: Iaae59b324e5ba6eaed9e507fdaa8e5006535716c
+Tracked-On: OAM-56502
+Signed-off-by: saranya <saranya.gopal@intel.com>
+Signed-off-by: Madhusudhan S <madhusudhan.s@intel.com>
+
+Conflicts:
+	packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialog.java
+
+Conflicts:
+	packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialog.java
+
+Conflicts:
+	core/res/res/values-zh-rHK/strings.xml
+	packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialog.java
+
+Conflicts:
+	packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialog.java
+---
+ core/res/res/values/config.xml                |  1 +
+ core/res/res/values/strings.xml               |  2 ++
+ core/res/res/values/symbols.xml               |  1 +
+ .../globalactions/GlobalActionsDialog.java    | 35 +++++++++++++++++++
+ 4 files changed, 39 insertions(+)
+
+diff --git a/core/res/res/values/config.xml b/core/res/res/values/config.xml
+index 818b96e6f43..c48a06697e5 100644
+--- a/core/res/res/values/config.xml
++++ b/core/res/res/values/config.xml
+@@ -2876,6 +2876,7 @@
+     <string-array translatable="false" name="config_globalActionsList">
+         <item>power</item>
+         <item>restart</item>
++        <item>sleep</item>
+         <item>lockdown</item>
+         <item>logout</item>
+         <item>bugreport</item>
+diff --git a/core/res/res/values/strings.xml b/core/res/res/values/strings.xml
+index a14326f4eae..bbe1a351081 100644
+--- a/core/res/res/values/strings.xml
++++ b/core/res/res/values/strings.xml
+@@ -519,6 +519,8 @@
+     <!-- TODO: promote to separate string-->
+     <string name="global_action_restart" translatable="false">@string/sim_restart_button</string>
+ 
++    <string name="global_action_sleep">Sleep</string>
++
+     <!-- label for item that starts emergency call -->
+     <string name="global_action_emergency">Emergency</string>
+ 
+diff --git a/core/res/res/values/symbols.xml b/core/res/res/values/symbols.xml
+index f9e263d4c12..7dc94fccaf9 100644
+--- a/core/res/res/values/symbols.xml
++++ b/core/res/res/values/symbols.xml
+@@ -1843,6 +1843,7 @@
+   <java-symbol type="string" name="global_actions" />
+   <java-symbol type="string" name="global_action_power_off" />
+   <java-symbol type="string" name="global_action_restart" />
++  <java-symbol type="string" name="global_action_sleep" />
+   <java-symbol type="string" name="global_actions_airplane_mode_off_status" />
+   <java-symbol type="string" name="global_actions_airplane_mode_on_status" />
+   <java-symbol type="string" name="global_actions_toggle_airplane_mode" />
+diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialog.java b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialog.java
+index cf5b1af764b..a123af5f0ec 100644
+--- a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialog.java
++++ b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialog.java
+@@ -47,6 +47,7 @@ import android.os.PowerManager;
+ import android.os.Process;
+ import android.os.RemoteException;
+ import android.os.ServiceManager;
++import android.os.SystemClock;
+ import android.os.SystemProperties;
+ import android.os.UserHandle;
+ import android.os.UserManager;
+@@ -142,6 +143,7 @@ public class GlobalActionsDialog implements DialogInterface.OnDismissListener,
+     private static final String GLOBAL_ACTION_KEY_SCREENSHOT = "screenshot";
+     private static final String GLOBAL_ACTION_KEY_RESTART_RECOVERY = "recovery";
+     private static final String GLOBAL_ACTION_KEY_SCREENRECORD = "screenrecord";
++    private static final String GLOBAL_ACTION_KEY_SLEEP = "sleep";
+ 
+     private static final int SHOW_TOGGLES_BUTTON = 1;
+     private static final int RESTART_RECOVERY_BUTTON = 2;
+@@ -471,6 +473,8 @@ public class GlobalActionsDialog implements DialogInterface.OnDismissListener,
+                             Settings.Secure.REBOOT_IN_POWER_MENU, 1, getCurrentUser().id) != 0) {
+                     mItems.add(new RestartAction());
+                 }
++            } else if (GLOBAL_ACTION_KEY_SLEEP.equals(actionKey)) {
++                mItems.add(new SleepAction());
+             } else if (GLOBAL_ACTION_KEY_SCREENSHOT.equals(actionKey)) {
+                 if (Settings.Secure.getIntForUser(mContext.getContentResolver(),
+                             Settings.Secure.SCREENSHOT_IN_POWER_MENU, 0, getCurrentUser().id) != 0) {
+@@ -638,6 +642,37 @@ public class GlobalActionsDialog implements DialogInterface.OnDismissListener,
+             return true;
+         }
+     }
++    
++    private final class SleepAction extends SinglePressAction implements LongPressAction { 
++        private SleepAction() { 
++            super(R.drawable.ic_restart, R.string.global_action_sleep); 
++        } 
++ 
++        @Override 
++        public boolean onLongPress() { 
++            PowerManager mPowerManager = (PowerManager) 
++                   mContext.getSystemService(Context.POWER_SERVICE); 
++            mPowerManager.goToSleep(SystemClock.uptimeMillis()); 
++            return true; 
++        } 
++ 
++        @Override 
++        public boolean showDuringKeyguard() { 
++            return true; 
++        } 
++ 
++        @Override 
++        public boolean showBeforeProvisioning() { 
++            return true; 
++        } 
++ 
++        @Override 
++        public void onPress() { 
++            PowerManager mPowerManager = (PowerManager) 
++                   mContext.getSystemService(Context.POWER_SERVICE); 
++            mPowerManager.goToSleep(SystemClock.uptimeMillis()); 
++        } 
++    } 
+ 
+     private class EmergencyAffordanceAction extends EmergencyAction {
+         EmergencyAffordanceAction() {
+-- 
+2.17.1
+

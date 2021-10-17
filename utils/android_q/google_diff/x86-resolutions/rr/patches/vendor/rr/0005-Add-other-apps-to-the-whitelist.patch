@@ -1,0 +1,25 @@
+From 46100151d1b20a03c46fd43c3e25afbf204e2d7f Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 28 Aug 2020 09:54:31 -0400
+Subject: [PATCH 5/5] Add other apps to the whitelist
+
+---
+ config/permissions/rr-hiddenapi-package-whitelist.xml | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/config/permissions/rr-hiddenapi-package-whitelist.xml b/config/permissions/rr-hiddenapi-package-whitelist.xml
+index 2c3f0f8f..03274c8f 100644
+--- a/config/permissions/rr-hiddenapi-package-whitelist.xml
++++ b/config/permissions/rr-hiddenapi-package-whitelist.xml
+@@ -24,4 +24,8 @@ platform cert need to be included, as apps signed with the platform cert are exe
+ <config>
+   <hidden-api-whitelisted-app package="com.android.screenshot" />
+   <hidden-api-whitelisted-app package="org.lineageos.jelly" />
++  <hidden-api-whitelisted-app package="com.farmerbb.taskbar" />
++  <hidden-api-whitelisted-app package="com.farmerbb.taskbar.support" />
++  <hidden-api-whitelisted-app package="com.google.android.webview" />
++  <hidden-api-whitelisted-app package="com.xda.nobar" />
+ </config>
+-- 
+2.17.1
+

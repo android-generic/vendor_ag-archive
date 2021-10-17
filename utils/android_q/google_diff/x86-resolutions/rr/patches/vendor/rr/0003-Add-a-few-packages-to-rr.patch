@@ -1,0 +1,25 @@
+From da0c5543d0fb6f745005b6e9d21da33b67f37e32 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 28 Aug 2020 09:51:12 -0400
+Subject: [PATCH 3/5] Add a few packages to rr
+
+---
+ config/rr.mk | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/config/rr.mk b/config/rr.mk
+index 6e2ce00a..8a9522cb 100644
+--- a/config/rr.mk
++++ b/config/rr.mk
+@@ -166,4 +166,7 @@ PRODUCT_PACKAGES += \
+     HideCutout \
+     ImmersiveMode \
+     StatusBarStock \
+-    StatusBarStockSysUI
++    StatusBarStockSysUI \
++    TrebuchetQuickStep \
++    Trebuchet \
++    privapp_whitelist_com.android.launcher3-ext.xml \
+-- 
+2.17.1
+

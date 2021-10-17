@@ -1,0 +1,24 @@
+From eef34f5f5949b04afe762c13a4abf90c42eb2320 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Fri, 4 Oct 2019 20:04:16 -0400
+Subject: [PATCH] Disable path restriction.
+
+---
+ ui/build/path.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/ui/build/path.go b/ui/build/path.go
+index 0e1c02ca..9a087e7e 100644
+--- a/ui/build/path.go
++++ b/ui/build/path.go
+@@ -152,6 +152,6 @@ func SetupPath(ctx Context, config Config) {
+ 	prebuiltsPath, _ := filepath.Abs("prebuilts/build-tools/path/" + runtime.GOOS + "-x86")
+ 	myPath = prebuiltsPath + string(os.PathListSeparator) + myPath
+ 
+-	config.Environment().Set("PATH", myPath)
++	//config.Environment().Set("PATH", myPath)
+ 	config.pathReplaced = true
+ }
+-- 
+2.17.1
+

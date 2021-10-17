@@ -1,0 +1,26 @@
+From 8737d44ffc7dfab30062158101bc07b9e3784957 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Thu, 25 Apr 2019 16:22:02 +0200
+Subject: [PATCH 073/100] drm/i915: skip Gemini Lake GPIO execution
+
+To prevent black screen on E-tab Pro display type "A"
+---
+ drivers/gpu/drm/i915/display/intel_dsi_vbt.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/i915/display/intel_dsi_vbt.c b/drivers/gpu/drm/i915/display/intel_dsi_vbt.c
+index 7401b0b381a2..c258ffb3319e 100644
+--- a/drivers/gpu/drm/i915/display/intel_dsi_vbt.c
++++ b/drivers/gpu/drm/i915/display/intel_dsi_vbt.c
+@@ -386,7 +386,7 @@ static const u8 *mipi_exec_gpio(struct intel_dsi *intel_dsi, const u8 *data)
+ 		vlv_exec_gpio(dev_priv, gpio_source, gpio_number, value);
+ 	else if (IS_CHERRYVIEW(dev_priv))
+ 		chv_exec_gpio(dev_priv, gpio_source, gpio_number, value);
+-	else
++	else if (!IS_GEMINILAKE(dev_priv))
+ 		bxt_exec_gpio(dev_priv, gpio_source, gpio_index, value);
+ 
+ 	return data;
+-- 
+2.17.1
+

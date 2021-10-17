@@ -1,0 +1,27 @@
+From daede18902a5c7605dbe84394779a14b3e60907a Mon Sep 17 00:00:00 2001
+From: Chen Yu Y <yu.y.chen@intel.com>
+Date: Tue, 4 Dec 2018 14:43:49 +0800
+Subject: [PATCH 1/4] fix audio crash issue
+
+Change-Id: Ie4d73b19e12f0a6522665c80b1da4263d5439de3
+Tracked-On:
+Signed-off-by: Chen Yu Y <yu.y.chen@intel.com>
+---
+ .../default/service/android.hardware.audio@2.0-service.rc       | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/audio/common/all-versions/default/service/android.hardware.audio@2.0-service.rc b/audio/common/all-versions/default/service/android.hardware.audio@2.0-service.rc
+index 6e91bccb3..eff54abd2 100644
+--- a/audio/common/all-versions/default/service/android.hardware.audio@2.0-service.rc
++++ b/audio/common/all-versions/default/service/android.hardware.audio@2.0-service.rc
+@@ -3,7 +3,7 @@ service vendor.audio-hal-2-0 /vendor/bin/hw/android.hardware.audio@2.0-service
+     user audioserver
+     # media gid needed for /dev/fm (radio) and for /data/misc/media (tee)
+     group audio camera drmrpc inet media mediadrm net_bt net_bt_admin net_bw_acct wakelock
+-    capabilities BLOCK_SUSPEND
++    capabilities SYS_NICE BLOCK_SUSPEND
+     ioprio rt 4
+     writepid /dev/cpuset/foreground/tasks /dev/stune/foreground/tasks
+     # audioflinger restarts itself when it loses connection with the hal
+--
+2.21.0

@@ -1,0 +1,26 @@
+From 8a9016d2e972e8b1816109b2efb7c52dd41d818d Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Sun, 13 Oct 2019 12:55:12 -0400
+Subject: [PATCH 09/11] DO NOT MERGE: Restore ext4 install
+
+removing previous change that sets mkfs to use the ext3 instead of ext4 on install
+---
+ install/scripts/1-install | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/install/scripts/1-install b/install/scripts/1-install
+index daffb711..e0cb1b98 100644
+--- a/install/scripts/1-install
++++ b/install/scripts/1-install
+@@ -213,7 +213,7 @@ format_fs()
+ 	choose "Choose filesystem" "Please select a filesystem to format $1:"
+ 	case "$choice" in
+ 		ext4)
+-			cmd="mkfs.ext3 -L"
++			cmd="mkfs.ext4 -L"
+ 			;;
+ 		ntfs)
+ 			cmd="mkntfs -fL"
+-- 
+2.17.1
+

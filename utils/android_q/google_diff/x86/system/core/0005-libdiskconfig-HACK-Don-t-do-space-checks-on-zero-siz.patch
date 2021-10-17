@@ -1,0 +1,36 @@
+From 1db24d39c729c8a232dd2c1f83f437bf439c933d Mon Sep 17 00:00:00 2001
+From: Andrew Boie <andrew.p.boie@intel.com>
+Date: Tue, 10 Jul 2012 20:43:29 -0700
+Subject: [PATCH 05/21] libdiskconfig: HACK Don't do space checks on zero-size
+ images
+
+If an image file is of zero size, assume we just want to expand it
+to fit the available images.
+
+Change-Id: If8f22eb12d3a5179960d4359307bb177e3323e8a
+Signed-off-by: Andrew Boie <andrew.p.boie@intel.com>
+---
+ libdiskconfig/config_mbr.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libdiskconfig/config_mbr.c b/libdiskconfig/config_mbr.c
+index ace9bbfb1..a0fe1c343 100644
+--- a/libdiskconfig/config_mbr.c
++++ b/libdiskconfig/config_mbr.c
+@@ -259,11 +259,11 @@ config_mbr(struct disk_info *dinfo)
+         }
+ 
+         /* if extended, need 1 lba for ebr */
+-        if ((cur_lba + extended) >= dinfo->num_lba)
++        if (dinfo->num_lba && (cur_lba + extended) >= dinfo->num_lba)
+             goto nospace;
+         else if (pinfo->len_kb != (uint32_t)-1) {
+             uint32_t sz_lba = (pinfo->len_kb / dinfo->sect_size) * 1024;
+-            if ((cur_lba + sz_lba + extended) > dinfo->num_lba)
++            if (dinfo->num_lba && (cur_lba + sz_lba + extended) > dinfo->num_lba)
+                 goto nospace;
+         }
+ 
+-- 
+2.21.0
+

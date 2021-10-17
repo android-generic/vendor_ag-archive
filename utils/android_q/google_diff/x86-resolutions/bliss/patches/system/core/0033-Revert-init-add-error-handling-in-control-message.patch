@@ -1,0 +1,86 @@
+From ecba6e2136d626139e87e4e1a0e7e1728abc7208 Mon Sep 17 00:00:00 2001
+From: Francescodario Cuzzocrea <bosconovic@gmail.com>
+Date: Sat, 11 Apr 2020 09:44:40 +0200
+Subject: [PATCH 2/5] Revert "init: add error handling in control message"
+
+This reverts commit 3a4413e22f5f97cc31f86122bc3c5ec0650d4f36.
+---
+ init/init.cpp             | 10 ++++------
+ init/init.h               |  2 +-
+ init/property_service.cpp |  5 ++---
+ 3 files changed, 7 insertions(+), 10 deletions(-)
+
+diff --git a/init/init.cpp b/init/init.cpp
+index 54939ffaa6..4ffcb629fa 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -277,13 +277,13 @@ static const std::map<std::string, ControlMessageFunction>& get_control_message_
+     return control_message_functions;
+ }
+ 
+-bool HandleControlMessage(const std::string& msg, const std::string& name, pid_t pid) {
++void HandleControlMessage(const std::string& msg, const std::string& name, pid_t pid) {
+     const auto& map = get_control_message_map();
+     const auto it = map.find(msg);
+ 
+     if (it == map.end()) {
+         LOG(ERROR) << "Unknown control msg '" << msg << "'";
+-        return false;
++        return;
+     }
+ 
+     std::string cmdline_path = StringPrintf("proc/%d/cmdline", pid);
+@@ -312,19 +312,17 @@ bool HandleControlMessage(const std::string& msg, const std::string& name, pid_t
+         default:
+             LOG(ERROR) << "Invalid function target from static map key '" << msg << "': "
+                        << static_cast<std::underlying_type<ControlTarget>::type>(function.target);
+-            return false;
++            return;
+     }
+ 
+     if (svc == nullptr) {
+         LOG(ERROR) << "Could not find '" << name << "' for ctl." << msg;
+-        return false;
++        return;
+     }
+ 
+     if (auto result = function.action(svc); !result) {
+         LOG(ERROR) << "Could not ctl." << msg << " for '" << name << "': " << result.error();
+-        return false;
+     }
+-    return true;
+ }
+ 
+ static Result<Success> wait_for_coldboot_done_action(const BuiltinArguments& args) {
+diff --git a/init/init.h b/init/init.h
+index 90ead0edb3..a76da20143 100644
+--- a/init/init.h
++++ b/init/init.h
+@@ -40,7 +40,7 @@ extern std::vector<std::string> late_import_paths;
+ Parser CreateParser(ActionManager& action_manager, ServiceList& service_list);
+ Parser CreateServiceOnlyParser(ServiceList& service_list);
+ 
+-bool HandleControlMessage(const std::string& msg, const std::string& arg, pid_t pid);
++void HandleControlMessage(const std::string& msg, const std::string& arg, pid_t pid);
+ 
+ void property_changed(const std::string& name, const std::string& value);
+ 
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index fb7da6c7e4..98ef5227ac 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -476,9 +476,8 @@ uint32_t HandlePropertySet(const std::string& name, const std::string& value,
+     }
+ 
+     if (StartsWith(name, "ctl.")) {
+-        return HandleControlMessage(name.c_str() + 4, value, cr.pid)
+-                       ? PROP_SUCCESS
+-                       : PROP_ERROR_HANDLE_CONTROL_MESSAGE;
++        HandleControlMessage(name.c_str() + 4, value, cr.pid);
++        return PROP_SUCCESS;
+     }
+ 
+     // sys.powerctl is a special property that is used to make the device reboot.  We want to log
+-- 
+2.17.1
+

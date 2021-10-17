@@ -1,0 +1,29 @@
+From a6cecd75ae02ce2285b6c37ee5ef751395c1e190 Mon Sep 17 00:00:00 2001
+From: Ronny Buchmann <60157654+ronnybuchmann@users.noreply.github.com>
+Date: Sun, 28 Mar 2021 01:10:30 +0100
+Subject: [PATCH 21/36] init.sh: model and manufacturer from board (fallback)
+
+when product_name and/or sys_vendor are empty
+---
+ init.sh | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/init.sh b/init.sh
+index c4c73c3..1ae140a 100644
+--- a/init.sh
++++ b/init.sh
+@@ -25,8 +25,9 @@ function rmmod_if_exist()
+ function init_misc()
+ {
+ 	# device information
+-	setprop ro.product.manufacturer "$(cat $DMIPATH/sys_vendor)"
+-	setprop ro.product.model "$PRODUCT"
++	VENDOR=$(cat $DMIPATH/sys_vendor)
++	[ -z "$VENDOR" ] ? setprop ro.product.manufacturer $(cat $DMIPATH/board_vendor) : setprop ro.product.manufacturer "$VENDOR"
++	[ -z "$PRODUCT" ] ? setprop ro.product.model "$BOARD" : setprop ro.product.model "$PRODUCT"
+ 
+ 	# a hack for USB modem
+ 	lsusb | grep 1a8d:1000 && eject
+-- 
+2.17.1
+

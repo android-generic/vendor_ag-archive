@@ -1,0 +1,39 @@
+From 35daf0585c633349fbc94ccb65d77a5cf98c81fe Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Wed, 13 Dec 2017 14:57:06 +0800
+Subject: [PATCH 18/21] ueventd: fix the buggy logging
+
+LOG(xxx) is totally broken. Use KLOG_xxx to actually show the log.
+---
+ init/ueventd.cpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/init/ueventd.cpp b/init/ueventd.cpp
+index 399ea4c5c..477f367c5 100644
+--- a/init/ueventd.cpp
++++ b/init/ueventd.cpp
+@@ -31,6 +31,9 @@
+ #include <android-base/logging.h>
+ #include <android-base/properties.h>
+ #include <fstab/fstab.h>
++#if defined(__ANDROID__)
++#include <cutils/klog.h>
++#endif
+ #include <selinux/android.h>
+ #include <selinux/selinux.h>
+ 
+@@ -214,7 +217,11 @@ void ColdBoot::Run() {
+     WaitForSubProcesses();
+ 
+     close(open(COLDBOOT_DONE, O_WRONLY | O_CREAT | O_CLOEXEC, 0000));
++#if defined(__ANDROID__)
++    KLOG_INFO("Coldboot", "took %f seconds", cold_boot_timer.duration().count() / 1000.0f);
++#else
+     LOG(INFO) << "Coldboot took " << cold_boot_timer.duration().count() / 1000.0f << " seconds";
++#endif
+ }
+ 
+ int ueventd_main(int argc, char** argv) {
+-- 
+2.21.0
+

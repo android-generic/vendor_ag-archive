@@ -1,0 +1,44 @@
+From ef50450cf3eb26f62ac009dac7dc082966e9854d Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 30 Apr 2021 22:13:04 -0400
+Subject: [PATCH 27/36] Make libndk_translation on by default
+
+Change-Id: I056ce602674a1cc1409fe775fa447c5988a1029e
+---
+ nativebridge/nativebridge.mk | 11 -----------
+ 1 file changed, 11 deletions(-)
+
+diff --git a/nativebridge/nativebridge.mk b/nativebridge/nativebridge.mk
+index 6f8b040..bb50356 100644
+--- a/nativebridge/nativebridge.mk
++++ b/nativebridge/nativebridge.mk
+@@ -28,26 +28,15 @@ PRODUCT_PROPERTY_OVERRIDES := \
+     ro.dalvik.vm.isa.arm=x86 \
+     ro.enable.native.bridge.exec=1 \
+ 
+-ifeq ($(TARGET_SUPPORTS_64_BIT_APPS),true)
+ PRODUCT_PROPERTY_OVERRIDES += \
+     ro.dalvik.vm.isa.arm64=x86_64 \
+     ro.enable.native.bridge.exec64=1
+-endif
+-
+-ifneq ($(NDK_TRANSLATION_PREINSTALL),google)
+-PRODUCT_PROPERTY_OVERRIDES := ro.dalvik.vm.native.bridge=libnb.so
+ 
+-PRODUCT_DEFAULT_PROPERTY_OVERRIDES := \
+-    ro.dalvik.vm.native.bridge=libnb.so
+-
+-PRODUCT_PACKAGES := libnb
+-else
+ PRODUCT_PROPERTY_OVERRIDES := ro.dalvik.vm.native.bridge=libndk_translation.so
+ 
+ PRODUCT_DEFAULT_PROPERTY_OVERRIDES := \
+     ro.dalvik.vm.native.bridge=libndk_translation.so
+     
+ PRODUCT_PROPERTY_OVERRIDES += persist.sys.nativebridge=1
+-endif
+ 
+ $(call inherit-product-if-exists,vendor/google/ndk_translation/ndk_translation.mk)
+-- 
+2.17.1
+

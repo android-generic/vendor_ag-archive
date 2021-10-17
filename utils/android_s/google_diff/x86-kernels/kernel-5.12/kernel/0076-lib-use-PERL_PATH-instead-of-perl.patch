@@ -1,0 +1,26 @@
+From ad6ab788a846b4822195fa245936ee84eb021040 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 27 Sep 2019 22:08:12 +0800
+Subject: [PATCH 076/100] lib: use $(PERL_PATH) instead of perl
+
+To avoid Android build system complaining.
+---
+ lib/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/Makefile b/lib/Makefile
+index b5307d3eec1a..3155378229b8 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -316,7 +316,7 @@ $(obj)/oid_registry_data.c: $(srctree)/include/linux/oid_registry.h \
+ 	$(call cmd,build_OID_registry)
+ 
+ quiet_cmd_build_OID_registry = GEN     $@
+-      cmd_build_OID_registry = perl $(srctree)/$(src)/build_OID_registry $< $@
++      cmd_build_OID_registry = $(PERL_PATH) $(srctree)/$(src)/build_OID_registry $< $@
+ 
+ clean-files	+= oid_registry_data.c
+ 
+-- 
+2.17.1
+

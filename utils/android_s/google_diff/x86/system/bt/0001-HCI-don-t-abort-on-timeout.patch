@@ -1,0 +1,29 @@
+From b2f33ced2b1fe9211629371d2546320455c0e7ee Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Wed, 6 Dec 2017 17:57:21 +0800
+Subject: [PATCH 1/6] HCI: don't abort on timeout
+
+Timeout is normal. Especially when the device is suspending.
+Don't abort it stupidly.
+---
+ hci/src/hci_layer.cc | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/hci/src/hci_layer.cc b/hci/src/hci_layer.cc
+index aad341b1d..574423b76 100644
+--- a/hci/src/hci_layer.cc
++++ b/hci/src/hci_layer.cc
+@@ -468,10 +468,6 @@ static void fragmenter_transmit_finished(BT_HDR* packet,
+ static void hci_timeout_abort(void) {
+   LOG_ERROR("%s restarting the Bluetooth process.", __func__);
+   hci_close_firmware_log_file(hci_firmware_log_fd);
+-
+-  // We shouldn't try to recover the stack from this command timeout.
+-  // If it's caused by a software bug, fix it. If it's a hardware bug, fix it.
+-  abort();
+ }
+ 
+ static void hci_root_inflamed_abort() {
+-- 
+2.30.2
+

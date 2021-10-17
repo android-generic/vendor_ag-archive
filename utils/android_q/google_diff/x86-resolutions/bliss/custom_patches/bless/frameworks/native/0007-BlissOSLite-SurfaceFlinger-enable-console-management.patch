@@ -1,0 +1,473 @@
+From 7660e3b5bb80dd11021ff30137ecef8dbb779fe9 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sun, 26 Oct 2014 15:38:15 +0800
+Subject: [PATCH 07/16] SurfaceFlinger: enable console management
+
+The console management was removed since ICS. But it's useful for debugging.
+Re-implement it based on the original class ConsoleManagerThread of class
+DisplayHardwareBase.
+---
+ services/inputflinger/Android.bp           |   2 +
+ services/inputflinger/EventHub.cpp         |  16 ++
+ services/surfaceflinger/Android.bp         |   7 +
+ services/surfaceflinger/DisplayDevice.cpp  | 263 +++++++++++++++++++++
+ services/surfaceflinger/DisplayDevice.h    |   5 +
+ services/surfaceflinger/SurfaceFlinger.cpp |  14 ++
+ services/surfaceflinger/SurfaceFlinger.h   |   3 +
+ 7 files changed, 310 insertions(+)
+
+diff --git a/services/inputflinger/Android.bp b/services/inputflinger/Android.bp
+index 8dd4d1df6..99216682e 100644
+--- a/services/inputflinger/Android.bp
++++ b/services/inputflinger/Android.bp
+@@ -51,6 +51,8 @@ cc_library_shared {
+     ],
+ 
+     cflags: [
++        "-DCONSOLE_MANAGER",
++        "-DANDROID_VT=7",
+         // TODO(b/23084678): Move inputflinger to its own process and mark it hidden
+         //-fvisibility=hidden
+     ],
+diff --git a/services/inputflinger/EventHub.cpp b/services/inputflinger/EventHub.cpp
+index bb40e9bab..c0148bd5f 100644
+--- a/services/inputflinger/EventHub.cpp
++++ b/services/inputflinger/EventHub.cpp
+@@ -51,6 +51,8 @@
+ #include <input/KeyCharacterMap.h>
+ #include <input/VirtualKeyMap.h>
+ 
++#include <linux/vt.h>
++
+ /* this macro is used to tell if "bit" is set in "array"
+  * it selects a byte from the array, and does a boolean AND
+  * operation with a byte that only has the relevant bit set.
+@@ -885,6 +887,14 @@ size_t EventHub::getEvents(int timeoutMillis, RawEvent* buffer, size_t bufferSiz
+             }
+         }
+ 
++#ifdef CONSOLE_MANAGER
++        struct vt_stat vs;
++        int fd_vt = open("/dev/tty0", O_RDWR | O_SYNC);
++        if (fd_vt >= 0) {
++            ioctl(fd_vt, VT_GETSTATE, &vs);
++            close(fd_vt);
++        }
++#endif
+         // Grab the next input event.
+         bool deviceChanged = false;
+         while (mPendingEventIndex < mPendingEventCount) {
+@@ -959,6 +969,12 @@ size_t EventHub::getEvents(int timeoutMillis, RawEvent* buffer, size_t bufferSiz
+                 } else if ((readSize % sizeof(struct input_event)) != 0) {
+                     ALOGE("could not get event (wrong size: %d)", readSize);
+                 } else {
++#ifdef CONSOLE_MANAGER
++                    if (vs.v_active != ANDROID_VT) {
++                        ALOGV("Skip a non Android VT event");
++                        continue;
++                    }
++#endif
+                     int32_t deviceId = device->id == mBuiltInKeyboardId ? 0 : device->id;
+ 
+                     size_t count = size_t(readSize) / sizeof(struct input_event);
+diff --git a/services/surfaceflinger/Android.bp b/services/surfaceflinger/Android.bp
+index 4cd0a1386..033f55a4e 100644
+--- a/services/surfaceflinger/Android.bp
++++ b/services/surfaceflinger/Android.bp
+@@ -166,6 +166,10 @@ cc_library_shared {
+     // built, so the same settings can be used elsewhere.
+     name: "libsurfaceflinger",
+     defaults: ["libsurfaceflinger_production_defaults"],
++    cflags: [
++        "-DCONSOLE_MANAGER",
++        "-DANDROID_VT=7",
++    ],
+     srcs: [
+         ":libsurfaceflinger_sources",
+ 
+@@ -174,6 +178,9 @@ cc_library_shared {
+         "SurfaceFlingerFactory.cpp",
+     ],
+     logtags: ["EventLog/EventLogTags.logtags"],
++    include_dirs: [
++        "external/drm_gralloc",
++    ],
+ }
+ 
+ cc_defaults {
+diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
+index 4a13bfb7a..03af68221 100644
+--- a/services/surfaceflinger/DisplayDevice.cpp
++++ b/services/surfaceflinger/DisplayDevice.cpp
+@@ -33,14 +33,257 @@
+ #include <system/window.h>
+ #include <ui/GraphicTypes.h>
+ 
++#include <fcntl.h>
++#include <termios.h>
++#include <linux/kd.h>
++#include <linux/vt.h>
++
+ #include "DisplayDevice.h"
+ #include "Layer.h"
+ #include "SurfaceFlinger.h"
++#include "gralloc_drm.h"
+ 
+ namespace android {
+ 
+ using android::base::StringAppendF;
+ 
++#ifdef CONSOLE_MANAGER
++class ConsoleManagerThread : public Thread {
++public:
++            ConsoleManagerThread(const sp<SurfaceFlinger>&, const wp<IBinder>&);
++    virtual ~ConsoleManagerThread();
++
++    status_t releaseScreen() const;
++
++private:
++    sp<SurfaceFlinger> mFlinger;
++    wp<IBinder> mDisplayToken;
++    int consoleFd;
++    long prev_vt_num;
++    vt_mode vm;
++    virtual void onFirstRef();
++    virtual status_t readyToRun();
++    virtual void requestExit();
++    virtual bool threadLoop();
++    static void sigHandler(int sig);
++    static pid_t sSignalCatcherPid;
++};
++
++ConsoleManagerThread::ConsoleManagerThread(const sp<SurfaceFlinger>& flinger, const wp<IBinder>& token)
++    : Thread(false), mFlinger(flinger), mDisplayToken(token), consoleFd(-1)
++{
++    sSignalCatcherPid = 0;
++
++    // create a new console
++    char const * const ttydev = "/dev/tty0";
++    int fd = open(ttydev, O_RDWR | O_SYNC);
++    if (fd < 0) {
++        ALOGE("Can't open %s, errno=%d (%s)", ttydev, errno, strerror(errno));
++        consoleFd = -errno;
++        return;
++    }
++    ALOGD("Open /dev/tty0 OK");
++
++    // to make sure that we are in text mode
++    int res = ioctl(fd, KDSETMODE, (void*) KD_TEXT);
++    if (res < 0) {
++        ALOGE("ioctl(%d, KDSETMODE, ...) failed, res %d (%s)",
++                fd, res, strerror(errno));
++    }
++
++    // get the current console
++    struct vt_stat vs;
++    res = ioctl(fd, VT_GETSTATE, &vs);
++    if (res < 0) {
++        ALOGE("ioctl(%d, VT_GETSTATE, ...) failed, res %d (%s)",
++                fd, res, strerror(errno));
++        consoleFd = -errno;
++        return;
++    }
++
++    // switch to console 7 (which is what X normaly uses)
++    do {
++        res = ioctl(fd, VT_ACTIVATE, ANDROID_VT);
++    } while(res < 0 && errno == EINTR);
++    if (res < 0) {
++        ALOGE("ioctl(%d, VT_ACTIVATE, ...) failed, %d (%s) for vt %d",
++                fd, errno, strerror(errno), ANDROID_VT);
++        consoleFd = -errno;
++        return;
++    }
++
++    do {
++        res = ioctl(fd, VT_WAITACTIVE, ANDROID_VT);
++    } while (res < 0 && errno == EINTR);
++    if (res < 0) {
++        ALOGE("ioctl(%d, VT_WAITACTIVE, ...) failed, %d %d %s for vt %d",
++                fd, res, errno, strerror(errno), ANDROID_VT);
++        consoleFd = -errno;
++        return;
++    }
++
++    // open the new console
++    close(fd);
++    fd = open(ttydev, O_RDWR | O_SYNC);
++    if (fd < 0) {
++        ALOGE("Can't open new console %s", ttydev);
++        consoleFd = -errno;
++        return;
++    }
++
++    /* disable console line buffer, echo, ... */
++    struct termios ttyarg;
++    ioctl(fd, TCGETS , &ttyarg);
++    ttyarg.c_iflag = 0;
++    ttyarg.c_lflag = 0;
++    ioctl(fd, TCSETS , &ttyarg);
++
++    // set up signals so we're notified when the console changes
++    // we can't use SIGUSR1 because it's used by the java-vm
++    vm.mode = VT_PROCESS;
++    vm.waitv = 0;
++    vm.relsig = SIGUSR2;
++    vm.acqsig = SIGUNUSED;
++    vm.frsig = 0;
++
++    struct sigaction act;
++    sigemptyset(&act.sa_mask);
++    act.sa_handler = sigHandler;
++    act.sa_flags = 0;
++    sigaction(vm.relsig, &act, NULL);
++
++    sigemptyset(&act.sa_mask);
++    act.sa_handler = sigHandler;
++    act.sa_flags = 0;
++    sigaction(vm.acqsig, &act, NULL);
++
++    sigset_t mask;
++    sigemptyset(&mask);
++    sigaddset(&mask, vm.relsig);
++    sigaddset(&mask, vm.acqsig);
++    sigprocmask(SIG_BLOCK, &mask, NULL);
++
++    // switch to graphic mode
++    res = ioctl(fd, KDSETMODE, (void*)KD_GRAPHICS);
++    ALOGW_IF(res < 0,
++            "ioctl(%d, KDSETMODE, KD_GRAPHICS) failed, res %d", fd, res);
++
++    prev_vt_num = vs.v_active;
++    consoleFd = fd;
++}
++
++ConsoleManagerThread::~ConsoleManagerThread()
++{
++    if (consoleFd >= 0) {
++        int fd = consoleFd;
++        int res;
++        ioctl(fd, KDSETMODE, (void*)KD_TEXT);
++        do {
++            res = ioctl(fd, VT_ACTIVATE, prev_vt_num);
++        } while(res < 0 && errno == EINTR);
++        do {
++            res = ioctl(fd, VT_WAITACTIVE, prev_vt_num);
++        } while(res < 0 && errno == EINTR);
++        close(fd);
++        char const * const ttydev = "/dev/tty0";
++        fd = open(ttydev, O_RDWR | O_SYNC);
++        ioctl(fd, VT_DISALLOCATE, 0);
++        close(fd);
++    }
++}
++
++status_t ConsoleManagerThread::releaseScreen() const
++{
++    int err = ioctl(consoleFd, VT_RELDISP, (void*)1);
++    ALOGE_IF(err < 0, "ioctl(%d, VT_RELDISP, 1) failed %d (%s)",
++        consoleFd, errno, strerror(errno));
++    return (err < 0) ? (-errno) : status_t(NO_ERROR);
++}
++
++void ConsoleManagerThread::onFirstRef()
++{
++    run("ConsoleManagerThread", PRIORITY_URGENT_DISPLAY);
++}
++
++status_t ConsoleManagerThread::readyToRun()
++{
++    if (consoleFd >= 0) {
++        sSignalCatcherPid = gettid();
++
++        sigset_t mask;
++        sigemptyset(&mask);
++        sigaddset(&mask, vm.relsig);
++        sigaddset(&mask, vm.acqsig);
++        sigprocmask(SIG_BLOCK, &mask, NULL);
++
++        int res = ioctl(consoleFd, VT_SETMODE, &vm);
++        if (res < 0) {
++            ALOGE("ioctl(%d, VT_SETMODE, ...) failed, %d (%s)",
++                    consoleFd, errno, strerror(errno));
++        }
++        return NO_ERROR;
++    }
++    return consoleFd;
++}
++
++void ConsoleManagerThread::requestExit()
++{
++    Thread::requestExit();
++    if (sSignalCatcherPid != 0) {
++        // wake the thread up
++        kill(sSignalCatcherPid, SIGINT);
++        // wait for it...
++    }
++}
++
++bool ConsoleManagerThread::threadLoop()
++{
++    sigset_t mask;
++    sigemptyset(&mask);
++    sigaddset(&mask, vm.relsig);
++    sigaddset(&mask, vm.acqsig);
++
++    int sig = 0;
++    sigwait(&mask, &sig);
++
++    hw_module_t const* mod;
++    gralloc_module_t const* gr = NULL;
++    status_t err = hw_get_module(GRALLOC_HARDWARE_MODULE_ID, &mod);
++    if (!err) {
++        gr = reinterpret_cast<gralloc_module_t const*>(mod);
++        if (!gr->perform)
++            gr = NULL;
++    }
++
++    if (sig == vm.relsig) {
++        if (gr)
++            gr->perform(gr, GRALLOC_MODULE_PERFORM_LEAVE_VT);
++        mFlinger->screenReleased(mDisplayToken.promote());
++    } else if (sig == vm.acqsig) {
++        mFlinger->screenAcquired(mDisplayToken.promote());
++        if (gr)
++            gr->perform(gr, GRALLOC_MODULE_PERFORM_ENTER_VT);
++    }
++
++    return true;
++}
++
++void ConsoleManagerThread::sigHandler(int sig)
++{
++    // resend the signal to our signal catcher thread
++    ALOGW("received signal %d in thread %d, resending to %d",
++            sig, gettid(), sSignalCatcherPid);
++
++    // we absolutely need the delays below because without them
++    // our main thread never gets a chance to handle the signal.
++    usleep(10000);
++    kill(sSignalCatcherPid, sig);
++    usleep(10000);
++}
++
++pid_t ConsoleManagerThread::sSignalCatcherPid;
++#endif
++
+ /*
+  * Initialize the display to the specified values.
+  *
+@@ -62,6 +305,9 @@ DisplayDevice::DisplayDevice(DisplayDeviceCreationArgs&& args)
+                 compositionengine::DisplayCreationArgs{args.isSecure, args.isVirtual,
+                                                        args.displayId})},
+         mIsVirtual(args.isVirtual),
++#ifdef CONSOLE_MANAGER
++        mConsoleManagerThread(0),
++#endif
+         mOrientation(),
+         mActiveConfig(0),
+         mIsPrimary(args.isPrimary) {
+@@ -90,7 +336,16 @@ DisplayDevice::DisplayDevice(DisplayDeviceCreationArgs&& args)
+     setProjection(DisplayState::eOrientationDefault, Rect::INVALID_RECT, Rect::INVALID_RECT);
+ }
+ 
++#ifdef CONSOLE_MANAGER
++DisplayDevice::~DisplayDevice() {
++    if (mConsoleManagerThread != 0) {
++        mConsoleManagerThread->requestExitAndWait();
++        ALOGD("ConsoleManagerThread: destroy primary DisplayDevice");
++    }
++}
++#else
+ DisplayDevice::~DisplayDevice() = default;
++#endif
+ 
+ void DisplayDevice::disconnect() {
+     mCompositionDisplay->disconnect();
+@@ -138,6 +393,11 @@ const Vector< sp<Layer> >& DisplayDevice::getLayersNeedingFences() const {
+ void DisplayDevice::setPowerMode(int mode) {
+     mPowerMode = mode;
+     getCompositionDisplay()->setCompositionEnabled(mPowerMode != HWC_POWER_MODE_OFF);
++#ifdef CONSOLE_MANAGER
++    if (mode != HWC_POWER_MODE_NORMAL && mConsoleManagerThread != 0) {
++        mConsoleManagerThread->releaseScreen();
++    }
++#endif
+ }
+ 
+ int DisplayDevice::getPowerMode()  const {
+@@ -274,6 +534,9 @@ void DisplayDevice::setProjection(int orientation,
+ 
+     if (isPrimary()) {
+         sPrimaryDisplayOrientation = displayStateOrientationToTransformOrientation(orientation);
++#ifdef CONSOLE_MANAGER
++        mConsoleManagerThread = new ConsoleManagerThread(mFlinger, mDisplayToken);
++#endif
+     }
+ 
+     getCompositionDisplay()->setProjection(globalTransform,
+diff --git a/services/surfaceflinger/DisplayDevice.h b/services/surfaceflinger/DisplayDevice.h
+index 0067b505e..23269cf68 100644
+--- a/services/surfaceflinger/DisplayDevice.h
++++ b/services/surfaceflinger/DisplayDevice.h
+@@ -49,6 +49,7 @@ class HWComposer;
+ class IGraphicBufferProducer;
+ class Layer;
+ class SurfaceFlinger;
++class ConsoleManagerThread;
+ 
+ struct CompositionInfo;
+ struct DisplayDeviceCreationArgs;
+@@ -185,6 +186,10 @@ private:
+     // list of layers needing fences
+     Vector< sp<Layer> > mLayersNeedingFences;
+ 
++#ifdef CONSOLE_MANAGER
++    sp<ConsoleManagerThread> mConsoleManagerThread;
++#endif
++
+     /*
+      * Transaction state
+      */
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 6166789fc..4e8abd0db 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -1389,6 +1389,20 @@ void SurfaceFlinger::waitForEvent() {
+     mEventQueue->waitMessage();
+ }
+ 
++#ifdef CONSOLE_MANAGER
++void SurfaceFlinger::screenReleased(const sp<IBinder>& display) {
++    // this may be called by a signal handler, we can't do too much in here
++    setPowerMode(display, HWC_POWER_MODE_OFF);
++    signalLayerUpdate();
++}
++
++void SurfaceFlinger::screenAcquired(const sp<IBinder>& display) {
++    // this may be called by a signal handler, we can't do too much in here
++    setPowerMode(display, HWC_POWER_MODE_NORMAL);
++    signalLayerUpdate();
++}
++#endif
++
+ void SurfaceFlinger::signalTransaction() {
+     mScheduler->resetIdleTimer();
+     mEventQueue->invalidate();
+diff --git a/services/surfaceflinger/SurfaceFlinger.h b/services/surfaceflinger/SurfaceFlinger.h
+index 52655944d..8ea1e02e0 100644
+--- a/services/surfaceflinger/SurfaceFlinger.h
++++ b/services/surfaceflinger/SurfaceFlinger.h
+@@ -319,6 +319,9 @@ public:
+ 
+     sp<Layer> fromHandle(const sp<IBinder>& handle) REQUIRES(mStateLock);
+ 
++    void screenReleased(const sp<IBinder>& display);
++    void screenAcquired(const sp<IBinder>& display);
++
+ private:
+     friend class BufferLayer;
+     friend class BufferQueueLayer;
+-- 
+2.21.0
+

@@ -1,0 +1,90 @@
+From caca471f985baaa0393a52abe88ce11e8a90a4fe Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 13 May 2021 14:08:06 -0400
+Subject: [PATCH 09/13] Revert "fingerprint: notify client when cancelling
+ succeeded"
+
+This reverts commit 0202d1e8b1d4e0edf1195092726178200012bff4.
+Change-Id: Ia27ee2392cc0f177cbb558536322e5c15d342a77
+---
+ core/res/res/values/bliss_config.xml              |  2 --
+ core/res/res/values/bliss_symbols.xml             |  2 --
+ .../server/biometrics/BiometricServiceBase.java   | 15 ++-------------
+ 3 files changed, 2 insertions(+), 17 deletions(-)
+
+diff --git a/core/res/res/values/bliss_config.xml b/core/res/res/values/bliss_config.xml
+index a4f54b548fb..71e6f85a096 100644
+--- a/core/res/res/values/bliss_config.xml
++++ b/core/res/res/values/bliss_config.xml
+@@ -54,8 +54,6 @@
+     <!-- Whether to show a custom view for FOD -->
+     <bool name="config_needCustomFODView">false</bool>
+ 
+-    <!-- Whether notify fingerprint client of successful cancelled authentication -->
+-    <bool name="config_notifyClientOnFingerprintCancelSuccess">false</bool>
+     <string-array translatable="false" name="custom_config_globalActionsList">
+         <item>emergency</item>
+         <item>lockdown</item>
+diff --git a/core/res/res/values/bliss_symbols.xml b/core/res/res/values/bliss_symbols.xml
+index 5eee9cacb41..33f65461cce 100644
+--- a/core/res/res/values/bliss_symbols.xml
++++ b/core/res/res/values/bliss_symbols.xml
+@@ -52,8 +52,6 @@
+     <!-- Whether to show a custom view for FOD -->
+     <java-symbol type="bool" name="config_needCustomFODView" />
+ 
+-    <!-- Whether notify fingerprint client of successful cancelled authentication -->
+-    <java-symbol type="bool" name="config_notifyClientOnFingerprintCancelSuccess" />
+     <!-- Power Menu -->
+   <java-symbol type="string" name="reboot_to_recovery_title" />
+   <java-symbol type="string" name="reboot_to_recovery_message" />
+diff --git a/services/core/java/com/android/server/biometrics/BiometricServiceBase.java b/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
+index fa12ba49427..9be8b9d24a9 100644
+--- a/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
++++ b/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
+@@ -92,7 +92,6 @@ public abstract class BiometricServiceBase extends SystemService
+     private final BiometricTaskStackListener mTaskStackListener = new BiometricTaskStackListener();
+     private final ResetClientStateRunnable mResetClientState = new ResetClientStateRunnable();
+     private final ArrayList<LockoutResetMonitor> mLockoutMonitors = new ArrayList<>();
+-    private final boolean mNotifyClient;
+ 
+     protected final IStatusBarService mStatusBarService;
+     protected final Map<Integer, Long> mAuthenticatorIds =
+@@ -663,8 +662,6 @@ public abstract class BiometricServiceBase extends SystemService
+         mPowerManager = mContext.getSystemService(PowerManager.class);
+         mUserManager = UserManager.get(mContext);
+         mMetricsLogger = new MetricsLogger();
+-        mNotifyClient = mContext.getResources().getBoolean(
+-                com.android.internal.R.bool.config_notifyClientOnFingerprintCancelSuccess);
+     }
+ 
+     @Override
+@@ -861,11 +858,7 @@ public abstract class BiometricServiceBase extends SystemService
+             ClientMonitor client = mCurrentClient;
+             if (client instanceof EnrollClient && client.getToken() == token) {
+                 if (DEBUG) Slog.v(getTag(), "Cancelling enrollment");
+-                final int stopResult = client.stop(client.getToken() == token);
+-                if (mNotifyClient && (stopResult == 0)) {
+-                    handleError(mHalDeviceId,
+-                            BiometricConstants.BIOMETRIC_ERROR_CANCELED, 0);
+-                }
++                client.stop(client.getToken() == token);
+             }
+         });
+     }
+@@ -936,11 +929,7 @@ public abstract class BiometricServiceBase extends SystemService
+                             + ", fromClient: " + fromClient);
+                     // If cancel was from BiometricService, it means the dialog was dismissed
+                     // and authentication should be canceled.
+-                    final int stopResult = client.stop(client.getToken() == token);
+-                    if (mNotifyClient && (stopResult == 0)) {
+-                        handleError(mHalDeviceId,
+-                                BiometricConstants.BIOMETRIC_ERROR_CANCELED, 0);
+-                    }
++                    client.stop(client.getToken() == token);
+                 } else {
+                     if (DEBUG) Slog.v(getTag(), "Can't stop client " + client.getOwnerString()
+                             + " since tokens don't match. fromClient: " + fromClient);
+-- 
+2.17.1
+

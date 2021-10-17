@@ -1,0 +1,29 @@
+From b876319904c511669b624b79a7856f64ca7e36ec Mon Sep 17 00:00:00 2001
+From: "Wang, ArvinX" <arvinx.wang@intel.com>
+Date: Tue, 4 Jun 2019 11:15:57 +0800
+Subject: [PATCH 3/5] Add DISALLOW_ADD_USER restriction for the guest user
+
+The guest user is missing DISALLOW_ADD_USER restriction,
+lead to canCurrentProcessAddUsers() always return true.
+
+Change-Id: I0354bb448da98dcd992880d1f8cd665beafa3e01
+Tracked-On: https://jira.devtools.intel.com/browse/OAM-80886
+Signed-off-by: Wang, ArvinX <arvinx.wang@intel.com>
+---
+ .../src/android/car/userlib/CarUserManagerHelper.java            | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/user/car-user-lib/src/android/car/userlib/CarUserManagerHelper.java b/user/car-user-lib/src/android/car/userlib/CarUserManagerHelper.java
+index 074594573..a887d676d 100644
+--- a/user/car-user-lib/src/android/car/userlib/CarUserManagerHelper.java
++++ b/user/car-user-lib/src/android/car/userlib/CarUserManagerHelper.java
+@@ -90,6 +90,7 @@ public final class CarUserManagerHelper {
+     private static final Set<String> DEFAULT_GUEST_RESTRICTIONS = Sets.newArraySet(
+             UserManager.DISALLOW_FACTORY_RESET,
+             UserManager.DISALLOW_REMOVE_USER,
++            UserManager.DISALLOW_ADD_USER,
+             UserManager.DISALLOW_MODIFY_ACCOUNTS,
+             UserManager.DISALLOW_INSTALL_APPS,
+             UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES,
+--
+2.21.0

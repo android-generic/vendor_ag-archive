@@ -1,0 +1,456 @@
+From 117007c8c5d263cb5879aed1cb7fcfce0a2fd78a Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@outlook.com>
+Date: Tue, 28 Jul 2020 23:05:24 +0800
+Subject: [PATCH 2/3] Add basic freeform bounds/windowing mode persistence
+
+Expose package-windowing-mode-overlay for definning windowing mode
+
+The location is /data/system_ce/0/package-windowing-mode-overlay.
+
+The example content is:
+
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <int name="com.android.contacts" value="1" />
+    <int name="com.android.messaging" value="1" />
+</map>
+
+So the current windowing mode checking chain is:
+1. If pc mode is enabled, we should set all package to undefined, and let system
+   to calculate windowing mode based on package config.
+2. If package is in our defined pc disallowed list, we should set it to undefined.
+3. If package has windowing mode defined in overlay shared preferences, we should use
+   whatever defined in that file. The frameworks will not change it, and leave it to
+   other system apps or user. If you want to set specific package to specific windowing
+   mode, just to modify it with key for package name and int value for windowing mode,
+   based on WindowConfiguration definition.
+4. If non of above, we will try to get windowing mode of package from saved shared
+   preferences, what will be modified when user changing window mode with shortcut
+   or decor caption bar. The default is WINDOWING_MODE_FREEFORM.
+
+Signed-off-by: utzcoz <utzcoz@outlook.com>
+---
+ .../android/internal/BoringdroidManager.java  | 177 ++++++++++++++++++
+ .../android/internal/policy/PhoneWindow.java  |   4 +
+ .../android/systemui/BoringdroidConfig.java   |  24 ---
+ .../phone/NavigationBarInflaterView.java      |   6 +-
+ .../com/android/server/wm/ActivityStack.java  |  21 +++
+ .../android/server/wm/ActivityStarter.java    |  15 +-
+ .../server/wm/LaunchParamsPersister.java      |  11 ++
+ .../server/wm/WindowManagerService.java       |  10 +
+ 8 files changed, 240 insertions(+), 28 deletions(-)
+ create mode 100644 core/java/com/android/internal/BoringdroidManager.java
+ delete mode 100644 packages/SystemUI/src/com/android/systemui/BoringdroidConfig.java
+
+diff --git a/core/java/com/android/internal/BoringdroidManager.java b/core/java/com/android/internal/BoringdroidManager.java
+new file mode 100644
+index 0000000000000..e4ac0a59cdc7d
+--- /dev/null
++++ b/core/java/com/android/internal/BoringdroidManager.java
+@@ -0,0 +1,177 @@
++/*
++ * Copyright (C) 2020 The boringdroid Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.internal;
++
++import android.app.WindowConfiguration;
++import android.content.Context;
++import android.content.SharedPreferences;
++import android.graphics.Rect;
++import android.os.Environment;
++import android.os.SystemProperties;
++import android.os.UserHandle;
++import android.os.UserManager;
++import android.util.Slog;
++
++import java.io.File;
++import java.util.ArrayList;
++import java.util.List;
++
++/**
++ * @hide
++ */
++public class BoringdroidManager {
++    public static boolean IS_SYSTEMUI_PLUGIN_ENABLED =
++            SystemProperties.getBoolean("persist.sys.systemuiplugin.enabled", false);
++
++    private static final String PACKAGE_WINDOW_BOUNDS_NAME = "package-window-bounds";
++    private static final String PACKAGE_WINDOWING_MODE_NAME = "package-windowing-mode";
++    private static final String PACKAGE_WINDOWING_MODE_OVERLAY_NAME = "package-windowing-mode-overlay";
++    private static final List<String> DISALLOWED_LIST = new ArrayList<>();
++    private static final String TAG = "BoringdroidConfig";
++
++    static {
++        DISALLOWED_LIST.add("android");
++        DISALLOWED_LIST.add("com.android.systemui");
++    }
++
++    public static boolean isPCModeEnabled() {
++        return SystemProperties.getBoolean("persist.sys.pcmode.enabled", true);
++    }
++
++    private static boolean isInPCModeDisallowedList(String packageName) {
++        return packageName != null && DISALLOWED_LIST.contains(packageName);
++    }
++
++    private static boolean isDataSystemDirNotReady(Context context) {
++        UserManager userManager = context.getSystemService(UserManager.class);
++        return !(userManager != null && userManager.isUserUnlockingOrUnlocked(UserHandle.myUserId()));
++    }
++
++    private static File getPackageWindowingModeFile() {
++        return new File(
++                Environment.getDataSystemCeDirectory(UserHandle.myUserId())
++                        + File.separator + PACKAGE_WINDOWING_MODE_NAME
++        );
++    }
++
++    private static File getPackageWindowingModeOverlayFile() {
++        return new File(
++                Environment.getDataSystemCeDirectory(UserHandle.myUserId())
++                        + File.separator + PACKAGE_WINDOWING_MODE_OVERLAY_NAME
++        );
++    }
++
++    private static File getPackageWindowBoundsName() {
++        return new File(
++                Environment.getDataSystemCeDirectory(UserHandle.myUserId())
++                        + File.separator + PACKAGE_WINDOW_BOUNDS_NAME
++        );
++    }
++
++    public static void savePackageWindowingMode(Context context,
++                                                String packageName,
++                                                @WindowConfiguration.WindowingMode
++                                                        int windowingMode) {
++        if (BoringdroidManager.isDataSystemDirNotReady(context)) {
++            Slog.e(TAG, "Calling savePackageWindowingMode with package " + packageName
++                    + ", and mode " + windowingMode + ", before file is ready");
++            return;
++        }
++        SharedPreferences sharedPreferences =
++                context.getSharedPreferences(getPackageWindowingModeFile(), Context.MODE_PRIVATE);
++        sharedPreferences.edit().putInt(packageName, windowingMode).apply();
++    }
++
++    public static @WindowConfiguration.WindowingMode
++    int getPackageWindowingMode(Context context, String packageName) {
++        if (BoringdroidManager.isDataSystemDirNotReady(context)) {
++            Slog.e(TAG, "Calling getPackageWindowingMode with package " + packageName
++                    + ", before file is ready");
++            return WindowConfiguration.WINDOWING_MODE_UNDEFINED;
++        }
++        // Okay, there is a checking chain for package windowing mode:
++        // 1. If pc mode is enabled, we should set all package to undefined, and let system
++        //    to calculate windowing mode based on package config.
++        // 2. If package is in our defined pc disallowed list, we should set it to undefined.
++        // 3. If package has windowing mode defined in overlay shared preferences, we should use
++        //    whatever defined in that file. The frameworks will not change it, and leave it to
++        //    other system apps or user. If you want to set specific package to specific windowing
++        //    mode, just to modify it with key for package name and int value for windowing mode,
++        //    based on WindowConfiguration definition.
++        // 4. If non of above, we will try to get windowing mode of package from saved shared
++        //    preferences, what will be modified when user changing window mode with shortcut
++        //    or decor caption bar. The default is WINDOWING_MODE_FREEFORM.
++        if (!BoringdroidManager.isPCModeEnabled()) {
++            return WindowConfiguration.WINDOWING_MODE_UNDEFINED;
++        }
++        // If the package is in the multi window black list, it will run in default
++        // windowing mode.
++        if (isInPCModeDisallowedList(packageName)) {
++            return WindowConfiguration.WINDOWING_MODE_UNDEFINED;
++        }
++        context.reloadSharedPreferences();
++        SharedPreferences overlaySharedPreferences =
++                context.getSharedPreferences(
++                        getPackageWindowingModeOverlayFile(),
++                        Context.MODE_PRIVATE
++                );
++        int overlayWindowingMode = overlaySharedPreferences.getInt(packageName, -1);
++        Slog.d(TAG, "Found overlay windowing mode " + overlayWindowingMode
++                + ", for package " + packageName);
++        if (overlayWindowingMode != -1) {
++            return overlayWindowingMode;
++        }
++        SharedPreferences sharedPreferences =
++                context.getSharedPreferences(getPackageWindowingModeFile(), Context.MODE_PRIVATE);
++        // We hope the default windowing mode is freeform.
++        return sharedPreferences.getInt(packageName, WindowConfiguration.WINDOWING_MODE_FREEFORM);
++    }
++
++    public static void savePackageWindowBounds(Context context, String packageName, Rect bounds) {
++        if (BoringdroidManager.isDataSystemDirNotReady(context)) {
++            Slog.e(TAG, "Calling savePackageWindowBounds with package " + packageName
++                    + ", and bounds " + bounds + ", before file is ready");
++            return;
++        }
++        SharedPreferences sharedPreferences =
++                context.getSharedPreferences(getPackageWindowBoundsName(), Context.MODE_PRIVATE);
++        Rect tempBounds = new Rect(bounds);
++        sharedPreferences
++                .edit()
++                .putInt(packageName + "-left", tempBounds.left)
++                .putInt(packageName + "-top", tempBounds.top)
++                .putInt(packageName + "-right", tempBounds.right)
++                .putInt(packageName + "-bottom", tempBounds.bottom)
++                .apply();
++    }
++
++    public static Rect getPackageWindowBounds(Context context, String packageName) {
++        if (BoringdroidManager.isDataSystemDirNotReady(context)) {
++            Slog.e(TAG, "Calling getPackageWindowBounds with package " + packageName
++                    + ", before file is ready");
++            return new Rect();
++        }
++        SharedPreferences sharedPreferences =
++                context.getSharedPreferences(getPackageWindowBoundsName(), Context.MODE_PRIVATE);
++        return new Rect(
++                sharedPreferences.getInt(packageName + "-left", 0),
++                sharedPreferences.getInt(packageName + "-top", 0),
++                sharedPreferences.getInt(packageName + "-right", 0),
++                sharedPreferences.getInt(packageName + "-bottom", 0)
++        );
++    }
++}
+\ No newline at end of file
+diff --git a/core/java/com/android/internal/policy/PhoneWindow.java b/core/java/com/android/internal/policy/PhoneWindow.java
+index d90a0225608d9..f3d8aee178d50 100644
+--- a/core/java/com/android/internal/policy/PhoneWindow.java
++++ b/core/java/com/android/internal/policy/PhoneWindow.java
+@@ -60,6 +60,7 @@ import android.os.Parcel;
+ import android.os.Parcelable;
+ import android.os.RemoteException;
+ import android.os.ServiceManager;
++import android.os.SystemProperties;
+ import android.provider.Settings;
+ import android.text.TextUtils;
+ import android.transition.Scene;
+@@ -372,6 +373,9 @@ public class PhoneWindow extends Window implements MenuBuilder.Callback {
+         // an user can force using it through developer options.
+         boolean forceResizable = Settings.Global.getInt(context.getContentResolver(),
+                 DEVELOPMENT_FORCE_RESIZABLE_ACTIVITIES, 0) != 0;
++        // region @boringdroidd
++        forceResizable |= SystemProperties.getBoolean("persist.sys.systemuiplugin.enabled", false);
++        // endregion
+         mSupportsPictureInPicture = forceResizable || context.getPackageManager().hasSystemFeature(
+                 PackageManager.FEATURE_PICTURE_IN_PICTURE);
+         mActivityConfigCallback = activityConfigCallback;
+diff --git a/packages/SystemUI/src/com/android/systemui/BoringdroidConfig.java b/packages/SystemUI/src/com/android/systemui/BoringdroidConfig.java
+deleted file mode 100644
+index d4aff777d9385..0000000000000
+--- a/packages/SystemUI/src/com/android/systemui/BoringdroidConfig.java
++++ /dev/null
+@@ -1,24 +0,0 @@
+-/*
+- * Copyright (C) 2020 The boringdroid Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-package com.android.systemui;
+-
+-import android.os.SystemProperties;
+-
+-public class BoringdroidConfig {
+-    public static boolean IS_SYSTEMUI_PLUGIN_ENABLED =
+-            SystemProperties.getBoolean("persist.sys.systemuiplugin.enabled", false);
+-}
+\ No newline at end of file
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/NavigationBarInflaterView.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/NavigationBarInflaterView.java
+index ebcbace4cfb9a..0607080ef1f65 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/NavigationBarInflaterView.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/NavigationBarInflaterView.java
+@@ -35,7 +35,7 @@ import android.widget.LinearLayout;
+ import android.widget.Space;
+ 
+ import com.android.internal.annotations.VisibleForTesting;
+-import com.android.systemui.BoringdroidConfig;
++import com.android.internal.BoringdroidManager;
+ import com.android.systemui.Dependency;
+ import com.android.systemui.R;
+ import com.android.systemui.recents.OverviewProxyService;
+@@ -144,7 +144,7 @@ public class NavigationBarInflaterView extends FrameLayout
+                         ? R.string.config_navBarLayoutQuickstep
+                         : R.string.config_navBarLayout;
+         // region @boringdroid
+-        if (BoringdroidConfig.IS_SYSTEMUI_PLUGIN_ENABLED) {
++        if (BoringdroidManager.IS_SYSTEMUI_PLUGIN_ENABLED) {
+             return getContext().getString(R.string.boring_config_navBarLayout);
+         } else {
+             return getContext().getString(defaultResource);
+@@ -419,7 +419,7 @@ public class NavigationBarInflaterView extends FrameLayout
+             }
+         }
+         // region @boringdroid
+-        if (BoringdroidConfig.IS_SYSTEMUI_PLUGIN_ENABLED && v instanceof KeyButtonView) {
++        if (BoringdroidManager.IS_SYSTEMUI_PLUGIN_ENABLED && v instanceof KeyButtonView) {
+             ViewGroup.LayoutParams layoutParams = v.getLayoutParams();
+             layoutParams.width =
+                     (int) v.getContext()
+diff --git a/services/core/java/com/android/server/wm/ActivityStack.java b/services/core/java/com/android/server/wm/ActivityStack.java
+index 6d452c39ecccd..86110626eec0c 100644
+--- a/services/core/java/com/android/server/wm/ActivityStack.java
++++ b/services/core/java/com/android/server/wm/ActivityStack.java
+@@ -143,6 +143,7 @@ import android.util.proto.ProtoOutputStream;
+ import android.view.Display;
+ import android.view.DisplayInfo;
+ 
++import com.android.internal.BoringdroidManager;
+ import com.android.internal.annotations.GuardedBy;
+ import com.android.internal.annotations.VisibleForTesting;
+ import com.android.internal.app.IVoiceInteractor;
+@@ -741,6 +742,16 @@ class ActivityStack extends Task {
+             // setWindowingMode triggers an onConfigurationChanged cascade which can result in a
+             // different resolved windowing mode (usually when preferredWindowingMode is UNDEFINED).
+             windowingMode = getWindowingMode();
++            // region @boringdroid
++            // When stack's windowing mode changed, we will persist this windowing mode for top activity.
++            if (topActivity != null && topActivity.info != null && topActivity.info.applicationInfo != null) {
++                BoringdroidManager.savePackageWindowingMode(
++                        WindowManagerService.getWMSContext(),
++                        topActivity.info.applicationInfo.packageName,
++                        windowingMode
++                );
++            }
++            // endregion
+ 
+             if (creating) {
+                 // Nothing else to do if we don't have a window container yet. E.g. call from ctor.
+@@ -1994,6 +2005,16 @@ class ActivityStack extends Task {
+     void startActivityLocked(ActivityRecord r, @Nullable ActivityRecord focusedTopActivity,
+             boolean newTask, boolean keepCurTransition, ActivityOptions options) {
+         Task rTask = r.getTask();
++        // region @boringdroid
++        // When creating task, the topActivity is null when invoking setWindowingMode,
++        // so we should save package windowing mode after task created. And saving
++        // windowing mode in setWindowingMode will be used to save windowing mode when
++        // changing windowing mode dynamically after task created, for example clicking
++        // maximize button to move task to fullscreen stack from freefrom stack.
++        BoringdroidManager.savePackageWindowingMode(
++                WindowManagerService.getWMSContext(), r.packageName, getWindowingMode()
++        );
++        // endregion
+         final boolean allowMoveToFront = options == null || !options.getAvoidMoveToFront();
+         final boolean isOrhasTask = rTask == this || hasChild(rTask);
+         // mLaunchTaskBehind tasks get placed at the back of the task stack.
+diff --git a/services/core/java/com/android/server/wm/ActivityStarter.java b/services/core/java/com/android/server/wm/ActivityStarter.java
+index 7af237b80cfab..176b408ead8a0 100644
+--- a/services/core/java/com/android/server/wm/ActivityStarter.java
++++ b/services/core/java/com/android/server/wm/ActivityStarter.java
+@@ -113,6 +113,7 @@ import android.util.DebugUtils;
+ import android.util.Pools.SynchronizedPool;
+ import android.util.Slog;
+ 
++import com.android.internal.BoringdroidManager;
+ import com.android.internal.annotations.VisibleForTesting;
+ import com.android.internal.app.HeavyWeightSwitcherActivity;
+ import com.android.internal.app.IVoiceInteractor;
+@@ -1591,7 +1592,19 @@ class ActivityStarter {
+             boolean restrictedBgActivity, NeededUriGrants intentGrants) {
+         setInitialState(r, options, inTask, doResume, startFlags, sourceRecord, voiceSession,
+                 voiceInteractor, restrictedBgActivity);
+-
++        // region @boringdroid
++        if (mOptions == null) {
++            mOptions = ActivityOptions.makeBasic();
++        }
++        if (mOptions.getLaunchWindowingMode() == WINDOWING_MODE_UNDEFINED) {
++            mOptions.setLaunchWindowingMode(
++                    BoringdroidManager.getPackageWindowingMode(
++                            WindowManagerService.getWMSContext(),
++                            mStartActivity.info.packageName
++                    )
++            );
++        }
++        // endregion
+         computeLaunchingTaskFlags();
+ 
+         computeSourceStack();
+diff --git a/services/core/java/com/android/server/wm/LaunchParamsPersister.java b/services/core/java/com/android/server/wm/LaunchParamsPersister.java
+index a974332fd8522..376470a98e593 100644
+--- a/services/core/java/com/android/server/wm/LaunchParamsPersister.java
++++ b/services/core/java/com/android/server/wm/LaunchParamsPersister.java
+@@ -17,6 +17,7 @@
+ package com.android.server.wm;
+ 
+ import android.annotation.Nullable;
++import android.app.WindowConfiguration;
+ import android.content.ComponentName;
+ import android.content.pm.ActivityInfo;
+ import android.content.pm.PackageManagerInternal;
+@@ -30,6 +31,7 @@ import android.util.SparseArray;
+ import android.util.Xml;
+ import android.view.DisplayInfo;
+ 
++import com.android.internal.BoringdroidManager;
+ import com.android.internal.annotations.VisibleForTesting;
+ import com.android.internal.util.FastXmlSerializer;
+ import com.android.server.LocalServices;
+@@ -324,6 +326,15 @@ class LaunchParamsPersister {
+         }
+         outParams.mWindowingMode = persistableParams.mWindowingMode;
+         outParams.mBounds.set(persistableParams.mBounds);
++        // region @boringdroid
++        if (name != null
++                && BoringdroidManager.getPackageWindowingMode(
++                        WindowManagerService.getWMSContext(), name.getPackageName())
++                != WindowConfiguration.WINDOWING_MODE_FREEFORM) {
++            outParams.mWindowingMode = WindowConfiguration.WINDOWING_MODE_UNDEFINED;
++            outParams.mBounds.setEmpty();
++        }
++        // endregion
+     }
+ 
+     void removeRecordForPackage(String packageName) {
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index b7a2eb3c705d3..7b48392130b44 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -146,6 +146,7 @@ import android.content.ContentResolver;
+ import android.content.Context;
+ import android.content.Intent;
+ import android.content.IntentFilter;
++import android.content.SharedPreferences;
+ import android.content.pm.ApplicationInfo;
+ import android.content.pm.PackageManager;
+ import android.content.pm.PackageManagerInternal;
+@@ -8272,4 +8273,13 @@ public class WindowManagerService extends IWindowManager.Stub
+             Binder.restoreCallingIdentity(origId);
+         }
+     }
++
++    // region @boringdroid
++    /**
++     * @hide
++     */
++    public static Context getWMSContext() {
++        return getInstance().mContext;
++    }
++    // endregion
+ }
+-- 
+2.17.1
+

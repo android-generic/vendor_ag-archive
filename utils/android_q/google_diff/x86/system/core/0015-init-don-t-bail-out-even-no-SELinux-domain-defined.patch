@@ -1,0 +1,44 @@
+From 93141ec680b66579c2506ae27a120a3325c5b00f Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 12 Sep 2017 16:22:04 +0800
+Subject: [PATCH 15/21] init: don't bail out even no SELinux domain defined
+
+---
+ init/service.cpp | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/init/service.cpp b/init/service.cpp
+index ccc37b70c..5ef98daac 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -29,6 +29,9 @@
+ #include <sys/wait.h>
+ #include <termios.h>
+ #include <unistd.h>
++#if defined(__ANDROID__)
++#include <cutils/klog.h>
++#endif
+ 
+ #include <android-base/file.h>
+ #include <android-base/logging.h>
+@@ -94,11 +97,17 @@ static Result<std::string> ComputeContextFromExecutable(const std::string& servi
+         free(new_con);
+     }
+     if (rc == 0 && computed_context == mycon.get()) {
++#if defined(__ANDROID__)
++        KLOG_WARNING("service", "File %s (labeled \"%s\") has incorrect label or no domain transition from %s to another SELinux domain defined.",
++                service_path.c_str(), filecon.get(), mycon.get());
++        return "skip";
++#else
+         return Error() << "File " << service_path << "(labeled \"" << filecon.get()
+                        << "\") has incorrect label or no domain transition from " << mycon.get()
+                        << " to another SELinux domain defined. Have you configured your "
+                           "service correctly? https://source.android.com/security/selinux/"
+                           "device-policy#label_new_services_and_address_denials";
++#endif
+     }
+     if (rc < 0) {
+         return Error() << "Could not get process context";
+-- 
+2.21.0
+

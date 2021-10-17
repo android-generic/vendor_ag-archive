@@ -1,0 +1,25 @@
+From a7d866f9bba852ea17af471c73ceec8303b783c3 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 14 Aug 2020 21:13:50 -0400
+Subject: [PATCH 1/2] Specify revision for vold
+
+Change-Id: I6614e893869dc29e92ce3464d49b1aa43c541307
+---
+ snippets/pixel.xml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/snippets/pixel.xml b/snippets/pixel.xml
+index 4d4b62a..9462ba5 100644
+--- a/snippets/pixel.xml
++++ b/snippets/pixel.xml
+@@ -181,6 +181,6 @@
+   <project path="system/sepolicy" name="system_sepolicy" remote="pixel" />
+   <project path="system/timezone" name="system_timezone" remote="pixel" />
+   <project path="system/update_engine" name="system_update_engine" remote="pixel" />
+-  <project path="system/vold" name="system_vold" remote="pixel" />
++  <project path="system/vold" name="system_vold" remote="pixel" revision="ee29b67f7490ef0f68e2a167680381d997db3255"/>
+ 
+ </manifest>
+-- 
+2.17.1
+

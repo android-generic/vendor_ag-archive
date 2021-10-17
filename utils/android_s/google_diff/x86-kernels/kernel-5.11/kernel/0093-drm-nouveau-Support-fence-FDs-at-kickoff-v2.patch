@@ -1,0 +1,224 @@
+From f0da9aa02a0b42c09436ad7cffd25d8dc99f6418 Mon Sep 17 00:00:00 2001
+From: Thierry Reding <treding@nvidia.com>
+Date: Fri, 28 Aug 2020 12:40:13 +0200
+Subject: [PATCH 093/106] drm/nouveau: Support fence FDs at kickoff (v2)
+
+Add a new NOUVEAU_GEM_PUSHBUF2 IOCTL that accepts and emits a sync fence
+FD from/to userspace if requested by the corresponding flags.
+
+Based heavily on work by Lauri Peltonen <lpeltonen@nvidia.com>
+
+Signed-off-by: Thierry Reding <treding@nvidia.com>
+
+(v2) Changes due to commit:
+     49a3f51dfee ("drm/gem: Use struct dma_buf_map in GEM vmap ops and convert GEM backends")
+---
+ drivers/gpu/drm/nouveau/nouveau_drm.c |  1 +
+ drivers/gpu/drm/nouveau/nouveau_gem.c | 78 +++++++++++++++++++++++++--
+ drivers/gpu/drm/nouveau/nouveau_gem.h |  2 +
+ include/uapi/drm/nouveau_drm.h        | 14 +++++
+ 4 files changed, 91 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/gpu/drm/nouveau/nouveau_drm.c b/drivers/gpu/drm/nouveau/nouveau_drm.c
+index 5ef8b5342844..35ce16ab5384 100644
+--- a/drivers/gpu/drm/nouveau/nouveau_drm.c
++++ b/drivers/gpu/drm/nouveau/nouveau_drm.c
+@@ -1143,6 +1143,7 @@ nouveau_ioctls[] = {
+ 	DRM_IOCTL_DEF_DRV(NOUVEAU_GEM_CPU_PREP, nouveau_gem_ioctl_cpu_prep, DRM_RENDER_ALLOW),
+ 	DRM_IOCTL_DEF_DRV(NOUVEAU_GEM_CPU_FINI, nouveau_gem_ioctl_cpu_fini, DRM_RENDER_ALLOW),
+ 	DRM_IOCTL_DEF_DRV(NOUVEAU_GEM_INFO, nouveau_gem_ioctl_info, DRM_RENDER_ALLOW),
++	DRM_IOCTL_DEF_DRV(NOUVEAU_GEM_PUSHBUF2, nouveau_gem_ioctl_pushbuf2, DRM_RENDER_ALLOW),
+ };
+ 
+ long
+diff --git a/drivers/gpu/drm/nouveau/nouveau_gem.c b/drivers/gpu/drm/nouveau/nouveau_gem.c
+index 67a230ae73b8..321bd388965f 100644
+--- a/drivers/gpu/drm/nouveau/nouveau_gem.c
++++ b/drivers/gpu/drm/nouveau/nouveau_gem.c
+@@ -25,6 +25,8 @@
+  */
+ 
+ #include <drm/drm_gem_ttm_helper.h>
++#include <linux/file.h>
++#include <linux/sync_file.h>
+ 
+ #include "nouveau_drv.h"
+ #include "nouveau_dma.h"
+@@ -681,24 +683,30 @@ nouveau_gem_pushbuf_reloc_apply(struct nouveau_cli *cli,
+ 	return ret;
+ }
+ 
+-int
+-nouveau_gem_ioctl_pushbuf(struct drm_device *dev, void *data,
+-			  struct drm_file *file_priv)
++static int
++__nouveau_gem_ioctl_pushbuf(struct drm_device *dev,
++			    struct drm_nouveau_gem_pushbuf2 *request,
++			    struct drm_file *file_priv)
+ {
+ 	struct nouveau_abi16 *abi16 = nouveau_abi16_get(file_priv);
+ 	struct nouveau_cli *cli = nouveau_cli(file_priv);
+ 	struct nouveau_abi16_chan *temp;
+ 	struct nouveau_drm *drm = nouveau_drm(dev);
+-	struct drm_nouveau_gem_pushbuf *req = data;
++	struct drm_nouveau_gem_pushbuf *req = &request->base;
+ 	struct drm_nouveau_gem_pushbuf_push *push;
+ 	struct drm_nouveau_gem_pushbuf_reloc *reloc = NULL;
+ 	struct drm_nouveau_gem_pushbuf_bo *bo;
+ 	struct nouveau_channel *chan = NULL;
+ 	struct validate_op op;
+ 	struct nouveau_fence *fence = NULL;
++	struct dma_fence *prefence = NULL;
+ 	int i, j, ret = 0;
+ 	bool do_reloc = false, sync = false;
+ 
++	/* check for unrecognized flags */
++	if (request->flags & ~NOUVEAU_GEM_PUSHBUF_FLAGS)
++		return -EINVAL;
++
+ 	if (unlikely(!abi16))
+ 		return -ENOMEM;
+ 
+@@ -768,6 +776,15 @@ nouveau_gem_ioctl_pushbuf(struct drm_device *dev, void *data,
+ 		goto out_prevalid;
+ 	}
+ 
++	if (request->flags & NOUVEAU_GEM_PUSHBUF_FENCE_WAIT) {
++		prefence = sync_file_get_fence(request->fence);
++		if (prefence) {
++			ret = nouveau_fence_sync(prefence, chan, true);
++			if (ret < 0)
++				goto out;
++		}
++	}
++
+ 	/* Apply any relocations that are required */
+ 	if (do_reloc) {
+ 		if (!reloc) {
+@@ -869,7 +886,30 @@ nouveau_gem_ioctl_pushbuf(struct drm_device *dev, void *data,
+ 		}
+ 	}
+ 
++	if (request->flags & NOUVEAU_GEM_PUSHBUF_FENCE_EMIT) {
++		struct sync_file *file;
++		int fd;
++
++		fd = get_unused_fd_flags(O_CLOEXEC);
++		if (fd < 0) {
++			ret = fd;
++			goto out;
++		}
++
++		file = sync_file_create(&fence->base);
++		if (!file) {
++			put_unused_fd(fd);
++			goto out;
++		}
++
++		fd_install(fd, file->file);
++		request->fence = fd;
++	}
++
+ out:
++	if (prefence)
++		dma_fence_put(prefence);
++
+ 	validate_fini(&op, chan, fence, bo);
+ 	nouveau_fence_unref(&fence);
+ 
+@@ -911,6 +951,27 @@ nouveau_gem_ioctl_pushbuf(struct drm_device *dev, void *data,
+ 	return nouveau_abi16_put(abi16, ret);
+ }
+ 
++int
++nouveau_gem_ioctl_pushbuf(struct drm_device *dev, void *data,
++			  struct drm_file *file_priv)
++{
++	struct drm_nouveau_gem_pushbuf *request = data;
++	struct drm_nouveau_gem_pushbuf2 req;
++	int ret;
++
++	memset(&req, 0, sizeof(req));
++	memcpy(&req.base, request, sizeof(*request));
++
++	ret = __nouveau_gem_ioctl_pushbuf(dev, &req, file_priv);
++
++	request->gart_available = req.base.gart_available;
++	request->vram_available = req.base.vram_available;
++	request->suffix1 = req.base.suffix1;
++	request->suffix0 = req.base.suffix0;
++
++	return ret;
++}
++
+ int
+ nouveau_gem_ioctl_cpu_prep(struct drm_device *dev, void *data,
+ 			   struct drm_file *file_priv)
+@@ -978,3 +1039,12 @@ nouveau_gem_ioctl_info(struct drm_device *dev, void *data,
+ 	return ret;
+ }
+ 
++int
++nouveau_gem_ioctl_pushbuf2(struct drm_device *dev, void *data,
++			   struct drm_file *file_priv)
++{
++	struct drm_nouveau_gem_pushbuf2 *req = data;
++
++	return __nouveau_gem_ioctl_pushbuf(dev, req, file_priv);
++}
++
+diff --git a/drivers/gpu/drm/nouveau/nouveau_gem.h b/drivers/gpu/drm/nouveau/nouveau_gem.h
+index 3b919c7c931c..9749e5704928 100644
+--- a/drivers/gpu/drm/nouveau/nouveau_gem.h
++++ b/drivers/gpu/drm/nouveau/nouveau_gem.h
+@@ -31,6 +31,8 @@ extern int nouveau_gem_ioctl_cpu_fini(struct drm_device *, void *,
+ 				      struct drm_file *);
+ extern int nouveau_gem_ioctl_info(struct drm_device *, void *,
+ 				  struct drm_file *);
++extern int nouveau_gem_ioctl_pushbuf2(struct drm_device *, void *,
++				      struct drm_file *);
+ 
+ extern int nouveau_gem_prime_pin(struct drm_gem_object *);
+ extern void nouveau_gem_prime_unpin(struct drm_gem_object *);
+diff --git a/include/uapi/drm/nouveau_drm.h b/include/uapi/drm/nouveau_drm.h
+index 853a327433d3..85425dc90301 100644
+--- a/include/uapi/drm/nouveau_drm.h
++++ b/include/uapi/drm/nouveau_drm.h
+@@ -115,6 +115,18 @@ struct drm_nouveau_gem_pushbuf {
+ 	__u64 gart_available;
+ };
+ 
++#define NOUVEAU_GEM_PUSHBUF_FENCE_WAIT (1 << 0)
++#define NOUVEAU_GEM_PUSHBUF_FENCE_EMIT (1 << 1)
++#define NOUVEAU_GEM_PUSHBUF_FLAGS (NOUVEAU_GEM_PUSHBUF_FENCE_WAIT | \
++				   NOUVEAU_GEM_PUSHBUF_FENCE_EMIT)
++
++struct drm_nouveau_gem_pushbuf2 {
++	struct drm_nouveau_gem_pushbuf base;
++	__u32 flags;
++	__s32 fence;
++	__u64 reserved;
++};
++
+ #define NOUVEAU_GEM_CPU_PREP_NOWAIT                                  0x00000001
+ #define NOUVEAU_GEM_CPU_PREP_WRITE                                   0x00000004
+ struct drm_nouveau_gem_cpu_prep {
+@@ -141,6 +153,7 @@ struct drm_nouveau_gem_cpu_fini {
+ #define DRM_NOUVEAU_GEM_CPU_PREP       0x42
+ #define DRM_NOUVEAU_GEM_CPU_FINI       0x43
+ #define DRM_NOUVEAU_GEM_INFO           0x44
++#define DRM_NOUVEAU_GEM_PUSHBUF2       0x45
+ 
+ struct drm_nouveau_svm_init {
+ 	__u64 unmanaged_addr;
+@@ -196,6 +209,7 @@ struct drm_nouveau_svm_bind {
+ #define DRM_IOCTL_NOUVEAU_GEM_CPU_PREP       DRM_IOW (DRM_COMMAND_BASE + DRM_NOUVEAU_GEM_CPU_PREP, struct drm_nouveau_gem_cpu_prep)
+ #define DRM_IOCTL_NOUVEAU_GEM_CPU_FINI       DRM_IOW (DRM_COMMAND_BASE + DRM_NOUVEAU_GEM_CPU_FINI, struct drm_nouveau_gem_cpu_fini)
+ #define DRM_IOCTL_NOUVEAU_GEM_INFO           DRM_IOWR(DRM_COMMAND_BASE + DRM_NOUVEAU_GEM_INFO, struct drm_nouveau_gem_info)
++#define DRM_IOCTL_NOUVEAU_GEM_PUSHBUF2       DRM_IOWR(DRM_COMMAND_BASE + DRM_NOUVEAU_GEM_PUSHBUF2, struct drm_nouveau_gem_pushbuf2)
+ 
+ #if defined(__cplusplus)
+ }
+-- 
+2.17.1
+

@@ -1,0 +1,85 @@
+From 131e16692c21eb734343a4caddb8bdbd78662a98 Mon Sep 17 00:00:00 2001
+From: Unknown <electrikjesus@gmail.com>
+Date: Wed, 24 Jun 2020 12:16:23 -0400
+Subject: [PATCH] Update back button graphics
+
+Thanks again @rogerdott for the artwork
+---
+ .../res/drawable/decor_back_button_dark.xml   | 24 ++++++++---------
+ .../res/drawable/decor_back_button_light.xml  | 26 +++++++++----------
+ 2 files changed, 23 insertions(+), 27 deletions(-)
+
+diff --git a/core/res/res/drawable/decor_back_button_dark.xml b/core/res/res/drawable/decor_back_button_dark.xml
+index 3a7e3e19bf5..23008e88413 100644
+--- a/core/res/res/drawable/decor_back_button_dark.xml
++++ b/core/res/res/drawable/decor_back_button_dark.xml
+@@ -18,18 +18,16 @@
+ 
+ <vector
+     xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:width="32.0dp"
+-    android:height="32.0dp"
+-    android:viewportWidth="32.0"
+-    android:viewportHeight="32.0"
++    android:name="vector"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="32"
++    android:viewportHeight="32"
+     android:tint="@color/decor_button_dark_color">
+-    <group
+-        android:scaleX="0.5"
+-        android:scaleY="0.5"
+-        android:translateX="8.0"
+-        android:translateY="8.0">
+-        <path
+-            android:fillColor="@color/white"
+-            android:pathData="M2.0,16.0l28.0,14.0l0.0,-28z" />
+-    </group>
++    <path
++        android:name="path"
++        android:pathData="M 19.75 22.616 C 20.236 22.13 20.236 21.341 19.75 20.855 C 18.146 19.247 14.907 16 14.907 16 C 14.907 16 18.146 12.753 19.75 11.145 C 20.236 10.659 20.236 9.871 19.75 9.384 L 19.749 9.383 C 19.263 8.897 18.473 8.897 17.987 9.383 L 12.317 15.053 C 12.066 15.304 11.925 15.645 11.925 16 C 11.925 16.355 12.066 16.696 12.317 16.947 L 17.987 22.617 C 18.473 23.103 19.263 23.103 19.749 22.617 L 19.75 22.616 Z"
++        android:fillColor="@color/white"
++        android:strokeWidth="1"/>
++    </path>
+ </vector>
+diff --git a/core/res/res/drawable/decor_back_button_light.xml b/core/res/res/drawable/decor_back_button_light.xml
+index c7e0d1e00f9..bee812c175b 100644
+--- a/core/res/res/drawable/decor_back_button_light.xml
++++ b/core/res/res/drawable/decor_back_button_light.xml
+@@ -15,20 +15,18 @@
+      limitations under the License.
+ -->
+ 
+-<vector
++<vector 
+     xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:width="32.0dp"
+-    android:height="32.0dp"
+-    android:viewportWidth="32.0"
+-    android:viewportHeight="32.0"
++    android:name="vector"
++    android:width="32dp"
++    android:height="32dp"
++    android:viewportWidth="32"
++    android:viewportHeight="32"
+     android:tint="@color/decor_button_light_color">
+-    <group
+-        android:scaleX="0.5"
+-        android:scaleY="0.5"
+-        android:translateX="8.0"
+-        android:translateY="8.0">
+-        <path
+-            android:fillColor="@color/white"
+-            android:pathData="M2.0,16.0l28.0,14.0l0.0,-28z" />
+-    </group>
++    <path
++        android:name="path"
++        android:pathData="M 19.75 22.616 C 20.236 22.13 20.236 21.341 19.75 20.855 C 18.146 19.247 14.907 16 14.907 16 C 14.907 16 18.146 12.753 19.75 11.145 C 20.236 10.659 20.236 9.871 19.75 9.384 L 19.749 9.383 C 19.263 8.897 18.473 8.897 17.987 9.383 L 12.317 15.053 C 12.066 15.304 11.925 15.645 11.925 16 C 11.925 16.355 12.066 16.696 12.317 16.947 L 17.987 22.617 C 18.473 23.103 19.263 23.103 19.749 22.617 L 19.75 22.616 Z"
++        android:fillColor="@color/white"
++        android:strokeWidth="1"/>
++    </path>
+ </vector>
+-- 
+2.17.1
+

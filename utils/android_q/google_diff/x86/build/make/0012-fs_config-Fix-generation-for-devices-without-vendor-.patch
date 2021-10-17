@@ -1,0 +1,44 @@
+From 8e75d3fce81a07adaa0f082edfa7e6e5fc689e3a Mon Sep 17 00:00:00 2001
+From: dianlujitao <dianlujitao@lineageos.org>
+Date: Tue, 10 Sep 2019 15:42:56 +0800
+Subject: [PATCH 12/17] fs_config: Fix generation for devices without vendor
+ partition
+
+If the "--all-partitions" argument is empty, the system fs_config should
+be generated with all partitions emitted.
+
+Fixes: 8453f02c (fs_config: Fix cases without vendor/oem partition)
+Change-Id: I058cfd1c8e665b40757998e773c35e26465bf58a
+Signed-off-by: dianlujitao <dianlujitao@lineageos.org>
+
+Conflicts:
+	tools/fs_config/fs_config_generator.py
+---
+ tools/fs_config/fs_config_generator.py | 11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/tools/fs_config/fs_config_generator.py b/tools/fs_config/fs_config_generator.py
+index 25bdfa84c6..109b29a160 100755
+--- a/tools/fs_config/fs_config_generator.py
++++ b/tools/fs_config/fs_config_generator.py
+@@ -1133,11 +1133,12 @@ class FSConfigGen(BaseGenerator):
+         path = fs_config.path
+ 
+         if self._partition == 'system':
+-            if self._all_partitions:
+-                for skip_partition in self._all_partitions.split(','):
+-                    if path.startswith(skip_partition) or path.startswith(
+-                            'system/' + skip_partition):
+-                        return False
++            if not self._all_partitions:
++                return True
++            for skip_partition in self._all_partitions.split(','):
++                if path.startswith(skip_partition) or path.startswith(
++                        'system/' + skip_partition):
++                    return False
+             return True
+         else:
+             if path.startswith(
+-- 
+2.17.1
+

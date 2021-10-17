@@ -1,0 +1,29 @@
+From 03a764505a15b65e6117bc8fddfaae9e77aaa628 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Thu, 29 Oct 2020 23:27:34 +0100
+Subject: [PATCH 105/106] Revert "vmwgfx: change the default resolution to
+ 1280x720"
+
+This reverts commit d8836d821a1caa03739ebdcbcd29355f4f79d54a.
+---
+ drivers/gpu/drm/vmwgfx/vmwgfx_drv.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_drv.c b/drivers/gpu/drm/vmwgfx/vmwgfx_drv.c
+index 2f6f07d5e8ee..216daf93022c 100644
+--- a/drivers/gpu/drm/vmwgfx/vmwgfx_drv.c
++++ b/drivers/gpu/drm/vmwgfx/vmwgfx_drv.c
+@@ -46,8 +46,8 @@
+ #define VMWGFX_CHIP_SVGAII 0
+ #define VMW_FB_RESERVATION 0
+ 
+-#define VMW_MIN_INITIAL_WIDTH 1280
+-#define VMW_MIN_INITIAL_HEIGHT 720
++#define VMW_MIN_INITIAL_WIDTH 800
++#define VMW_MIN_INITIAL_HEIGHT 600
+ 
+ #ifndef VMWGFX_GIT_VERSION
+ #define VMWGFX_GIT_VERSION "Unknown"
+-- 
+2.17.1
+

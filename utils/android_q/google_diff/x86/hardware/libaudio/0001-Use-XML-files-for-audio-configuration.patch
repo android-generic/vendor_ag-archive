@@ -1,0 +1,71 @@
+From 72216e36b61eb1db89c43b4832b52cee4116a695 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Fri, 4 Oct 2019 19:55:52 -0400
+Subject: [PATCH] Use XML files for audio configuration.
+
+---
+ alsa.mk                                |  7 +++++-
+ primary_audio_policy_configuration.xml | 33 ++++++++++++++++++++++++++
+ 2 files changed, 39 insertions(+), 1 deletion(-)
+ create mode 100644 primary_audio_policy_configuration.xml
+
+diff --git a/alsa.mk b/alsa.mk
+index ee99f33..2cff474 100644
+--- a/alsa.mk
++++ b/alsa.mk
+@@ -43,7 +43,12 @@ copy_init := \
+ PRODUCT_COPY_FILES := \
+ 	$(foreach f,$(copy_conf),$(LOCAL_ALSA_CONF_DIR)/$(f):$(TARGET_ALSA_CONF_DIR)/$(f)) \
+ 	$(foreach f,$(copy_init),$(LOCAL_ALSA_INIT_DIR)/$(f):$(TARGET_ALSA_CONF_DIR)/init/$(f)) \
+-	$(if $(wildcard $(PRODUCT_DIR)audio_policy.conf),$(PRODUCT_DIR),$(LOCAL_PATH)/)audio_policy.conf:system/etc/audio_policy.conf \
++	frameworks/av/services/audiopolicy/config/audio_policy_configuration_generic.xml:system/etc/audio_policy_configuration.xml \
++	$(LOCAL_PATH)/primary_audio_policy_configuration.xml:system/etc/primary_audio_policy_configuration.xml \
++	frameworks/av/services/audiopolicy/config/r_submix_audio_policy_configuration.xml:system/etc/r_submix_audio_policy_configuration.xml \
++	frameworks/av/services/audiopolicy/config/audio_policy_volumes.xml:system/etc/audio_policy_volumes.xml \
++	frameworks/av/services/audiopolicy/config/default_volume_tables.xml:system/etc/default_volume_tables.xml \
++	frameworks/av/services/audiopolicy/config/surround_sound_configuration_5_0.xml:system/etc/surround_sound_configuration_5_0.xml
+ 
+ PRODUCT_PACKAGES := \
+ 	alsa_amixer \
+diff --git a/primary_audio_policy_configuration.xml b/primary_audio_policy_configuration.xml
+new file mode 100644
+index 0000000..1c31708
+--- /dev/null
++++ b/primary_audio_policy_configuration.xml
+@@ -0,0 +1,33 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!-- Default Primary Audio HAL Module Audio Policy Configuration include file -->
++<module name="primary" halVersion="2.0">
++    <attachedDevices>
++        <item>Speaker</item>
++        <item>Built-In Mic</item>
++    </attachedDevices>
++    <defaultOutputDevice>Speaker</defaultOutputDevice>
++    <mixPorts>
++        <mixPort name="primary output" role="source" flags="AUDIO_OUTPUT_FLAG_PRIMARY">
++            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
++                     samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
++        </mixPort>
++        <mixPort name="primary input" role="sink">
++            <profile name="" format="AUDIO_FORMAT_PCM_16_BIT"
++                     samplingRates="8000,11025,16000,22050,24000,32000,44100,48000"
++                     channelMasks="AUDIO_CHANNEL_IN_MONO,AUDIO_CHANNEL_IN_STEREO"/>
++        </mixPort>
++   </mixPorts>
++   <devicePorts>
++        <devicePort tagName="Speaker" type="AUDIO_DEVICE_OUT_SPEAKER" role="sink">
++        </devicePort>
++
++        <devicePort tagName="Built-In Mic" type="AUDIO_DEVICE_IN_BUILTIN_MIC" role="source">
++        </devicePort>
++    </devicePorts>
++    <routes>
++        <route type="mix" sink="Speaker"
++               sources="primary output"/>
++        <route type="mix" sink="primary input"
++               sources="Built-In Mic"/>
++    </routes>
++</module>
+-- 
+2.21.0
+

@@ -1,0 +1,57 @@
+From 94393bc5ae0d8f55067fc50dfe949d50bdc733d2 Mon Sep 17 00:00:00 2001
+From: Victor Bo <bvoid@yandex.ru>
+Date: Thu, 29 Apr 2021 15:01:36 -0400
+Subject: [PATCH 04/13] Revert "SystemUI: Don't shift KeyguardSecurityContainer
+ when FOD isn't available"
+
+This reverts commit bd73dc16c91ce3e1a525b08382d87c11912e41c9.
+---
+ .../android/keyguard/KeyguardSecurityContainer.java   | 11 ++---------
+ 1 file changed, 2 insertions(+), 9 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/keyguard/KeyguardSecurityContainer.java b/packages/SystemUI/src/com/android/keyguard/KeyguardSecurityContainer.java
+index 0daafe108e2..3905d5f5df1 100644
+--- a/packages/SystemUI/src/com/android/keyguard/KeyguardSecurityContainer.java
++++ b/packages/SystemUI/src/com/android/keyguard/KeyguardSecurityContainer.java
+@@ -33,7 +33,6 @@ import android.app.AlertDialog;
+ import android.app.admin.DevicePolicyManager;
+ import android.content.Context;
+ import android.content.Intent;
+-import android.content.pm.PackageManager;
+ import android.content.res.ColorStateList;
+ import android.graphics.Insets;
+ import android.graphics.Rect;
+@@ -125,7 +124,6 @@ public class KeyguardSecurityContainer extends FrameLayout implements KeyguardSe
+     private InjectionInflationController mInjectionInflationController;
+     private boolean mSwipeUpToRetry;
+     private AdminSecondaryLockScreenController mSecondaryLockScreenController;
+-    private boolean mHasFod;
+ 
+     private final ViewConfiguration mViewConfiguration;
+     private final SpringAnimation mSpringAnimation;
+@@ -263,10 +261,6 @@ public class KeyguardSecurityContainer extends FrameLayout implements KeyguardSe
+         mKeyguardStateController = Dependency.get(KeyguardStateController.class);
+         mSecondaryLockScreenController = new AdminSecondaryLockScreenController(context, this,
+                 mUpdateMonitor, mCallback, new Handler(Looper.myLooper()));
+-
+-        PackageManager packageManager = mContext.getPackageManager();
+-        mHasFod = context.getResources().getBoolean(
+-                com.android.internal.R.bool.config_needCustomFODView);
+     }
+ 
+     public void setSecurityCallback(SecurityCallback callback) {
+@@ -523,9 +517,8 @@ public class KeyguardSecurityContainer extends FrameLayout implements KeyguardSe
+ 
+         // Consume bottom insets because we're setting the padding locally (for IME and navbar.)
+         int inset;
+-        int minBottomMargin = mHasFod && mUpdateMonitor.isFingerprintDetectionRunning() ?
+-                getResources().getDimensionPixelSize(
+-                        R.dimen.kg_security_container_min_bottom_margin) : 0;
++        int minBottomMargin = getResources().getDimensionPixelSize(
++                R.dimen.kg_security_container_min_bottom_margin);
+ 
+         if (sNewInsetsMode == NEW_INSETS_MODE_FULL) {
+             int bottomInset = insets.getInsetsIgnoringVisibility(systemBars()).bottom;
+-- 
+2.17.1
+

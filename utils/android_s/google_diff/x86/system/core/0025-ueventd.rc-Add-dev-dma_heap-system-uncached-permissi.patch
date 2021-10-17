@@ -1,0 +1,30 @@
+From efb6e07e0a33fd07ff714b88c40413a44eaab1d8 Mon Sep 17 00:00:00 2001
+From: John Stultz <john.stultz@linaro.org>
+Date: Fri, 11 Dec 2020 07:05:16 +0000
+Subject: [PATCH] ueventd.rc: Add /dev/dma_heap/system-uncached permissions
+
+Add permissions for dev/dma_heap/system-uncached dmabuf heap.
+
+This should match the dmabuf system heap.
+
+Signed-off-by: John Stultz <john.stultz@linaro.org>
+Change-Id: I9253d56c72d45e228539f709e76ba0862ae03d96
+---
+ rootdir/ueventd.rc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/rootdir/ueventd.rc b/rootdir/ueventd.rc
+index 5ed9d4d4d..114731594 100644
+--- a/rootdir/ueventd.rc
++++ b/rootdir/ueventd.rc
+@@ -47,6 +47,7 @@ subsystem dma_heap
+ 
+ /dev/pmsg0                0222   root       log
+ /dev/dma_heap/system      0444   system     system
++/dev/dma_heap/system-uncached      0444   system     system
+ 
+ # kms driver for drm based gpu
+ /dev/dri/*                0666   root       graphics
+-- 
+2.25.1
+

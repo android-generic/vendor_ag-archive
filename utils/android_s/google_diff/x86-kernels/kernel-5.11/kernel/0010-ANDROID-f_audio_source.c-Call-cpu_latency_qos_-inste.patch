@@ -1,0 +1,43 @@
+From 69afafefddcf68d8b964d3ee17cf75b5ce8b9f33 Mon Sep 17 00:00:00 2001
+From: Greg Kroah-Hartman <gregkh@google.com>
+Date: Tue, 31 Mar 2020 14:57:05 +0200
+Subject: [PATCH 010/106] ANDROID: f_audio_source.c: Call cpu_latency_qos_*()
+ instead of pm_qos_*()
+
+Upstream changed the apis, but the driver in this tree was not
+converted, so do so.
+
+Much like commit 77b352456941 ("drivers: usb: Call cpu_latency_qos_*()
+instead of pm_qos_*()") upstream
+
+Signed-off-by: Greg Kroah-Hartman <gregkh@google.com>
+Change-Id: Id420f27774599433a68ec54729104cd1d3b0c4e6
+---
+ drivers/usb/gadget/function/f_audio_source.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/usb/gadget/function/f_audio_source.c b/drivers/usb/gadget/function/f_audio_source.c
+index 8124af33b738..c768a526b315 100644
+--- a/drivers/usb/gadget/function/f_audio_source.c
++++ b/drivers/usb/gadget/function/f_audio_source.c
+@@ -745,7 +745,7 @@ static int audio_pcm_open(struct snd_pcm_substream *substream)
+ 	audio->substream = substream;
+ 
+ 	/* Add the QoS request and set the latency to 0 */
+-	pm_qos_add_request(&audio->pm_qos, PM_QOS_CPU_DMA_LATENCY, 0);
++	cpu_latency_qos_add_request(&audio->pm_qos, 0);
+ 
+ 	return 0;
+ }
+@@ -758,7 +758,7 @@ static int audio_pcm_close(struct snd_pcm_substream *substream)
+ 	spin_lock_irqsave(&audio->lock, flags);
+ 
+ 	/* Remove the QoS request */
+-	pm_qos_remove_request(&audio->pm_qos);
++	cpu_latency_qos_remove_request(&audio->pm_qos);
+ 
+ 	audio->substream = NULL;
+ 	spin_unlock_irqrestore(&audio->lock, flags);
+-- 
+2.17.1
+

@@ -1,0 +1,31 @@
+From 6cef666fa91fe420eaa9e6a6a77e798870a6b1b9 Mon Sep 17 00:00:00 2001
+From: dianlujitao <dianlujitao@lineageos.org>
+Date: Thu, 10 Oct 2019 09:26:00 +0800
+Subject: [PATCH 17/17] Fix odm output directory for devices w/o vendor
+ partition
+
+Change-Id: Iba6c169630ea6bf61b9057a9994e5eb824915304
+---
+ core/board_config.mk | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/core/board_config.mk b/core/board_config.mk
+index ac0f27da53..5f227a808b 100644
+--- a/core/board_config.mk
++++ b/core/board_config.mk
+@@ -436,9 +436,9 @@ endif
+ ###########################################
+ # Now we can substitute with the real value of TARGET_COPY_OUT_ODM
+ ifeq ($(TARGET_COPY_OUT_ODM),$(_odm_path_placeholder))
+-  TARGET_COPY_OUT_ODM := vendor/odm
+-else ifeq ($(filter odm vendor/odm,$(TARGET_COPY_OUT_ODM)),)
+-  $(error TARGET_COPY_OUT_ODM must be either 'odm' or 'vendor/odm', seeing '$(TARGET_COPY_OUT_ODM)'.)
++  TARGET_COPY_OUT_ODM := $(TARGET_COPY_OUT_VENDOR)/odm
++else ifeq ($(filter odm system/vendor/odm vendor/odm,$(TARGET_COPY_OUT_ODM)),)
++  $(error TARGET_COPY_OUT_ODM must be either 'odm', 'system/vendor/odm' or 'vendor/odm', seeing '$(TARGET_COPY_OUT_ODM)'.)
+ endif
+ PRODUCT_COPY_FILES := $(subst $(_odm_path_placeholder),$(TARGET_COPY_OUT_ODM),$(PRODUCT_COPY_FILES))
+ 
+-- 
+2.17.1
+

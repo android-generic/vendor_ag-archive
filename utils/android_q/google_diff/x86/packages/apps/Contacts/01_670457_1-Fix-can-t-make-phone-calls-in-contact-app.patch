@@ -1,0 +1,94 @@
+From d356976750ab00f29d6d14ceb6b85912ce91ae3e Mon Sep 17 00:00:00 2001
+From: johnzhax <johnx.zhang@intel.com>
+Date: Wed, 29 Aug 2018 15:56:34 +0800
+Subject: [PATCH] Fix can't make phone calls in contact app
+
+It should support make phone calls since the BT-HFP is ready.
+Return true for the isVoiceCapable() if it is an automotive device.
+
+Change-Id: I6aee24da36f4c4a1cef8b46d6d91fbea692d88e0
+Tracked-On:
+Signed-off-by: Lei,RayX <rayx.lei@intel.com>
+---
+ .../contacts/compat/TelephonyManagerCompat.java        | 10 +++++++++-
+ .../preference/DisplayOptionsPreferenceFragment.java   |  4 +---
+ .../android/contacts/util/PhoneCapabilityTester.java   |  4 +---
+ 3 files changed, 11 insertions(+), 7 deletions(-)
+
+diff --git a/src/com/android/contacts/compat/TelephonyManagerCompat.java b/src/com/android/contacts/compat/TelephonyManagerCompat.java
+index a8b022646..63c4531e4 100644
+--- a/src/com/android/contacts/compat/TelephonyManagerCompat.java
++++ b/src/com/android/contacts/compat/TelephonyManagerCompat.java
+@@ -17,6 +17,9 @@
+ package com.android.contacts.compat;
+
+ import android.net.Uri;
++import android.content.Context;
++import android.content.pm.PackageManager;
++import androidx.annotation.NonNull;
+ import androidx.annotation.Nullable;
+ import android.telecom.PhoneAccountHandle;
+ import android.telephony.TelephonyManager;
+@@ -39,10 +42,15 @@ public class TelephonyManagerCompat {
+      * on any device with a telephony radio, even if the device is
+      * data-only.
+      */
+-    public static boolean isVoiceCapable(@Nullable TelephonyManager telephonyManager) {
++    public static boolean isVoiceCapable(@NonNull Context context) {
++        TelephonyManager telephonyManager =
++                (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+         if (telephonyManager == null) {
+             return false;
+         }
++        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
++            return true;
++        }
+         if (CompatUtils.isLollipopMr1Compatible()
+                 || CompatUtils.isMethodAvailable(TELEPHONY_MANAGER_CLASS, "isVoiceCapable")) {
+             // isVoiceCapable was unhidden in L-MR1
+diff --git a/src/com/android/contacts/preference/DisplayOptionsPreferenceFragment.java b/src/com/android/contacts/preference/DisplayOptionsPreferenceFragment.java
+index 69abf0594..f518c3f9b 100644
+--- a/src/com/android/contacts/preference/DisplayOptionsPreferenceFragment.java
++++ b/src/com/android/contacts/preference/DisplayOptionsPreferenceFragment.java
+@@ -38,7 +38,6 @@ import android.provider.ContactsContract.Profile;
+ import com.google.android.material.snackbar.Snackbar;
+ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+ import android.telecom.TelecomManager;
+-import android.telephony.TelephonyManager;
+ import android.text.BidiFormatter;
+ import android.text.TextDirectionHeuristics;
+ import android.view.LayoutInflater;
+@@ -294,8 +293,7 @@ public class DisplayOptionsPreferenceFragment extends PreferenceFragment
+             getPreferenceScreen().removePreference(findPreference(KEY_DISPLAY_ORDER));
+         }
+
+-        final boolean isPhone = TelephonyManagerCompat.isVoiceCapable(
+-                (TelephonyManager) getContext().getSystemService(Context.TELEPHONY_SERVICE));
++        final boolean isPhone = TelephonyManagerCompat.isVoiceCapable(getContext());
+         final boolean showBlockedNumbers = isPhone && ContactsUtils.FLAG_N_FEATURE
+                 && BlockedNumberContract.canCurrentUserBlockNumbers(getContext());
+         if (!showBlockedNumbers) {
+diff --git a/src/com/android/contacts/util/PhoneCapabilityTester.java b/src/com/android/contacts/util/PhoneCapabilityTester.java
+index 9753b8851..5df9aa3e4 100644
+--- a/src/com/android/contacts/util/PhoneCapabilityTester.java
++++ b/src/com/android/contacts/util/PhoneCapabilityTester.java
+@@ -25,7 +25,6 @@ import android.net.Uri;
+ import android.net.sip.SipManager;
+ import android.provider.MediaStore;
+ import android.provider.Telephony;
+-import android.telephony.TelephonyManager;
+
+ import com.android.contacts.ContactsUtils;
+ import com.android.contacts.compat.TelephonyManagerCompat;
+@@ -62,8 +61,7 @@ public final class PhoneCapabilityTester {
+     }
+
+     private static void initialize(Context context) {
+-        sIsPhone = TelephonyManagerCompat.isVoiceCapable(
+-                (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE));
++        sIsPhone = TelephonyManagerCompat.isVoiceCapable(context);
+         sIsSipPhone = sIsPhone && SipManager.isVoipSupported(context);
+         sIsInitialized = true;
+     }
+--
+2.21.0

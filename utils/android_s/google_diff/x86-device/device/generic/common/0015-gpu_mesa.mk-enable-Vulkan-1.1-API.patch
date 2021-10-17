@@ -1,0 +1,22 @@
+From 347788182de2f19a50d22e2fbe429af1f400723d Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Thu, 14 May 2020 21:32:47 +0200
+Subject: [PATCH 15/36] gpu_mesa.mk: enable Vulkan 1.1 API
+
+---
+ gpu/gpu_mesa.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/gpu/gpu_mesa.mk b/gpu/gpu_mesa.mk
+index e28568f..a4055b8 100644
+--- a/gpu/gpu_mesa.mk
++++ b/gpu/gpu_mesa.mk
+@@ -29,4 +29,4 @@ PRODUCT_PROPERTY_OVERRIDES := \
+ 
+ PRODUCT_COPY_FILES += \
+     frameworks/native/data/etc/android.hardware.vulkan.level-1.xml:system/etc/permissions/android.hardware.vulkan.level.xml \
+-    frameworks/native/data/etc/android.hardware.vulkan.version-1_0_3.xml:system/etc/permissions/android.hardware.vulkan.version.xml
++    frameworks/native/data/etc/android.hardware.vulkan.version-1_1.xml:system/etc/permissions/android.hardware.vulkan.version.xml
+-- 
+2.17.1
+

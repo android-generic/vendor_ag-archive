@@ -1,0 +1,83 @@
+From 32a6abf791a98ee110ce521360e12833d71d6ce9 Mon Sep 17 00:00:00 2001
+From: Rashed Abdel-Tawab <rashed@linux.com>
+Date: Thu, 20 Sep 2018 08:25:23 -0700
+Subject: [PATCH 07/17] build: Automatically replace old-style kernel header
+ includes with new header lib
+
+This is a combination of 3 commits.
+This is the 1st commit message:
+
+build: add kernel header dependency if module uses kernel headers
+
+Many of the QCOM components use kernel headers, but don't declare
+the dependency on them.  This is fine in CAF because of the way they
+build the boot.img before anything else.  In CM, we don't build the
+boot.img the same, so we run into a race between the kernel build &
+these modules... and the modules lose.
+
+Warn about modules that have this missing dependency, and add it for
+them so we don't have to modify each Android.mk.
+
+Change-Id: I95f1e47b5ef440f6f5d8f64a0c3f38d9572e839e
+
+============================================================================
+This is the commit message #2:
+
+build: Switch kernel header inclusion
+
+The build is switching to the target INSTALLED_KERNEL_HEADERS to
+declare dependencies on kernel headers.
+
+Change-Id: I913e74681b02dfcf1eaed3d1e47ff4ab2300b12d
+
+============================================================================
+This is the commit message #3:
+
+build: Automatically replace old-style kernel header includes with new header lib
+
+Since we do this via soong and the result is a header library, just replace all
+legacy include paths that point to the old header location with calls to the new
+header library. Since we no longer have the legacy include, we can also remove
+the additional dependency.
+
+This reverts commit fa798218e5b7f96e12ab3acc9d47a3f26a140777.
+
+Change-Id: I716955534e50831e6568ca01e480aa8b90075d92
+---
+ core/binary.mk | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/core/binary.mk b/core/binary.mk
+index 43063a8cc4..b89cce2cc3 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -34,6 +34,26 @@ endif
+ 
+ my_soong_problems :=
+ 
++# Automatically replace the old-style kernel header include with a dependency
++# on the generated_kernel_headers header library
++ifneq (,$(findstring $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include,$(LOCAL_C_INCLUDES)))
++  LOCAL_C_INCLUDES := $(patsubst $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include,,$(LOCAL_C_INCLUDES))
++  LOCAL_HEADER_LIBRARIES += generated_kernel_headers
++endif
++
++# Some qcom binaries use this weird -isystem include...
++ifneq (,$(findstring $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include,$(LOCAL_CFLAGS)))
++  LOCAL_CFLAGS := $(patsubst -isystem $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include,,$(LOCAL_CFLAGS))
++  LOCAL_HEADER_LIBRARIES += generated_kernel_headers
++endif
++
++# Remove KERNEL_OBJ/usr from any LOCAL_ADDITIONAL_DEPENDENCIES, we will
++# just include generated_kernel_headers which already has the proper
++# dependency
++ifneq (,$(findstring $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr,$(LOCAL_ADDITIONAL_DEPENDENCIES)))
++  LOCAL_ADDITIONAL_DEPENDENCIES := $(patsubst $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr,,$(LOCAL_ADDITIONAL_DEPENDENCIES))
++endif
++
+ # The following LOCAL_ variables will be modified in this file.
+ # Because the same LOCAL_ variables may be used to define modules for both 1st arch and 2nd arch,
+ # we can't modify them in place.
+-- 
+2.17.1
+

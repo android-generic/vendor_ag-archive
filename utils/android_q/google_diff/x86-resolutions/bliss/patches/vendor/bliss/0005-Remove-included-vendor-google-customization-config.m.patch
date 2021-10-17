@@ -1,0 +1,26 @@
+From 150ff0094f50e19cdafa5df904b48593991a5e7e Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 17 Sep 2020 16:25:20 -0400
+Subject: [PATCH 5/6] Remove included vendor/google-customization/config.mk
+
+Change-Id: I067360e9ae9eb852dd792df845a69e865fde8545
+---
+ config/common.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/config/common.mk b/config/common.mk
+index 5554cb87..dd9f9849 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -211,7 +211,7 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+ -include vendor/themes/bliss_themes.mk
+ 
+ # Customization
+-include vendor/google-customization/config.mk
++#~ include vendor/google-customization/config.mk
+ 
+ -include $(WORKSPACE)/build_env/image-auto-bits.mk
+ -include vendor/bliss/config/partner_gms.mk
+-- 
+2.17.1
+

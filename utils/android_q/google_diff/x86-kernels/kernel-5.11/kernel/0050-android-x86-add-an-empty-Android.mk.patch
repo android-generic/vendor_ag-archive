@@ -1,0 +1,25 @@
+From 641748f99367f8fa5a8d9d46e964d34005e806aa Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Mon, 17 Nov 2014 20:14:41 +0800
+Subject: [PATCH 050/106] android-x86: add an empty Android.mk
+
+It prevents findleaves.py from searching into the subdirectories.
+---
+ Android.mk | 5 +++++
+ 1 file changed, 5 insertions(+)
+ create mode 100644 Android.mk
+
+diff --git a/Android.mk b/Android.mk
+new file mode 100644
+index 000000000000..42a260a3fdee
+--- /dev/null
++++ b/Android.mk
+@@ -0,0 +1,5 @@
++#
++# Copyright (C) 2014 The Android-x86 Open Source Project
++#
++
++# The kernel building rule is moved to build/core/tasks/kernel.mk.
+-- 
+2.17.1
+

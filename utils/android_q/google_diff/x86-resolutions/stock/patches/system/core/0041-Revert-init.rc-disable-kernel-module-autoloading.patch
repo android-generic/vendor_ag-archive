@@ -1,0 +1,25 @@
+From 0d8d4943a491590d17c82392f33fb29f4c00be4b Mon Sep 17 00:00:00 2001
+From: Eric Biggers <ebiggers@google.com>
+Date: Wed, 11 Mar 2020 09:56:15 -0700
+Subject: [PATCH] Revert "init.rc: disable kernel module autoloading"
+
+This reverts commit f00d95d987548c8278eecd4cf38ebe9af1726ebe.
+---
+ rootdir/init.rc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 89b58af108..1895dea48b 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -15,6 +15,7 @@ import /init.${ro.zygote}.rc
+ on early-init
+     # Disable sysrq from keyboard
+     write /proc/sys/kernel/sysrq 0
++    
+ 
+     # Set the security context of /adb_keys if present.
+     restorecon /adb_keys
+-- 
+2.17.1
+

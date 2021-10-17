@@ -15,11 +15,26 @@
 # more details.
 
 top_dir=`pwd`
-vendor_path="ag"
-utils_dir="$top_dir/vendor/$vendor_path/utils"
-patch_dir="$utils_dir/android_r/google_diff/x86"
-private_utils_dir="$top_dir/vendor/$vendor_path/PRIVATE/utils"
+ag_vendor_path="ag"
+private_utils_dir="$top_dir/vendor/$ag_vendor_path/PRIVATE/utils"
 private_patch_dir="$private_utils_dir/android_r/google_diff/$TARGET_PRODUCT"
+LOCALDIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
+if [ -f build/make/core/version_defaults.mk ]; then
+    if grep -q "PLATFORM_SDK_VERSION := 29" build/make/core/version_defaults.mk; then
+        patch_dir="$LOCALDIR/android_q/google_diff/x86"
+        roms_patch_dir="$LOCALDIR/android_q/google_diff/x86-resolutions"
+    fi
+    if grep -q "PLATFORM_SDK_VERSION := 30" build/make/core/version_defaults.mk; then
+        patch_dir="$LOCALDIR/android_r/google_diff/x86"
+        roms_patch_dir="$LOCALDIR/android_r/google_diff/x86-resolutions"
+    fi
+    if grep -q "PLATFORM_SDK_VERSION := 31" build/make/core/version_defaults.mk; then
+        patch_dir="$LOCALDIR/android_s/google_diff/x86"
+        roms_patch_dir="$LOCALDIR/android_s/google_diff/x86-resolutions"
+    fi
+fi
+
 #setup colors
 red=`tput setaf 1`
 green=`tput setaf 2`
@@ -41,7 +56,7 @@ current_project=""
 previous_project=""
 conflict=""
 conflict_list=""
-
+goodpatch=""
 project_revision=""
 
 tag_project() {
@@ -87,19 +102,43 @@ apply_patch() {
 
     if [[ "$c" == "" ]] ; then
       git am -3 $pd/$i >& /dev/null
-      
+
       if [[ $? == 0 ]]; then
         echo -e ${reset}""${reset}
         echo -e ${ltgreen}"        Applying          $i"${reset}
         echo -e ${reset}""${reset}
-        
       else
         echo -e ${reset}""${reset}
         echo -e ${ltred}"        Conflicts         $i"${reset}
         echo -e ${reset}""${reset}
 		git am --abort >& /dev/null
-		conflict="y"
-		conflict_list=" $current_project $conflict_list"
+
+		echo "                Searching other vendors for patch resolutions..."
+        for agvendor in "$roms_patch_dir"/*/ ; do
+            agvendor_name=$(echo ${d%%/} | sed 's|.*/||')
+			echo "                looking in $agvendor_name for that patch..."
+			if [[ -f "${agvendor}${i}" ]]; then
+				echo "                Found ${agvendor}${i}!!"
+				echo "                trying..."
+				git am -3 "${agvendor}${i}" >& /dev/null
+				if [[ $? == 0 ]]; then
+					echo "                Applying          $i $?"
+					goodpatch="y"
+					break
+				else
+					echo "                Conflicts          $i"
+					git am --abort >& /dev/null
+					conflict="y"
+				fi
+			fi
+		done
+		if [[ "$goodpatch" != "y" ]]; then
+			echo "                No resolution was found"
+			git am --abort >& /dev/null
+			echo "                Setting $i as Conflicts"
+			conflict="y"
+			conflict_list="$current_project $conflict_list"
+		fi
       fi
     else
 	  echo -e ${reset}""${reset}
@@ -118,7 +157,6 @@ cd $patch_dir
 patch_list=`find * -iname "*.patch" | sort -u`
 
 apply_patch "$patch_list" "$patch_dir"
-#~ apply_patch "$patch_list" "$patch_dir" 2>&1 | tee $top_dir/vendor/$vendor_path/tmp/conflicts.script
 
 echo ""
 if [[ "$conflict" == "y" ]]; then
@@ -128,7 +166,6 @@ if [[ "$conflict" == "y" ]]; then
   for i in $conflict_list ; do echo $i; done | sort -u
   echo -e ${yellow} "==========================================================================="${reset}
   echo -e ${yellow} "WARNING: Please resolve Conflict(s). You may need to re-run build..."${reset}
-  # return 1
 else
   echo -e ${green} "==========================================================================="${reset}
   echo -e ${green} "           INFO : All patches applied fine !!                              "${reset}

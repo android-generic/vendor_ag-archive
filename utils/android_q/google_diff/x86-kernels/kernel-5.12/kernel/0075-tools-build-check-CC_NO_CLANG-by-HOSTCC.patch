@@ -1,0 +1,28 @@
+From 9d5f94b78d63bc4538507f4811977996c9b59667 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Wed, 2 Oct 2019 18:50:20 +0800
+Subject: [PATCH 075/100] tools build: check CC_NO_CLANG by HOSTCC
+
+The tools are intended for host instead of target.
+
+Signed-off-by: Chih-Wei Huang <cwhuang@linux.org.tw>
+---
+ tools/scripts/Makefile.include | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tools/scripts/Makefile.include b/tools/scripts/Makefile.include
+index a402f32a145c..a8237d611f52 100644
+--- a/tools/scripts/Makefile.include
++++ b/tools/scripts/Makefile.include
+@@ -39,7 +39,7 @@ EXTRA_WARNINGS += -Wundef
+ EXTRA_WARNINGS += -Wwrite-strings
+ EXTRA_WARNINGS += -Wformat
+ 
+-CC_NO_CLANG := $(shell $(CC) -dM -E -x c /dev/null | grep -Fq "__clang__"; echo $$?)
++CC_NO_CLANG := $(shell $(HOSTCC) -dM -E -x c /dev/null | grep -Fq "__clang__"; echo $$?)
+ 
+ # Makefiles suck: This macro sets a default value of $(2) for the
+ # variable named by $(1), unless the variable has been set by
+-- 
+2.17.1
+

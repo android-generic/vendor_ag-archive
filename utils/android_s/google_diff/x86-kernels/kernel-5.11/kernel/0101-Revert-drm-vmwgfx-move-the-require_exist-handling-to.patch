@@ -1,0 +1,54 @@
+From d39385ad9b7fec6455b7af2b3e964848e9cd385d Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 18 Oct 2020 18:05:59 +0200
+Subject: [PATCH 101/106] Revert "drm/vmwgfx: move the require_exist handling
+ together"
+
+This reverts commit 8815a94f27d2f30fe1216ce10c7da0f6ae69ca0f.
+---
+ drivers/gpu/drm/vmwgfx/vmwgfx_surface.c | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_surface.c b/drivers/gpu/drm/vmwgfx/vmwgfx_surface.c
+index 6583aae99c0a..033471e7266c 100644
+--- a/drivers/gpu/drm/vmwgfx/vmwgfx_surface.c
++++ b/drivers/gpu/drm/vmwgfx/vmwgfx_surface.c
+@@ -938,12 +938,16 @@ vmw_surface_handle_reference(struct vmw_private *dev_priv,
+ 	uint32_t handle;
+ 	struct ttm_base_object *base;
+ 	int ret;
++	bool require_exist = false;
+ 
+ 	if (handle_type == DRM_VMW_HANDLE_PRIME) {
+ 		ret = ttm_prime_fd_to_handle(tfile, u_handle, &handle);
+ 		if (unlikely(ret != 0))
+ 			return ret;
+ 	} else {
++		if (unlikely(drm_is_render_client(file_priv)))
++			require_exist = true;
++
+ 		handle = u_handle;
+ 	}
+ 
+@@ -960,8 +964,6 @@ vmw_surface_handle_reference(struct vmw_private *dev_priv,
+ 	}
+ 
+ 	if (handle_type != DRM_VMW_HANDLE_PRIME) {
+-		bool require_exist = false;
+-
+ 		user_srf = container_of(base, struct vmw_user_surface,
+ 					prime.base);
+ 
+@@ -973,9 +975,6 @@ vmw_surface_handle_reference(struct vmw_private *dev_priv,
+ 		    user_srf->master != file_priv->master)
+ 			require_exist = true;
+ 
+-		if (unlikely(drm_is_render_client(file_priv)))
+-			require_exist = true;
+-
+ 		ret = ttm_ref_object_add(tfile, base, TTM_REF_USAGE, NULL,
+ 					 require_exist);
+ 		if (unlikely(ret != 0)) {
+-- 
+2.17.1
+

@@ -1,0 +1,58 @@
+From a9ec1aa28029b84c9609761e14145f4eba8a9be4 Mon Sep 17 00:00:00 2001
+From: Victor Bo <bvoid@yandex.ru>
+Date: Mon, 11 May 2020 20:18:14 +0300
+Subject: [PATCH 10/12] add system speedup tuning
+
+	modified:   res/values/strings.xml
+	modified:   res/xml/display_settings.xml
+	modified:   src/com/android/settings/DisplaySettings.java
+---
+ res/values/strings.xml                        | 2 ++
+ res/xml/display_settings.xml                  | 4 ++++
+ src/com/android/settings/DisplaySettings.java | 2 ++
+ 3 files changed, 8 insertions(+)
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index dddca608f0..49ce862b6e 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -10090,6 +10090,8 @@
+     <string name="theme_customization_sysui_icon_title">Statusbar Icon</string>
+     <!-- [CHAR_LIMIT=NONE] Developer Settings: Title of the setting which enables overlays to customize the      statusbar icons spacing (e.g. set 2dp paddings). -->
+     <string name="theme_customization_statusbar_title">Status Bar spacing</string>
++    <!-- [CHAR_LIMIT=NONE] Developer Settings: Title of the setting which enables overlays to customize the      SystemUI speed performance -->
++    <string name="theme_customization_speedui_title">UI Speed up/Powersaving</string>
+     <!-- [CHAR_LIMIT=NONE] Developer Settings: Label for the option that turns off customizations for a given category.-->
+     <string name="theme_customization_device_default">Device default</string>
+ 
+diff --git a/res/xml/display_settings.xml b/res/xml/display_settings.xml
+index 907fd69c3d..b5ac68a811 100644
+--- a/res/xml/display_settings.xml
++++ b/res/xml/display_settings.xml
+@@ -182,6 +182,10 @@
+             android:key="android.theme.customization.statusbar"
+             android:title="@string/theme_customization_statusbar_title"/>
+ 
++        <ListPreference
++            android:key="android.theme.customization.speedui"
++            android:title="@string/theme_customization_speedui_title"/>
++
+     <com.android.settings.display.darkmode.DarkModePreference
+         android:key="dark_ui_mode"
+         android:title="@string/dark_ui_mode"
+diff --git a/src/com/android/settings/DisplaySettings.java b/src/com/android/settings/DisplaySettings.java
+index 8653292fbb..4f58759612 100644
+--- a/src/com/android/settings/DisplaySettings.java
++++ b/src/com/android/settings/DisplaySettings.java
+@@ -104,6 +104,8 @@ public class DisplaySettings extends DashboardFragment {
+         controllers.add(new RefreshRatePreferenceController(context));
+         controllers.add(new OverlayCategoryPreferenceController(context,
+                 "android.theme.customization.statusbar"));
++        controllers.add(new OverlayCategoryPreferenceController(context,
++                "android.theme.customization.speedui"));
+         return controllers;
+     }
+ 
+-- 
+2.25.1
+

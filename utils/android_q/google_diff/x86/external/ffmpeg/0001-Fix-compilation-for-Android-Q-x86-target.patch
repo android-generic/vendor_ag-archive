@@ -1,0 +1,39 @@
+From 70894ca155fbb21f7a3eec2a84b2b37ea4679940 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Sun, 13 Oct 2019 12:56:33 -0400
+Subject: [PATCH] Fix compilation for Android Q / x86 target
+
+---
+ android/build.mk | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/android/build.mk b/android/build.mk
+index 9423918099..ac81d88963 100644
+--- a/android/build.mk
++++ b/android/build.mk
+@@ -61,19 +61,20 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_C_INCLUDES)
+ 
+ LOCAL_CFLAGS += \
+ 	-O3 -std=c99 -fno-math-errno -fno-signed-zeros -fomit-frame-pointer \
+-	-Wno-pointer-to-int-cast -Wstrict-prototypes -Wempty-body -Wno-parentheses \
++	-Wno-pointer-to-int-cast -Wno-strict-prototypes -Wempty-body -Wno-parentheses \
+ 	-Wno-switch -Wno-format-zero-length -Wno-pointer-sign -Wno-unused-parameter \
+ 	-Wno-deprecated-declarations -Wno-missing-field-initializers -Wno-sign-compare \
+ 	-Wno-constant-conversion -Wno-incompatible-pointer-types-discards-qualifiers \
+ 	-Wno-initializer-overrides -Wno-sometimes-uninitialized \
+ 	-Wno-unneeded-internal-declaration -Wno-unused-function -Wno-absolute-value \
++	-Wno-expansion-to-defined -Wno-string-plus-int \
+ 	-Werror=format-security -Werror=implicit-function-declaration -Werror=missing-prototypes \
+ 	-Werror=return-type -Werror=vla -Wformat -Wno-maybe-uninitialized -fPIC
+ 
+ LOCAL_ASFLAGS_x86 := -Pconfig-x86.asm
+ LOCAL_ASFLAGS_x86_64 := -Pconfig-x86_64.asm
+ 
+-LOCAL_LDFLAGS := -Wl,--no-fatal-warnings -Wl,-Bsymbolic
++LOCAL_LDFLAGS := -Wl,--no-fatal-warnings -Wl,-Bsymbolic -Wl,-z,notext
+ 
+ LOCAL_CLANG_CFLAGS += -Wno-unknown-attributes
+ LOCAL_CLANG_ASFLAGS += $(if $(filter x86,$(FFMPEG_ARCH_DIR)),,-no-integrated-as)
+-- 
+2.21.0
+

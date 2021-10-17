@@ -1,0 +1,149 @@
+From 9e21857cb0df73f4e676cf5dcf2d1998f12b13fc Mon Sep 17 00:00:00 2001
+From: Christian Oder <myself5@carbonrom.org>
+Date: Mon, 29 Jun 2020 20:49:16 +0200
+Subject: [PATCH 1/2] Revert "update_engine: Rework ENFORCE_AB_OTA to allow
+ resizing partitions"
+
+This reverts commit 976010c5a517a14898345704e3cbcb781a1ddb5f.
+---
+ Android.bp                          | 19 ++++++++++++++-----
+ boot_control_android.cc             | 22 ----------------------
+ payload_consumer/delta_performer.cc |  9 +++++++++
+ 3 files changed, 23 insertions(+), 27 deletions(-)
+
+diff --git a/Android.bp b/Android.bp
+index 693ebcf4..a43d6461 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -66,11 +66,6 @@ cc_defaults {
+         pdk: {
+             enabled: false,
+         },
+-        carbon: {
+-            target_enforce_ab_ota_partition_list: {
+-                cflags: ["-DTARGET_ENFORCE_AB_OTA_PARTITION_LIST"],
+-            },
+-        },
+     },
+ 
+     target: {
+@@ -189,6 +184,13 @@ cc_library_static {
+         "payload_consumer/xz_extent_writer.cc",
+         "payload_consumer/fec_file_descriptor.cc",
+     ],
++    product_variables: {
++        carbon: {
++            target_enforce_ab_ota_partition_list: {
++                cflags: ["-DTARGET_ENFORCE_AB_OTA_PARTITION_LIST"],
++            },
++        },
++    },
+ }
+ 
+ // libupdate_engine_boot_control (type: static_library)
+@@ -512,6 +514,13 @@ cc_library_static {
+         "payload_generator/topological_sort.cc",
+         "payload_generator/xz_android.cc",
+     ],
++    product_variables: {
++        carbon: {
++            target_enforce_ab_ota_partition_list: {
++                cflags: ["-DTARGET_ENFORCE_AB_OTA_PARTITION_LIST"],
++            },
++        },
++    },
+ }
+ 
+ // delta_generator (type: executable)
+diff --git a/boot_control_android.cc b/boot_control_android.cc
+index c4de0b0e..1fab85f1 100644
+--- a/boot_control_android.cc
++++ b/boot_control_android.cc
+@@ -305,7 +305,6 @@ bool UpdatePartitionMetadata(DynamicPartitionControlInterface* dynamic_control,
+     return false;
+   }
+ 
+-#ifndef TARGET_ENFORCE_AB_OTA_PARTITION_LIST
+   std::vector<string> groups = builder->ListGroups();
+   for (const auto& group_name : groups) {
+     if (base::EndsWith(
+@@ -314,7 +313,6 @@ bool UpdatePartitionMetadata(DynamicPartitionControlInterface* dynamic_control,
+       builder->RemoveGroupAndPartitions(group_name);
+     }
+   }
+-#endif
+ 
+   uint64_t total_size = 0;
+   for (const auto& group : partition_metadata.groups) {
+@@ -335,7 +333,6 @@ bool UpdatePartitionMetadata(DynamicPartitionControlInterface* dynamic_control,
+     return false;
+   }
+ 
+-#ifndef TARGET_ENFORCE_AB_OTA_PARTITION_LIST
+   for (const auto& group : partition_metadata.groups) {
+     auto group_name_suffix = group.name + target_suffix;
+     if (!builder->AddGroup(group_name_suffix, group.size)) {
+@@ -364,25 +361,6 @@ bool UpdatePartitionMetadata(DynamicPartitionControlInterface* dynamic_control,
+                 << group_name_suffix << " with size " << partition.size;
+     }
+   }
+-#else
+-  for (const auto& group : partition_metadata.groups) {
+-    for (const auto& partition : group.partitions) {
+-      auto partition_name_suffix = partition.name + target_suffix;
+-      Partition* p = builder->FindPartition(partition_name_suffix);
+-      if (!p) {
+-        LOG(ERROR) << "Cannot find partition " << partition_name_suffix;
+-        return false;
+-      }
+-      if (!builder->ResizePartition(p, partition.size)) {
+-        LOG(ERROR) << "Cannot resize partition " << partition_name_suffix
+-                   << " to size " << partition.size << ". Not enough space?";
+-        return false;
+-      }
+-      LOG(INFO) << "Updated partition " << partition_name_suffix
+-                << " with size " << partition.size;
+-    }
+-  }
+-#endif
+ 
+   auto target_device =
+       device_dir.Append(fs_mgr_get_super_partition_name(target_slot)).value();
+diff --git a/payload_consumer/delta_performer.cc b/payload_consumer/delta_performer.cc
+index d76a959e..018cb4b7 100644
+--- a/payload_consumer/delta_performer.cc
++++ b/payload_consumer/delta_performer.cc
+@@ -952,6 +952,9 @@ bool DeltaPerformer::InitPartitionMetadata() {
+       for (const auto& partition_name : group.partition_names()) {
+         auto it = partition_sizes.find(partition_name);
+         if (it == partition_sizes.end()) {
++#ifdef TARGET_ENFORCE_AB_OTA_PARTITION_LIST
++          continue;
++#else
+           // TODO(tbao): Support auto-filling partition info for framework-only
+           // OTA.
+           LOG(ERROR) << "dynamic_partition_metadata contains partition "
+@@ -959,6 +962,7 @@ bool DeltaPerformer::InitPartitionMetadata() {
+                      << " but it is not part of the manifest. "
+                      << "This is not supported.";
+           return false;
++#endif
+         }
+         e.partitions.push_back({partition_name, it->second});
+       }
+@@ -967,7 +971,12 @@ bool DeltaPerformer::InitPartitionMetadata() {
+   }
+ 
+   bool metadata_updated = false;
++#ifdef TARGET_ENFORCE_AB_OTA_PARTITION_LIST
++  LOG(INFO) << "Skip metadata update because device has set TARGET_ENFORCE_AB_OTA_PARTITION_LIST";
++  metadata_updated = true;
++#else
+   prefs_->GetBoolean(kPrefsDynamicPartitionMetadataUpdated, &metadata_updated);
++#endif
+   if (!boot_control_->InitPartitionMetadata(
+           install_plan_->target_slot, partition_metadata, !metadata_updated)) {
+     LOG(ERROR) << "Unable to initialize partition metadata for slot "
+-- 
+2.17.1
+

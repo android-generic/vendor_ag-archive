@@ -1,0 +1,72 @@
+From bbe8d41b6922140ee9f7176c153e9d44c6256d72 Mon Sep 17 00:00:00 2001
+From: "Wang, ArvinX" <arvinx.wang@intel.com>
+Date: Mon, 24 Jun 2019 17:31:29 +0800
+Subject: [PATCH 5/5] Fix gallery carsh
+
+The Gallery target SDK is 28, if starting the foreground service,
+need to add permission: android.permission.FOREGROUND_SERVICE
+and setForeground with NotificationChannel.
+
+Change-Id: If26250e9500f27f320e6ff9a51654e10252ecd05
+Tracked-On: https://jira.devtools.intel.com/browse/OAM-80894
+Signed-off-by: Wang, ArvinX <arvinx.wang@intel.com>
+---
+ AndroidManifest.xml                                 |  1 +
+ src/com/android/gallery3d/ingest/IngestService.java | 12 +++++++++++-
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 43439f97a..05f7813ae 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -31,6 +31,7 @@
+     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+     <uses-permission android:name="com.android.gallery3d.permission.GALLERY_PROVIDER" />
++    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
+     <supports-screens android:smallScreens="false"
+             android:normalScreens="true" android:largeScreens="true"
+diff --git a/src/com/android/gallery3d/ingest/IngestService.java b/src/com/android/gallery3d/ingest/IngestService.java
+index 262e41086..e41cf645a 100644
+--- a/src/com/android/gallery3d/ingest/IngestService.java
++++ b/src/com/android/gallery3d/ingest/IngestService.java
+@@ -23,6 +23,7 @@ import com.android.gallery3d.ingest.data.MtpClient;
+ import com.android.gallery3d.ingest.data.MtpDeviceIndex;
+
+ import android.annotation.TargetApi;
++import android.app.NotificationChannel;
+ import android.app.NotificationManager;
+ import android.app.PendingIntent;
+ import android.app.Service;
+@@ -63,6 +64,9 @@ public class IngestService extends Service implements ImportTask.Listener,
+
+   private static final int PROGRESS_UPDATE_INTERVAL_MS = 180;
+
++  private static final String INGESTSERVICE_NOTIFICATION_CHANNEL =
++          "ingestservice_notification_channel";
++
+   private MtpClient mClient;
+   private final IBinder mBinder = new LocalBinder();
+   private ScannerClient mScannerClient;
+@@ -85,11 +89,17 @@ public class IngestService extends Service implements ImportTask.Listener,
+     super.onCreate();
+     mScannerClient = new ScannerClient(this);
+     mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
++    NotificationChannel notificationChannel = new NotificationChannel(
++            INGESTSERVICE_NOTIFICATION_CHANNEL,
++            this.getString(R.string.app_name),
++            NotificationManager.IMPORTANCE_HIGH);
++    mNotificationManager.createNotificationChannel(notificationChannel);
+     mNotificationBuilder = new NotificationCompat.Builder(this);
+     // TODO(georgescu): Use a better drawable for the notificaton?
+     mNotificationBuilder.setSmallIcon(android.R.drawable.stat_notify_sync)
+         .setContentIntent(PendingIntent.getActivity(this, 0,
+-            new Intent(this, IngestActivity.class), 0));
++            new Intent(this, IngestActivity.class), 0))
++        .setChannelId(INGESTSERVICE_NOTIFICATION_CHANNEL);
+     mIndex = MtpDeviceIndex.getInstance();
+     mIndex.setProgressListener(this);
+
+--
+2.21.0

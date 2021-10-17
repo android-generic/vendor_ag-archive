@@ -1,0 +1,26 @@
+From d4820c81b2dcc28637464e6f7587f02370ca5947 Mon Sep 17 00:00:00 2001
+From: Roman Petrovski <roman.petrovski@gmail.com>
+Date: Sat, 11 Jun 2016 03:50:00 +0800
+Subject: [PATCH 11/21] init: support usbmisc devices
+
+The patch allows to create usbmisc device nodes like /dev/cdc-wdm0.
+---
+ init/devices.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init/devices.cpp b/init/devices.cpp
+index 159c75e03..ecda19ce7 100644
+--- a/init/devices.cpp
++++ b/init/devices.cpp
+@@ -438,7 +438,7 @@ void DeviceHandler::HandleUevent(const Uevent& uevent) {
+                    std::find(subsystems_.cbegin(), subsystems_.cend(), uevent.subsystem);
+                subsystem != subsystems_.cend()) {
+         devpath = subsystem->ParseDevPath(uevent);
+-    } else if (uevent.subsystem == "usb") {
++    } else if (uevent.subsystem == "usb" || uevent.subsystem == "usbmisc") {
+         if (!uevent.device_name.empty()) {
+             devpath = "/dev/" + uevent.device_name;
+         } else {
+-- 
+2.21.0
+

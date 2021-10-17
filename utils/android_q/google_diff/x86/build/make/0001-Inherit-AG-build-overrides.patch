@@ -1,0 +1,25 @@
+From 7111843dcbde13e4311fbe9d4d2ef446aaca5deb Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 28 Oct 2020 19:19:42 -0400
+Subject: [PATCH] Inherit AG build overrides.
+
+Change-Id: Ib2fb218f02e1221db781bce8429bd95214397a8c
+---
+ core/main.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/core/main.mk b/core/main.mk
+index d3074456c..d855f71c0 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -385,6 +385,7 @@ ADDITIONAL_BUILD_PROPERTIES += net.bt.name=Android
+ # ------------------------------------------------------------
+ # Define a function that, given a list of module tags, returns
+ # non-empty if that module should be installed in /system.
++-include vendor/android-generic/build/core/main.mk
+ 
+ # For most goals, anything not tagged with the "tests" tag should
+ # be installed in /system.
+-- 
+2.17.1
+

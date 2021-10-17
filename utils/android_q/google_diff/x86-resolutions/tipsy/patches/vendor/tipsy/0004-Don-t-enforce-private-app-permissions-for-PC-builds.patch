@@ -1,0 +1,27 @@
+From 22caf46f0d32fc1fad8b5ca77dd42cd2e106b340 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 19 Jun 2020 16:45:10 -0400
+Subject: [PATCH 2/3] Don't enforce private app permissions for PC builds
+
+---
+ config/common.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/config/common.mk b/config/common.mk
+index 54a9aab9..644ee28f 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -63,8 +63,8 @@ PRODUCT_COPY_FILES += \
+     vendor/tipsy/sounds/BatteryPlugged_48k.ogg:$(TARGET_COPY_OUT_SYSTEM)/media/audio/ui/BatteryPlugged_48k.ogg
+ 
+ # Enforce privapp-permissions whitelist
+-PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+-    ro.control_privapp_permissions=enforce
++# PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
++#     ro.control_privapp_permissions=enforce
+ 
+ # Additional packages
+ -include vendor/tipsy/config/packages.mk
+-- 
+2.17.1
+

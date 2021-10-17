@@ -1,0 +1,40 @@
+From 39f829b47ec4f0718086043c69360b99ba588270 Mon Sep 17 00:00:00 2001
+From: Byron Gardner <byron.gardner@intel.com>
+Date: Mon, 3 Nov 2014 15:54:28 -0800
+Subject: [PATCH 04/16] Enable 64-bit support in libs/gui/Sensor.cpp
+
+Change-Id: Iaaa112bd821a6a0e3234461df8f7b6acc47b254e
+Orig-Change-Id: I04c22e6f2c6f4271ca451b775c8d7f86e4c97c38
+Tracked-On: https://jira01.devtools.intel.com/browse/IMINAN-9998
+Category: aosp improvement
+Domain: SENSORS.VIRT-Common
+Origin: internal
+Upstream-Candidate: yes
+Signed-off-by: Byron Gardner <byron.gardner@intel.com>
+Reviewed-on: https://android.intel.com:443/296325
+---
+ libs/sensor/Sensor.cpp | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/libs/sensor/Sensor.cpp b/libs/sensor/Sensor.cpp
+index 139987e6a..e302cf1ea 100644
+--- a/libs/sensor/Sensor.cpp
++++ b/libs/sensor/Sensor.cpp
+@@ -477,10 +477,10 @@ size_t Sensor::getFlattenedSize() const {
+             sizeof(mRequiredAppOp) + sizeof(mMaxDelay) + sizeof(mFlags) + sizeof(mUuid);
+ 
+     size_t variableSize =
+-            sizeof(uint32_t) + FlattenableUtils::align<4>(mName.length()) +
+-            sizeof(uint32_t) + FlattenableUtils::align<4>(mVendor.length()) +
+-            sizeof(uint32_t) + FlattenableUtils::align<4>(mStringType.length()) +
+-            sizeof(uint32_t) + FlattenableUtils::align<4>(mRequiredPermission.length());
++            sizeof(size_t) + FlattenableUtils::align<sizeof(size_t)>(mName.length()) +
++            sizeof(size_t) + FlattenableUtils::align<sizeof(size_t)>(mVendor.length()) +
++            sizeof(size_t) + FlattenableUtils::align<sizeof(size_t)>(mStringType.length()) +
++            sizeof(size_t) + FlattenableUtils::align<sizeof(size_t)>(mRequiredPermission.length());
+ 
+     return fixedSize + variableSize;
+ }
+-- 
+2.21.0
+

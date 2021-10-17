@@ -1,0 +1,26 @@
+From 6ba26f6bc0e03b6f687a7b22dde3d3f2c37ee325 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 17 Sep 2020 16:25:03 -0400
+Subject: [PATCH 4/6] Remove included BoardConfigKernel
+
+Change-Id: I903e086551277dde2c923b6b115f49b313dc35d9
+---
+ config/BoardConfigBliss.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/config/BoardConfigBliss.mk b/config/BoardConfigBliss.mk
+index 18b0cc3e..a1ef162a 100644
+--- a/config/BoardConfigBliss.mk
++++ b/config/BoardConfigBliss.mk
+@@ -3,7 +3,7 @@ ifeq ($(WITH_BLISS_CHARGER),true)
+     BOARD_HAL_STATIC_LIBRARIES := libhealthd.bliss
+ endif
+ 
+-include vendor/bliss/config/BoardConfigKernel.mk
++#~ include vendor/bliss/config/BoardConfigKernel.mk
+ 
+ ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+ include vendor/bliss/config/BoardConfigQcom.mk
+-- 
+2.17.1
+

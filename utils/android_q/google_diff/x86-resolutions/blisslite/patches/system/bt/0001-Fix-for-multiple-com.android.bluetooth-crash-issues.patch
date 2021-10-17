@@ -1,0 +1,130 @@
+From fdecede1eb5fecb82e20664bfa0cca6e1c375df2 Mon Sep 17 00:00:00 2001
+From: Gaganpreet kaur <gaganpreetx.kaur@intel.com>
+Date: Wed, 24 Apr 2019 16:39:07 +0530
+Subject: [PATCH] Fix for multiple com.android.bluetooth crash issues.
+
+Issue 1: com.android.bluetooth crash was seen due to invalid/
+out of bound index while creating Listening Channel for AVRCP.
+
+Reason: AVRCP creates the listening channel using
+bta_av_rc_create, this function expects RC Channel Handle to be
+passed as it will fetch the index for RC handle using
+tBTA_AV_SCB* p_scb = p_cb->p_scb[shdl - 1];
+
+But we are passing 0 i.e. index for RC handle directly. Due to
+which above statement will throw exception for out of bound
+index and crash is observed.
+
+Fix: Updated the bta_av_rc_create calls with RC handle value
+instead of index.
+
+Issue 2: com.android.bluetooth crash was seen due to failed
+check for parameter length for vendor capabilities as:
+CHECK(p_vcs_cplt_params->param_len >
+                         BTM_VSC_CHIP_CAPABILITY_RSP_LEN)
+
+Reason: We always receive param_len for vendor capabilities as
+9. Also BTM_VSC_CHIP_CAPABILITY_RSP_LEN is defined as 9. But as
+per the check param_len is expected to be greater than 9. As the
+check fails, exception is seen and crash is observed.
+
+Fix: Changed the CHECK on param_len for Vendor Capabilities as:
+CHECK(p_vcs_cplt_params->param_len >=
+                         BTM_VSC_CHIP_CAPABILITY_RSP_LEN)
+
+Change-Id: Ic11c58e8193c0d8252e569fee2bc99d30abb7aae
+Tracked-On:
+Signed-off-by: Gaganpreet kaur <gaganpreetx.kaur@intel.com>
+---
+ bta/av/bta_av_act.cc     |  6 +++---
+ bta/av/bta_av_main.cc    |  4 ++--
+ stack/btm/btm_ble_gap.cc | 20 +++++++++++---------
+ 3 files changed, 16 insertions(+), 14 deletions(-)
+
+diff --git a/bta/av/bta_av_act.cc b/bta/av/bta_av_act.cc
+index a7278420a..62ff8b23f 100644
+--- a/bta/av/bta_av_act.cc
++++ b/bta/av/bta_av_act.cc
+@@ -1254,7 +1254,7 @@ void bta_av_conn_chg(tBTA_AV_DATA* p_data) {
+     /* if the AVRCP is no longer listening, create the listening channel */
+     if (bta_av_cb.rc_acp_handle == BTA_AV_RC_HANDLE_NONE &&
+         bta_av_cb.features & BTA_AV_FEAT_RCTG)
+-      bta_av_rc_create(&bta_av_cb, AVCT_ACP, 0, BTA_AV_NUM_LINKS + 1);
++      bta_av_rc_create(&bta_av_cb, AVCT_ACP, 1, BTA_AV_NUM_LINKS + 1);
+   }
+ 
+   APPL_TRACE_DEBUG(
+@@ -1435,7 +1435,7 @@ void bta_av_sig_chg(tBTA_AV_DATA* p_data) {
+       p_lcb->conn_msk = 0; /* clear the connect mask */
+       /* start listening when the signal channel is open */
+       if (p_cb->features & BTA_AV_FEAT_RCTG) {
+-        bta_av_rc_create(p_cb, AVCT_ACP, 0, p_lcb->lidx);
++        bta_av_rc_create(p_cb, AVCT_ACP, 1, p_lcb->lidx);
+       }
+       /* this entry is not used yet. */
+       p_cb->conn_lcb |= mask; /* mark it as used */
+@@ -1969,7 +1969,7 @@ void bta_av_rc_closed(tBTA_AV_DATA* p_data) {
+   (*p_cb->p_cback)(BTA_AV_RC_CLOSE_EVT, &bta_av_data);
+   if (bta_av_cb.rc_acp_handle == BTA_AV_RC_HANDLE_NONE
+                   && bta_av_cb.features & BTA_AV_FEAT_RCTG)
+-      bta_av_rc_create(&bta_av_cb, AVCT_ACP, 0, BTA_AV_NUM_LINKS + 1);
++      bta_av_rc_create(&bta_av_cb, AVCT_ACP, 1, BTA_AV_NUM_LINKS + 1);
+ }
+ 
+ /*******************************************************************************
+diff --git a/bta/av/bta_av_main.cc b/bta/av/bta_av_main.cc
+index bdd8a70fa..f7df7d368 100644
+--- a/bta/av/bta_av_main.cc
++++ b/bta/av/bta_av_main.cc
+@@ -679,7 +679,7 @@ static void bta_av_api_register(tBTA_AV_DATA* p_data) {
+       }
+       /* start listening when A2DP is registered */
+       if (bta_av_cb.features & BTA_AV_FEAT_RCTG)
+-        bta_av_rc_create(&bta_av_cb, AVCT_ACP, 0, BTA_AV_NUM_LINKS + 1);
++        bta_av_rc_create(&bta_av_cb, AVCT_ACP, 1, BTA_AV_NUM_LINKS + 1);
+ 
+       /* if the AV and AVK are both supported, it cannot support the CT role
+        */
+@@ -696,7 +696,7 @@ static void bta_av_api_register(tBTA_AV_DATA* p_data) {
+                           BTA_ID_AV);
+ #endif
+ #endif
+-          bta_av_rc_create(&bta_av_cb, AVCT_ACP, 0, BTA_AV_NUM_LINKS + 1);
++          bta_av_rc_create(&bta_av_cb, AVCT_ACP, 1, BTA_AV_NUM_LINKS + 1);
+         }
+ #if (BTA_AR_INCLUDED == TRUE)
+         /* create an SDP record as AVRC CT. We create 1.3 for SOURCE
+diff --git a/stack/btm/btm_ble_gap.cc b/stack/btm/btm_ble_gap.cc
+index 7f94bb8cb..a1dcf08a6 100644
+--- a/stack/btm/btm_ble_gap.cc
++++ b/stack/btm/btm_ble_gap.cc
+@@ -498,15 +498,17 @@ static void btm_ble_vendor_capability_vsc_cmpl_cback(
+     BTM_TRACE_DEBUG("%s: Status = 0x%02x (0 is success)", __func__, status);
+     return;
+   }
+-  CHECK(p_vcs_cplt_params->param_len >= BTM_VSC_CHIP_CAPABILITY_RSP_LEN);
+-  STREAM_TO_UINT8(btm_cb.cmn_ble_vsc_cb.adv_inst_max, p);
+-  STREAM_TO_UINT8(btm_cb.cmn_ble_vsc_cb.rpa_offloading, p);
+-  STREAM_TO_UINT16(btm_cb.cmn_ble_vsc_cb.tot_scan_results_strg, p);
+-  STREAM_TO_UINT8(btm_cb.cmn_ble_vsc_cb.max_irk_list_sz, p);
+-  STREAM_TO_UINT8(btm_cb.cmn_ble_vsc_cb.filter_support, p);
+-  STREAM_TO_UINT8(btm_cb.cmn_ble_vsc_cb.max_filter, p);
+-  STREAM_TO_UINT8(btm_cb.cmn_ble_vsc_cb.energy_support, p);
+-
++  if (p_vcs_cplt_params->param_len >= BTM_VSC_CHIP_CAPABILITY_RSP_LEN) { 
++	  CHECK(p_vcs_cplt_params->param_len >= BTM_VSC_CHIP_CAPABILITY_RSP_LEN);
++	  STREAM_TO_UINT8(btm_cb.cmn_ble_vsc_cb.adv_inst_max, p);
++	  STREAM_TO_UINT8(btm_cb.cmn_ble_vsc_cb.rpa_offloading, p);
++	  STREAM_TO_UINT16(btm_cb.cmn_ble_vsc_cb.tot_scan_results_strg, p);
++	  STREAM_TO_UINT8(btm_cb.cmn_ble_vsc_cb.max_irk_list_sz, p);
++	  STREAM_TO_UINT8(btm_cb.cmn_ble_vsc_cb.filter_support, p);
++	  STREAM_TO_UINT8(btm_cb.cmn_ble_vsc_cb.max_filter, p);
++	  STREAM_TO_UINT8(btm_cb.cmn_ble_vsc_cb.energy_support, p);
++  }
++  
+   if (p_vcs_cplt_params->param_len >
+       BTM_VSC_CHIP_CAPABILITY_RSP_LEN_L_RELEASE) {
+     STREAM_TO_UINT16(btm_cb.cmn_ble_vsc_cb.version_supported, p);
+-- 
+2.17.1
+

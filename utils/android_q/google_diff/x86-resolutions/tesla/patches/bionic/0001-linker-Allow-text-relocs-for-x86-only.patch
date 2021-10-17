@@ -1,0 +1,44 @@
+From 40d1c43a5eabf4507d4deac457904f551d440c50 Mon Sep 17 00:00:00 2001
+From: "Christopher R. Palmer" <crpalmer@gmail.com>
+Date: Sun, 7 Feb 2016 06:46:05 -0500
+Subject: [PATCH] linker: Allow text-relocs for x86 (only)
+
+This effectively reverts
+
+https://android.googlesource.com/platform/bionic/+/e4ad91f86a47b39612e030a162f4793cb3421d31%5E%21/#F0
+
+for x86 platforms.  Unfortunately, this seems like it is required
+if we are going to support ffmpeg.  The ffmpeg team decreed that they
+require text relocations for x86 (only) and that they would not
+fix the fact that android 6.0 makes ffmpeg unusable on x86:
+
+https://trac.ffmpeg.org/ticket/4928
+
+Change-Id: I68397f4d62f4f6acd8e0d41b7ecdc115969b890a
+---
+ linker/linker.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/linker/linker.cpp b/linker/linker.cpp
+index 6f4f4326a..8a36e6ec9 100644
+--- a/linker/linker.cpp
++++ b/linker/linker.cpp
+@@ -3962,6 +3962,7 @@ bool soinfo::link_image(const soinfo_list_t& global_group, const soinfo_list_t&
+ 
+ #if !defined(__LP64__)
+   if (has_text_relocations) {
++#if !defined(__i386__) // ffmpeg says that they require text relocations on x86
+     // Fail if app is targeting M or above.
+     int app_target_api_level = get_application_target_sdk_version();
+ #if defined(TARGET_NEEDS_PLATFORM_TEXT_RELOCATIONS)
+@@ -3975,6 +3976,7 @@ bool soinfo::link_image(const soinfo_list_t& global_group, const soinfo_list_t&
+                      "Enforced-for-API-level-23)", get_realpath());
+       return false;
+     }
++#endif
+     // Make segments writable to allow text relocations to work properly. We will later call
+     // phdr_table_protect_segments() after all of them are applied.
+     DL_WARN_documented_change(__ANDROID_API_M__,
+-- 
+2.17.1
+

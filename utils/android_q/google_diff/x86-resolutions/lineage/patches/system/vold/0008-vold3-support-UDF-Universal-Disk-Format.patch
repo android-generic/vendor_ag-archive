@@ -1,0 +1,105 @@
+From d15d926ee620c258af2b616002500670e4146127 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sun, 26 Mar 2017 00:46:42 +0800
+Subject: [PATCH] vold3: support UDF (Universal Disk Format)
+
+Refer to https://en.wikipedia.org/wiki/Universal_Disk_Format.
+---
+ fs/Iso9660.cpp         | 10 ++--------
+ fs/Iso9660.h           |  2 +-
+ model/Disk.cpp         |  5 +++--
+ model/PublicVolume.cpp |  7 ++++---
+ 4 files changed, 10 insertions(+), 14 deletions(-)
+
+diff --git a/fs/Iso9660.cpp b/fs/Iso9660.cpp
+index 3bbfaee..a9e3e6f 100644
+--- a/fs/Iso9660.cpp
++++ b/fs/Iso9660.cpp
+@@ -29,8 +29,7 @@ bool IsSupported() {
+ }
+ 
+ status_t Mount(const std::string& source, const std::string& target,
+-        int ownerUid, int ownerGid ) {
+-    int rc;
++        int ownerUid, int ownerGid, const char* type) {
+     unsigned long flags;
+     char mountData[256];
+ 
+@@ -42,12 +41,7 @@ status_t Mount(const std::string& source, const std::string& target,
+     snprintf(mountData, sizeof(mountData),
+             "utf8,uid=%d,gid=%d", ownerUid, ownerGid);
+ 
+-    rc = mount(c_source, c_target, "iso9660", flags, mountData);
+-    if (rc != 0) {
+-        rc = mount(c_source, c_target, "udf", flags, mountData);
+-    }
+-
+-    return rc;
++    return mount(c_source, c_target, type, flags, mountData);
+ }
+ 
+ }  // namespace iso9660
+diff --git a/fs/Iso9660.h b/fs/Iso9660.h
+index 3bd57bc..1d730a6 100644
+--- a/fs/Iso9660.h
++++ b/fs/Iso9660.h
+@@ -25,7 +25,7 @@ namespace iso9660 {
+ 
+ bool IsSupported();
+ status_t Mount(const std::string& source, const std::string& target,
+-        int ownerUid, int ownerGid );
++        int ownerUid, int ownerGid, const char* type);
+ 
+ }  // namespace iso9660
+ }  // namespace vold
+diff --git a/model/Disk.cpp b/model/Disk.cpp
+index 30c5bd1..6a09faa 100644
+--- a/model/Disk.cpp
++++ b/model/Disk.cpp
+@@ -363,8 +363,8 @@ status_t Disk::readPartitions() {
+ 
+         std::string fsType, unused;
+         if (ReadMetadataUntrusted(mDevPath, &fsType, &unused, &unused) == OK) {
+-            if (fsType == "iso9660") {
+-                LOG(INFO) << "Detect iso9660";
++            if (fsType == "iso9660" || fsType == "udf") {
++                LOG(INFO) << "Detect " << fsType;
+                 createPublicVolume(mDevice);
+                 res = OK;
+             }
+@@ -414,6 +414,7 @@ status_t Disk::readPartitions() {
+                 }
+ 
+                 switch (type) {
++                    case 0x00: // ISO9660
+                     case 0x06:  // FAT16
+                     case 0x07:  // HPFS/NTFS/exFAT
+                     case 0x0b:  // W95 FAT32 (LBA)
+diff --git a/model/PublicVolume.cpp b/model/PublicVolume.cpp
+index 3039078..30c9596 100644
+--- a/model/PublicVolume.cpp
++++ b/model/PublicVolume.cpp
+@@ -63,7 +63,7 @@ status_t PublicVolume::readMetadata() {
+     status_t res = ReadMetadataUntrusted(mDevPath, &mFsType, &mFsUuid, &mFsLabel);
+ 
+     // iso9660 has no UUID, we use label as UUID
+-    if (mFsType == "iso9660" && mFsUuid.empty() && !mFsLabel.empty()) {
++    if ((mFsType == "iso9660" || mFsType == "udf") && mFsUuid.empty() && !mFsLabel.empty()) {
+         std::replace(mFsLabel.begin(), mFsLabel.end(), ' ', '_');
+         mFsUuid = mFsLabel;
+     }
+@@ -149,8 +149,9 @@ status_t PublicVolume::doMount() {
+         ret = ntfs::Check(mDevPath);
+     } else if (mFsType == "vfat") {
+         ret = vfat::Check(mDevPath);
+-    } else if (mFsType != "iso9660") {
+-        LOG(WARNING) << getId() << " unsupported filesystem check, skipping";
++    } else if (mFsType != "iso9660" && mFsType != "udf") {
++        ret = iso9660::Mount(mDevPath, mRawPath,
++				AID_MEDIA_RW, AID_MEDIA_RW, mFsType.c_str());
+     }
+     if (ret) {
+         LOG(ERROR) << getId() << " failed filesystem check";
+-- 
+2.17.1
+

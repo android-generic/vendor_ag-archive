@@ -1,0 +1,31 @@
+From b062237ff2ca7c36abd6228abb1d5a8d52324292 Mon Sep 17 00:00:00 2001
+From: Jeevaka Prabu Badrappan <jeevaka.badrappan@intel.com>
+Date: Thu, 21 Mar 2019 14:22:47 +0530
+Subject: [PATCH] Remove ftp and pptp filter causing hotspot enablement issues
+
+Change-Id: I2862fe65d3bacc99c21378fdc3035141e0de6de9
+Tracked-On: https://jira.devtools.intel.com/browse/OAM-77808
+Signed-off-by: Jeevaka Prabu Badrappan <jeevaka.badrappan@intel.com>
+
+diff --git a/server/TetherController.cpp b/server/TetherController.cpp
+index 0c5b6bfe..e9445c82 100644
+--- a/server/TetherController.cpp
++++ b/server/TetherController.cpp
+@@ -701,12 +701,14 @@ int TetherController::setForwardRules(bool add, const char *intIface, const char
+     }
+ 
+     std::vector<std::string> v4 = {
++#ifndef IGNORES_FTP_PPTP_CONNTRACK_FAILURE
+             "*raw",
+             StringPrintf("%s %s -p tcp --dport 21 -i %s -j CT --helper ftp", op,
+                          LOCAL_RAW_PREROUTING, intIface),
+             StringPrintf("%s %s -p tcp --dport 1723 -i %s -j CT --helper pptp", op,
+                          LOCAL_RAW_PREROUTING, intIface),
+             "COMMIT",
++#endif
+             "*filter",
+             StringPrintf("%s %s -i %s -o %s -m state --state ESTABLISHED,RELATED -g %s", op,
+                          LOCAL_FORWARD, extIface, intIface, LOCAL_TETHER_COUNTERS_CHAIN),
+-- 
+2.17.1
+

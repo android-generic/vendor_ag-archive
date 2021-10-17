@@ -1,0 +1,37 @@
+From cace9490eb4d648aafab1c372ada4d08c53b6537 Mon Sep 17 00:00:00 2001
+From: Han Wang <416810799@qq.com>
+Date: Mon, 3 Dec 2018 12:02:45 +0100
+Subject: [PATCH 13/17] Enable dynamic linker warnings only on eng build
+
+ * Users get confused by these
+
+Change-Id: I9582f465091542e68e230282bb8dcfbb5c2ed3ad
+---
+ core/main.mk | 9 ++-------
+ 1 file changed, 2 insertions(+), 7 deletions(-)
+
+diff --git a/core/main.mk b/core/main.mk
+index df5c13cc2a..dc94dd1ff1 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -218,15 +218,10 @@ include build/make/core/pdk_config.mk
+ 
+ #
+ # -----------------------------------------------------------------
+-# Enable dynamic linker warnings for userdebug, eng and non-REL builds
+-ifneq ($(TARGET_BUILD_VARIANT),user)
+-  ADDITIONAL_BUILD_PROPERTIES += ro.bionic.ld.warning=1
+-else
+-# Enable it for user builds as long as they are not final.
+-ifneq ($(PLATFORM_VERSION_CODENAME),REL)
++# Enable dynamic linker warnings for eng builds
++ifeq ($(TARGET_BUILD_VARIANT),eng)
+   ADDITIONAL_BUILD_PROPERTIES += ro.bionic.ld.warning=1
+ endif
+-endif
+ 
+ ADDITIONAL_BUILD_PROPERTIES += ro.treble.enabled=${PRODUCT_FULL_TREBLE}
+ 
+-- 
+2.17.1
+

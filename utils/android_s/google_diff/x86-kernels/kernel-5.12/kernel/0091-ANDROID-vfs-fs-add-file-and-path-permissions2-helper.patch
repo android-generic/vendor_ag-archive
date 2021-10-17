@@ -1,0 +1,74 @@
+From e046698841da468a32a947bc0f36c35890223aa2 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 28 Feb 2021 17:22:45 +0100
+Subject: [PATCH 091/100] ANDROID: vfs: fs: add file and path permissions2
+ helpers
+
+Apply permission2 logic for filesystems with per mount permissions
+to file and path permissions, due to commit
+02f92b3868a1 ("fs: add file and path permissions helpers")
+---
+ fs/open.c          |  6 +++---
+ include/linux/fs.h | 10 ++++++++++
+ 2 files changed, 13 insertions(+), 3 deletions(-)
+
+diff --git a/fs/open.c b/fs/open.c
+index 2cdffb53f5a3..350a124d3201 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -504,7 +504,7 @@ SYSCALL_DEFINE1(chdir, const char __user *, filename)
+ 	if (error)
+ 		goto out;
+ 
+-	error = inode_permission2(path.mnt, path.dentry->d_inode, MAY_EXEC | MAY_CHDIR);
++	error = path_permission2(path.mnt, &path, MAY_EXEC | MAY_CHDIR);
+ 	if (error)
+ 		goto dput_and_out;
+ 
+@@ -533,7 +533,7 @@ SYSCALL_DEFINE1(fchdir, unsigned int, fd)
+ 	if (!d_can_lookup(f.file->f_path.dentry))
+ 		goto out_putf;
+ 
+-	error = inode_permission2(f.file->f_path.mnt, file_inode(f.file),
++	error = file_permission2(f.file->f_path.mnt, f.file,
+ 				MAY_EXEC | MAY_CHDIR);
+ 	if (!error)
+ 		set_fs_pwd(current->fs, &f.file->f_path);
+@@ -553,7 +553,7 @@ SYSCALL_DEFINE1(chroot, const char __user *, filename)
+ 	if (error)
+ 		goto out;
+ 
+-	error = inode_permission2(path.mnt, path.dentry->d_inode, MAY_EXEC | MAY_CHDIR);
++	error = path_permission2(path.mnt, &path, MAY_EXEC | MAY_CHDIR);
+ 	if (error)
+ 		goto dput_and_out;
+ 
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index feb57df1976a..006ca37e5181 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2893,11 +2893,21 @@ static inline int file_permission(struct file *file, int mask)
+ 	return inode_permission(file_mnt_user_ns(file),
+ 				file_inode(file), mask);
+ }
++static inline int file_permission2(struct vfsmount *mnt, struct file *file, int mask)
++{
++	return inode_permission2(mnt, file_mnt_user_ns(file),
++				file_inode(file), mask);
++}
+ static inline int path_permission(const struct path *path, int mask)
+ {
+ 	return inode_permission(mnt_user_ns(path->mnt),
+ 				d_inode(path->dentry), mask);
+ }
++static inline int path_permission2(struct vfsmount *mnt, const struct path *path, int mask)
++{
++	return inode_permission2(mnt, mnt_user_ns(path->mnt),
++				d_inode(path->dentry), mask);
++}
+ int __check_sticky(struct user_namespace *mnt_userns, struct inode *dir,
+ 		   struct inode *inode);
+ 
+-- 
+2.17.1
+

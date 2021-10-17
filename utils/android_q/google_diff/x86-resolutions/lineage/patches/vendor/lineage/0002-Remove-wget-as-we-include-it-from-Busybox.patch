@@ -1,0 +1,37 @@
+From bdcc3d3d2a7d03534b22f490b6823dad65600302 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 26 Aug 2020 19:36:38 -0400
+Subject: [PATCH 2/5] Remove wget as we include it from Busybox
+
+---
+ prebuilt/common/Android.mk | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/prebuilt/common/Android.mk b/prebuilt/common/Android.mk
+index da16a5ad..0fc7e56c 100644
+--- a/prebuilt/common/Android.mk
++++ b/prebuilt/common/Android.mk
+@@ -1,13 +1,13 @@
+ LOCAL_PATH := $(call my-dir)
+ 
+ # a wrapper for curl which provides wget syntax, for compatibility
+-include $(CLEAR_VARS)
+-LOCAL_MODULE := wget
+-LOCAL_SRC_FILES := bin/wget
+-LOCAL_MODULE_TAGS := optional
+-LOCAL_MODULE_CLASS := EXECUTABLES
+-LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
+-include $(BUILD_PREBUILT)
++#~ include $(CLEAR_VARS)
++#~ LOCAL_MODULE := wget
++#~ LOCAL_SRC_FILES := bin/wget
++#~ LOCAL_MODULE_TAGS := optional
++#~ LOCAL_MODULE_CLASS := EXECUTABLES
++#~ LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
++#~ include $(BUILD_PREBUILT)
+ 
+ ################################
+ # Copies the APN list file into $(TARGET_COPY_OUT_PRODUCT)/etc for the product as apns-conf.xml.
+-- 
+2.17.1
+

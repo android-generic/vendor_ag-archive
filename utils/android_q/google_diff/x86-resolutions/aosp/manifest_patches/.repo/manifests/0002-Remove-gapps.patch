@@ -1,0 +1,27 @@
+From 1d2f6dd1142d40034f8e1641579bacf375f34e90 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 15 Aug 2020 13:11:08 -0400
+Subject: [PATCH 2/2] Remove gapps
+
+Change-Id: Ibc5a154aca4fe3f7cdaf714c2dddfb01442d50a5
+---
+ snippets/pixel.xml | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/snippets/pixel.xml b/snippets/pixel.xml
+index 9462ba5..d0c6858 100644
+--- a/snippets/pixel.xml
++++ b/snippets/pixel.xml
+@@ -100,7 +100,9 @@
+   <project path="manifest" name="manifest" remote="pixel" />
+   <project path="platform_testing" name="platform_testing" remote="pixel" />
+   <project path="vendor/aosp" name="vendor_aosp" remote="pixel" />
++<!--
+   <project path="vendor/gapps" name="vendor_gapps" remote="pixel-gitlab" clone-depth="1" />
++-->
+   <project path="vendor/pixelstyle" name="vendor_pixelstyle" remote="pixel" />
+   <project path="vendor/google-customization" name="vendor_google-customization" remote="pixel" />
+ 
+-- 
+2.17.1
+

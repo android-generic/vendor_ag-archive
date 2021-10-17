@@ -1,0 +1,49 @@
+From f0768fb8aefe161150a75d12fa14c4528a975fd5 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Sun, 13 Sep 2020 20:38:17 -0400
+Subject: [PATCH 02/36] Switch to modules.blocklist
+
+---
+ device.mk         | 2 +-
+ modules.blacklist | 4 ----
+ modules.blocklist | 4 ++++
+ 3 files changed, 5 insertions(+), 5 deletions(-)
+ delete mode 100644 modules.blacklist
+ create mode 100644 modules.blocklist
+
+diff --git a/device.mk b/device.mk
+index 7f69fc5..efdc980 100644
+--- a/device.mk
++++ b/device.mk
+@@ -35,7 +35,7 @@ PRODUCT_DEFAULT_PROPERTY_OVERRIDES := \
+ PRODUCT_COPY_FILES := \
+     $(if $(wildcard $(PRODUCT_DIR)init.rc),$(PRODUCT_DIR)init.rc:root/init.rc) \
+     $(if $(wildcard $(PRODUCT_DIR)init.sh),$(PRODUCT_DIR),$(LOCAL_PATH)/)init.sh:system/etc/init.sh \
+-    $(if $(wildcard $(PRODUCT_DIR)modules.blacklist),$(PRODUCT_DIR),$(LOCAL_PATH)/)modules.blacklist:system/etc/modules.blacklist \
++    $(if $(wildcard $(PRODUCT_DIR)modules.blocklist),$(PRODUCT_DIR),$(LOCAL_PATH)/)modules.blocklist:system/etc/modules.blocklist \
+     $(if $(wildcard $(PRODUCT_DIR)fstab.$(TARGET_PRODUCT)),$(PRODUCT_DIR)fstab.$(TARGET_PRODUCT),$(LOCAL_PATH)/fstab.x86):root/fstab.$(TARGET_PRODUCT) \
+     $(if $(wildcard $(PRODUCT_DIR)wpa_supplicant.conf),$(PRODUCT_DIR),$(LOCAL_PATH)/)wpa_supplicant.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant.conf \
+     $(if $(wildcard $(PRODUCT_DIR)wpa_supplicant_overlay.conf),$(PRODUCT_DIR),$(LOCAL_PATH)/)wpa_supplicant_overlay.conf:$(TARGET_COPY_OUT_VENDOR)/etc/wifi/wpa_supplicant_overlay.conf \
+diff --git a/modules.blacklist b/modules.blacklist
+deleted file mode 100644
+index 44987ab..0000000
+--- a/modules.blacklist
++++ /dev/null
+@@ -1,4 +0,0 @@
+-blacklist evbug
+-blacklist nouveau
+-deferred amdgpu
+-deferred radeon
+diff --git a/modules.blocklist b/modules.blocklist
+new file mode 100644
+index 0000000..6781481
+--- /dev/null
++++ b/modules.blocklist
+@@ -0,0 +1,4 @@
++blocklist evbug
++blocklist nouveau
++deferred amdgpu
++deferred radeon
+-- 
+2.17.1
+

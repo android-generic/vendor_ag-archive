@@ -1,0 +1,35 @@
+From 6cbb04b1f4c871ad9feda3f4d59a0c7b6571ea2a Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Wed, 13 Sep 2017 00:31:57 +0800
+Subject: [PATCH 16/21] fs_mgr: check ro.* property first
+
+fs_mgr reads default fstab via ro.hardware property before Android 8.0.
+However, Android 8.0 changed it to use ro.boot.hardware. The incompatible
+change is bad.
+
+Android-x86 doesn't set ro.boot.hardware anymore. Let's check ro.*
+properties as before.
+---
+ fs_mgr/fs_mgr_boot_config.cpp | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/fs_mgr/fs_mgr_boot_config.cpp b/fs_mgr/fs_mgr_boot_config.cpp
+index abece4d7e..dd7254f4a 100644
+--- a/fs_mgr/fs_mgr_boot_config.cpp
++++ b/fs_mgr/fs_mgr_boot_config.cpp
+@@ -104,6 +104,12 @@ bool fs_mgr_get_boot_config(const std::string& key, std::string* out_val) {
+         }
+     }
+ 
++    // next check if we have "ro.*" property already
++    *out_val = android::base::GetProperty("ro." + key, "");
++    if (!out_val->empty()) {
++        return true;
++    }
++
+     // next, check if we have "ro.boot" property already
+     *out_val = android::base::GetProperty("ro.boot." + key, "");
+     if (!out_val->empty()) {
+-- 
+2.21.0
+

@@ -1,0 +1,56 @@
+From ef8c08f3028f53f8ef03c9d6c35090a309f8fa09 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 28 Jul 2017 19:44:57 +0800
+Subject: [PATCH 12/16] RenderEngine: support non-RGBA_8888 format
+
+Some of our GPUs (e.g., radeon) don't support RGBA_8888 well.
+To workaround it, just get the EGL config by a simpler query.
+
+This patch should be reverted once all of our GPUs support
+RGBA_8888.
+---
+ libs/renderengine/gl/GLESRenderEngine.cpp | 14 ++++++++++----
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+
+diff --git a/libs/renderengine/gl/GLESRenderEngine.cpp b/libs/renderengine/gl/GLESRenderEngine.cpp
+index 46a8e9eec..6b806864e 100644
+--- a/libs/renderengine/gl/GLESRenderEngine.cpp
++++ b/libs/renderengine/gl/GLESRenderEngine.cpp
+@@ -296,7 +296,7 @@ std::unique_ptr<GLESRenderEngine> GLESRenderEngine::create(int hwcFormat, uint32
+             break;
+     }
+ 
+-    ALOGI("OpenGL ES informations:");
++    ALOGI("OpenGL ES informations: format=0x%x", hwcFormat);
+     ALOGI("vendor    : %s", extensions.getVendor());
+     ALOGI("renderer  : %s", extensions.getRenderer());
+     ALOGI("version   : %s", extensions.getVersion());
+@@ -312,8 +312,14 @@ EGLConfig GLESRenderEngine::chooseEglConfig(EGLDisplay display, int format, bool
+     EGLConfig config;
+ 
+     // First try to get an ES3 config
+-    err = selectEGLConfig(display, format, EGL_OPENGL_ES3_BIT, &config);
+-    if (err != NO_ERROR) {
++    // Only try to get an ES3/ES2 config if format is RGBA_8888
++    if (format != HAL_PIXEL_FORMAT_RGBA_8888) {
++        ALOGI("Trying a simpler query for non-RGBA_8888");
++        err = selectEGLConfig(display, format, 0, &config);
++        if (err != NO_ERROR) {
++            LOG_ALWAYS_FATAL("no suitable EGLConfig found, giving up");
++        }
++    } else if ((err = selectEGLConfig(display, format, EGL_OPENGL_ES3_BIT, &config)) != NO_ERROR) {
+         // If ES3 fails, try to get an ES2 config
+         err = selectEGLConfig(display, format, EGL_OPENGL_ES2_BIT, &config);
+         if (err != NO_ERROR) {
+@@ -335,7 +341,7 @@ EGLConfig GLESRenderEngine::chooseEglConfig(EGLDisplay display, int format, bool
+         eglGetConfigAttrib(display, config, EGL_GREEN_SIZE, &g);
+         eglGetConfigAttrib(display, config, EGL_BLUE_SIZE, &b);
+         eglGetConfigAttrib(display, config, EGL_ALPHA_SIZE, &a);
+-        ALOGI("EGL information:");
++        ALOGI("EGL information: format=0x%x", format);
+         ALOGI("vendor    : %s", eglQueryString(display, EGL_VENDOR));
+         ALOGI("version   : %s", eglQueryString(display, EGL_VERSION));
+         ALOGI("extensions: %s", eglQueryString(display, EGL_EXTENSIONS));
+-- 
+2.21.0
+

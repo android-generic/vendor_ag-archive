@@ -1,0 +1,45 @@
+From f2ff8a1f52c990f5de2ff07c354ac1a578e1ca43 Mon Sep 17 00:00:00 2001
+From: Yi Yao <yi.yao@intel.com>
+Date: Wed, 29 May 2019 14:50:59 +0800
+Subject: [PATCH] enable ATOMIC_WRITE
+
+it will greately improve database I/O performance.
+
+Change-Id: I32132fe6a56bf8ffeeda4cbd23666736b16d62e0
+Tracked-On:
+Signed-off-by: Yi Yao <yi.yao@intel.com>
+---
+ dist/Android.bp | 1 +
+ dist/sqlite3.c  | 4 ++++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/dist/Android.bp b/dist/Android.bp
+index 54cd389..868f209 100644
+--- a/dist/Android.bp
++++ b/dist/Android.bp
+@@ -30,6 +30,7 @@ cc_defaults {
+         "-DSQLITE_ENABLE_MEMORY_MANAGEMENT=1",
+         "-DSQLITE_ENABLE_FTS3",
+         "-DSQLITE_ENABLE_FTS3_BACKWARDS",
++        "-DSQLITE_ENABLE_ATOMIC_WRITE",
+         "-DSQLITE_ENABLE_FTS4",
+         "-DSQLITE_OMIT_BUILTIN_TEST",
+         "-DSQLITE_OMIT_COMPILEOPTION_DIAGS",
+diff --git a/dist/sqlite3.c b/dist/sqlite3.c
+index bcaaf16..b06b6b1 100644
+--- a/dist/sqlite3.c
++++ b/dist/sqlite3.c
+@@ -34806,7 +34806,11 @@ static int unixSectorSize(sqlite3_file *id){
+ static int unixDeviceCharacteristics(sqlite3_file *id){
+   unixFile *pFd = (unixFile*)id;
+   setDeviceCharacteristics(pFd);
++#ifdef SQLITE_ENABLE_ATOMIC_WRITE
++  return pFd->deviceCharacteristics | SQLITE_IOCAP_ATOMIC4K;
++#else
+   return pFd->deviceCharacteristics;
++#endif
+ }
+
+ #if !defined(SQLITE_OMIT_WAL) || SQLITE_MAX_MMAP_SIZE>0
+--
+2.21.0

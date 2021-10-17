@@ -1,0 +1,53 @@
+From b8ba877b4a350d4e2b9c47e89a55277d46e526df Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Mon, 10 May 2021 11:07:11 -0400
+Subject: [PATCH 11/11] Fix changelog generation for Android-x86
+
+---
+ Android.mk      | 2 +-
+ tools/changelog | 7 +++----
+ 2 files changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index 491f48a0..42892541 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -105,7 +105,7 @@ ISO_IMAGE := $(PRODUCT_OUT)/$(ROM_VENDOR_VERSION)_k-$(KRNL)_m-$(MSA).iso
+ ISOHYBRID := LD_LIBRARY_PATH=$(LOCAL_PATH)/install/lib external/syslinux/bios/utils/isohybrid
+ $(ISO_IMAGE): $(boot_dir) $(BUILT_IMG)
+ 	# Generate Changelog
+-	$(hide) ./bootable/newinstaller/tools/changelog
++	bash bootable/newinstaller/tools/changelog
+ 	$(hide) mv Changelog.txt $(PRODUCT_OUT)/Changelog-$(BUILD_NAME_VARIANT).txt
+ 	@echo ----- Making iso image ------
+ 	$(hide) sed -i "s|\(Installation CD\)\(.*\)|\1 $(VER)|; s|CMDLINE|$(BOARD_KERNEL_CMDLINE)|" $</isolinux/isolinux.cfg
+diff --git a/tools/changelog b/tools/changelog
+index b3994b68..3ac87e40 100755
+--- a/tools/changelog
++++ b/tools/changelog
+@@ -1,6 +1,6 @@
+ #!/bin/sh
+ 
+-BUILD_TOP := $(shell pwd)
++BUILD_TOP="$ANDROID_BUILD_TOP"
+ echo $BUILD_TOP
+ Changelog=Changelog.txt
+ 
+@@ -15,12 +15,11 @@ touch $Changelog
+ 
+ # Print something to build output
+ echo ${bldppl}"Generating changelog..."${txtrst}
+-
+ for i in $(seq 30);
+ do
+-export After_Date=`date --date="$i days ago" +%m-%d-%Y`
++export After_Date=`/bin/date --date="$i days ago" +%F`
+ k=$(expr $i - 1)
+-	export Until_Date=`date --date="$k days ago" +%m-%d-%Y`
++	export Until_Date=`/bin/date --date="$k days ago" +%F`
+ 
+ 	# Line with after --- until was too long for a small ListView
+ 	echo '====================' >> $Changelog;
+-- 
+2.17.1
+

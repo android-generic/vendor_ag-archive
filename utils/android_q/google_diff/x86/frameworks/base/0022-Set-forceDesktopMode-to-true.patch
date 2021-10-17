@@ -1,0 +1,27 @@
+From d289c13c2da8e4d57041d5fdff83f928ad9ceaeb Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 29 Nov 2019 19:46:31 +0800
+Subject: [PATCH 22/30] Set forceDesktopMode to true
+
+---
+ services/core/java/com/android/server/wm/DisplayRotation.java | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/wm/DisplayRotation.java b/services/core/java/com/android/server/wm/DisplayRotation.java
+index d3207727eccf..a856623ac062 100644
+--- a/services/core/java/com/android/server/wm/DisplayRotation.java
++++ b/services/core/java/com/android/server/wm/DisplayRotation.java
+@@ -300,8 +300,8 @@ public class DisplayRotation {
+         // It's also not likely to rotate a TV screen.
+         final boolean isTv = mContext.getPackageManager().hasSystemFeature(
+                 PackageManager.FEATURE_LEANBACK);
+-        final boolean forceDesktopMode =
+-                mService.mForceDesktopModeOnExternalDisplays && !isDefaultDisplay;
++        final boolean forceDesktopMode = true;
++                // mService.mForceDesktopModeOnExternalDisplays && !isDefaultDisplay;
+         mDefaultFixedToUserRotation =
+                 (isCar || isTv || mService.mIsPc || forceDesktopMode)
+                 // For debug purposes the next line turns this feature off with:
+-- 
+2.17.1
+

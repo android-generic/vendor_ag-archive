@@ -1,0 +1,31 @@
+From 4f73137e774d4704dcdefd58b461418f8c375b13 Mon Sep 17 00:00:00 2001
+From: Chirayu Desai <cdesai@cyanogenmod.org>
+Date: Tue, 19 Mar 2013 17:50:37 +0530
+Subject: [PATCH 04/17] envsetup: export ANDROID_BUILD_TOP earlier
+
+Change-Id: Ia3497f61f4e9aaeeb793cecd3b4f488f0a48181a
+---
+ envsetup.sh | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/envsetup.sh b/envsetup.sh
+index 9e381a23e3..089e17ff73 100644
+--- a/envsetup.sh
++++ b/envsetup.sh
+@@ -323,7 +323,6 @@ function set_stuff_for_environment()
+     setpaths
+     set_sequence_number
+ 
+-    export ANDROID_BUILD_TOP=$(gettop)
+     # With this environment variable new GCC can apply colors to warnings/errors
+     export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+     export ASAN_OPTIONS=detect_leaks=0
+@@ -1755,3 +1754,5 @@ function source_vendorsetup() {
+ validate_current_shell
+ source_vendorsetup
+ addcompletions
++
++export ANDROID_BUILD_TOP=$(gettop)
+-- 
+2.17.1
+

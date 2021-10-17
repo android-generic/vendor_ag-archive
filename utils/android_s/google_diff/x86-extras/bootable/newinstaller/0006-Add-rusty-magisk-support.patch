@@ -1,0 +1,34 @@
+From 56755c28a607f17200437fc7884601331d93977e Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 30 Apr 2021 22:50:24 -0400
+Subject: [PATCH 06/11] Add rusty-magisk support
+
+---
+ Android.mk | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/Android.mk b/Android.mk
+index bc8fc8f4..491f48a0 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -58,9 +58,17 @@ $(INITRD_RAMDISK): $(initrd_bin) $(systemimg) $(TARGET_INITRD_SCRIPTS) | $(ACP)
+ 
+ INSTALL_RAMDISK := $(PRODUCT_OUT)/install.img
+ INSTALLER_BIN := $(TARGET_INSTALLER_OUT)/sbin/efibootmgr
++
++ifneq ("$(wildcard rusgik/target/x86_64-unknown-linux-musl/release/*)","")
+ $(INSTALL_RAMDISK): $(wildcard $(LOCAL_PATH)/install/*/* $(LOCAL_PATH)/install/*/*/*/*) $(INSTALLER_BIN) | $(MKBOOTFS)
+ 	$(if $(TARGET_INSTALL_SCRIPTS),mkdir -p $(TARGET_INSTALLER_OUT)/scripts; $(ACP) -p $(TARGET_INSTALL_SCRIPTS) $(TARGET_INSTALLER_OUT)/scripts)
+ 	$(MKBOOTFS) $(dir $(dir $(<D))) $(TARGET_INSTALLER_OUT) | gzip -9 > $@
++	mv $(PRODUCT_OUT)/root/init $(PRODUCT_OUT)/root/init.real && cp rusgik/target/x86_64-unknown-linux-musl/release/rusty-magisk $(PRODUCT_OUT)/root/init && chmod 777 $(PRODUCT_OUT)/root/init
++else
++$(INSTALL_RAMDISK): $(wildcard $(LOCAL_PATH)/install/*/* $(LOCAL_PATH)/install/*/*/*/*) $(INSTALLER_BIN) | $(MKBOOTFS)
++	$(if $(TARGET_INSTALL_SCRIPTS),mkdir -p $(TARGET_INSTALLER_OUT)/scripts; $(ACP) -p $(TARGET_INSTALL_SCRIPTS) $(TARGET_INSTALLER_OUT)/scripts)
++	$(MKBOOTFS) $(dir $(dir $(<D))) $(TARGET_INSTALLER_OUT) | gzip -9 > $@
++endif
+ 
+ isolinux_files := $(addprefix external/syslinux/bios/com32/, \
+ 	../core/isolinux.bin \
+-- 
+2.17.1
+

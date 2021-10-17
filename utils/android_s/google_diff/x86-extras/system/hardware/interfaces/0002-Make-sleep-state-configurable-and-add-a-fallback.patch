@@ -1,0 +1,104 @@
+From 0d93e679fd1018b9d22d33c00ff687f81a55bfcb Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Mon, 20 Apr 2020 18:43:48 +0800
+Subject: [PATCH 1/2] Make sleep state configurable and add a fallback
+
+This patch allows the user to set the sleep state target from
+Android properties for wakeup_count method.
+
+It also includes a fallback state if the default state is not
+available and the user didn't set the sleep.state property.
+
+Conflicts:
+	suspend/1.0/default/SystemSuspend.cpp
+---
+ suspend/1.0/default/SystemSuspend.cpp | 25 +++++++++++++++++++++++--
+ suspend/1.0/default/SystemSuspend.h   |  2 ++
+ 2 files changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/suspend/1.0/default/SystemSuspend.cpp b/suspend/1.0/default/SystemSuspend.cpp
+index 8f89de3..4245a05 100644
+--- a/suspend/1.0/default/SystemSuspend.cpp
++++ b/suspend/1.0/default/SystemSuspend.cpp
+@@ -18,6 +18,7 @@
+ 
+ #include <android-base/file.h>
+ #include <android-base/logging.h>
++#include <android-base/properties.h>
+ #include <android-base/strings.h>
+ #include <fcntl.h>
+ #include <hidl/Status.h>
+@@ -28,6 +29,7 @@
+ #include <string>
+ #include <thread>
+ 
++using ::android::base::GetProperty;
+ using ::android::base::Error;
+ using ::android::base::ReadFdToString;
+ using ::android::base::WriteStringToFd;
+@@ -129,7 +131,7 @@ bool SystemSuspend::forceSuspend() {
+     //  returns from suspend, the wakelocks and SuspendCounter will not have
+     //  changed.
+     auto counterLock = std::unique_lock(mCounterLock);
+-    bool success = WriteStringToFd(kSleepState, mStateFd);
++    bool success = WriteStringToFd(getSleepState(), mStateFd);
+     counterLock.unlock();
+ 
+     if (!success) {
+@@ -192,7 +194,7 @@ void SystemSuspend::initAutosuspend() {
+                 PLOG(VERBOSE) << "error writing from /sys/power/wakeup_count";
+                 continue;
+             }
+-            bool success = WriteStringToFd(kSleepState, mStateFd);
++            bool success = WriteStringToFd(getSleepState(), mStateFd);
+             counterLock.unlock();
+ 
+             if (!success) {
+@@ -208,6 +210,25 @@ void SystemSuspend::initAutosuspend() {
+     LOG(INFO) << "automatic system suspend enabled";
+ }
+ 
++const string &SystemSuspend::getSleepState() {
++    if (mSleepState.empty()) {
++        mSleepState = GetProperty("sleep.state", "");
++        if (!mSleepState.empty()) {
++            LOG(INFO) << "autosuspend using sleep.state property " << mSleepState;
++        } else {
++            string buf = readFd(mStateFd);
++            if (buf.find(kSleepState) != std::string::npos) {
++                mSleepState = kSleepState;
++                LOG(INFO) << "autosuspend using default sleep_state " << mSleepState;
++            } else {
++                mSleepState = "freeze";
++                LOG(WARNING) << "autosuspend using fallback state " << mSleepState;
++            }
++        }
++    }
++    return mSleepState;
++}
++
+ void SystemSuspend::updateSleepTime(bool success) {
+     static constexpr std::chrono::milliseconds kMaxSleepTime = 1min;
+     if (success) {
+diff --git a/suspend/1.0/default/SystemSuspend.h b/suspend/1.0/default/SystemSuspend.h
+index 9fe9319..83121b5 100644
+--- a/suspend/1.0/default/SystemSuspend.h
++++ b/suspend/1.0/default/SystemSuspend.h
+@@ -97,12 +97,14 @@ class SystemSuspend : public ISystemSuspend {
+ 
+    private:
+     void initAutosuspend();
++    const std::string &getSleepState();
+ 
+     std::mutex mCounterLock;
+     std::condition_variable mCounterCondVar;
+     uint32_t mSuspendCounter;
+     unique_fd mWakeupCountFd;
+     unique_fd mStateFd;
++    std::string mSleepState;
+ 
+     unique_fd mSuspendStatsFd;
+ 
+-- 
+2.17.1
+

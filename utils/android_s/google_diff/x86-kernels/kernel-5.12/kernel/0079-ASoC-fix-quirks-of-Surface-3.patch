@@ -1,0 +1,29 @@
+From 3f91b9d1f374cded66671d216385d5307c28342b Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Mon, 23 Mar 2020 12:40:08 +0800
+Subject: [PATCH 079/100] ASoC: fix quirks of Surface 3
+
+I didn't realize I messed up the brackets. Many thanks to youling257
+who pointed it out.
+
+Fixes: 18e2e857c576 ("ASoC: add quirk for Surface 3 with bad DMI table")
+---
+ sound/soc/intel/common/soc-acpi-intel-cht-match.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/sound/soc/intel/common/soc-acpi-intel-cht-match.c b/sound/soc/intel/common/soc-acpi-intel-cht-match.c
+index 584e75b3e7b4..1013a57be89a 100644
+--- a/sound/soc/intel/common/soc-acpi-intel-cht-match.c
++++ b/sound/soc/intel/common/soc-acpi-intel-cht-match.c
+@@ -26,6 +26,8 @@ static const struct dmi_system_id cht_table[] = {
+ 			DMI_MATCH(DMI_SYS_VENDOR, "Microsoft Corporation"),
+ 			DMI_MATCH(DMI_PRODUCT_NAME, "Surface 3"),
+ 		},
++	},
++	{
+ 		.callback = cht_surface_quirk_cb,
+ 		.matches = {
+ 			DMI_MATCH(DMI_BIOS_VENDOR, "American Megatrends Inc."),
+-- 
+2.17.1
+

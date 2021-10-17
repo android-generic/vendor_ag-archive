@@ -1,0 +1,82 @@
+From bfb6541fc184f82fc7bbf95f0bfb277546b07ff9 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 19 Jun 2020 16:44:14 -0400
+Subject: [PATCH 1/3] Remove sdllvm as we use our own
+
+---
+ sdclang/sdllvm-lto-defs.mk | 35 -----------------------------------
+ sdclang/vendorsetup.sh     | 20 --------------------
+ 2 files changed, 55 deletions(-)
+ delete mode 100644 sdclang/sdllvm-lto-defs.mk
+ delete mode 100644 sdclang/vendorsetup.sh
+
+diff --git a/sdclang/sdllvm-lto-defs.mk b/sdclang/sdllvm-lto-defs.mk
+deleted file mode 100644
+index fb8b18ea..00000000
+--- a/sdclang/sdllvm-lto-defs.mk
++++ /dev/null
+@@ -1,35 +0,0 @@
+-ifeq ($(LOCAL_MODULE_CLASS), STATIC_LIBRARIES)
+-# For STATIC_LIBRARIES we need to use SD LLVM's archiver and archiver flags.
+-
+-AR := $(SDCLANG_PATH)/llvm-ar
+-ARFLAGS := crsD
+-
+-# For 32 bit
+-$(LOCAL_BUILT_MODULE) : $(combo_2nd_arch_prefix)TARGET_AR := $(AR)
+-$(LOCAL_BUILT_MODULE) : $(combo_var_prefix)GLOBAL_ARFLAGS := $(ARFLAGS)
+-
+-# For 64 bit
+-intermediates := $(call local-intermediates-dir,,$(LOCAL_2ND_ARCH_VAR_PREFIX))
+-LOCAL_BUILT_MODULE_64 := $(intermediates)/$(my_installed_module_stem)
+-
+-$(LOCAL_BUILT_MODULE_64) : TARGET_AR := $(AR)
+-$(LOCAL_BUILT_MODULE_64) : TARGET_GLOBAL_ARFLAGS := $(ARFLAGS)
+-
+-else
+-# For SHARED_LIBRARIES and EXECUTABLES we need to filter out flags not
+-# needed/understood by SD LLVM's Linker.
+-
+-linked_module_32 := $(intermediates)/LINKED/$(my_installed_module_stem)
+-intermediates    := $(call local-intermediates-dir,,$(LOCAL_2ND_ARCH_VAR_PREFIX))
+-linked_module_64 := $(intermediates)/LINKED/$(my_installed_module_stem)
+-
+-FLAGS_TO_BE_FILTERED := -Wl,--icf=safe -Wl,--no-undefined-version -Wl,--fix-cortex-a53-843419 -fuse-ld=gold -Wl,-m,aarch64_elf64_le_vec
+-$(linked_module_32) : PRIVATE_TARGET_GLOBAL_LDFLAGS := $(filter-out $(FLAGS_TO_BE_FILTERED),$(PRIVATE_TARGET_GLOBAL_LDFLAGS))
+-$(linked_module_64) : PRIVATE_TARGET_GLOBAL_LDFLAGS := $(filter-out $(FLAGS_TO_BE_FILTERED),$(PRIVATE_TARGET_GLOBAL_LDFLAGS))
+-
+-ifeq ($(LOCAL_SDCLANG_LTO_UNSAFE_FILTER), true)
+-$(linked_module_32) : PRIVATE_LDFLAGS := $(filter-out $(FLAGS_TO_BE_FILTERED),$(PRIVATE_LDFLAGS))
+-$(linked_module_64) : PRIVATE_LDFLAGS := $(filter-out $(FLAGS_TO_BE_FILTERED),$(PRIVATE_LDFLAGS))
+-endif
+-
+-endif
+diff --git a/sdclang/vendorsetup.sh b/sdclang/vendorsetup.sh
+deleted file mode 100644
+index 014891c1..00000000
+--- a/sdclang/vendorsetup.sh
++++ /dev/null
+@@ -1,20 +0,0 @@
+-# Set SDClang defaults
+-export SDCLANG=false
+-export SDCLANG_PATH=vendor/qcom/sdclang-6.0/linux-x86/bin
+-export SDCLANG_LTO_DEFS=vendor/tipsy/sdclang/sdllvm-lto-defs.mk
+-export SDCLANG_COMMON_FLAGS="-O3 -fvectorize -Wno-user-defined-warnings -Wno-vectorizer-no-neon -Wno-unknown-warning-option \
+--Wno-deprecated-register -Wno-tautological-type-limit-compare -Wno-sign-compare -Wno-gnu-folding-constant \
+--mllvm -arm-implicit-it=always -Wno-inline-asm -Wno-unused-command-line-argument -Wno-unused-variable"
+-
+-# Enable based on host OS/availablitiy
+-case $(uname -s) in
+-    Linux)
+-        if [ -d "$SDCLANG_PATH" ]; then
+-            export SDCLANG=true
+-        fi
+-        ;;
+-    Darwin)
+-        ;;
+-    *)
+-        ;;
+-esac
+-- 
+2.17.1
+

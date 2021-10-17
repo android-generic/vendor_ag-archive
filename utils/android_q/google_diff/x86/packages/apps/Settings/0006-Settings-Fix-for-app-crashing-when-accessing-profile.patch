@@ -1,0 +1,65 @@
+From 33c8533812752f52602b85aa48ed950460298aa4 Mon Sep 17 00:00:00 2001
+From: Jeevaka Prabu Badrappan <jeevaka.badrappan@intel.com>
+Date: Mon, 1 Apr 2019 22:03:34 +0530
+Subject: [PATCH 6/9] Settings: Fix for app crashing when accessing profile
+ details
+
+Settings app crashes when it tries to access pbap and map
+server profiles.
+
+In IVI, only client pbap and map profiles are valid.
+So, fix the issue by adding pbap and map server profiles
+only if client profile is not in the profile list.
+
+Change-Id: I574e9d4d46f4cd169cc40635cf24f7d87dfab473
+Tracked-On:
+Signed-off-by: Harshita Goswami <harshita.goswami@intel.com>
+---
+ .../BluetoothDetailsProfilesController.java    | 18 ++++++++++++++----
+ 1 file changed, 14 insertions(+), 4 deletions(-)
+
+diff --git a/src/com/android/settings/bluetooth/BluetoothDetailsProfilesController.java b/src/com/android/settings/bluetooth/BluetoothDetailsProfilesController.java
+index 749a38f614..2b007b2773 100644
+--- a/src/com/android/settings/bluetooth/BluetoothDetailsProfilesController.java
++++ b/src/com/android/settings/bluetooth/BluetoothDetailsProfilesController.java
+@@ -193,17 +193,27 @@ public class BluetoothDetailsProfilesController extends BluetoothDetailsControll
+     private List<LocalBluetoothProfile> getProfiles() {
+         List<LocalBluetoothProfile> result = mCachedDevice.getConnectableProfiles();
+         final BluetoothDevice device = mCachedDevice.getDevice();
++        boolean pbapClientAdded = false;
++        boolean mapClientAdded = false;
++
++        for (LocalBluetoothProfile profile : result) {
++            if (profile.getProfileId() == BluetoothProfile.PBAP_CLIENT) {
++                pbapClientAdded = true;
++            } else if (profile.getProfileId() == BluetoothProfile.MAP_CLIENT) {
++                mapClientAdded = true;
++            }
++        }
+ 
+         final int pbapPermission = device.getPhonebookAccessPermission();
+         // Only provide PBAP cabability if the client device has requested PBAP.
+-        if (pbapPermission != BluetoothDevice.ACCESS_UNKNOWN) {
++        if (!pbapClientAdded && pbapPermission != BluetoothDevice.ACCESS_UNKNOWN) {
+             final PbapServerProfile psp = mManager.getProfileManager().getPbapProfile();
+             result.add(psp);
+         }
+ 
+-        final MapProfile mapProfile = mManager.getProfileManager().getMapProfile();
+         final int mapPermission = device.getMessageAccessPermission();
+-        if (mapPermission != BluetoothDevice.ACCESS_UNKNOWN) {
++        if (!mapClientAdded && mapPermission != BluetoothDevice.ACCESS_UNKNOWN) {
++            final MapProfile mapProfile = mManager.getProfileManager().getMapProfile();
+             result.add(mapProfile);
+         }
+ 
+@@ -291,4 +301,4 @@ public class BluetoothDetailsProfilesController extends BluetoothDetailsControll
+     public String getPreferenceKey() {
+         return KEY_PROFILES_GROUP;
+     }
+-}
+\ No newline at end of file
++}
+-- 
+2.17.1
+

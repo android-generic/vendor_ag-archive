@@ -1,0 +1,27 @@
+From 7cedbced3087a799b7229c3a428a4a64b0550b12 Mon Sep 17 00:00:00 2001
+From: Unknown <electrikjesus@gmail.com>
+Date: Thu, 15 Oct 2020 20:16:53 -0400
+Subject: [PATCH] Disable persistent PC Mode & systemUI plugin
+
+---
+ boringdroid.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/boringdroid.mk b/boringdroid.mk
+index 8366759..655f9b2 100644
+--- a/boringdroid.mk
++++ b/boringdroid.mk
+@@ -1,8 +1,8 @@
+ # Recents
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+     ro.recents.grid=true \
+-    persist.sys.pcmode.enabled=true \
+-    persist.sys.systemuiplugin.enabled=true \
++    persist.sys.pcmode.enabled=false \
++    persist.sys.systemuiplugin.enabled=false \
+     persist.sys.bd.tunerkeys=sysui_nav_bar--sysui_nav_bar_left--sysui_nav_bar_right\
+ 
+ PRODUCT_PACKAGES := \
+-- 
+2.17.1
+

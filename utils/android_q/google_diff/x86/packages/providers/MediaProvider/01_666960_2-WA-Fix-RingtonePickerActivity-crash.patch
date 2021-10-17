@@ -1,0 +1,32 @@
+From b7097cf8caef39ff70d0c3bb9ecff172c397c982 Mon Sep 17 00:00:00 2001
+From: "Wang, ArvinX" <arvinx.wang@intel.com>
+Date: Wed, 17 Apr 2019 17:24:19 +0800
+Subject: [PATCH 2/3] [WA]Fix RingtonePickerActivity crash
+
+Google refactor the mediaProvider projection map on Q.
+But the refactor is not completely in System and third application now.
+
+So, enable the old old projection map value on Q.
+
+Change-Id: I40ca65a51bbc113ec54742cac38ac2f8bf2596d0
+Tracked-On: https://jira.devtools.intel.com/browse/OAM-79439
+Signed-off-by: Wang, ArvinX <arvinx.wang@intel.com>
+---
+ src/com/android/providers/media/MediaProvider.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/com/android/providers/media/MediaProvider.java b/src/com/android/providers/media/MediaProvider.java
+index 39420757..fa184594 100644
+--- a/src/com/android/providers/media/MediaProvider.java
++++ b/src/com/android/providers/media/MediaProvider.java
+@@ -3858,7 +3858,7 @@ public class MediaProvider extends ContentProvider {
+
+             // If caller is an older app, we're willing to let through a
+             // greylist of technically invalid columns
+-            if (getCallingPackageTargetSdkVersion() < Build.VERSION_CODES.Q) {
++            if (getCallingPackageTargetSdkVersion() <= Build.VERSION_CODES.Q) {
+                 qb.setProjectionGreylist(sGreylist);
+             }
+         }
+--
+2.21.0

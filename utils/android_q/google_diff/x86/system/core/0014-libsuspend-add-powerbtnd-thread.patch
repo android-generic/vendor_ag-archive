@@ -1,0 +1,215 @@
+From a569eb973241cdb23e0c29ac52c1622d36331e1f Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sat, 20 May 2017 16:29:06 +0800
+Subject: [PATCH 14/21] libsuspend: add powerbtnd thread
+
+Also send wakeup key on resume to ensure the system wakes up normally.
+---
+ libsuspend/autosuspend_wakeup_count.cpp | 157 ++++++++++++++++++++++++
+ 1 file changed, 157 insertions(+)
+
+diff --git a/libsuspend/autosuspend_wakeup_count.cpp b/libsuspend/autosuspend_wakeup_count.cpp
+index f284c5963..73e89ccb9 100644
+--- a/libsuspend/autosuspend_wakeup_count.cpp
++++ b/libsuspend/autosuspend_wakeup_count.cpp
+@@ -32,20 +32,28 @@
+ #include <android-base/logging.h>
+ #include <android-base/strings.h>
+ #include <android-base/properties.h>
++#include <android-base/stringprintf.h>
++
++#include <linux/uinput.h>
++#include <dirent.h>
++#include <poll.h>
+ 
+ #include "autosuspend_ops.h"
+ 
+ #define BASE_SLEEP_TIME 100000
+ #define MAX_SLEEP_TIME 60000000
++#define MAX_POWERBTNS 3
+ 
+ static constexpr char default_sleep_state[] = "mem";
+ static constexpr char fallback_sleep_state[] = "freeze";
+ 
+ static int state_fd = -1;
++static int uinput_fd = -1;
+ static int wakeup_count_fd;
+ 
+ using android::base::GetProperty;
+ using android::base::ReadFdToString;
++using android::base::StringPrintf;
+ using android::base::Trim;
+ using android::base::WriteStringToFd;
+ 
+@@ -66,6 +74,151 @@ static void update_sleep_time(bool success) {
+     sleep_time = MIN(sleep_time * 2, MAX_SLEEP_TIME);
+ }
+ 
++static void emit_key(int ufd, int key_code, int val)
++{
++    struct input_event iev;
++    iev.type = EV_KEY;
++    iev.code = key_code;
++    iev.value = val;
++    iev.time.tv_sec = 0;
++    iev.time.tv_usec = 0;
++    write(ufd, &iev, sizeof(iev));
++    iev.type = EV_SYN;
++    iev.code = SYN_REPORT;
++    iev.value = 0;
++    write(ufd, &iev, sizeof(iev));
++    LOG(INFO) << StringPrintf("send key %d (%d) on fd %d", key_code, val, ufd);
++}
++
++static void send_key_wakeup(int ufd)
++{
++    emit_key(ufd, KEY_WAKEUP, 1);
++    emit_key(ufd, KEY_WAKEUP, 0);
++}
++
++static void send_key_power(int ufd, bool longpress)
++{
++    emit_key(ufd, KEY_POWER, 1);
++    if (longpress) sleep(2);
++    emit_key(ufd, KEY_POWER, 0);
++}
++
++static int openfds(struct pollfd pfds[])
++{
++    int cnt = 0;
++    const char *dirname = "/dev/input";
++    struct dirent *de;
++    DIR *dir;
++
++    if ((dir = opendir(dirname))) {
++        while ((cnt < MAX_POWERBTNS) && (de = readdir(dir))) {
++            int fd;
++            char name[PATH_MAX];
++            if (de->d_name[0] != 'e') /* eventX */
++                continue;
++            snprintf(name, PATH_MAX, "%s/%s", dirname, de->d_name);
++            fd = open(name, O_RDWR | O_NONBLOCK);
++            if (fd < 0) {
++                LOG(ERROR) << StringPrintf("could not open %s, %s", name, strerror(errno));
++                continue;
++            }
++            name[sizeof(name) - 1] = '\0';
++            if (ioctl(fd, EVIOCGNAME(sizeof(name) - 1), &name) < 1) {
++                LOG(ERROR) << StringPrintf("could not get device name for %s, %s", name, strerror(errno));
++                name[0] = '\0';
++            }
++            // TODO: parse /etc/excluded-input-devices.xml
++            if (strcmp(name, "Power Button")) {
++                close(fd);
++                continue;
++            }
++
++            LOG(INFO) << StringPrintf("open %s(%s) ok fd=%d", de->d_name, name, fd);
++            pfds[cnt].events = POLLIN;
++            pfds[cnt++].fd = fd;
++        }
++        closedir(dir);
++    }
++
++    return cnt;
++}
++
++static void *powerbtnd_thread_func(void *arg __attribute__((unused)))
++{
++    int cnt, timeout, pollres;
++    bool longpress = true;
++    bool doubleclick = android::base::GetBoolProperty("poweroff.doubleclick", false);
++    struct pollfd pfds[MAX_POWERBTNS];
++
++    timeout = -1;
++    cnt = openfds(pfds);
++
++    while (cnt > 0) {
++        if ((pollres = poll(pfds, cnt, timeout)) < 0) {
++            LOG(ERROR) << "poll error: " << strerror(errno);
++            break;
++        }
++        LOG(VERBOSE) << "pollres=" << pollres << " timeout=" << timeout;
++        if (pollres == 0) {
++            LOG(INFO) << "timeout, send one power key";
++            send_key_power(uinput_fd, 0);
++            timeout = -1;
++            longpress = true;
++            continue;
++        }
++        for (int i = 0; i < cnt; ++i) {
++            if (pfds[i].revents & POLLIN) {
++                struct input_event iev;
++                size_t res = read(pfds[i].fd, &iev, sizeof(iev));
++                if (res < sizeof(iev)) {
++                    LOG(WARNING) << StringPrintf("insufficient input data(%zd)? fd=%d", res, pfds[i].fd);
++                    continue;
++                }
++                LOG(DEBUG) << StringPrintf("type=%d code=%d value=%d from fd=%d", iev.type, iev.code, iev.value, pfds[i].fd);
++                if (iev.type == EV_KEY && iev.code == KEY_POWER && !iev.value) {
++                    if (!doubleclick || timeout > 0) {
++                        send_key_power(uinput_fd, longpress);
++                        timeout = -1;
++                    } else {
++                        timeout = 1000; // one second
++                    }
++                } else if (iev.type == EV_SYN && iev.code == SYN_REPORT && iev.value) {
++                    LOG(INFO) << "got a resuming event";
++                    longpress = false;
++                    timeout = 1000; // one second
++                }
++            }
++        }
++    }
++
++    return NULL;
++}
++
++static void init_android_power_button()
++{
++    static pthread_t powerbtnd_thread;
++    struct uinput_user_dev ud;
++
++    if (uinput_fd >= 0) return;
++
++    uinput_fd = open("/dev/uinput", O_WRONLY | O_NDELAY);
++    if (uinput_fd < 0) {
++        LOG(ERROR) << "could not open uinput device: " << strerror(errno);
++        return;
++    }
++
++    memset(&ud, 0, sizeof(ud));
++    strcpy(ud.name, "Android Power Button");
++    write(uinput_fd, &ud, sizeof(ud));
++    ioctl(uinput_fd, UI_SET_EVBIT, EV_KEY);
++    ioctl(uinput_fd, UI_SET_KEYBIT, KEY_POWER);
++    ioctl(uinput_fd, UI_SET_KEYBIT, KEY_WAKEUP);
++    ioctl(uinput_fd, UI_DEV_CREATE, 0);
++
++    pthread_create(&powerbtnd_thread, NULL, powerbtnd_thread_func, NULL);
++    pthread_setname_np(powerbtnd_thread, "powerbtnd");
++}
++
+ static bool sleep_state_available(const char *state)
+ {
+     std::string buf;
+@@ -128,6 +281,9 @@ static void* suspend_thread_func(void* arg __attribute__((unused))) {
+         if (WriteStringToFd(wakeup_count, wakeup_count_fd)) {
+             LOG(VERBOSE) << "write " << sleep_state << " to " << sys_power_state;
+             success = WriteStringToFd(sleep_state, state_fd);
++            if (success) {
++                send_key_wakeup(uinput_fd);
++            }
+ 
+             void (*func)(bool success) = wakeup_func;
+             if (func != NULL) {
+@@ -266,5 +422,6 @@ struct autosuspend_ops autosuspend_wakeup_count_ops = {
+ };
+ 
+ struct autosuspend_ops* autosuspend_wakeup_count_init(void) {
++    init_android_power_button();
+     return &autosuspend_wakeup_count_ops;
+ }
+-- 
+2.21.0
+

@@ -1,0 +1,25 @@
+From 5064dbd587a15b66c9abb2e0569182b4b0a56695 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 12 Jun 2020 17:17:24 -0400
+Subject: [PATCH 5/8] Import IOException for suspend on IVI
+
+Change-Id: I457dd2e187c046f9212f39e4c7a03e1df5bba37c
+---
+ .../core/java/com/android/server/power/PowerManagerService.java  | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
+index c5bd700ff24..64633bbab64 100644
+--- a/services/core/java/com/android/server/power/PowerManagerService.java
++++ b/services/core/java/com/android/server/power/PowerManagerService.java
+@@ -111,6 +111,7 @@ import com.android.server.power.batterysaver.BatterySaverStateMachine;
+ import com.android.server.power.batterysaver.BatterySavingStats;
+ 
+ import java.io.FileDescriptor;
++import java.io.IOException;
+ import java.io.PrintWriter;
+ import java.lang.annotation.Retention;
+ import java.lang.annotation.RetentionPolicy;
+-- 
+2.17.1
+

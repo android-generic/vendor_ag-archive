@@ -1,0 +1,72 @@
+From b94ff275cd7c61aab4e15f84117ec8e1fc0ded8e Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 7 Jan 2020 16:46:37 +0800
+Subject: [PATCH 10/12] Revert "Remove waitpid on UnMount"
+
+The sdcard with fuse support runs in daemon mode.
+
+This reverts commit 8b9a5b344e9f467621f07040567e5231da413f46.
+---
+ model/EmulatedVolume.cpp | 10 ++++++++--
+ model/PublicVolume.cpp   | 10 ++++++++--
+ 2 files changed, 16 insertions(+), 4 deletions(-)
+
+diff --git a/model/EmulatedVolume.cpp b/model/EmulatedVolume.cpp
+index 552fe2f..6b93141 100644
+--- a/model/EmulatedVolume.cpp
++++ b/model/EmulatedVolume.cpp
+@@ -119,8 +119,8 @@ status_t EmulatedVolume::doMount() {
+         }
+     }
+     /* sdcardfs will have exited already. FUSE will still be running */
+-    TEMP_FAILURE_RETRY(waitpid(mFusePid, nullptr, 0));
+-    mFusePid = 0;
++    if (TEMP_FAILURE_RETRY(waitpid(mFusePid, nullptr, WNOHANG)) == mFusePid)
++        mFusePid = 0;
+ 
+     return OK;
+ }
+@@ -136,6 +136,12 @@ status_t EmulatedVolume::doUnmount() {
+     ForceUnmount(mFuseWrite);
+     ForceUnmount(mFuseFull);
+ 
++    if (mFusePid > 0) {
++        kill(mFusePid, SIGTERM);
++        TEMP_FAILURE_RETRY(waitpid(mFusePid, nullptr, 0));
++        mFusePid = 0;
++    }
++
+     rmdir(mFuseDefault.c_str());
+     rmdir(mFuseRead.c_str());
+     rmdir(mFuseWrite.c_str());
+diff --git a/model/PublicVolume.cpp b/model/PublicVolume.cpp
+index 82e8540..5ab30f6 100644
+--- a/model/PublicVolume.cpp
++++ b/model/PublicVolume.cpp
+@@ -247,8 +247,8 @@ status_t PublicVolume::doMount() {
+         }
+     }
+     /* sdcardfs will have exited already. FUSE will still be running */
+-    TEMP_FAILURE_RETRY(waitpid(mFusePid, nullptr, 0));
+-    mFusePid = 0;
++    if (TEMP_FAILURE_RETRY(waitpid(mFusePid, nullptr, WNOHANG)) == mFusePid)
++        mFusePid = 0;
+ 
+     return OK;
+ }
+@@ -268,6 +268,12 @@ status_t PublicVolume::doUnmount() {
+     ForceUnmount(mFuseFull);
+     ForceUnmount(mRawPath);
+ 
++    if (mFusePid > 0) {
++        kill(mFusePid, SIGTERM);
++        TEMP_FAILURE_RETRY(waitpid(mFusePid, nullptr, 0));
++        mFusePid = 0;
++    }
++
+     rmdir(mFuseDefault.c_str());
+     rmdir(mFuseRead.c_str());
+     rmdir(mFuseWrite.c_str());
+-- 
+2.17.1
+

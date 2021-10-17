@@ -1,0 +1,84 @@
+From f18ad6a29ea55562c7f51e65d464fd83b20a41b3 Mon Sep 17 00:00:00 2001
+From: Ma Jian <majian@jidemail.com>
+Date: Sun, 12 Jun 2016 17:34:25 +0800
+Subject: [PATCH 12/21] Support use local time for RTC
+
+When default timezone isn't UTC, there will no persist.sys.timezone
+under /data/property/, so init won't get the default timezone for
+setting time from rtc.
+
+This change adds a fallback to read the property when the persist file
+does not exists.
+
+Notice, the default property of persist.sys.timezone should be set in
+/default.prop instead of /system/build.prop
+
+NO_REF_TASK
+Tested: set default timezone with Asia/Shanghai, make sure bios time
+is correct in local time, reboot to android, the local time should
+be correct.
+
+Change-Id: Ifbd20cb3710f833ab65852b4e5d51e38cc7c2d79
+---
+ init/builtins.cpp | 43 +++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
+
+diff --git a/init/builtins.cpp b/init/builtins.cpp
+index 18cc80286..eabd7bc9d 100644
+--- a/init/builtins.cpp
++++ b/init/builtins.cpp
+@@ -788,8 +788,51 @@ static Result<Success> do_rmdir(const BuiltinArguments& args) {
+     return Success();
+ }
+ 
++// Read persist property from /data/property directly, because it may not have loaded.
++// If the file not found, try to call GetProperty to get the vaule from /default.prop.
++static std::string persist_property_get(const std::string& name)
++{
++    auto result = ReadFile("/data/property/" + name);
++    return !result ? base::GetProperty(name, "") : *result;
++}
++
+ static Result<Success> do_sysclktz(const BuiltinArguments& args) {
+     struct timezone tz = {};
++
++    if (persist_property_get("persist.rtc_local_time") == "1") {
++        struct timeval tv = {};
++
++        if (gettimeofday(&tv, NULL)) {
++            return ErrnoError() << "gettimeofday() failed";
++        }
++
++        // Set system time and saved system zone in case of network
++        // not available and auto syncing time not available.
++        std::string time_zone = persist_property_get("persist.sys.timezone");
++        if (time_zone.empty()) {
++            LOG(INFO) << "sysclktz: persist.sys.timezone not found";
++            tz.tz_minuteswest = 0;
++        } else {
++            LOG(INFO) << "sysclktz: persist.sys.timezone: " << time_zone;
++            // localtime_r need the property, we need to set it
++            property_set("persist.sys.timezone", time_zone.c_str());
++            time_t t = tv.tv_sec;
++            struct tm tm;
++            if (localtime_r(&t, &tm)) {
++                tz.tz_minuteswest = -(tm.tm_gmtoff / 60);
++                LOG(INFO) << "sysclktz: tz.tz_minuteswest: " << tz.tz_minuteswest;
++            }
++        }
++
++        // At this moment, system time should be local time too,
++        // set it back to utc which linux required.
++        tv.tv_sec += tz.tz_minuteswest * 60;
++        if (!settimeofday(&tv, &tz)) {
++            return Success();
++        }
++        return ErrnoError() << "settimeofday() with tv failed";
++    }
++
+     if (!android::base::ParseInt(args[1], &tz.tz_minuteswest)) {
+         return Error() << "Unable to parse mins_west_of_gmt";
+     }
+-- 
+2.21.0
+

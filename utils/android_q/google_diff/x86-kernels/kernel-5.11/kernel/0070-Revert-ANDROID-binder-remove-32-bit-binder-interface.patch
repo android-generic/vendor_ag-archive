@@ -1,0 +1,57 @@
+From 6d5c3af6992e36f926367b5ff1894c075cd56809 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 16 Jun 2018 13:39:50 +0200
+Subject: [PATCH 070/106] Revert "ANDROID: binder: remove 32-bit binder
+ interface."
+
+This reverts commit 1190b4e38f97023154e6b3bef61b251aa5f970d0.
+
+ Conflicts:
+	drivers/android/binder.c
+---
+ drivers/android/Kconfig  | 13 +++++++++++++
+ drivers/android/binder.c |  4 ++++
+ 2 files changed, 17 insertions(+)
+
+diff --git a/drivers/android/Kconfig b/drivers/android/Kconfig
+index 53b22e26266c..2432f2d370a5 100644
+--- a/drivers/android/Kconfig
++++ b/drivers/android/Kconfig
+@@ -44,6 +44,19 @@ config ANDROID_BINDER_DEVICES
+ 	  created. Each binder device has its own context manager, and is
+ 	  therefore logically separated from the other devices.
+ 
++config ANDROID_BINDER_IPC_32BIT
++	bool "Use old (Android 4.4 and earlier) 32-bit binder API"
++	depends on !64BIT && ANDROID_BINDER_IPC
++	default y
++	---help---
++	  The Binder API has been changed to support both 32 and 64bit
++	  applications in a mixed environment.
++
++	  Enable this to support an old 32-bit Android user-space (v4.4 and
++	  earlier).
++
++	  Note that enabling this will break newer Android user-space.
++
+ config ANDROID_BINDER_IPC_SELFTEST
+ 	bool "Android Binder IPC Driver Selftest"
+ 	depends on ANDROID_BINDER_IPC
+diff --git a/drivers/android/binder.c b/drivers/android/binder.c
+index 5d834d542bb7..171d438c573d 100644
+--- a/drivers/android/binder.c
++++ b/drivers/android/binder.c
+@@ -67,6 +67,10 @@
+ #include <linux/task_work.h>
+ #include <linux/sizes.h>
+ 
++#ifdef CONFIG_ANDROID_BINDER_IPC_32BIT
++#define BINDER_IPC_32BIT 1
++#endif
++
+ #include <uapi/linux/sched/types.h>
+ #include <uapi/linux/android/binder.h>
+ 
+-- 
+2.17.1
+

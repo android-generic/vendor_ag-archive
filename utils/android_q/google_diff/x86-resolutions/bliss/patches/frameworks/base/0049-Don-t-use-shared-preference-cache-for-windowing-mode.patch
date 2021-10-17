@@ -1,0 +1,25 @@
+From 5d244b4447103877204428c8cecfeb69e67def60 Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@outlook.com>
+Date: Wed, 2 Sep 2020 00:34:25 +0800
+Subject: [PATCH 6/8] Don't use shared preference cache for windowing mode
+
+Signed-off-by: utzcoz <utzcoz@outlook.com>
+---
+ core/java/com/android/internal/BoringdroidManager.java | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/core/java/com/android/internal/BoringdroidManager.java b/core/java/com/android/internal/BoringdroidManager.java
+index 0b1168734fab..e4ac0a59cdc7 100644
+--- a/core/java/com/android/internal/BoringdroidManager.java
++++ b/core/java/com/android/internal/BoringdroidManager.java
+@@ -123,6 +123,7 @@ public class BoringdroidManager {
+         if (isInPCModeDisallowedList(packageName)) {
+             return WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+         }
++        context.reloadSharedPreferences();
+         SharedPreferences overlaySharedPreferences =
+                 context.getSharedPreferences(
+                         getPackageWindowingModeOverlayFile(),
+-- 
+2.17.1
+

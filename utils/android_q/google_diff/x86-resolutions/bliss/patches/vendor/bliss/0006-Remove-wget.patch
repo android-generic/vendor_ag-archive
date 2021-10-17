@@ -1,0 +1,32 @@
+From e890d0dfcce315029e1313503dfe7a701065c495 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 17 Sep 2020 16:28:02 -0400
+Subject: [PATCH 6/6] Remove wget
+
+Change-Id: I926e194968bf13b9a4070d6140ebbe0c75962660
+---
+ prebuilt/common/Android.mk | 9 ---------
+ 1 file changed, 9 deletions(-)
+
+diff --git a/prebuilt/common/Android.mk b/prebuilt/common/Android.mk
+index 447d8506..422215dc 100644
+--- a/prebuilt/common/Android.mk
++++ b/prebuilt/common/Android.mk
+@@ -1,14 +1,5 @@
+ LOCAL_PATH := $(call my-dir)
+ 
+-# a wrapper for curl which provides wget syntax, for compatibility
+-include $(CLEAR_VARS)
+-LOCAL_MODULE := wget
+-LOCAL_SRC_FILES := bin/wget
+-LOCAL_MODULE_TAGS := optional
+-LOCAL_MODULE_CLASS := EXECUTABLES
+-LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
+-include $(BUILD_PREBUILT)
+-
+ include $(CLEAR_VARS)
+ LOCAL_MODULE := BlissPapers
+ LOCAL_MODULE_TAGS := optional
+-- 
+2.17.1
+

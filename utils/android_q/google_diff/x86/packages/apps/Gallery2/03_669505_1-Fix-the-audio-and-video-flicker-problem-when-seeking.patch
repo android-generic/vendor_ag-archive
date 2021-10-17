@@ -1,0 +1,55 @@
+From d00798d34ed727f90909415b0e6912a31cf1445d Mon Sep 17 00:00:00 2001
+From: yingzhex <yingzhenx.li@intel.com>
+Date: Wed, 23 May 2018 16:37:47 +0800
+Subject: [PATCH 3/5] Fix the audio and video flicker problem when seeking.
+
+Change-Id: I6def085e62348f1336d5cb116ced5aa2fc8ac7d3
+Tracked-On: https://jira01.devtools.intel.com/browse/OAM-80081
+Signed-off-by: yingzhex <yingzhenx.li@intel.com>
+Signed-off-by: Yan, WalterX <walterx.yan@intel.com>
+---
+ src/com/android/gallery3d/app/CommonControllerOverlay.java | 4 ++++
+ src/com/android/gallery3d/app/MoviePlayer.java             | 6 ++++++
+ 2 files changed, 10 insertions(+)
+
+diff --git a/src/com/android/gallery3d/app/CommonControllerOverlay.java b/src/com/android/gallery3d/app/CommonControllerOverlay.java
+index 9adb4e7a8..24bdeb306 100644
+--- a/src/com/android/gallery3d/app/CommonControllerOverlay.java
++++ b/src/com/android/gallery3d/app/CommonControllerOverlay.java
+@@ -132,6 +132,10 @@ public abstract class CommonControllerOverlay extends FrameLayout implements
+         return view;
+     }
+
++    public boolean isPlaying() {
++        return (mState == State.PLAYING);
++    }
++
+     @Override
+     public void setListener(Listener listener) {
+         this.mListener = listener;
+diff --git a/src/com/android/gallery3d/app/MoviePlayer.java b/src/com/android/gallery3d/app/MoviePlayer.java
+index f6bd36725..b4052f1fe 100644
+--- a/src/com/android/gallery3d/app/MoviePlayer.java
++++ b/src/com/android/gallery3d/app/MoviePlayer.java
+@@ -378,6 +378,9 @@ public class MoviePlayer implements
+     @Override
+     public void onSeekStart() {
+         mDragging = true;
++        if(mController.isPlaying()){
++            mVideoView.pause();
++        }
+     }
+
+     @Override
+@@ -388,6 +391,9 @@ public class MoviePlayer implements
+     @Override
+     public void onSeekEnd(int time, int start, int end) {
+         mDragging = false;
++        if(mController.isPlaying()){
++            mVideoView.start();
++        }
+         mVideoView.seekTo(time);
+         setProgress();
+     }
+--
+2.21.0

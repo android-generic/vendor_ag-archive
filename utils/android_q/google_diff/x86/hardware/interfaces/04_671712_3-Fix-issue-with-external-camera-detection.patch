@@ -1,0 +1,41 @@
+From 7092d8a6de9177b30313827f585806cb1f2e7b9c Mon Sep 17 00:00:00 2001
+From: saranya <saranya.gopal@intel.com>
+Date: Wed, 12 Jun 2019 15:21:21 +0530
+Subject: [PATCH 3/4] Fix issue with external camera detection
+
+CameraProviderManager has not set callback by the time
+the devices are added by ExternalCameraProvider.
+So, run the camera detection hotplug thread after
+CameraProviderManager has set callback.
+
+Change-Id: Ia85100e5096405d9956130d9ad601a6fba8fa8ad
+Signed-off-by: saranya <saranya.gopal@intel.com>
+---
+ .../provider/2.4/default/ExternalCameraProviderImpl_2_4.cpp  | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/camera/provider/2.4/default/ExternalCameraProviderImpl_2_4.cpp b/camera/provider/2.4/default/ExternalCameraProviderImpl_2_4.cpp
+index a6fd28812..f776e6f00 100644
+--- a/camera/provider/2.4/default/ExternalCameraProviderImpl_2_4.cpp
++++ b/camera/provider/2.4/default/ExternalCameraProviderImpl_2_4.cpp
+@@ -65,7 +65,8 @@ bool matchDeviceName(const hidl_string& deviceName, std::string* deviceVersion,
+ ExternalCameraProviderImpl_2_4::ExternalCameraProviderImpl_2_4() :
+         mCfg(ExternalCameraConfig::loadFromCfg()),
+         mHotPlugThread(this) {
+-    mHotPlugThread.run("ExtCamHotPlug", PRIORITY_BACKGROUND);
++    // FIXME: Camera provider is not ready. So, run this later.
++    //mHotPlugThread.run("ExtCamHotPlug", PRIORITY_BACKGROUND);
+
+     mPreferredHal3MinorVersion =
+         property_get_int32("ro.vendor.camera.external.hal3TrebleMinorVersion", 4);
+@@ -103,7 +104,7 @@ Return<Status> ExternalCameraProviderImpl_2_4::setCallback(
+             mCallbacks->cameraDeviceStatusChange(pair.first, pair.second);
+         }
+     }
+-
++    mHotPlugThread.run("ExtCamHotPlug", PRIORITY_BACKGROUND);
+     return Status::OK;
+ }
+
+--
+2.21.0

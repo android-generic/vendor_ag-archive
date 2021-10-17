@@ -1,0 +1,34 @@
+From 2ddd2a1e41f59829ce6c7f3d3058811dd9cfed80 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 29 Apr 2020 12:15:39 -0400
+Subject: [PATCH 11/11] init: Permissions for vendor init
+
+This reverts commit aa39415260171b8a5645a5c255330eb98e1de020.
+---
+ libcutils/fs_config.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/libcutils/fs_config.cpp b/libcutils/fs_config.cpp
+index c32f0dcf0e..8c7cd96b48 100644
+--- a/libcutils/fs_config.cpp
++++ b/libcutils/fs_config.cpp
+@@ -94,6 +94,8 @@ static const struct fs_path_config android_dirs[] = {
+     { 00751, AID_ROOT,         AID_SHELL,        0, "system/bin" },
+     { 00755, AID_ROOT,         AID_ROOT,         0, "system/etc/ppp" },
+     { 00755, AID_ROOT,         AID_SHELL,        0, "system/vendor" },
++    { 00755, AID_ROOT,         AID_SHELL,        0, "system/vendor/bin" },
++    { 00755, AID_ROOT,         AID_SHELL,        0, "system/vendor/etc" },
+     { 00751, AID_ROOT,         AID_SHELL,        0, "system/xbin" },
+     { 00755, AID_ROOT,         AID_SHELL,        0, "system/apex/*/bin" },
+     { 00751, AID_ROOT,         AID_SHELL,        0, "vendor/bin" },
+@@ -223,6 +225,7 @@ static const struct fs_path_config android_files[] = {
+     { 00755, AID_ROOT,      AID_SHELL,     0, "system/etc/init.d/*" },
+     { 00755, AID_ROOT,      AID_SHELL,     0, "system/xbin/*" },
+     { 00755, AID_ROOT,      AID_SHELL,     0, "system/apex/*/bin/*" },
++    { 00755, AID_ROOT,      AID_SHELL,     0, "system/vendor/etc/init/*" },
+     { 00755, AID_ROOT,      AID_SHELL,     0, "vendor/bin/*" },
+     { 00755, AID_ROOT,      AID_SHELL,     0, "vendor/xbin/*" },
+     { 00644, AID_ROOT,      AID_ROOT,      0, 0 },
+-- 
+2.17.1
+

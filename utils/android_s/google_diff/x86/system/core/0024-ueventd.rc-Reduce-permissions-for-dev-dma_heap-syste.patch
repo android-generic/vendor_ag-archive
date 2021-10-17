@@ -1,0 +1,32 @@
+From dc01a02a1ade54d7d608d3d5f5376f878195388f Mon Sep 17 00:00:00 2001
+From: John Stultz <john.stultz@linaro.org>
+Date: Mon, 14 Dec 2020 23:27:22 +0000
+Subject: [PATCH] ueventd.rc: Reduce permissions for /dev/dma_heap/system to
+ 444
+
+Jeffrey Vander Stoep noted the permissions for the system dmabuf
+heap should be 444 instead of 666, as we only need to open and
+call ioctl on the device.
+
+Signed-off-by: John Stultz <john.stultz@linaro.org>
+Change-Id: I650c9fabfffd1eac5f59bbc7fa1e0ae1f5646bd9
+---
+ rootdir/ueventd.rc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rootdir/ueventd.rc b/rootdir/ueventd.rc
+index 42229bdaa..5ed9d4d4d 100644
+--- a/rootdir/ueventd.rc
++++ b/rootdir/ueventd.rc
+@@ -46,7 +46,7 @@ subsystem dma_heap
+ /dev/vndbinder            0666   root       root
+ 
+ /dev/pmsg0                0222   root       log
+-/dev/dma_heap/system      0666   system     system
++/dev/dma_heap/system      0444   system     system
+ 
+ # kms driver for drm based gpu
+ /dev/dri/*                0666   root       graphics
+-- 
+2.25.1
+

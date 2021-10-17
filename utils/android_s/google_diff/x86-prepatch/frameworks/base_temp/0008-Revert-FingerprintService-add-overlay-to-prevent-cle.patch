@@ -1,0 +1,86 @@
+From 3d47f1b588f03d507771cc53170bf9f1392a29a5 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 13 May 2021 14:06:00 -0400
+Subject: [PATCH 08/13] Revert "FingerprintService: add overlay to prevent
+ cleanup of unused fingerprints"
+
+This reverts commit 70e463996e85213a46fdcbbb5829ec4f236aa721.
+Change-Id: If9d042edcf8e99403210af0f87781beb9bfb46fd
+---
+ core/res/res/values/bliss_config.xml                      | 4 ----
+ core/res/res/values/bliss_symbols.xml                     | 3 ---
+ .../android/server/biometrics/BiometricServiceBase.java   | 8 +++-----
+ 3 files changed, 3 insertions(+), 12 deletions(-)
+
+diff --git a/core/res/res/values/bliss_config.xml b/core/res/res/values/bliss_config.xml
+index 1dc7702c52a..a4f54b548fb 100644
+--- a/core/res/res/values/bliss_config.xml
++++ b/core/res/res/values/bliss_config.xml
+@@ -56,10 +56,6 @@
+ 
+     <!-- Whether notify fingerprint client of successful cancelled authentication -->
+     <bool name="config_notifyClientOnFingerprintCancelSuccess">false</bool>
+-
+-    <!-- Whether to cleanup fingerprints upon connection to the daemon and when user switches -->
+-    <bool name="config_cleanupUnusedFingerprints">true</bool>
+-
+     <string-array translatable="false" name="custom_config_globalActionsList">
+         <item>emergency</item>
+         <item>lockdown</item>
+diff --git a/core/res/res/values/bliss_symbols.xml b/core/res/res/values/bliss_symbols.xml
+index 044488c8c28..5eee9cacb41 100644
+--- a/core/res/res/values/bliss_symbols.xml
++++ b/core/res/res/values/bliss_symbols.xml
+@@ -54,9 +54,6 @@
+ 
+     <!-- Whether notify fingerprint client of successful cancelled authentication -->
+     <java-symbol type="bool" name="config_notifyClientOnFingerprintCancelSuccess" />
+-
+-    <!-- Whether to cleanup fingerprints upon connection to the daemon and when user switches -->
+-    <java-symbol type="bool" name="config_cleanupUnusedFingerprints" />
+     <!-- Power Menu -->
+   <java-symbol type="string" name="reboot_to_recovery_title" />
+   <java-symbol type="string" name="reboot_to_recovery_message" />
+diff --git a/services/core/java/com/android/server/biometrics/BiometricServiceBase.java b/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
+index 534709eb7cb..fa12ba49427 100644
+--- a/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
++++ b/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
+@@ -78,6 +78,7 @@ public abstract class BiometricServiceBase extends SystemService
+ 
+     protected static final boolean DEBUG = true;
+ 
++    private static final boolean CLEANUP_UNKNOWN_TEMPLATES = true;
+     private static final String KEY_LOCKOUT_RESET_USER = "lockout_reset_user";
+     private static final int MSG_USER_SWITCHING = 10;
+     private static final long CANCEL_TIMEOUT_LIMIT = 3000; // max wait for onCancel() from HAL,in ms
+@@ -92,7 +93,6 @@ public abstract class BiometricServiceBase extends SystemService
+     private final ResetClientStateRunnable mResetClientState = new ResetClientStateRunnable();
+     private final ArrayList<LockoutResetMonitor> mLockoutMonitors = new ArrayList<>();
+     private final boolean mNotifyClient;
+-    private final boolean mCleanupUnusedFingerprints;
+ 
+     protected final IStatusBarService mStatusBarService;
+     protected final Map<Integer, Long> mAuthenticatorIds =
+@@ -665,8 +665,6 @@ public abstract class BiometricServiceBase extends SystemService
+         mMetricsLogger = new MetricsLogger();
+         mNotifyClient = mContext.getResources().getBoolean(
+                 com.android.internal.R.bool.config_notifyClientOnFingerprintCancelSuccess);
+-        mCleanupUnusedFingerprints = mContext.getResources().getBoolean(
+-                com.android.internal.R.bool.config_cleanupUnusedFingerprints);
+     }
+ 
+     @Override
+@@ -1252,8 +1250,8 @@ public abstract class BiometricServiceBase extends SystemService
+      * This method should be called upon connection to the daemon, and when user switches.
+      * @param userId
+      */
+-    public void doTemplateCleanupForUser(int userId) {
+-        if (mCleanupUnusedFingerprints) {
++    protected void doTemplateCleanupForUser(int userId) {
++        if (CLEANUP_UNKNOWN_TEMPLATES) {
+             enumerateUser(userId);
+         }
+     }
+-- 
+2.17.1
+

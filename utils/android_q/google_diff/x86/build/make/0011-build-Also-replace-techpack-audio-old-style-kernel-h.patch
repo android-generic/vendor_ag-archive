@@ -1,0 +1,31 @@
+From 97daa7641bf65e500a1791f64bb8ce87b3f5cc68 Mon Sep 17 00:00:00 2001
+From: Bruno Martins <bgcngm@gmail.com>
+Date: Mon, 5 Nov 2018 11:35:24 +0000
+Subject: [PATCH 11/17] build: Also replace techpack/audio old-style kernel
+ header
+
+ * We are also going to replace them by the new header lib
+
+Change-Id: I0562d8f0cfe3186af50e00eaab858f2836cbc9f0
+---
+ core/binary.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/core/binary.mk b/core/binary.mk
+index b89cce2cc3..5ddf2cd5b3 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -40,6 +40,10 @@ ifneq (,$(findstring $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include,$(LOCAL_
+   LOCAL_C_INCLUDES := $(patsubst $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include,,$(LOCAL_C_INCLUDES))
+   LOCAL_HEADER_LIBRARIES += generated_kernel_headers
+ endif
++ifneq (,$(findstring $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/techpack/audio/include,$(LOCAL_C_INCLUDES)))
++  LOCAL_C_INCLUDES := $(patsubst $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/techpack/audio/include,,$(LOCAL_C_INCLUDES))
++  LOCAL_HEADER_LIBRARIES += generated_kernel_headers
++endif
+ 
+ # Some qcom binaries use this weird -isystem include...
+ ifneq (,$(findstring $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ/usr/include,$(LOCAL_CFLAGS)))
+-- 
+2.17.1
+

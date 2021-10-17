@@ -1,0 +1,43 @@
+From 24d8ecc2b1f854c5d07b1310ec453b5617a5a3f6 Mon Sep 17 00:00:00 2001
+From: rleix <rayx.lei@intel.com>
+Date: Tue, 14 May 2019 15:07:23 +0800
+Subject: [PATCH 2/2] Launch AlarmService as foreground service
+
+Since android O, the background execution is restricted.
+The AlarmService didn't allow background start when app is idle.
+
+Change-Id: I08b27862ac57098f7a01729b5738f0c2fa02930a
+Tracked-On:
+Signed-off-by: Lei,RayX <rayx.lei@intel.com>
+---
+ src/com/android/deskclock/alarms/AlarmStateManager.java | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/src/com/android/deskclock/alarms/AlarmStateManager.java b/src/com/android/deskclock/alarms/AlarmStateManager.java
+index 0f70a0fe9..770ebc915 100644
+--- a/src/com/android/deskclock/alarms/AlarmStateManager.java
++++ b/src/com/android/deskclock/alarms/AlarmStateManager.java
+@@ -1006,8 +1006,9 @@ public final class AlarmStateManager extends BroadcastReceiver {
+                     createStateChangeIntent(context, ALARM_MANAGER_TAG, instance, newState);
+             // Treat alarm state change as high priority, use foreground broadcasts
+             stateChangeIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+-            PendingIntent pendingIntent = PendingIntent.getService(context, instance.hashCode(),
+-                    stateChangeIntent, PendingIntent.FLAG_UPDATE_CURRENT);
++            PendingIntent pendingIntent =
++                    PendingIntent.getForegroundService(context, instance.hashCode(),
++                    stateChangeIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+
+             final AlarmManager am = (AlarmManager) context.getSystemService(ALARM_SERVICE);
+             if (Utils.isMOrLater()) {
+@@ -1023,7 +1024,8 @@ public final class AlarmStateManager extends BroadcastReceiver {
+             LogUtils.v("Canceling instance " + instance.mId + " timers");
+
+             // Create a PendingIntent that will match any one set for this instance
+-            PendingIntent pendingIntent = PendingIntent.getService(context, instance.hashCode(),
++            PendingIntent pendingIntent =
++                    PendingIntent.getForegroundService(context, instance.hashCode(),
+                     createStateChangeIntent(context, ALARM_MANAGER_TAG, instance, null),
+                     PendingIntent.FLAG_NO_CREATE);
+
+--
+2.21.0

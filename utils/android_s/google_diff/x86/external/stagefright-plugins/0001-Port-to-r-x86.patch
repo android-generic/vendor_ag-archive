@@ -1,0 +1,25 @@
+From 06a1a37389fac0dafa1d9a203366fd3a377a2c67 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Mon, 14 Sep 2020 11:51:53 -0400
+Subject: [PATCH 1/4] Port to r-x86
+
+---
+ extractor/FFmpegExtractor.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/extractor/FFmpegExtractor.cpp b/extractor/FFmpegExtractor.cpp
+index 1e9ce65..5b29e48 100644
+--- a/extractor/FFmpegExtractor.cpp
++++ b/extractor/FFmpegExtractor.cpp
+@@ -26,7 +26,7 @@
+ #include <utils/misc.h>
+ #include <utils/String8.h>
+ #include <cutils/properties.h>
+-#include <media/DataSourceBase.h>
++#include <media/stagefright/DataSourceBase.h>
+ #include <media/stagefright/foundation/ABitReader.h>
+ #include <media/stagefright/foundation/ABuffer.h>
+ #include <media/stagefright/foundation/ADebug.h>
+-- 
+2.30.2
+

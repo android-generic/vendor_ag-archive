@@ -1,0 +1,53 @@
+From 636785b5f17d607f0a519c0746ac1dc2dc379580 Mon Sep 17 00:00:00 2001
+From: Matthew Maurer <mmaurer@google.com>
+Date: Wed, 24 Apr 2019 10:53:17 -0700
+Subject: [PATCH] Don't check token for NO_AUTH_REQUIRED
+
+IF NO_AUTH_REQUIRED or AUTH_TIMEOUT is specified, we don't need to check
+the auth token. We began checking the auth token even in those cases
+when the TRUSTED_CONFIRMATION_REQUIRED tag was introduced because the
+TRUSTED_CONFIRMATION_REQUIRED tag must still be checked in those cases.
+
+Bug: 129569848
+Change-Id: I7b1fe55527f344759480330c2bb6f0a75ef15cfc
+---
+ android_keymaster/keymaster_enforcement.cpp | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/android_keymaster/keymaster_enforcement.cpp b/android_keymaster/keymaster_enforcement.cpp
+index bc42511..dc533a0 100644
+--- a/android_keymaster/keymaster_enforcement.cpp
++++ b/android_keymaster/keymaster_enforcement.cpp
+@@ -148,6 +148,7 @@ KeymasterEnforcement::AuthorizeUpdateOrFinish(const AuthProxy& auth_set,
+                                               keymaster_operation_handle_t op_handle) {
+     int auth_type_index = -1;
+     int trusted_confirmation_index = -1;
++    bool no_auth_required = false;
+     for (size_t pos = 0; pos < auth_set.size(); ++pos) {
+         switch (auth_set[pos].tag) {
+         case KM_TAG_USER_AUTH_TYPE:
+@@ -159,7 +160,9 @@ KeymasterEnforcement::AuthorizeUpdateOrFinish(const AuthProxy& auth_set,
+             break;
+         case KM_TAG_NO_AUTH_REQUIRED:
+         case KM_TAG_AUTH_TIMEOUT:
+-        // If no auth is required or if auth is timeout-based, we have nothing to check.
++            // If no auth is required or if auth is timeout-based, we have nothing to check.
++            no_auth_required = true;
++            break;
+         default:
+             break;
+         }
+@@ -171,6 +174,11 @@ KeymasterEnforcement::AuthorizeUpdateOrFinish(const AuthProxy& auth_set,
+         return KM_ERROR_NO_USER_CONFIRMATION;
+     }
+
++    // If NO_AUTH_REQUIRED or AUTH_TIMEOUT was set, we need not check an auth token.
++    if (no_auth_required) {
++        return KM_ERROR_OK;
++    }
++
+     // Note that at this point we should be able to assume that authentication is required, because
+     // authentication is required if KM_TAG_NO_AUTH_REQUIRED is absent.  However, there are legacy
+     // keys which have no authentication-related tags, so we assume that absence is equivalent to
+--
+2.21.0

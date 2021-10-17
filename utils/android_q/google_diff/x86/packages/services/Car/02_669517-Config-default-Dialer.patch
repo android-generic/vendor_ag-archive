@@ -1,0 +1,28 @@
+From 0504e89f9cf9beda173116b810fda80307f7ec42 Mon Sep 17 00:00:00 2001
+From: "Wang, ArvinX" <arvinx.wang@intel.com>
+Date: Thu, 16 May 2019 12:39:39 +0800
+Subject: [PATCH 2/5] Config default Dialer
+
+Change-Id: I5498edb5f0753d233327633e88e30dde14d3f40f
+Tracked-On: https://jira.devtools.intel.com/browse/OAM-80643
+Signed-off-by: Wang, ArvinX <arvinx.wang@intel.com>
+---
+ .../overlay/frameworks/base/core/res/res/values/config.xml     | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/car_product/overlay/frameworks/base/core/res/res/values/config.xml b/car_product/overlay/frameworks/base/core/res/res/values/config.xml
+index 62ff41c10..1e42d58ba 100644
+--- a/car_product/overlay/frameworks/base/core/res/res/values/config.xml
++++ b/car_product/overlay/frameworks/base/core/res/res/values/config.xml
+@@ -52,6 +52,9 @@
+     <!-- Show Navigation Bar -->
+     <bool name="config_showNavigationBar">true</bool>
+
++    <!-- The name of the package that will hold the dialer role by default. -->
++    <string name="config_defaultDialer" translatable="false">com.android.car.dialer</string>
++
+     <integer name="config_jobSchedulerInactivityIdleThreshold">0</integer>
+     <integer name="config_jobSchedulerIdleWindowSlop">0</integer>
+
+--
+2.21.0

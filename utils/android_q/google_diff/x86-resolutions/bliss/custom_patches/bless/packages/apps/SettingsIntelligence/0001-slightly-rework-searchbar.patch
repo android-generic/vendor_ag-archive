@@ -1,0 +1,62 @@
+From f1f4d5b28262b171d094f32060ac8f9160d023f1 Mon Sep 17 00:00:00 2001
+From: Victor Bo <bvoid@yandex.ru>
+Date: Sat, 28 Dec 2019 19:08:14 +0200
+Subject: [PATCH] slightly rework searchbar
+
+Change-Id: Id9fad966e477f2246ebfcbd5ec269db81f4161d1
+---
+ res/layout/search_panel.xml | 5 +++--
+ res/values/colors.xml       | 2 +-
+ res/values/dimens.xml       | 4 ++--
+ 3 files changed, 6 insertions(+), 5 deletions(-)
+
+diff --git a/res/layout/search_panel.xml b/res/layout/search_panel.xml
+index cd53318..af99fa3 100644
+--- a/res/layout/search_panel.xml
++++ b/res/layout/search_panel.xml
+@@ -32,8 +32,9 @@
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:layout_margin="@dimen/search_bar_margin"
+-            app:cardCornerRadius="@*android:dimen/config_dialogCornerRadius"
+-            app:cardElevation="3dp">
++            app:cardBackgroundColor="@color/search_panel_background"
++            app:cardCornerRadius="18dp"
++            app:cardElevation="0dp">
+             <Toolbar
+                 android:id="@+id/search_toolbar"
+                 android:layout_width="match_parent"
+diff --git a/res/values/colors.xml b/res/values/colors.xml
+index 5c39967..ba761b1 100644
+--- a/res/values/colors.xml
++++ b/res/values/colors.xml
+@@ -18,5 +18,5 @@
+ <resources>
+     <color name="launcher_background_color">@*android:color/accent_device_default</color>
+ 
+-    <color name="search_panel_background">@android:color/white</color>
++    <color name="search_panel_background">#fafafa</color>
+ </resources>
+diff --git a/res/values/dimens.xml b/res/values/dimens.xml
+index 9491650..443160b 100644
+--- a/res/values/dimens.xml
++++ b/res/values/dimens.xml
+@@ -29,7 +29,7 @@
+     <dimen name="search_bar_margin">16dp</dimen>
+     <dimen name="search_bar_negative_margin">-16dp</dimen>
+ 
+-    <dimen name="search_bar_height">48dp</dimen>
++    <dimen name="search_bar_height">50dp</dimen>
+     <dimen name="search_bar_text_size">16dp</dimen>
+ 
+     <!-- Dashboard image tile size -->
+@@ -37,4 +37,4 @@
+ 
+     <!-- Dashboard tile image margin start / end -->
+     <dimen name="dashboard_tile_image_margin">24dp</dimen>
+-</resources>
+\ No newline at end of file
++</resources>
+-- 
+2.25.1
+

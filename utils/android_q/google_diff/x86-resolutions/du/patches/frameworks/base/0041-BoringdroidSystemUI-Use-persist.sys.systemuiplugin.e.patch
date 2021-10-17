@@ -1,0 +1,142 @@
+From 87247d735d4ce66e82d5d0e1842ff074ec515e9b Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@outlook.com>
+Date: Fri, 24 Jul 2020 15:27:32 +0800
+Subject: [PATCH] BoringdroidSystemUI: Use persist.sys.systemuiplugin.enabled
+ to control plugin and nav bar style
+
+Change-Id: I1d88309b355d99c5aa75f3b6ad3c73e9d39ffdc3
+Signed-off-by: utzcoz <utzcoz@outlook.com>
+---
+ packages/SystemUI/res/values/config.xml       |  3 +++
+ packages/SystemUI/res/values/dimens.xml       |  4 +++-
+ .../shared/plugins/PluginManagerImpl.java     |  6 ++++-
+ .../android/systemui/BoringdroidConfig.java   | 24 +++++++++++++++++++
+ .../phone/NavigationBarInflaterView.java      | 20 +++++++++++++++-
+ 5 files changed, 54 insertions(+), 3 deletions(-)
+ create mode 100644 packages/SystemUI/src/com/android/systemui/BoringdroidConfig.java
+
+diff --git a/packages/SystemUI/res/values/config.xml b/packages/SystemUI/res/values/config.xml
+index 61cc72c1c4f..cf7d3615584 100644
+--- a/packages/SystemUI/res/values/config.xml
++++ b/packages/SystemUI/res/values/config.xml
+@@ -319,6 +319,9 @@
+     <string name="config_navBarLayout" translatable="false">left[.5W],back[1WC];home;recent[1WC],right[.5W]</string>
+     <string name="config_navBarLayoutQuickstep" translatable="false">back[1.7WC];home;contextual[1.7WC]</string>
+     <string name="config_navBarLayoutHandle" translatable="false">back[40AC];home_handle;ime_switcher[40AC]</string>
++    <!-- region @boringdroid -->
++    <string name="boring_config_navBarLayout" translatable="false">back,home,recent;;</string>
++    <!-- endregion -->
+ 
+     <bool name="quick_settings_show_full_alarm">false</bool>
+ 
+diff --git a/packages/SystemUI/res/values/dimens.xml b/packages/SystemUI/res/values/dimens.xml
+index 0263329dbe8..bd1b52b21db 100644
+--- a/packages/SystemUI/res/values/dimens.xml
++++ b/packages/SystemUI/res/values/dimens.xml
+@@ -295,7 +295,9 @@
+     <dimen name="navigation_icon_size">32dp</dimen>
+ 
+     <dimen name="navigation_key_padding">0dp</dimen>
+-
++    <!-- region @boringdroid -->
++    <dimen name="boring_navigation_key_width">30dp</dimen>
++    <!-- endregion -->
+     <!-- The width of the view containing the menu/ime navigation bar icons -->
+     <dimen name="navigation_extra_key_width">36dp</dimen>
+ 
+diff --git a/packages/SystemUI/shared/src/com/android/systemui/shared/plugins/PluginManagerImpl.java b/packages/SystemUI/shared/src/com/android/systemui/shared/plugins/PluginManagerImpl.java
+index 53403aa4dbf..5ba766dd8d1 100644
+--- a/packages/SystemUI/shared/src/com/android/systemui/shared/plugins/PluginManagerImpl.java
++++ b/packages/SystemUI/shared/src/com/android/systemui/shared/plugins/PluginManagerImpl.java
+@@ -94,7 +94,11 @@ public class PluginManagerImpl extends BroadcastReceiver implements PluginManage
+         mContext = context;
+         mFactory = factory;
+         mLooper = initializer.getBgLooper();
+-        isDebuggable = debuggable;
++        // region @boringdroid
++        // We enable the plugin manager despite of the debuggable flag.
++        // isDebuggable = debuggable;
++        isDebuggable = SystemProperties.getBoolean("persist.sys.systemuiplugin.enabled", false);
++        // endregion
+         mWhitelistedPlugins.addAll(Arrays.asList(initializer.getWhitelistedPlugins(mContext)));
+         mPluginPrefs = new PluginPrefs(mContext);
+         mPluginEnabler = initializer.getPluginEnabler(mContext);
+diff --git a/packages/SystemUI/src/com/android/systemui/BoringdroidConfig.java b/packages/SystemUI/src/com/android/systemui/BoringdroidConfig.java
+new file mode 100644
+index 00000000000..d4aff777d93
+--- /dev/null
++++ b/packages/SystemUI/src/com/android/systemui/BoringdroidConfig.java
+@@ -0,0 +1,24 @@
++/*
++ * Copyright (C) 2020 The boringdroid Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.systemui;
++
++import android.os.SystemProperties;
++
++public class BoringdroidConfig {
++    public static boolean IS_SYSTEMUI_PLUGIN_ENABLED =
++            SystemProperties.getBoolean("persist.sys.systemuiplugin.enabled", false);
++}
+\ No newline at end of file
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/NavigationBarInflaterView.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/NavigationBarInflaterView.java
+index f3b0d6a4cd6..199276febc8 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/NavigationBarInflaterView.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/NavigationBarInflaterView.java
+@@ -36,6 +36,7 @@ import android.widget.LinearLayout;
+ import android.widget.Space;
+ 
+ import com.android.internal.annotations.VisibleForTesting;
++import com.android.systemui.BoringdroidConfig;
+ import com.android.systemui.Dependency;
+ import com.android.systemui.R;
+ import com.android.systemui.CustomSettingsService;
+@@ -153,7 +154,13 @@ public class NavigationBarInflaterView extends FrameLayout
+                 : mOverviewProxyService.shouldShowSwipeUpUI()
+                         ? R.string.config_navBarLayoutQuickstep
+                         : R.string.config_navBarLayout;
+-        return getContext().getString(defaultResource);
++        // region @boringdroid
++        if (BoringdroidConfig.IS_SYSTEMUI_PLUGIN_ENABLED) {
++            return getContext().getString(R.string.boring_config_navBarLayout);
++        } else {
++            return getContext().getString(defaultResource);
++        }
++        // endregion
+     }
+ 
+     @Override
+@@ -472,6 +479,17 @@ public class NavigationBarInflaterView extends FrameLayout
+                 }
+             }
+         }
++        // region @boringdroid
++        if (BoringdroidConfig.IS_SYSTEMUI_PLUGIN_ENABLED && v instanceof KeyButtonView) {
++            ViewGroup.LayoutParams layoutParams = v.getLayoutParams();
++            layoutParams.width =
++                    (int) v.getContext()
++                            .getResources()
++                            .getDimension(R.dimen.boring_navigation_key_width);
++            v.setLayoutParams(layoutParams);
++            v.setPadding(0, v.getPaddingTop(), 0, v.getPaddingBottom());
++        }
++        // endregion
+         return v;
+     }
+ 
+-- 
+2.17.1
+

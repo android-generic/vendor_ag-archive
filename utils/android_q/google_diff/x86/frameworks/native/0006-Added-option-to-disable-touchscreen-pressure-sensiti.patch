@@ -1,0 +1,49 @@
+From 64307cccd534175c205c93403e2822ef4cffc8a9 Mon Sep 17 00:00:00 2001
+From: Edward Peek <edwardpeek@gmail.com>
+Date: Wed, 4 Apr 2012 06:17:00 +1200
+Subject: [PATCH 06/16] Added option to disable touchscreen pressure
+ sensitivity from idc files
+
+---
+ services/inputflinger/InputReader.cpp | 5 +++++
+ services/inputflinger/InputReader.h   | 1 +
+ 2 files changed, 6 insertions(+)
+
+diff --git a/services/inputflinger/InputReader.cpp b/services/inputflinger/InputReader.cpp
+index e374f1271..becd7aa2e 100644
+--- a/services/inputflinger/InputReader.cpp
++++ b/services/inputflinger/InputReader.cpp
+@@ -4044,6 +4044,8 @@ void TouchInputMapper::parseCalibration() {
+             out.pressureCalibration = Calibration::PRESSURE_CALIBRATION_PHYSICAL;
+         } else if (pressureCalibrationString == "amplitude") {
+             out.pressureCalibration = Calibration::PRESSURE_CALIBRATION_AMPLITUDE;
++        } else if (pressureCalibrationString == "disable") {
++            out.pressureCalibration = Calibration::PRESSURE_CALIBRATION_DISABLE;
+         } else if (pressureCalibrationString != "default") {
+             ALOGW("Invalid value for touch.pressure.calibration: '%s'",
+                     pressureCalibrationString.string());
+@@ -4114,6 +4116,9 @@ void TouchInputMapper::resolveCalibration() {
+     if (mRawPointerAxes.pressure.valid) {
+         if (mCalibration.pressureCalibration == Calibration::PRESSURE_CALIBRATION_DEFAULT) {
+             mCalibration.pressureCalibration = Calibration::PRESSURE_CALIBRATION_PHYSICAL;
++        } else if (mCalibration.pressureCalibration == Calibration::PRESSURE_CALIBRATION_DISABLE) {
++            mRawPointerAxes.pressure.valid = false;
++            mCalibration.pressureCalibration = Calibration::PRESSURE_CALIBRATION_NONE;
+         }
+     } else {
+         mCalibration.pressureCalibration = Calibration::PRESSURE_CALIBRATION_NONE;
+diff --git a/services/inputflinger/InputReader.h b/services/inputflinger/InputReader.h
+index 9777779e7..cdc46d325 100644
+--- a/services/inputflinger/InputReader.h
++++ b/services/inputflinger/InputReader.h
+@@ -1119,6 +1119,7 @@ protected:
+             PRESSURE_CALIBRATION_NONE,
+             PRESSURE_CALIBRATION_PHYSICAL,
+             PRESSURE_CALIBRATION_AMPLITUDE,
++            PRESSURE_CALIBRATION_DISABLE,
+         };
+ 
+         PressureCalibration pressureCalibration;
+-- 
+2.21.0
+

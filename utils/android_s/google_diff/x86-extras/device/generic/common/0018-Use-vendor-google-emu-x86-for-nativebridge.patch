@@ -1,0 +1,121 @@
+From a79da3557804b07a096ba2d886e1a6b75605297f Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 10 Apr 2021 15:10:26 -0400
+Subject: [PATCH 18/36] Use vendor/google/emu-x86 for nativebridge
+
+---
+ nativebridge/Android.mk      | 14 +++++++++-----
+ nativebridge/nativebridge.mk | 15 ++++++++++++---
+ nativebridge/src/libnb.cpp   | 13 ++-----------
+ 3 files changed, 23 insertions(+), 19 deletions(-)
+
+diff --git a/nativebridge/Android.mk b/nativebridge/Android.mk
+index 5516935..1b64665 100644
+--- a/nativebridge/Android.mk
++++ b/nativebridge/Android.mk
+@@ -19,9 +19,13 @@ LOCAL_CPPFLAGS := -std=c++11
+ LOCAL_SHARED_LIBRARIES := libcutils libdl liblog
+ LOCAL_C_INCLUDES := art/libnativebridge/include
+ LOCAL_MULTILIB := both
+-LOCAL_POST_INSTALL_CMD := $(hide) \
+-    rm -rf $(TARGET_OUT)/{bin,lib}/{arm*,*houdini*} {$(TARGET_OUT),$(PRODUCT_OUT)}/vendor/{bin,lib}/{arm*,*houdini*}; \
+-    mkdir -p $(TARGET_OUT)/{lib/arm,$(if $(filter true,$(TARGET_IS_64_BIT)),lib64/arm64)}; \
+-    touch $(TARGET_OUT)/lib/libhoudini.so $(if $(filter true,$(TARGET_IS_64_BIT)),$(TARGET_OUT)/lib64/libhoudini.so)
++ifneq ("$(wildcard vendor/google/emu-x86/*)","")
++	include $(BUILD_SHARED_LIBRARY)
++else
++	LOCAL_POST_INSTALL_CMD := $(hide) \
++	    rm -rf $(TARGET_OUT)/*/{arm*,*houdini*} {$(TARGET_OUT),$(PRODUCT_OUT)}/vendor/{*/arm*,*/*houdini*}; \
++	    mkdir -p $(TARGET_OUT)/{lib/arm,$(if $(filter true,$(TARGET_IS_64_BIT)),lib64/arm64)}; \
++	    touch $(TARGET_OUT)/lib/libhoudini.so $(if $(filter true,$(TARGET_IS_64_BIT)),$(TARGET_OUT)/lib64/libhoudini.so)
+ 
+-include $(BUILD_SHARED_LIBRARY)
++	include $(BUILD_SHARED_LIBRARY)
++endif
+diff --git a/nativebridge/nativebridge.mk b/nativebridge/nativebridge.mk
+index 244cb92..6f8b040 100644
+--- a/nativebridge/nativebridge.mk
++++ b/nativebridge/nativebridge.mk
+@@ -11,11 +11,13 @@
+ # Enable native bridge
+ WITH_NATIVE_BRIDGE := true
+ 
++ifneq ($(DONT_SET_NB_ABI),true)
+ # Native Bridge ABI List
+ NATIVE_BRIDGE_ABI_LIST_32_BIT := armeabi-v7a armeabi
+ NATIVE_BRIDGE_ABI_LIST_64_BIT := arm64-v8a
++endif
+ 
+-LOCAL_SRC_FILES := bin/enable_nativebridge
++#~ LOCAL_SRC_FILES := bin/enable_nativebridge
+ 
+ PRODUCT_COPY_FILES := $(foreach f,$(LOCAL_SRC_FILES),$(LOCAL_PATH)/$(f):system/$(f)) \
+     $(LOCAL_PATH)/OEMBlackList:$(TARGET_COPY_OUT_VENDOR)/etc/misc/.OEMBlackList \
+@@ -35,10 +37,17 @@ endif
+ ifneq ($(NDK_TRANSLATION_PREINSTALL),google)
+ PRODUCT_PROPERTY_OVERRIDES := ro.dalvik.vm.native.bridge=libnb.so
+ 
++PRODUCT_DEFAULT_PROPERTY_OVERRIDES := \
++    ro.dalvik.vm.native.bridge=libnb.so
++
+ PRODUCT_PACKAGES := libnb
+ else
++PRODUCT_PROPERTY_OVERRIDES := ro.dalvik.vm.native.bridge=libndk_translation.so
++
++PRODUCT_DEFAULT_PROPERTY_OVERRIDES := \
++    ro.dalvik.vm.native.bridge=libndk_translation.so
++    
+ PRODUCT_PROPERTY_OVERRIDES += persist.sys.nativebridge=1
+-PRODUCT_PROPERTY_OVERRIDES += ro.dalvik.vm.native.bridge=libndk_translation.so
+ endif
+ 
+-$(call inherit-product-if-exists,vendor/google/emu-x86/target/libndk_translation.mk)
++$(call inherit-product-if-exists,vendor/google/ndk_translation/ndk_translation.mk)
+diff --git a/nativebridge/src/libnb.cpp b/nativebridge/src/libnb.cpp
+index 09f9e29..aad369e 100644
+--- a/nativebridge/src/libnb.cpp
++++ b/nativebridge/src/libnb.cpp
+@@ -37,7 +37,7 @@ static NativeBridgeCallbacks *get_callbacks()
+ #ifdef __LP64__
+                 "64"
+ #endif
+-                "/libndk_translation.so";
++                "/libhoudini.so";
+         if (!native_handle) {
+             native_handle = dlopen(libnb, RTLD_LAZY);
+             if (!native_handle) {
+@@ -188,13 +188,6 @@ static native_bridge_namespace_t *native_bridge4_getVendorNamespace()
+     return cb ? cb->getVendorNamespace() : nullptr;
+ }
+ 
+-static native_bridge_namespace_t *native_bridge5_getExportedNamespace()
+-{
+-    LOGV("enter native_bridge5_getExportedNamespace");
+-    NativeBridgeCallbacks *cb = get_callbacks();
+-    return cb ? cb->getExportedNamespace() : nullptr;
+-}
+-
+ static void __attribute__ ((destructor)) on_dlclose()
+ {
+     if (native_handle) {
+@@ -207,7 +200,7 @@ extern "C" {
+ 
+ NativeBridgeCallbacks NativeBridgeItf = {
+     // v1
+-    .version = 5,
++    .version = 4,
+     .initialize = native_bridge2_initialize,
+     .loadLibrary = native_bridge2_loadLibrary,
+     .getTrampoline = native_bridge2_getTrampoline,
+@@ -226,8 +219,6 @@ NativeBridgeCallbacks NativeBridgeItf = {
+     .loadLibraryExt = native_bridge3_loadLibraryExt,
+     // v4
+     .getVendorNamespace = native_bridge4_getVendorNamespace,
+-    // v5
+-    .getExportedNamespace = native_bridge5_getExportedNamespace,
+ };
+ 
+ } // extern "C"
+-- 
+2.17.1
+

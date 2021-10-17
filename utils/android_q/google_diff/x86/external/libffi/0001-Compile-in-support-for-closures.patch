@@ -1,0 +1,61 @@
+From c97ebeb03894ddee983aeaa016465749bd522335 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Thu, 14 Nov 2019 12:47:27 -0500
+Subject: [PATCH] Compile in support for closures
+
+This is intended to support nb-qemu (QEMU-based native bridge for
+Android-x86).
+---
+ Android.bp            | 2 ++
+ linux-x86/fficonfig.h | 3 +++
+ src/closures.c        | 2 +-
+ 3 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/Android.bp b/Android.bp
+index 923cb10..bb99949 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -30,11 +30,13 @@ cc_library_static {
+         "-Wno-pointer-arith",
+         "-Wno-sign-compare",
+         "-Wno-unused-parameter",
++        "-Wno-null-pointer-arithmetic",
+     ],
+     local_include_dirs: ["include"],
+     generated_headers: ["ffi_header"],
+     export_generated_headers: ["ffi_header"],
+     srcs: [
++        "src/closures.c",
+         "src/debug.c",
+         "src/java_raw_api.c",
+         "src/prep_cif.c",
+diff --git a/linux-x86/fficonfig.h b/linux-x86/fficonfig.h
+index 939ef31..a3afa31 100644
+--- a/linux-x86/fficonfig.h
++++ b/linux-x86/fficonfig.h
+@@ -14,6 +14,9 @@
+ /* Define this if you want extra debugging. */
+ #undef FFI_DEBUG
+ 
++/* Cannot use malloc on this target, so, we revert to alternative means */
++#define FFI_MMAP_EXEC_WRIT 1
++
+ /* Define this is you do not want support for the raw API. */
+ #undef FFI_NO_RAW_API
+ 
+diff --git a/src/closures.c b/src/closures.c
+index 721ff00..bde8d7b 100644
+--- a/src/closures.c
++++ b/src/closures.c
+@@ -54,7 +54,7 @@
+ #endif
+ 
+ #if FFI_MMAP_EXEC_WRIT && !defined FFI_MMAP_EXEC_SELINUX
+-# ifdef __linux__
++# if defined(__linux__) && !defined(__ANDROID__)
+ /* When defined to 1 check for SELinux and if SELinux is active,
+    don't attempt PROT_EXEC|PROT_WRITE mapping at all, as that
+    might cause audit messages.  */
+-- 
+2.17.1
+

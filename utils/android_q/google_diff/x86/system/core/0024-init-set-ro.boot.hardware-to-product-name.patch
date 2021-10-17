@@ -1,0 +1,48 @@
+From dea6baaf3e367c5660421ea9e93c7aa18009f7e3 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sat, 23 Nov 2019 09:30:10 +0800
+Subject: [PATCH 05/11] init: set ro.boot.hardware to product name
+
+We don't set androidboot.hardware cmdline anymore.
+---
+ init/init.cpp | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/init/init.cpp b/init/init.cpp
+index 7be795ee0c..e00cd0af6b 100644
+--- a/init/init.cpp
++++ b/init/init.cpp
+@@ -49,6 +49,7 @@
+ #include <processgroup/processgroup.h>
+ #include <processgroup/setup.h>
+ #include <selinux/android.h>
++#include <sys/system_properties.h>
+ 
+ #ifndef RECOVERY
+ #include <binder/ProcessState.h>
+@@ -412,9 +413,21 @@ static void export_kernel_boot_props() {
+         { "ro.boot.mode",       "ro.bootmode",   "unknown", },
+         { "ro.boot.baseband",   "ro.baseband",   "unknown", },
+         { "ro.boot.bootloader", "ro.bootloader", "unknown", },
+-        { "ro.boot.hardware",   "ro.hardware",   "unknown", },
++        { "ro.boot.hardware",   "ro.hardware",   UNSET, },
+         { "ro.boot.revision",   "ro.revision",   "0", },
+     };
++    const char *hardware = prop_map[4].src_prop;
++    if (GetProperty(hardware, UNSET).empty()) {
++        char line[PROP_NAME_MAX + PROP_VALUE_MAX + 2], value[PROP_VALUE_MAX];
++        auto f = fopen("/system/build.prop", "r");
++        while (fgets(line, sizeof(line), f) == line) {
++            if (sscanf(line, "ro.product.system.name=%s", value) > 0) {
++                property_set(hardware, value);
++                break;
++            }
++        }
++        fclose(f);
++    }
+     for (const auto& prop : prop_map) {
+         std::string value = GetProperty(prop.src_prop, prop.default_value);
+         if (value != UNSET)
+-- 
+2.17.1
+

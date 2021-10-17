@@ -1,0 +1,84 @@
+From 7dfea0a4448d12713bd8b5452c768b8c7010f8c5 Mon Sep 17 00:00:00 2001
+From: yingbinx <yingbinx.zeng@intel.com>
+Date: Wed, 28 Jun 2017 15:57:50 +0800
+Subject: [PATCH] [AIA]Fix input wrong wait time after input wrong key
+
+Wrong wait time after input wrong key over 5 times.
+The patch is to fix the wrong wait time after input
+wrong key.
+
+Change-Id: Id363cd01a44093ed8e6a76d4c9138882ba509511
+Tracked-On:
+Signed-off-by: yingbinx <yingbinx.zeng@intel.com>
+---
+ gatekeeper.cpp | 39 +++++++++++++++++++--------------------
+ 1 file changed, 19 insertions(+), 20 deletions(-)
+
+diff --git a/gatekeeper.cpp b/gatekeeper.cpp
+index 9097491..fe84199 100644
+--- a/gatekeeper.cpp
++++ b/gatekeeper.cpp
+@@ -132,25 +132,9 @@ void GateKeeper::Verify(const VerifyRequest &request, VerifyResponse *response)
+
+     uint64_t timestamp = GetMillisecondsSinceBoot();
+
+-    uint32_t timeout = 0;
+     bool throttle = (password_handle->version >= HANDLE_VERSION_THROTTLE);
+     bool throttle_secure = password_handle->flags & HANDLE_FLAG_THROTTLE_SECURE;
+-    if (throttle) {
+-        failure_record_t record;
+-        if (!GetFailureRecord(uid, user_id, &record, throttle_secure)) {
+-            response->error = ERROR_UNKNOWN;
+-            return;
+-        }
+-
+-        if (ThrottleRequest(uid, timestamp, &record, throttle_secure, response)) return;
+-
+-        if (!IncrementFailureRecord(uid, user_id, timestamp, &record, throttle_secure)) {
+-            response->error = ERROR_UNKNOWN;
+-            return;
+-        }
+-
+-        timeout = ComputeRetryTimeout(&record);
+-    } else {
++    if (!throttle) {
+         response->request_reenroll = true;
+     }
+
+@@ -167,8 +151,23 @@ void GateKeeper::Verify(const VerifyRequest &request, VerifyResponse *response)
+         if (throttle) ClearFailureRecord(uid, user_id, throttle_secure);
+     } else {
+         // compute the new timeout given the incremented record
+-        if (throttle && timeout > 0) {
+-            response->SetRetryTimeout(timeout);
++        if (throttle) {
++            failure_record_t record;
++            if (!GetFailureRecord(uid, user_id, &record, throttle_secure)) {
++                response->error = ERROR_UNKNOWN;
++                return;
++            }
++
++
++            if (!IncrementFailureRecord(uid, user_id, timestamp, &record, throttle_secure)) {
++                response->error = ERROR_UNKNOWN;
++                return;
++            }
++
++            if (ThrottleRequest(uid, timestamp, &record, throttle_secure, response)) {
++                return;
++            }
++            //response->SetRetryTimeout(timeout);
+         } else {
+             response->error = ERROR_INVALID;
+         }
+@@ -299,7 +298,7 @@ bool GateKeeper::ThrottleRequest(uint32_t uid, uint64_t timestamp,
+         // we have a pending timeout
+         if (timestamp < last_checked + timeout && timestamp > last_checked) {
+             // attempt before timeout expired, return remaining time
+-            response->SetRetryTimeout(timeout - (timestamp - last_checked));
++            response->SetRetryTimeout(timeout - (uint32_t)(timestamp - last_checked));
+             return true;
+         } else if (timestamp <= last_checked) {
+             // device was rebooted or timer reset, don't count as new failure but
+--
+2.21.0

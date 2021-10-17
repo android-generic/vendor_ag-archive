@@ -1,0 +1,32 @@
+From 90441b15771c23e2ec2ed4a83de567eddf25857d Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Mon, 10 Aug 2020 22:20:26 -0400
+Subject: [PATCH] Fix conflicts with ROM settings
+
+---
+ Android.mk | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index 5a9d266548..a7ec3e3261 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -65,13 +65,13 @@ LOCAL_AAPT_FLAGS := --auto-add-overlay \
+ LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res \
+     packages/apps/BootlegDumpster/res
+ 
+-LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res \
++LOCAL_RESOURCE_DIR += \
+     external/koush/Widgets/Widgets/res \
+     external/koush/Superuser/Superuser/res
+ 
+ LOCAL_AAPT_INCLUDE_ALL_RESOURCES := true
+ 
+-LOCAL_AAPT_FLAGS := --auto-add-overlay \
++LOCAL_AAPT_FLAGS +=  \
+     --extra-packages com.koushikdutta.superuser:com.koushikdutta.widgets
+ 
+ ifneq ($(INCREMENTAL_BUILDS),)
+-- 
+2.17.1
+

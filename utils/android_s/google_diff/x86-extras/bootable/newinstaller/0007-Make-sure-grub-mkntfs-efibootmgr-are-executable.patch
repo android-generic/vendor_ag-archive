@@ -1,0 +1,42 @@
+From fad7f7d86b378d545d394c671f4d790cc2130d85 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 1 May 2021 22:02:12 -0400
+Subject: [PATCH 07/11] Make sure grub, mkntfs & efibootmgr are executable
+
+---
+ initrd/init               | 3 +++
+ install/scripts/1-install | 4 ++++
+ 2 files changed, 7 insertions(+)
+
+diff --git a/initrd/init b/initrd/init
+index cd7422d8..506a9601 100755
+--- a/initrd/init
++++ b/initrd/init
+@@ -24,6 +24,9 @@ fi
+ exec 2>> $LOG
+ 
+ chmod 755 /sbin/mount.ntfs-3g
++chmod 755 /sbin/grub
++chmod 755 /sbin/mkntfs
++chmod 755 /sbin/efibootmgr
+ 
+ # early boot
+ if test x"$HAS_CTTY" != x"Yes"; then
+diff --git a/install/scripts/1-install b/install/scripts/1-install
+index 7a625dba..daffb711 100644
+--- a/install/scripts/1-install
++++ b/install/scripts/1-install
+@@ -594,6 +594,10 @@ do_install()
+ 	booted_from=`basename $dev`
+ 	efi=$(cat /sys/firmware/efi/fw_platform_size 2> /dev/null)
+ 	[ -n "$efi" ] && mount -t efivarfs none /sys/firmware/efi/efivars
++	
++	chmod 755 /sbin/grub
++	chmod 755 /sbin/mkntfs
++	chmod 755 /sbin/efibootmgr
+ 
+ 	until install_hd; do
+ 		if [ $retval -eq 255 ]; then
+-- 
+2.17.1
+

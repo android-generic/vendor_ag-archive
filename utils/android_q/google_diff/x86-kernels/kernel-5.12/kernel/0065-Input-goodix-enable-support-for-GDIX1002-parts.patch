@@ -1,0 +1,25 @@
+From cd365fac73163b4622fd3ad2be881886318689c9 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 4 Mar 2018 12:00:44 +0100
+Subject: [PATCH 065/100] Input: goodix - enable support for GDIX1002 parts
+
+At least two vendors (Chuwi and Onda) have parts with GDIX1002 id
+---
+ drivers/input/touchscreen/goodix.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/input/touchscreen/goodix.c b/drivers/input/touchscreen/goodix.c
+index c682b028f0a2..bfbf716bf576 100644
+--- a/drivers/input/touchscreen/goodix.c
++++ b/drivers/input/touchscreen/goodix.c
+@@ -1423,6 +1423,7 @@ static SIMPLE_DEV_PM_OPS(goodix_pm_ops, goodix_suspend, goodix_resume);
+ 
+ static const struct i2c_device_id goodix_ts_id[] = {
+ 	{ "GDIX1001:00", 0 },
++	{ "GDIX1002:00", 0 },
+ 	{ }
+ };
+ MODULE_DEVICE_TABLE(i2c, goodix_ts_id);
+-- 
+2.17.1
+

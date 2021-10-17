@@ -1,0 +1,69 @@
+From 6649647bfc6b08ffa324a9f03b7dcbe7dbd098f7 Mon Sep 17 00:00:00 2001
+From: Amrita Raju <amrita.raju@intel.com>
+Date: Tue, 11 Jun 2019 12:37:20 +0530
+Subject: [PATCH 8/9] Bluetooth reset unsuccessful after network reset
+
+Bluetooth paired devices are not removed from paired list
+after network reset. This is due to NullPointerException
+which occurs during telephony reset.
+
+Change-Id: I3efec1d74f6aed1acc657f0442d87867ce66e6ef
+Tracked-On:
+Signed-off-by: Amrita Raju <amrita.raju@intel.com>
+---
+ .../android/settings/ResetNetworkConfirm.java | 24 +++++++++++--------
+ 1 file changed, 14 insertions(+), 10 deletions(-)
+
+diff --git a/src/com/android/settings/ResetNetworkConfirm.java b/src/com/android/settings/ResetNetworkConfirm.java
+index beb0528f6a..47f529478a 100644
+--- a/src/com/android/settings/ResetNetworkConfirm.java
++++ b/src/com/android/settings/ResetNetworkConfirm.java
+@@ -25,6 +25,7 @@ import android.bluetooth.BluetoothAdapter;
+ import android.bluetooth.BluetoothManager;
+ import android.content.ContentResolver;
+ import android.content.Context;
++import android.content.pm.PackageManager;
+ import android.net.ConnectivityManager;
+ import android.net.NetworkPolicyManager;
+ import android.net.Uri;
+@@ -89,6 +90,7 @@ public class ResetNetworkConfirm extends InstrumentedFragment {
+ 
+         @Override
+         protected Boolean doInBackground(Void... params) {
++            PackageManager pm = mContext.getPackageManager();
+             ConnectivityManager connectivityManager = (ConnectivityManager)
+                     mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+             if (connectivityManager != null) {
+@@ -103,17 +105,19 @@ public class ResetNetworkConfirm extends InstrumentedFragment {
+ 
+             p2pFactoryReset(mContext);
+ 
+-            TelephonyManager telephonyManager = (TelephonyManager)
+-                    mContext.getSystemService(Context.TELEPHONY_SERVICE);
+-            if (telephonyManager != null) {
+-                telephonyManager.factoryReset(mSubId);
+-            }
++            if (pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
++                TelephonyManager telephonyManager = (TelephonyManager)
++                        mContext.getSystemService(Context.TELEPHONY_SERVICE);
++                if (telephonyManager != null) {
++                    telephonyManager.factoryReset(mSubId);
++                }
+ 
+-            NetworkPolicyManager policyManager = (NetworkPolicyManager)
+-                    mContext.getSystemService(Context.NETWORK_POLICY_SERVICE);
+-            if (policyManager != null) {
+-                String subscriberId = telephonyManager.getSubscriberId(mSubId);
+-                policyManager.factoryReset(subscriberId);
++                NetworkPolicyManager policyManager = (NetworkPolicyManager)
++                        mContext.getSystemService(Context.NETWORK_POLICY_SERVICE);
++                if (policyManager != null) {
++                    String subscriberId = telephonyManager.getSubscriberId(mSubId);
++                    policyManager.factoryReset(subscriberId);
++                }
+             }
+ 
+             BluetoothManager btManager = (BluetoothManager)
+-- 
+2.17.1
+

@@ -1,0 +1,53 @@
+From da34b92502928339112f734e066351f918b39bfe Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sun, 18 May 2014 02:20:32 +0800
+Subject: [PATCH 05/22] InputReader: read the pointercal from TSCalibration2
+
+Watch the pointercal and reload it on changed.
+---
+ .../android/server/input/InputManagerService.java | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/services/core/java/com/android/server/input/InputManagerService.java b/services/core/java/com/android/server/input/InputManagerService.java
+index 115899a2a51..d8978d83956 100644
+--- a/services/core/java/com/android/server/input/InputManagerService.java
++++ b/services/core/java/com/android/server/input/InputManagerService.java
+@@ -51,6 +51,7 @@ import android.media.AudioManager;
+ import android.os.Binder;
+ import android.os.Bundle;
+ import android.os.Environment;
++import android.os.FileObserver;
+ import android.os.Handler;
+ import android.os.IBinder;
+ import android.os.LocaleList;
+@@ -322,6 +323,19 @@ public class InputManagerService extends IInputManager.Stub
+     /** Whether to use the dev/input/event or uevent subsystem for the audio jack. */
+     final boolean mUseDevInputEventForAudioJack;
+ 
++    private class TscalObserver extends FileObserver {
++        public TscalObserver() {
++            super("/data/misc/tscal/pointercal", CLOSE_WRITE);
++        }
++
++        @Override
++        public void onEvent(int event, String path) {
++            Slog.i(TAG, "detect pointercal changed");
++            reloadDeviceAliases();
++        }
++    }
++    private final TscalObserver mTscalObserver = new TscalObserver();
++
+     public InputManagerService(Context context) {
+         this.mContext = context;
+         this.mHandler = new InputManagerHandler(DisplayThread.get().getLooper());
+@@ -339,6 +353,7 @@ public class InputManagerService extends IInputManager.Stub
+             new File(doubleTouchGestureEnablePath);
+ 
+         LocalServices.addService(InputManagerInternal.class, new LocalService());
++        mTscalObserver.startWatching();
+     }
+ 
+     public void setWindowManagerCallbacks(WindowManagerCallbacks callbacks) {
+-- 
+2.30.2
+

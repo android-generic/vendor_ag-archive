@@ -1,0 +1,46 @@
+From bb6ed54f699217f9a568bdcae6df2cf9e09128da Mon Sep 17 00:00:00 2001
+From: Victor Bo <bvoid@yandex.ru>
+Date: Fri, 8 May 2020 19:31:31 +0300
+Subject: [PATCH 140/140] fix some visual issues
+
+	modified:   packages/SystemUI/res/values/dimens.xml
+
+Change-Id: I754670e98ea2d047d6a5ca6fd39a061d32f0ceb1
+---
+ packages/SystemUI/res/values/dimens.xml | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/packages/SystemUI/res/values/dimens.xml b/packages/SystemUI/res/values/dimens.xml
+index 8d99fc9e03c..21747a30539 100644
+--- a/packages/SystemUI/res/values/dimens.xml
++++ b/packages/SystemUI/res/values/dimens.xml
+@@ -164,7 +164,7 @@
+     <dimen name="notification_min_interaction_height">40dp</dimen>
+ 
+     <!-- the padding of the shelf icon container -->
+-    <dimen name="shelf_icon_container_padding">0dp</dimen>
++    <dimen name="shelf_icon_container_padding">13dp</dimen>
+ 
+     <!-- The padding of a notification icon on top to the start of the notification. Used for custom
+          views where the distance can't be measured -->
+@@ -376,7 +376,7 @@
+     <dimen name="system_icons_super_container_margin_start">16dp</dimen>
+ 
+     <!-- Margin end of the system icons super container when the avatar is missing. -->
+-    <dimen name="system_icons_super_container_avatarless_margin_end">2dp</dimen>
++    <dimen name="system_icons_super_container_avatarless_margin_end">6dp</dimen>
+ 
+     <!-- Width for the notification panel and related windows -->
+     <dimen name="match_parent">-1px</dimen>
+@@ -643,7 +643,7 @@
+     <dimen name="multi_user_switch_keyguard_margin">3dp</dimen>
+ 
+     <!-- end margin for system icons if multi user switch is hidden -->
+-    <dimen name="system_icons_switcher_hidden_expanded_margin">2dp</dimen>
++    <dimen name="system_icons_switcher_hidden_expanded_margin">6dp</dimen>
+ 
+     <!-- The thickness of the colored border around the current user. -->
+     <dimen name="keyguard_user_switcher_border_thickness">2dp</dimen>
+-- 
+2.25.1
+

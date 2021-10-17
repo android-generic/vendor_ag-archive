@@ -1,0 +1,32 @@
+From f623f13368c17216d69b4cd4cfbd210df91f8363 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 21 Feb 2020 15:52:13 +0800
+Subject: [PATCH 2/3] inputflinger: fix relative mouse movement
+
+Since commit 78f97b326 ("Support pointer capture in InputReader") the
+logic to determine whether mouse input is relative was changed.
+However, commit 47addd2 was forward ported from nougat-x86. It doesn't
+consider that.
+
+Fixes: 47addd2 ("inputflinger: treat tablet-style inputs as absolute coordinate mouse pointer")
+Reported-and-tested-by: MrARM Slack <mrarm.slack@gmail.com>
+---
+ services/inputflinger/InputReader.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/inputflinger/InputReader.cpp b/services/inputflinger/InputReader.cpp
+index e3e9f0a9c..e3d2dc91d 100644
+--- a/services/inputflinger/InputReader.cpp
++++ b/services/inputflinger/InputReader.cpp
+@@ -2830,7 +2830,7 @@ void CursorInputMapper::sync(nsecs_t when) {
+             rotateDelta(mOrientation, &deltaX, &deltaY);
+         }
+         mPointerVelocityControl.move(when, &deltaX, &deltaY);
+-        if (mPointerController != NULL) {
++        if (mSource == AINPUT_SOURCE_MOUSE) {
+             if (moved) {
+                 mPointerController->move(deltaX, deltaY);
+             }
+-- 
+2.17.1
+

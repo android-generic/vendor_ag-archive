@@ -1,0 +1,30 @@
+From 12dded258e5ec109dada3fa2aad98bbe97fb5212 Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@outlook.com>
+Date: Sun, 2 May 2021 22:21:37 +0800
+Subject: [PATCH 4/5] DO NOT MERGE - Fix NPE of PhoneStateMonitor
+
+Change-Id: I72abd4e31f0c4c123adcb4a5df5a6ffdb6c7e6ed
+Signed-off-by: utzcoz <utzcoz@outlook.com>
+---
+ .../src/com/android/systemui/assist/PhoneStateMonitor.java   | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/assist/PhoneStateMonitor.java b/packages/SystemUI/src/com/android/systemui/assist/PhoneStateMonitor.java
+index 257ad50eff61..c833c3051165 100644
+--- a/packages/SystemUI/src/com/android/systemui/assist/PhoneStateMonitor.java
++++ b/packages/SystemUI/src/com/android/systemui/assist/PhoneStateMonitor.java
+@@ -184,6 +184,11 @@ public final class PhoneStateMonitor {
+         if (runningTaskInfo == null) {
+             return false;
+         } else {
++            // region @boringdroid
++            if (runningTaskInfo.topActivity == null) {
++                return false;
++            }
++            // endregion
+             return runningTaskInfo.topActivity.equals(mDefaultHome);
+         }
+     }
+-- 
+2.20.1
+

@@ -1,0 +1,40 @@
+From a6c5a683b74b5fad3338a764939b44cce06ae7b5 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 7 Jul 2019 22:25:52 +0200
+Subject: [PATCH 5/5] libsync.h: fix missing braces in (struct sync_merge_data)
+ data
+
+Fixes the following build error in IA-HardwareComposer when using clang:
+
+In file included from external/IA-Hardware-Composer/common/core/hwclayer.cpp:18:
+external/libdrm/libsync.h:88:33:
+error: suggest braces around initialization of subobject [-Werror,-Wmissing-braces]
+        struct sync_merge_data data = {0};
+                                       ^
+                                       {}
+
+Using -Wno-missing-braces in external/IA-Hardware-Composer/common/core/Android.mk
+LOCAL_CPPFLAGS did not solve the issue, this change in external/libdrm/libsync.h
+was necessary
+
+Signed-off-by: Mauro Rossi <issor.oruam@gmail.com>
+---
+ libsync.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libsync.h b/libsync.h
+index f1a2f96d..d30cdbf8 100644
+--- a/libsync.h
++++ b/libsync.h
+@@ -85,7 +85,7 @@ static inline int sync_wait(int fd, int timeout)
+ 
+ static inline int sync_merge(const char *name, int fd1, int fd2)
+ {
+-	struct sync_merge_data data = {0};
++	struct sync_merge_data data = { {0} };
+ 	int ret;
+ 
+ 	data.fd2 = fd2;
+-- 
+2.17.1
+

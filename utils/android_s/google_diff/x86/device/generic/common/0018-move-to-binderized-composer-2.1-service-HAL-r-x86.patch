@@ -1,0 +1,45 @@
+From e2bc195a54226c412e54d02a00b75229069f5756 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 28 Mar 2021 23:14:06 +0200
+Subject: [PATCH] move to binderized composer@2.1-service HAL (r-x86)
+
+Use hwbinder transport for composer 2.1 HAL in manifext.xml
+Enable android.hardware.graphics.composer@2.1-service in treble.mk
+
+Test result is that gbm_gralloc is booting and GUI is usable
+
+Change-Id: I47519d4f09b8eb0dbb9698e8e326eb02a7454028
+---
+ manifest.xml | 2 +-
+ treble.mk    | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/manifest.xml b/manifest.xml
+index 5ed527b..23b002a 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -64,7 +64,7 @@
+     </hal>
+     <hal format="hidl">
+         <name>android.hardware.graphics.composer</name>
+-        <transport arch="32+64">passthrough</transport>
++        <transport>hwbinder</transport>
+         <version>2.1</version>
+         <interface>
+             <name>IComposer</name>
+diff --git a/treble.mk b/treble.mk
+index a070956..fed0929 100644
+--- a/treble.mk
++++ b/treble.mk
+@@ -5,7 +5,7 @@ PRODUCT_PACKAGES += \
+ 
+ # HWComposer HAL
+ PRODUCT_PACKAGES += \
+-    android.hardware.graphics.composer@2.1-impl \
++    android.hardware.graphics.composer@2.1-service \
+     android.hardware.graphics.composer@2.1-service.drmfb
+ 
+ # Audio HAL
+-- 
+2.25.1
+

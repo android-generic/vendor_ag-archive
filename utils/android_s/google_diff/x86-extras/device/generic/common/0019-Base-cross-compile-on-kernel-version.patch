@@ -1,0 +1,55 @@
+From 8c9af16fc2255d4af9d8f665096aee0a875a7932 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 10 Apr 2021 23:10:31 -0400
+Subject: [PATCH 19/36] Base cross compile on kernel version
+
+Let's make this a bit more dynamic
+---
+ build/tasks/kernel.mk | 20 +++++++++++++++++---
+ 1 file changed, 17 insertions(+), 3 deletions(-)
+
+diff --git a/build/tasks/kernel.mk b/build/tasks/kernel.mk
+index 0bd2dc8..72a44bb 100644
+--- a/build/tasks/kernel.mk
++++ b/build/tasks/kernel.mk
+@@ -25,20 +25,34 @@ TARGET_KERNEL_CONFIG ?= goldfish_defconfig
+ KERNEL_CONFIG_DIR := arch/arm/configs
+ endif
+ 
++# Grab current kernel version information
++ROM_FOLDER_LOCATION := $(abspath $(PWD))
++KERNEL_MAKEFILE_LOCATION := "$(ROM_FOLDER_LOCATION)/kernel/Makefile"
++VERSION := $(shell grep -m 1 VERSION $(KERNEL_MAKEFILE_LOCATION) | sed 's/^.*= //g')
++PATCHLEVEL := $(shell grep -m 1 PATCHLEVEL $(KERNEL_MAKEFILE_LOCATION) | sed 's/^.*= //g')
++SUBLEVEL := $(shell grep -m 1 SUBLEVEL $(KERNEL_MAKEFILE_LOCATION) | sed 's/^.*= //g')
++
+ KERNEL_CLANG_CLAGS := HOSTCC=$(abspath $(LLVM_PREBUILTS_PATH)/clang)
+ ifeq ($(BUILD_KERNEL_WITH_CLANG),true)
+ CROSS_COMPILE := x86_64-linux-androidkernel-
+ KERNEL_CLANG_CLAGS += CC=$(abspath $(LLVM_PREBUILTS_PATH)/clang) CLANG_TRIPLE=x86_64-linux-gnu-
+-else
+-ifeq ($(TARGET_KERNEL_ARCH),x86_64)
++# If current kernel version >= 5.9 
++else ifeq ($(shell expr $(VERSION) \>= 5 "&" $(PATCHLEVEL) \>= 9), 1)
++CROSS_COMPILE ?= $(abspath $(TARGET_TOOLS_PREFIX))
++# If current kernel version <= 5.9 
++else ifeq ($(shell expr $(VERSION) \>= 5 "&" $(PATCHLEVEL) \<= 9 "|" $(VERSION) \< 5), 1)
+ ifeq ($(HOST_OS),darwin)
+ CROSS_COMPILE ?= $(abspath prebuilts/gcc/darwin-x86/host/i686-apple-darwin-4.2.1/bin)/i686-apple-darwin11-
+-else
++else 
+ CROSS_COMPILE ?= $(abspath prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6/bin)/x86_64-linux-
+ endif
+ else
+ CROSS_COMPILE ?= $(abspath $(TARGET_TOOLS_PREFIX))
+ endif
++# Allow to use local gcc: "export NO_KERNEL_CROSS_COMPILE=true" 
++# or adding NO_KERNEL_CROSS_COMPILE := true to BoardConfig.mk
++ifeq ($(NO_KERNEL_CROSS_COMPILE),true)
++KERNEL_CROSS_COMPILE ?=
+ endif
+ 
+ KBUILD_OUTPUT := $(TARGET_OUT_INTERMEDIATES)/kernel
+-- 
+2.17.1
+

@@ -1,0 +1,4647 @@
+From 7f75e4b447c8a67d50d257e0cb7f634aaef5f9ee Mon Sep 17 00:00:00 2001
+From: Jake Weinstein <jake@aospa.co>
+Date: Fri, 21 Aug 2020 18:48:40 +0200
+Subject: [PATCH 2/2] Revert "Update libjpeg-turbo to v2.0.5"
+
+This reverts commit 8683f0eff7e805b2431be011f18535c2ff0f0344.
+---
+ BUILDING.md                   |  11 +-
+ ChangeLog.md                  | 125 +++-------
+ LICENSE.md                    |   2 +-
+ README.md                     |  34 +--
+ cjpeg.c                       |   6 +-
+ djpeg.c                       |   4 +-
+ jchuff.c                      |   6 +-
+ jconfigint.h                  |   9 +-
+ jconfigint.h.in               |   3 -
+ jcphuff.c                     |   4 +-
+ jdatadst-tj.c                 |   3 +-
+ jdatadst.c                    |   3 +-
+ jfdctint.c                    |   2 +-
+ jidctint.c                    |   2 +-
+ jidctred.c                    |   2 +-
+ jpegtran.c                    |   3 +-
+ jversion.h                    |   7 +-
+ rdppm.c                       |   4 +-
+ rdswitch.c                    |  12 +-
+ simd/CMakeLists.txt           |   8 -
+ simd/arm/arm64/jsimd_neon.S   | 142 +++++++++--
+ simd/i386/jccolext-avx2.asm   |   6 +-
+ simd/i386/jccolext-mmx.asm    |  10 +-
+ simd/i386/jccolext-sse2.asm   |   6 +-
+ simd/i386/jccolor-avx2.asm    |   2 +
+ simd/i386/jccolor-mmx.asm     |   2 +
+ simd/i386/jccolor-sse2.asm    |   2 +
+ simd/i386/jcgray-avx2.asm     |   2 +
+ simd/i386/jcgray-mmx.asm      |   2 +
+ simd/i386/jcgray-sse2.asm     |   2 +
+ simd/i386/jcgryext-avx2.asm   |   6 +-
+ simd/i386/jcgryext-mmx.asm    |  10 +-
+ simd/i386/jcgryext-sse2.asm   |   6 +-
+ simd/i386/jchuff-sse2.asm     |  53 +++--
+ simd/i386/jcphuff-sse2.asm    |   2 +
+ simd/i386/jcsample-avx2.asm   |   2 +
+ simd/i386/jcsample-mmx.asm    |   2 +
+ simd/i386/jcsample-sse2.asm   |   2 +
+ simd/i386/jdcolext-avx2.asm   |   6 +-
+ simd/i386/jdcolext-mmx.asm    |  10 +-
+ simd/i386/jdcolext-sse2.asm   |   6 +-
+ simd/i386/jdcolor-avx2.asm    |   2 +
+ simd/i386/jdcolor-mmx.asm     |   2 +
+ simd/i386/jdcolor-sse2.asm    |   2 +
+ simd/i386/jdmerge-avx2.asm    |   2 +
+ simd/i386/jdmerge-mmx.asm     |   2 +
+ simd/i386/jdmerge-sse2.asm    |   2 +
+ simd/i386/jdmrgext-avx2.asm   |   6 +-
+ simd/i386/jdmrgext-mmx.asm    |  10 +-
+ simd/i386/jdmrgext-sse2.asm   |   6 +-
+ simd/i386/jdsample-avx2.asm   |   2 +
+ simd/i386/jdsample-mmx.asm    |   2 +
+ simd/i386/jdsample-sse2.asm   |   2 +
+ simd/i386/jfdctflt-3dn.asm    |   2 +
+ simd/i386/jfdctflt-sse.asm    |   2 +
+ simd/i386/jfdctfst-mmx.asm    |   2 +
+ simd/i386/jfdctfst-sse2.asm   |   2 +
+ simd/i386/jfdctint-avx2.asm   |   2 +
+ simd/i386/jfdctint-mmx.asm    |   2 +
+ simd/i386/jfdctint-sse2.asm   |   2 +
+ simd/i386/jidctflt-3dn.asm    |  34 +--
+ simd/i386/jidctflt-sse.asm    |   6 +-
+ simd/i386/jidctflt-sse2.asm   |   6 +-
+ simd/i386/jidctfst-mmx.asm    |   6 +-
+ simd/i386/jidctfst-sse2.asm   |   6 +-
+ simd/i386/jidctint-avx2.asm   |   6 +-
+ simd/i386/jidctint-mmx.asm    |   6 +-
+ simd/i386/jidctint-sse2.asm   |   6 +-
+ simd/i386/jidctred-mmx.asm    |  18 +-
+ simd/i386/jidctred-sse2.asm   |  10 +-
+ simd/i386/jquant-3dn.asm      |   2 +
+ simd/i386/jquant-mmx.asm      |   2 +
+ simd/i386/jquant-sse.asm      |   2 +
+ simd/i386/jquantf-sse2.asm    |   2 +
+ simd/i386/jquanti-avx2.asm    |   2 +
+ simd/i386/jquanti-sse2.asm    |   2 +
+ simd/i386/jsimdcpu.asm        |   2 +
+ simd/nasm/jcolsamp.inc        |   2 +
+ simd/nasm/jdct.inc            |   2 +
+ simd/nasm/jsimdext.inc        |  24 +-
+ simd/x86_64/jccolext-avx2.asm |   6 +-
+ simd/x86_64/jccolext-sse2.asm |   6 +-
+ simd/x86_64/jccolor-avx2.asm  |   2 +
+ simd/x86_64/jccolor-sse2.asm  |   2 +
+ simd/x86_64/jcgray-avx2.asm   |   2 +
+ simd/x86_64/jcgray-sse2.asm   |   2 +
+ simd/x86_64/jcgryext-avx2.asm |   6 +-
+ simd/x86_64/jcgryext-sse2.asm |   6 +-
+ simd/x86_64/jchuff-sse2.asm   |   6 +-
+ simd/x86_64/jcphuff-sse2.asm  |   2 +
+ simd/x86_64/jcsample-avx2.asm |   2 +
+ simd/x86_64/jcsample-sse2.asm |   2 +
+ simd/x86_64/jdcolext-avx2.asm |   6 +-
+ simd/x86_64/jdcolext-sse2.asm |   6 +-
+ simd/x86_64/jdcolor-avx2.asm  |   2 +
+ simd/x86_64/jdcolor-sse2.asm  |   2 +
+ simd/x86_64/jdmerge-avx2.asm  |   2 +
+ simd/x86_64/jdmerge-sse2.asm  |   2 +
+ simd/x86_64/jdmrgext-avx2.asm |   6 +-
+ simd/x86_64/jdmrgext-sse2.asm |   6 +-
+ simd/x86_64/jdsample-avx2.asm |   2 +
+ simd/x86_64/jdsample-sse2.asm |   2 +
+ simd/x86_64/jfdctflt-sse.asm  |   2 +
+ simd/x86_64/jfdctfst-sse2.asm |   2 +
+ simd/x86_64/jfdctint-avx2.asm |   2 +
+ simd/x86_64/jfdctint-sse2.asm |   2 +
+ simd/x86_64/jidctflt-sse2.asm |   6 +-
+ simd/x86_64/jidctfst-sse2.asm |   6 +-
+ simd/x86_64/jidctint-avx2.asm |   6 +-
+ simd/x86_64/jidctint-sse2.asm |   6 +-
+ simd/x86_64/jidctred-sse2.asm |  10 +-
+ simd/x86_64/jquantf-sse2.asm  |   2 +
+ simd/x86_64/jquanti-avx2.asm  |   2 +
+ simd/x86_64/jquanti-sse2.asm  |   2 +
+ simd/x86_64/jsimdcpu.asm      |   2 +
+ tjbench.c                     | 357 ++++++++++++++--------------
+ tjunittest.c                  | 429 ++++++++--------------------------
+ turbojpeg-jni.c               |   6 +-
+ turbojpeg.c                   |  64 ++---
+ turbojpeg.h                   |   7 +-
+ 120 files changed, 833 insertions(+), 891 deletions(-)
+
+diff --git a/BUILDING.md b/BUILDING.md
+index a4ae1e06..9ef1f45e 100644
+--- a/BUILDING.md
++++ b/BUILDING.md
+@@ -15,18 +15,13 @@ Build Requirements
+   * If using NASM, 2.10 or later is required.
+   * If using NASM, 2.10 or later (except 2.11.08) is required for an x86-64 Mac
+     build (2.11.08 does not work properly with libjpeg-turbo's x86-64 SIMD code
+-    when building macho64 objects.)
+-  * If using YASM, 1.2.0 or later is required.
+-  * If building on macOS, NASM or YASM can be obtained from
++    when building macho64 objects.)  NASM or YASM can be obtained from
+     [MacPorts](http://www.macports.org/) or [Homebrew](http://brew.sh/).
++  * If using YASM, 1.2.0 or later is required.
+      - NOTE: Currently, if it is desirable to hide the SIMD function symbols in
+        Mac executables or shared libraries that statically link with
+-       libjpeg-turbo, then NASM 2.14 or later or YASM must be used when
+-       building libjpeg-turbo.
++       libjpeg-turbo, then YASM must be used when building libjpeg-turbo.
+   * If building on Windows, **nasm.exe**/**yasm.exe** should be in your `PATH`.
+-  * NASM and YASM are located in the CRB (Code Ready Builder) repository on
+-    Red Hat Enterprise Linux 8 and in the PowerTools repository on CentOS 8,
+-    which is not enabled by default.
+ 
+   The binary RPMs released by the NASM project do not work on older Linux
+   systems, such as Red Hat Enterprise Linux 5.  On such systems, you can easily
+diff --git a/ChangeLog.md b/ChangeLog.md
+index 59fb2de9..3667d120 100644
+--- a/ChangeLog.md
++++ b/ChangeLog.md
+@@ -1,74 +1,3 @@
+-2.0.5
+-=====
+-
+-### Significant changes relative to 2.0.4:
+-
+-1. Worked around issues in the MIPS DSPr2 SIMD extensions that caused failures
+-in the libjpeg-turbo regression tests.  Specifically, the
+-`jsimd_h2v1_downsample_dspr2()` and `jsimd_h2v2_downsample_dspr2()` functions
+-in the MIPS DSPr2 SIMD extensions are now disabled until/unless they can be
+-fixed, and other functions that are incompatible with big endian MIPS CPUs are
+-disabled when building libjpeg-turbo for such CPUs.
+-
+-2. Fixed an oversight in the `TJCompressor.compress(int)` method in the
+-TurboJPEG Java API that caused an error ("java.lang.IllegalStateException: No
+-source image is associated with this instance") when attempting to use that
+-method to compress a YUV image.
+-
+-3. Fixed an issue (CVE-2020-13790) in the PPM reader that caused a buffer
+-overrun in cjpeg, TJBench, or the `tjLoadImage()` function if one of the values
+-in a binary PPM/PGM input file exceeded the maximum value defined in the file's
+-header and that maximum value was less than 255.  libjpeg-turbo 1.5.0 already
+-included a similar fix for binary PPM/PGM files with maximum values greater
+-than 255.
+-
+-4. The TurboJPEG API library's global error handler, which is used in functions
+-such as `tjBufSize()` and `tjLoadImage()` that do not require a TurboJPEG
+-instance handle, is now thread-safe on platforms that support thread-local
+-storage.
+-
+-
+-2.0.4
+-=====
+-
+-### Significant changes relative to 2.0.3:
+-
+-1. Fixed a regression in the Windows packaging system (introduced by
+-2.0 beta1[2]) whereby, if both the 64-bit libjpeg-turbo SDK for GCC and the
+-64-bit libjpeg-turbo SDK for Visual C++ were installed on the same system, only
+-one of them could be uninstalled.
+-
+-2. Fixed a signed integer overflow and subsequent segfault that occurred when
+-attempting to decompress images with more than 715827882 pixels using the
+-64-bit C version of TJBench.
+-
+-3. Fixed out-of-bounds write in `tjDecompressToYUV2()` and
+-`tjDecompressToYUVPlanes()` (sometimes manifesting as a double free) that
+-occurred when attempting to decompress grayscale JPEG images that were
+-compressed with a sampling factor other than 1 (for instance, with
+-`cjpeg -grayscale -sample 2x2`).
+-
+-4. Fixed a regression introduced by 2.0.2[5] that caused the TurboJPEG API to
+-incorrectly identify some JPEG images with unusual sampling factors as 4:4:4
+-JPEG images.  This was known to cause a buffer overflow when attempting to
+-decompress some such images using `tjDecompressToYUV2()` or
+-`tjDecompressToYUVPlanes()`.
+-
+-5. Fixed an issue, detected by ASan, whereby attempting to losslessly transform
+-a specially-crafted malformed JPEG image containing an extremely-high-frequency
+-coefficient block (junk image data that could never be generated by a
+-legitimate JPEG compressor) could cause the Huffman encoder's local buffer to
+-be overrun. (Refer to 1.4.0[9] and 1.4beta1[15].)  Given that the buffer
+-overrun was fully contained within the stack and did not cause a segfault or
+-other user-visible errant behavior, and given that the lossless transformer
+-(unlike the decompressor) is not generally exposed to arbitrary data exploits,
+-this issue did not likely pose a security risk.
+-
+-6. The ARM 64-bit (ARMv8) NEON SIMD assembly code now stores constants in a
+-separate read-only data section rather than in the text section, to support
+-execute-only memory layouts.
+-
+-
+ 2.0.3
+ =====
+ 
+@@ -209,11 +138,10 @@ would produce a "Bogus message code" error message if the underlying bitmap and
+ PPM readers/writers threw an error that was specific to the readers/writers
+ (as opposed to a general libjpeg API error.)
+ 
+-4. Fixed an issue (CVE-2018-1152) whereby a specially-crafted malformed BMP
+-file, one in which the header specified an image width of 1073741824 pixels,
+-would trigger a floating point exception (division by zero) in the
+-`tjLoadImage()` function when attempting to load the BMP file into a
+-4-component image buffer.
++4. Fixed an issue whereby a specially-crafted malformed BMP file, one in which
++the header specified an image width of 1073741824 pixels, would trigger a
++floating point exception (division by zero) in the `tjLoadImage()` function
++when attempting to load the BMP file into a 4-component image buffer.
+ 
+ 5. Fixed an issue whereby certain combinations of calls to
+ `jpeg_skip_scanlines()` and `jpeg_read_scanlines()` could trigger an infinite
+@@ -227,10 +155,10 @@ a 4:2:2 or 4:2:0 JPEG image using the merged (non-fancy) upsampling algorithms
+ 7. The new CMake-based build system will now disable the MIPS DSPr2 SIMD
+ extensions if it detects that the compiler does not support DSPr2 instructions.
+ 
+-8. Fixed out-of-bounds read in cjpeg (CVE-2018-14498) that occurred when
+-attempting to compress a specially-crafted malformed color-index
+-(8-bit-per-sample) BMP file in which some of the samples (color indices)
+-exceeded the bounds of the BMP file's color table.
++8. Fixed out-of-bounds read in cjpeg that occurred when attempting to compress
++a specially-crafted malformed color-index (8-bit-per-sample) BMP file in which
++some of the samples (color indices) exceeded the bounds of the BMP file's color
++table.
+ 
+ 9. Fixed a signed integer overflow in the progressive Huffman decoder, detected
+ by the Clang and GCC undefined behavior sanitizers, that could be triggered by
+@@ -390,8 +318,8 @@ write scanlines in bottom-up order.)  djpeg will now exit gracefully if an
+ output format other than PPM/PGM, GIF, or Targa is selected along with the
+ `-crop` option.
+ 
+-4. Fixed an issue (CVE-2017-15232) whereby `jpeg_skip_scanlines()` would
+-segfault if color quantization was enabled.
++4. Fixed an issue whereby `jpeg_skip_scanlines()` would segfault if color
++quantization was enabled.
+ 
+ 5. TJBench (both C and Java versions) will now display usage information if any
+ command-line argument is unrecognized.  This prevents the program from silently
+@@ -592,10 +520,10 @@ application was linked against.
+ 
+ 3. Fixed a couple of issues in the PPM reader that would cause buffer overruns
+ in cjpeg if one of the values in a binary PPM/PGM input file exceeded the
+-maximum value defined in the file's header and that maximum value was greater
+-than 255.  libjpeg-turbo 1.4.2 already included a similar fix for ASCII PPM/PGM
+-files.  Note that these issues were not security bugs, since they were confined
+-to the cjpeg program and did not affect any of the libjpeg-turbo libraries.
++maximum value defined in the file's header.  libjpeg-turbo 1.4.2 already
++included a similar fix for ASCII PPM/PGM files.  Note that these issues were
++not security bugs, since they were confined to the cjpeg program and did not
++affect any of the libjpeg-turbo libraries.
+ 
+ 4. Fixed an issue whereby attempting to decompress a JPEG file with a corrupt
+ header using the `tjDecompressToYUV2()` function would cause the function to
+@@ -1018,13 +946,13 @@ and IDCT algorithms (both are used during JPEG decompression.)  For unknown
+ reasons (probably related to clang), this code cannot currently be compiled for
+ iOS.
+ 
+-15. Fixed an extremely rare bug (CVE-2014-9092) that could cause the Huffman
+-encoder's local buffer to overrun when a very high-frequency MCU is compressed
+-using quality 100 and no subsampling, and when the JPEG output buffer is being
+-dynamically resized by the destination manager.  This issue was so rare that,
+-even with a test program specifically designed to make the bug occur (by
+-injecting random high-frequency YUV data into the compressor), it was
+-reproducible only once in about every 25 million iterations.
++15. Fixed an extremely rare bug that could cause the Huffman encoder's local
++buffer to overrun when a very high-frequency MCU is compressed using quality
++100 and no subsampling, and when the JPEG output buffer is being dynamically
++resized by the destination manager.  This issue was so rare that, even with a
++test program specifically designed to make the bug occur (by injecting random
++high-frequency YUV data into the compressor), it was reproducible only once in
++about every 25 million iterations.
+ 
+ 16. Fixed an oversight in the TurboJPEG C wrapper:  if any of the JPEG
+ compression functions was called repeatedly with the same
+@@ -1059,9 +987,8 @@ entropy coding (by passing arguments of `-progressive -arithmetic` to cjpeg or
+ jpegtran, for instance) would result in an error, `Requested feature was
+ omitted at compile time`.
+ 
+-4. Fixed a couple of issues (CVE-2013-6629 and CVE-2013-6630) whereby malformed
+-JPEG images would cause libjpeg-turbo to use uninitialized memory during
+-decompression.
++4. Fixed a couple of issues whereby malformed JPEG images would cause
++libjpeg-turbo to use uninitialized memory during decompression.
+ 
+ 5. Fixed an error (`Buffer passed to JPEG library is too small`) that occurred
+ when calling the TurboJPEG YUV encoding function with a very small (< 5x5)
+@@ -1200,9 +1127,9 @@ correct behavior of the colorspace extensions when merged upsampling is used.
+ upper 64 bits of xmm6 and xmm7 on Win64 platforms, which violated the Win64
+ calling conventions.
+ 
+-4. Fixed a regression (CVE-2012-2806) caused by 1.2.0[6] whereby decompressing
+-corrupt JPEG images (specifically, images in which the component count was
+-erroneously set to a large value) would cause libjpeg-turbo to segfault.
++4. Fixed a regression caused by 1.2.0[6] whereby decompressing corrupt JPEG
++images (specifically, images in which the component count was erroneously set
++to a large value) would cause libjpeg-turbo to segfault.
+ 
+ 5. Worked around a severe performance issue with "Bobcat" (AMD Embedded APU)
+ processors.  The `MASKMOVDQU` instruction, which was used by the libjpeg-turbo
+diff --git a/LICENSE.md b/LICENSE.md
+index 99c9aadc..5ca512b3 100644
+--- a/LICENSE.md
++++ b/LICENSE.md
+@@ -91,7 +91,7 @@ best of our understanding.
+ The Modified (3-clause) BSD License
+ ===================================
+ 
+-Copyright (C)2009-2020 D. R. Commander.  All Rights Reserved.
++Copyright (C)2009-2019 D. R. Commander.  All Rights Reserved.
+ Copyright (C)2015 Viktor Szathmáry.  All Rights Reserved.
+ 
+ Redistribution and use in source and binary forms, with or without
+diff --git a/README.md b/README.md
+index e7ff743a..c61b8556 100644
+--- a/README.md
++++ b/README.md
+@@ -1,14 +1,14 @@
+ Background
+ ==========
+ 
+-libjpeg-turbo is a JPEG image codec that uses SIMD instructions to accelerate
+-baseline JPEG compression and decompression on x86, x86-64, ARM, PowerPC, and
+-MIPS systems, as well as progressive JPEG compression on x86 and x86-64
+-systems.  On such systems, libjpeg-turbo is generally 2-6x as fast as libjpeg,
+-all else being equal.  On other types of systems, libjpeg-turbo can still
+-outperform libjpeg by a significant amount, by virtue of its highly-optimized
+-Huffman coding routines.  In many cases, the performance of libjpeg-turbo
+-rivals that of proprietary high-speed JPEG codecs.
++libjpeg-turbo is a JPEG image codec that uses SIMD instructions (MMX, SSE2,
++AVX2, NEON, AltiVec) to accelerate baseline JPEG compression and decompression
++on x86, x86-64, ARM, and PowerPC systems, as well as progressive JPEG
++compression on x86 and x86-64 systems.  On such systems, libjpeg-turbo is
++generally 2-6x as fast as libjpeg, all else being equal.  On other types of
++systems, libjpeg-turbo can still outperform libjpeg by a significant amount, by
++virtue of its highly-optimized Huffman coding routines.  In many cases, the
++performance of libjpeg-turbo rivals that of proprietary high-speed JPEG codecs.
+ 
+ libjpeg-turbo implements both the traditional libjpeg API as well as the less
+ powerful but more straightforward TurboJPEG API.  libjpeg-turbo also features
+@@ -145,14 +145,14 @@ supported and which aren't.
+ 
+ #### Fully supported
+ 
+-- **libjpeg API: IDCT scaling extensions in decompressor**<br>
++- **libjpeg: IDCT scaling extensions in decompressor**<br>
+   libjpeg-turbo supports IDCT scaling with scaling factors of 1/8, 1/4, 3/8,
+   1/2, 5/8, 3/4, 7/8, 9/8, 5/4, 11/8, 3/2, 13/8, 7/4, 15/8, and 2/1 (only 1/4
+   and 1/2 are SIMD-accelerated.)
+ 
+-- **libjpeg API: Arithmetic coding**
++- **libjpeg: Arithmetic coding**
+ 
+-- **libjpeg API: In-memory source and destination managers**<br>
++- **libjpeg: In-memory source and destination managers**<br>
+   See notes below.
+ 
+ - **cjpeg: Separate quality settings for luminance and chrominance**<br>
+@@ -184,14 +184,14 @@ means of quality improvement.  The reader is invited to peruse the research at
+ but it is the general belief of our project that these features have not
+ demonstrated sufficient usefulness to justify inclusion in libjpeg-turbo.
+ 
+-- **libjpeg API: DCT scaling in compressor**<br>
++- **libjpeg: DCT scaling in compressor**<br>
+   `cinfo.scale_num` and `cinfo.scale_denom` are silently ignored.
+   There is no technical reason why DCT scaling could not be supported when
+   emulating the libjpeg v7+ API/ABI, but without the SmartScale extension (see
+   below), only scaling factors of 1/2, 8/15, 4/7, 8/13, 2/3, 8/11, 4/5, and
+   8/9 would be available, which is of limited usefulness.
+ 
+-- **libjpeg API: SmartScale**<br>
++- **libjpeg: SmartScale**<br>
+   `cinfo.block_size` is silently ignored.
+   SmartScale is an extension to the JPEG format that allows for DCT block
+   sizes other than 8x8.  Providing support for this new format would be
+@@ -204,7 +204,7 @@ demonstrated sufficient usefulness to justify inclusion in libjpeg-turbo.
+   interest in providing this feature would be as a means of supporting
+   additional DCT scaling factors.
+ 
+-- **libjpeg API: Fancy downsampling in compressor**<br>
++- **libjpeg: Fancy downsampling in compressor**<br>
+   `cinfo.do_fancy_downsampling` is silently ignored.
+   This requires the DCT scaling feature, which is not supported.
+ 
+@@ -252,8 +252,8 @@ building libjpeg-turbo.  This will restore the pre-1.3 behavior, in which
+ libjpeg v8 API/ABI.
+ 
+ On Un*x systems, including the in-memory source/destination managers changes
+-the dynamic library version from 62.2.0 to 62.3.0 if using libjpeg v6b API/ABI
+-emulation and from 7.2.0 to 7.3.0 if using libjpeg v7 API/ABI emulation.
++the dynamic library version from 62.1.0 to 62.2.0 if using libjpeg v6b API/ABI
++emulation and from 7.1.0 to 7.2.0 if using libjpeg v7 API/ABI emulation.
+ 
+ Note that, on most Un*x systems, the dynamic linker will not look for a
+ function in a library until that function is actually used.  Thus, if a program
+@@ -329,7 +329,7 @@ in a way that makes the rest of the libjpeg infrastructure happy, so it is
+ necessary to use the slow Huffman decoder when decompressing a JPEG image that
+ has restart markers.  This can cause the decompression performance to drop by
+ as much as 20%, but the performance will still be much greater than that of
+-libjpeg.  Many consumer packages, such as Photoshop, use restart markers when
++libjpeg.  Many consumer packages, such as PhotoShop, use restart markers when
+ generating JPEG images, so images generated by those programs will experience
+ this issue.
+ 
+diff --git a/cjpeg.c b/cjpeg.c
+index 52a6005d..07e7db14 100644
+--- a/cjpeg.c
++++ b/cjpeg.c
+@@ -682,10 +682,12 @@ main(int argc, char **argv)
+ 
+   if (memdst) {
+     fprintf(stderr, "Compressed size:  %lu bytes\n", outsize);
+-    free(outbuffer);
++    if (outbuffer != NULL)
++      free(outbuffer);
+   }
+ 
+-  free(icc_profile);
++  if (icc_profile != NULL)
++    free(icc_profile);
+ 
+   /* All done. */
+   exit(jerr.num_warnings ? EXIT_WARNING : EXIT_SUCCESS);
+diff --git a/djpeg.c b/djpeg.c
+index e127cf79..920e90d7 100644
+--- a/djpeg.c
++++ b/djpeg.c
+@@ -516,9 +516,7 @@ main(int argc, char **argv)
+   FILE *input_file;
+   FILE *output_file;
+   unsigned char *inbuffer = NULL;
+-#if JPEG_LIB_VERSION >= 80 || defined(MEM_SRCDST_SUPPORTED)
+   unsigned long insize = 0;
+-#endif
+   JDIMENSION num_scanlines;
+ 
+   /* On Mac, fetch a command line. */
+@@ -813,7 +811,7 @@ main(int argc, char **argv)
+   end_progress_monitor((j_common_ptr)&cinfo);
+ #endif
+ 
+-  if (memsrc)
++  if (memsrc && inbuffer != NULL)
+     free(inbuffer);
+ 
+   /* All done. */
+diff --git a/jchuff.c b/jchuff.c
+index cb05055d..526203e3 100644
+--- a/jchuff.c
++++ b/jchuff.c
+@@ -43,8 +43,8 @@
+  */
+ 
+ /* NOTE: Both GCC and Clang define __GNUC__ */
+-#if defined(__GNUC__) && (defined(__arm__) || defined(__aarch64__))
+-#if !defined(__thumb__) || defined(__thumb2__)
++#if defined __GNUC__ && (defined __arm__ || defined __aarch64__)
++#if !defined __thumb__ || defined __thumb2__
+ #define USE_CLZ_INTRINSIC
+ #endif
+ #endif
+@@ -432,7 +432,7 @@ dump_buffer(working_state *state)
+  * scanning order-- 1, 8, 16, etc.), then this will produce an encoded block
+  * larger than 200 bytes.
+  */
+-#define BUFSIZE  (DCTSIZE2 * 8)
++#define BUFSIZE  (DCTSIZE2 * 4)
+ 
+ #define LOAD_BUFFER() { \
+   if (state->free_in_buffer < BUFSIZE) { \
+diff --git a/jconfigint.h b/jconfigint.h
+index ec343ed3..5b28a1f4 100644
+--- a/jconfigint.h
++++ b/jconfigint.h
+@@ -24,18 +24,11 @@
+   #endif
+ #endif
+ 
+-/* How to obtain thread-local storage */
+-#if defined(_MSC_VER) && (defined(_WIN32) || defined(_WIN64))
+-#define THREAD_LOCAL  __declspec(thread)
+-#else
+-#define THREAD_LOCAL __thread
+-#endif
+-
+ /* Define to the full name of this package. */
+ #define PACKAGE_NAME  "libjpeg-turbo"
+ 
+ /* Version number of package */
+-#define VERSION "2.0.5"
++#define VERSION  "2.0.2"
+ 
+ /* The size of `size_t', as computed by sizeof. */
+ /* The size of `size_t', as reported by the compiler through the
+diff --git a/jconfigint.h.in b/jconfigint.h.in
+index 68cbc2a5..55df0536 100644
+--- a/jconfigint.h.in
++++ b/jconfigint.h.in
+@@ -7,9 +7,6 @@
+ /* How to obtain function inlining. */
+ #define INLINE  @INLINE@
+ 
+-/* How to obtain thread-local storage */
+-#define THREAD_LOCAL  @THREAD_LOCAL@
+-
+ /* Define to the full name of this package. */
+ #define PACKAGE_NAME  "@CMAKE_PROJECT_NAME@"
+ 
+diff --git a/jcphuff.c b/jcphuff.c
+index 8c4efaf1..024d3af0 100644
+--- a/jcphuff.c
++++ b/jcphuff.c
+@@ -52,8 +52,8 @@
+  */
+ 
+ /* NOTE: Both GCC and Clang define __GNUC__ */
+-#if defined(__GNUC__) && (defined(__arm__) || defined(__aarch64__))
+-#if !defined(__thumb__) || defined(__thumb2__)
++#if defined __GNUC__ && (defined __arm__ || defined __aarch64__)
++#if !defined __thumb__ || defined __thumb2__
+ #define USE_CLZ_INTRINSIC
+ #endif
+ #endif
+diff --git a/jdatadst-tj.c b/jdatadst-tj.c
+index fdaa2de1..f6ded64a 100644
+--- a/jdatadst-tj.c
++++ b/jdatadst-tj.c
+@@ -103,7 +103,8 @@ empty_mem_output_buffer(j_compress_ptr cinfo)
+ 
+   MEMCOPY(nextbuffer, dest->buffer, dest->bufsize);
+ 
+-  free(dest->newbuffer);
++  if (dest->newbuffer != NULL)
++    free(dest->newbuffer);
+ 
+   dest->newbuffer = nextbuffer;
+ 
+diff --git a/jdatadst.c b/jdatadst.c
+index 246fffb5..3168b969 100644
+--- a/jdatadst.c
++++ b/jdatadst.c
+@@ -143,7 +143,8 @@ empty_mem_output_buffer(j_compress_ptr cinfo)
+ 
+   MEMCOPY(nextbuffer, dest->buffer, dest->bufsize);
+ 
+-  free(dest->newbuffer);
++  if (dest->newbuffer != NULL)
++    free(dest->newbuffer);
+ 
+   dest->newbuffer = nextbuffer;
+ 
+diff --git a/jfdctint.c b/jfdctint.c
+index b47c3061..c0391a92 100644
+--- a/jfdctint.c
++++ b/jfdctint.c
+@@ -1,7 +1,7 @@
+ /*
+  * jfdctint.c
+  *
+- * This file was part of the Independent JPEG Group's software:
++ * This file was part of the Independent JPEG Group's software.
+  * Copyright (C) 1991-1996, Thomas G. Lane.
+  * libjpeg-turbo Modifications:
+  * Copyright (C) 2015, D. R. Commander.
+diff --git a/jidctint.c b/jidctint.c
+index 98425d5f..55573429 100644
+--- a/jidctint.c
++++ b/jidctint.c
+@@ -1,7 +1,7 @@
+ /*
+  * jidctint.c
+  *
+- * This file was part of the Independent JPEG Group's software:
++ * This file was part of the Independent JPEG Group's software.
+  * Copyright (C) 1991-1998, Thomas G. Lane.
+  * Modification developed 2002-2009 by Guido Vollbeding.
+  * libjpeg-turbo Modifications:
+diff --git a/jidctred.c b/jidctred.c
+index 1dd65a94..1ff352f8 100644
+--- a/jidctred.c
++++ b/jidctred.c
+@@ -1,7 +1,7 @@
+ /*
+  * jidctred.c
+  *
+- * This file was part of the Independent JPEG Group's software:
++ * This file was part of the Independent JPEG Group's software.
+  * Copyright (C) 1994-1998, Thomas G. Lane.
+  * libjpeg-turbo Modifications:
+  * Copyright (C) 2015, D. R. Commander.
+diff --git a/jpegtran.c b/jpegtran.c
+index 28cde2f9..058e8443 100644
+--- a/jpegtran.c
++++ b/jpegtran.c
+@@ -591,7 +591,8 @@ main(int argc, char **argv)
+   end_progress_monitor((j_common_ptr)&dstinfo);
+ #endif
+ 
+-  free(icc_profile);
++  if (icc_profile != NULL)
++    free(icc_profile);
+ 
+   /* All done. */
+   exit(jsrcerr.num_warnings + jdsterr.num_warnings ?
+diff --git a/jversion.h b/jversion.h
+index ba31a427..191fb6bb 100644
+--- a/jversion.h
++++ b/jversion.h
+@@ -4,7 +4,7 @@
+  * This file was part of the Independent JPEG Group's software:
+  * Copyright (C) 1991-2012, Thomas G. Lane, Guido Vollbeding.
+  * libjpeg-turbo Modifications:
+- * Copyright (C) 2010, 2012-2020, D. R. Commander.
++ * Copyright (C) 2010, 2012-2019, D. R. Commander.
+  * For conditions of distribution and use, see the accompanying README.ijg
+  * file.
+  *
+@@ -36,7 +36,7 @@
+  */
+ 
+ #define JCOPYRIGHT \
+-  "Copyright (C) 2009-2020 D. R. Commander\n" \
++  "Copyright (C) 2009-2019 D. R. Commander\n" \
+   "Copyright (C) 2011-2016 Siarhei Siamashka\n" \
+   "Copyright (C) 2015-2016, 2018 Matthieu Darbois\n" \
+   "Copyright (C) 2015 Intel Corporation\n" \
+@@ -49,5 +49,4 @@
+   "Copyright (C) 1991-2016 Thomas G. Lane, Guido Vollbeding"
+ 
+ #define JCOPYRIGHT_SHORT \
+-  "Copyright (C) 1991-2020 The libjpeg-turbo Project and many others"
+-
++  "Copyright (C) 1991-2019 The libjpeg-turbo Project and many others"
+diff --git a/rdppm.c b/rdppm.c
+index a8507b90..87bc3309 100644
+--- a/rdppm.c
++++ b/rdppm.c
+@@ -5,7 +5,7 @@
+  * Copyright (C) 1991-1997, Thomas G. Lane.
+  * Modified 2009 by Bill Allombert, Guido Vollbeding.
+  * libjpeg-turbo Modifications:
+- * Copyright (C) 2015-2017, 2020, D. R. Commander.
++ * Copyright (C) 2015-2017, D. R. Commander.
+  * For conditions of distribution and use, see the accompanying README.ijg
+  * file.
+  *
+@@ -720,7 +720,7 @@ start_input_ppm(j_compress_ptr cinfo, cjpeg_source_ptr sinfo)
+     /* On 16-bit-int machines we have to be careful of maxval = 65535 */
+     source->rescale = (JSAMPLE *)
+       (*cinfo->mem->alloc_small) ((j_common_ptr)cinfo, JPOOL_IMAGE,
+-                                  (size_t)(((long)MAX(maxval, 255) + 1L) *
++                                  (size_t)(((long)maxval + 1L) *
+                                            sizeof(JSAMPLE)));
+     half_maxval = maxval / 2;
+     for (val = 0; val <= (long)maxval; val++) {
+diff --git a/rdswitch.c b/rdswitch.c
+index 886fec39..c50c33e7 100644
+--- a/rdswitch.c
++++ b/rdswitch.c
+@@ -338,8 +338,8 @@ set_quality_ratings(j_compress_ptr cinfo, char *arg, boolean force_baseline)
+ #else
+       q_scale_factor[tblno] = jpeg_quality_scaling(val);
+ #endif
+-      while (*arg && *arg++ != ','); /* advance to next segment of arg
+-                                        string */
++      while (*arg && *arg++ != ',') /* advance to next segment of arg string */
++        ;
+     } else {
+       /* reached end of parameter, set remaining factors to last value */
+ #if JPEG_LIB_VERSION >= 70
+@@ -378,8 +378,8 @@ set_quant_slots(j_compress_ptr cinfo, char *arg)
+         return FALSE;
+       }
+       cinfo->comp_info[ci].quant_tbl_no = val;
+-      while (*arg && *arg++ != ','); /* advance to next segment of arg
+-                                        string */
++      while (*arg && *arg++ != ',') /* advance to next segment of arg string */
++        ;
+     } else {
+       /* reached end of parameter, set remaining components to last table */
+       cinfo->comp_info[ci].quant_tbl_no = val;
+@@ -412,8 +412,8 @@ set_sample_factors(j_compress_ptr cinfo, char *arg)
+       }
+       cinfo->comp_info[ci].h_samp_factor = val1;
+       cinfo->comp_info[ci].v_samp_factor = val2;
+-      while (*arg && *arg++ != ',');  /* advance to next segment of arg
+-                                         string */
++      while (*arg && *arg++ != ',') /* advance to next segment of arg string */
++        ;
+     } else {
+       /* reached end of parameter, set remaining components to 1x1 sampling */
+       cinfo->comp_info[ci].h_samp_factor = 1;
+diff --git a/simd/CMakeLists.txt b/simd/CMakeLists.txt
+index 5c8009a9..3472c0db 100755
+--- a/simd/CMakeLists.txt
++++ b/simd/CMakeLists.txt
+@@ -38,14 +38,6 @@ elseif(CPU_TYPE STREQUAL "i386")
+   endif()
+ endif()
+ 
+-if(NOT REQUIRE_SIMD)
+-  include(CheckLanguage)
+-  check_language(ASM_NASM)
+-  if(NOT CMAKE_ASM_NASM_COMPILER)
+-    simd_fail("SIMD extensions disabled: could not find NASM compiler")
+-    return()
+-  endif()
+-endif()
+ enable_language(ASM_NASM)
+ message(STATUS "CMAKE_ASM_NASM_COMPILER = ${CMAKE_ASM_NASM_COMPILER}")
+ 
+diff --git a/simd/arm/arm64/jsimd_neon.S b/simd/arm/arm64/jsimd_neon.S
+index 16614d15..fae1cad6 100644
+--- a/simd/arm/arm64/jsimd_neon.S
++++ b/simd/arm/arm64/jsimd_neon.S
+@@ -32,24 +32,123 @@
+ #endif
+ 
+ #if defined(__APPLE__)
+-.section __DATA, __const
+-#elif defined(_WIN32)
+-.section .rdata
++.section __DATA,__const
+ #else
+ .section .rodata, "a", %progbits
+ #endif
+ 
+-/* Constants for jsimd_*_ycc_neon() */
++#define F_0_298   2446  /* FIX(0.298631336) */
++#define F_0_390   3196  /* FIX(0.390180644) */
++#define F_0_541   4433  /* FIX(0.541196100) */
++#define F_0_765   6270  /* FIX(0.765366865) */
++#define F_0_899   7373  /* FIX(0.899976223) */
++#define F_1_175   9633  /* FIX(1.175875602) */
++#define F_1_501  12299  /* FIX(1.501321110) */
++#define F_1_847  15137  /* FIX(1.847759065) */
++#define F_1_961  16069  /* FIX(1.961570560) */
++#define F_2_053  16819  /* FIX(2.053119869) */
++#define F_2_562  20995  /* FIX(2.562915447) */
++#define F_3_072  25172  /* FIX(3.072711026) */
++
++.balign 16
++Ljsimd_idct_islow_neon_consts:
++  .short F_0_298
++  .short -F_0_390
++  .short F_0_541
++  .short F_0_765
++  .short - F_0_899
++  .short F_1_175
++  .short F_1_501
++  .short - F_1_847
++  .short - F_1_961
++  .short F_2_053
++  .short - F_2_562
++  .short F_3_072
++  .short 0          /* padding */
++  .short 0
++  .short 0
++  .short 0
++
++#undef F_0_298
++#undef F_0_390
++#undef F_0_541
++#undef F_0_765
++#undef F_0_899
++#undef F_1_175
++#undef F_1_501
++#undef F_1_847
++#undef F_1_961
++#undef F_2_053
++#undef F_2_562
++#undef F_3_072
++
++
++#define XFIX_1_082392200  v0.h[0]
++#define XFIX_1_414213562  v0.h[1]
++#define XFIX_1_847759065  v0.h[2]
++#define XFIX_2_613125930  v0.h[3]
++
++.balign 16
++Ljsimd_idct_ifast_neon_consts:
++  .short (277 * 128 - 256 * 128)  /* XFIX_1_082392200 */
++  .short (362 * 128 - 256 * 128)  /* XFIX_1_414213562 */
++  .short (473 * 128 - 256 * 128)  /* XFIX_1_847759065 */
++  .short (669 * 128 - 512 * 128)  /* XFIX_2_613125930 */
++
++#define CONST_BITS  13
++#define PASS1_BITS  2
++
++#define FIX_0_211164243  (1730)   /* FIX(0.211164243) */
++#define FIX_0_509795579  (4176)   /* FIX(0.509795579) */
++#define FIX_0_601344887  (4926)   /* FIX(0.601344887) */
++#define FIX_0_720959822  (5906)   /* FIX(0.720959822) */
++#define FIX_0_765366865  (6270)   /* FIX(0.765366865) */
++#define FIX_0_850430095  (6967)   /* FIX(0.850430095) */
++#define FIX_0_899976223  (7373)   /* FIX(0.899976223) */
++#define FIX_1_061594337  (8697)   /* FIX(1.061594337) */
++#define FIX_1_272758580  (10426)  /* FIX(1.272758580) */
++#define FIX_1_451774981  (11893)  /* FIX(1.451774981) */
++#define FIX_1_847759065  (15137)  /* FIX(1.847759065) */
++#define FIX_2_172734803  (17799)  /* FIX(2.172734803) */
++#define FIX_2_562915447  (20995)  /* FIX(2.562915447) */
++#define FIX_3_624509785  (29692)  /* FIX(3.624509785) */
+ 
+ .balign 16
+-Ljsimd_rgb_ycc_neon_consts:
++Ljsimd_idct_4x4_neon_consts:
++  .short FIX_1_847759065        /* v0.h[0] */
++  .short -FIX_0_765366865       /* v0.h[1] */
++  .short -FIX_0_211164243       /* v0.h[2] */
++  .short FIX_1_451774981        /* v0.h[3] */
++  .short -FIX_2_172734803       /* d1[0] */
++  .short FIX_1_061594337        /* d1[1] */
++  .short -FIX_0_509795579       /* d1[2] */
++  .short -FIX_0_601344887       /* d1[3] */
++  .short FIX_0_899976223        /* v2.h[0] */
++  .short FIX_2_562915447        /* v2.h[1] */
++  .short 1 << (CONST_BITS + 1)  /* v2.h[2] */
++  .short 0                      /* v2.h[3] */
++
++.balign 8
++Ljsimd_idct_2x2_neon_consts:
++  .short -FIX_0_720959822  /* v14[0] */
++  .short FIX_0_850430095   /* v14[1] */
++  .short -FIX_1_272758580  /* v14[2] */
++  .short FIX_3_624509785   /* v14[3] */
++
++.balign 16
++Ljsimd_ycc_colorid_neon_consts:
++  .short 0,      0,     0,      0
++  .short 22971, -11277, -23401, 29033
++  .short -128,  -128,   -128,   -128
++  .short -128,  -128,   -128,   -128
++
++.balign 16
++Ljsimd_colorid_ycc_neon_consts:
+   .short 19595, 38470, 7471, 11059
+   .short 21709, 32768, 27439, 5329
+   .short 32767, 128, 32767, 128
+   .short 32767, 128, 32767, 128
+ 
+-/* Constants for jsimd_fdct_islow_neon() */
+-
+ #define F_0_298   2446  /* FIX(0.298631336) */
+ #define F_0_390   3196  /* FIX(0.390180644) */
+ #define F_0_541   4433  /* FIX(0.541196100) */
+@@ -95,8 +194,6 @@ Ljsimd_fdct_islow_neon_consts:
+ #undef F_2_562
+ #undef F_3_072
+ 
+-/* Constants for jsimd_fdct_ifast_neon() */
+-
+ .balign 16
+ Ljsimd_fdct_ifast_neon_consts:
+   .short (98 * 128)               /* XFIX_0_382683433 */
+@@ -104,9 +201,6 @@ Ljsimd_fdct_ifast_neon_consts:
+   .short (181 * 128)              /* XFIX_0_707106781 */
+   .short (334 * 128 - 256 * 128)  /* XFIX_1_306562965 */
+ 
+-/* Constants for jsimd_huff_encode_one_block_neon() */
+-
+-.balign 16
+ Ljsimd_huff_encode_one_block_neon_consts:
+     .byte 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, \
+           0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80
+@@ -134,6 +228,9 @@ Ljsimd_huff_encode_one_block_neon_consts:
+            255, 255, 255, 255,   8,   9,  22,  23  /* L5 => L6 : 2 lines OK */
+     .byte    4,   5,   6,   7, 255, 255, 255, 255, \
+            255, 255, 255, 255, 255, 255, 255, 255  /* L7 : 1 line OK */
++Ljsimd_huff_encode_one_block_neon_slowtbl_consts:
++    .byte 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, \
++          0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80
+ 
+ .text
+ 
+@@ -159,14 +256,13 @@ _\fname:
+ #endif
+ .endm
+ 
+-/* Get symbol location */
+-.macro get_symbol_loc reg, symbol
++.macro get_symbol_loc xi, symbol
+ #ifdef __APPLE__
+-    adrp            \reg, \symbol@PAGE
+-    add             \reg, \reg, \symbol@PAGEOFF
++    adrp            \xi, \symbol@PAGE
++    add             \xi, \xi, \symbol@PAGEOFF
+ #else
+-    adrp            \reg, \symbol
+-    add             \reg, \reg, :lo12:\symbol
++    adrp            \xi, \symbol
++    add             \xi, \xi, :lo12:\symbol
+ #endif
+ .endm
+ 
+@@ -386,6 +482,7 @@ _\fname:
+     do_rgb_to_yuv_stage1
+ .endm
+ 
++
+ .if \fast_ld3 == 1
+ asm_function jsimd_\colorid\()_ycc_convert_neon
+ .else
+@@ -408,7 +505,8 @@ asm_function jsimd_\colorid\()_ycc_convert_neon_slowld3
+     N               .req w12
+ 
+     /* Load constants to d0, d1, d2, d3 */
+-    get_symbol_loc  x13, Ljsimd_rgb_ycc_neon_consts
++    get_symbol_loc x13, Ljsimd_colorid_ycc_neon_consts
++
+     ld1             {v0.8h, v1.8h}, [x13]
+ 
+     ldr             OUTPUT_BUF0, [OUTPUT_BUF]
+@@ -1130,6 +1228,8 @@ asm_function jsimd_quantize_neon
+ 
+ .macro generate_jsimd_huff_encode_one_block fast_tbl
+ 
++.balign 16
++
+ .if \fast_tbl == 1
+ asm_function jsimd_huff_encode_one_block_neon
+ .else
+@@ -1139,7 +1239,11 @@ asm_function jsimd_huff_encode_one_block_neon_slowtbl
+     sub             BUFFER, BUFFER, #0x1    /* BUFFER=buffer-- */
+     /* Save ARM registers */
+     stp             x19, x20, [sp]
++.if \fast_tbl == 1
+     get_symbol_loc  x15, Ljsimd_huff_encode_one_block_neon_consts
++.else
++    get_symbol_loc  x15, Ljsimd_huff_encode_one_block_neon_slowtbl_consts
++.endif
+     ldr             PUT_BUFFER, [x0, #0x10]
+     ldr             PUT_BITSw, [x0, #0x18]
+     ldrsh           w12, [x2]               /* load DC coeff in w12 */
+diff --git a/simd/i386/jccolext-avx2.asm b/simd/i386/jccolext-avx2.asm
+index c46d6844..7a8d784a 100644
+--- a/simd/i386/jccolext-avx2.asm
++++ b/simd/i386/jccolext-avx2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -108,12 +110,12 @@ EXTN(jsimd_rgb_ycc_convert_avx2):
+     test        cl, SIZEOF_BYTE
+     jz          short .column_ld2
+     sub         ecx, byte SIZEOF_BYTE
+-    movzx       eax, byte [esi+ecx]
++    movzx       eax, BYTE [esi+ecx]
+ .column_ld2:
+     test        cl, SIZEOF_WORD
+     jz          short .column_ld4
+     sub         ecx, byte SIZEOF_WORD
+-    movzx       edx, word [esi+ecx]
++    movzx       edx, WORD [esi+ecx]
+     shl         eax, WORD_BIT
+     or          eax, edx
+ .column_ld4:
+diff --git a/simd/i386/jccolext-mmx.asm b/simd/i386/jccolext-mmx.asm
+index 6357a42b..9a2c30e2 100644
+--- a/simd/i386/jccolext-mmx.asm
++++ b/simd/i386/jccolext-mmx.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -109,13 +111,13 @@ EXTN(jsimd_rgb_ycc_convert_mmx):
+     jz          short .column_ld2
+     sub         ecx, byte SIZEOF_BYTE
+     xor         eax, eax
+-    mov         al, byte [esi+ecx]
++    mov         al, BYTE [esi+ecx]
+ .column_ld2:
+     test        cl, SIZEOF_WORD
+     jz          short .column_ld4
+     sub         ecx, byte SIZEOF_WORD
+     xor         edx, edx
+-    mov         dx, word [esi+ecx]
++    mov         dx, WORD [esi+ecx]
+     shl         eax, WORD_BIT
+     or          eax, edx
+ .column_ld4:
+@@ -125,7 +127,7 @@ EXTN(jsimd_rgb_ycc_convert_mmx):
+     test        cl, SIZEOF_DWORD
+     jz          short .column_ld8
+     sub         ecx, byte SIZEOF_DWORD
+-    movd        mmG, dword [esi+ecx]
++    movd        mmG, DWORD [esi+ecx]
+     psllq       mmA, DWORD_BIT
+     por         mmA, mmG
+ .column_ld8:
+@@ -195,7 +197,7 @@ EXTN(jsimd_rgb_ycc_convert_mmx):
+     test        cl, SIZEOF_MMWORD/8
+     jz          short .column_ld2
+     sub         ecx, byte SIZEOF_MMWORD/8
+-    movd        mmA, dword [esi+ecx*RGB_PIXELSIZE]
++    movd        mmA, DWORD [esi+ecx*RGB_PIXELSIZE]
+ .column_ld2:
+     test        cl, SIZEOF_MMWORD/4
+     jz          short .column_ld4
+diff --git a/simd/i386/jccolext-sse2.asm b/simd/i386/jccolext-sse2.asm
+index c6c80852..e830562c 100644
+--- a/simd/i386/jccolext-sse2.asm
++++ b/simd/i386/jccolext-sse2.asm
+@@ -12,6 +12,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -107,12 +109,12 @@ EXTN(jsimd_rgb_ycc_convert_sse2):
+     test        cl, SIZEOF_BYTE
+     jz          short .column_ld2
+     sub         ecx, byte SIZEOF_BYTE
+-    movzx       eax, byte [esi+ecx]
++    movzx       eax, BYTE [esi+ecx]
+ .column_ld2:
+     test        cl, SIZEOF_WORD
+     jz          short .column_ld4
+     sub         ecx, byte SIZEOF_WORD
+-    movzx       edx, word [esi+ecx]
++    movzx       edx, WORD [esi+ecx]
+     shl         eax, WORD_BIT
+     or          eax, edx
+ .column_ld4:
+diff --git a/simd/i386/jccolor-avx2.asm b/simd/i386/jccolor-avx2.asm
+index 14944e95..958517f3 100644
+--- a/simd/i386/jccolor-avx2.asm
++++ b/simd/i386/jccolor-avx2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jccolor-mmx.asm b/simd/i386/jccolor-mmx.asm
+index 8cb399bd..47be9e1e 100644
+--- a/simd/i386/jccolor-mmx.asm
++++ b/simd/i386/jccolor-mmx.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jccolor-sse2.asm b/simd/i386/jccolor-sse2.asm
+index 686d222f..c0d5d45e 100644
+--- a/simd/i386/jccolor-sse2.asm
++++ b/simd/i386/jccolor-sse2.asm
+@@ -12,6 +12,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jcgray-avx2.asm b/simd/i386/jcgray-avx2.asm
+index 560ee0c7..4d66242c 100644
+--- a/simd/i386/jcgray-avx2.asm
++++ b/simd/i386/jcgray-avx2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jcgray-mmx.asm b/simd/i386/jcgray-mmx.asm
+index 79fdf082..07c7ea6c 100644
+--- a/simd/i386/jcgray-mmx.asm
++++ b/simd/i386/jcgray-mmx.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jcgray-sse2.asm b/simd/i386/jcgray-sse2.asm
+index cb4b28e8..4b8c7971 100644
+--- a/simd/i386/jcgray-sse2.asm
++++ b/simd/i386/jcgray-sse2.asm
+@@ -12,6 +12,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jcgryext-avx2.asm b/simd/i386/jcgryext-avx2.asm
+index 3fa7973d..52e99a84 100644
+--- a/simd/i386/jcgryext-avx2.asm
++++ b/simd/i386/jcgryext-avx2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -100,12 +102,12 @@ EXTN(jsimd_rgb_gray_convert_avx2):
+     test        cl, SIZEOF_BYTE
+     jz          short .column_ld2
+     sub         ecx, byte SIZEOF_BYTE
+-    movzx       eax, byte [esi+ecx]
++    movzx       eax, BYTE [esi+ecx]
+ .column_ld2:
+     test        cl, SIZEOF_WORD
+     jz          short .column_ld4
+     sub         ecx, byte SIZEOF_WORD
+-    movzx       edx, word [esi+ecx]
++    movzx       edx, WORD [esi+ecx]
+     shl         eax, WORD_BIT
+     or          eax, edx
+ .column_ld4:
+diff --git a/simd/i386/jcgryext-mmx.asm b/simd/i386/jcgryext-mmx.asm
+index 8af42e5a..4a9ab0da 100644
+--- a/simd/i386/jcgryext-mmx.asm
++++ b/simd/i386/jcgryext-mmx.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -101,13 +103,13 @@ EXTN(jsimd_rgb_gray_convert_mmx):
+     jz          short .column_ld2
+     sub         ecx, byte SIZEOF_BYTE
+     xor         eax, eax
+-    mov         al, byte [esi+ecx]
++    mov         al, BYTE [esi+ecx]
+ .column_ld2:
+     test        cl, SIZEOF_WORD
+     jz          short .column_ld4
+     sub         ecx, byte SIZEOF_WORD
+     xor         edx, edx
+-    mov         dx, word [esi+ecx]
++    mov         dx, WORD [esi+ecx]
+     shl         eax, WORD_BIT
+     or          eax, edx
+ .column_ld4:
+@@ -117,7 +119,7 @@ EXTN(jsimd_rgb_gray_convert_mmx):
+     test        cl, SIZEOF_DWORD
+     jz          short .column_ld8
+     sub         ecx, byte SIZEOF_DWORD
+-    movd        mmG, dword [esi+ecx]
++    movd        mmG, DWORD [esi+ecx]
+     psllq       mmA, DWORD_BIT
+     por         mmA, mmG
+ .column_ld8:
+@@ -187,7 +189,7 @@ EXTN(jsimd_rgb_gray_convert_mmx):
+     test        cl, SIZEOF_MMWORD/8
+     jz          short .column_ld2
+     sub         ecx, byte SIZEOF_MMWORD/8
+-    movd        mmA, dword [esi+ecx*RGB_PIXELSIZE]
++    movd        mmA, DWORD [esi+ecx*RGB_PIXELSIZE]
+ .column_ld2:
+     test        cl, SIZEOF_MMWORD/4
+     jz          short .column_ld4
+diff --git a/simd/i386/jcgryext-sse2.asm b/simd/i386/jcgryext-sse2.asm
+index c9d6ff1e..04d891cd 100644
+--- a/simd/i386/jcgryext-sse2.asm
++++ b/simd/i386/jcgryext-sse2.asm
+@@ -12,6 +12,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -99,12 +101,12 @@ EXTN(jsimd_rgb_gray_convert_sse2):
+     test        cl, SIZEOF_BYTE
+     jz          short .column_ld2
+     sub         ecx, byte SIZEOF_BYTE
+-    movzx       eax, byte [esi+ecx]
++    movzx       eax, BYTE [esi+ecx]
+ .column_ld2:
+     test        cl, SIZEOF_WORD
+     jz          short .column_ld4
+     sub         ecx, byte SIZEOF_WORD
+-    movzx       edx, word [esi+ecx]
++    movzx       edx, WORD [esi+ecx]
+     shl         eax, WORD_BIT
+     or          eax, edx
+ .column_ld4:
+diff --git a/simd/i386/jchuff-sse2.asm b/simd/i386/jchuff-sse2.asm
+index d0112e61..6ea69f6e 100644
+--- a/simd/i386/jchuff-sse2.asm
++++ b/simd/i386/jchuff-sse2.asm
+@@ -17,6 +17,8 @@
+ ; This file contains an SSE2 implementation for Huffman coding of one block.
+ ; The following code is based directly on jchuff.c; see jchuff.c for more
+ ; details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+@@ -25,10 +27,11 @@
+ 
+     alignz      32
+     GLOBAL_DATA(jconst_huff_encode_one_block)
+-    EXTERN      EXTN(jpeg_nbits_table)
+ 
+ EXTN(jconst_huff_encode_one_block):
+ 
++%include "jpeg_nbits_table.inc"
++
+     alignz      32
+ 
+ ; --------------------------------------------------------------------------
+@@ -194,8 +197,8 @@ EXTN(jsimd_huff_encode_one_block_sse2):
+     push        ebp
+ 
+     mov         esi, POINTER [eax+8]       ; (working_state *state)
+-    mov         put_buffer, dword [esi+8]  ; put_buffer = state->cur.put_buffer;
+-    mov         put_bits, dword [esi+12]   ; put_bits = state->cur.put_bits;
++    mov         put_buffer, DWORD [esi+8]  ; put_buffer = state->cur.put_buffer;
++    mov         put_bits, DWORD [esi+12]   ; put_bits = state->cur.put_bits;
+     push        esi                        ; esi is now scratch
+ 
+     get_GOT     edx                        ; get GOT address
+@@ -211,7 +214,7 @@ EXTN(jsimd_huff_encode_one_block_sse2):
+     ; Encode the DC coefficient difference per section F.1.2.1
+     mov         esi, POINTER [esp+block]  ; block
+     movsx       ecx, word [esi]           ; temp = temp2 = block[0] - last_dc_val;
+-    sub         ecx, dword [eax+20]
++    sub         ecx, DWORD [eax+20]
+     mov         esi, ecx
+ 
+     ; This is a well-known technique for obtaining the absolute value
+@@ -226,12 +229,12 @@ EXTN(jsimd_huff_encode_one_block_sse2):
+     ; For a negative input, want temp2 = bitwise complement of abs(input)
+     ; This code assumes we are on a two's complement machine
+     add         esi, edx                ; temp2 += temp3;
+-    mov         dword [esp+temp], esi   ; backup temp2 in temp
++    mov         DWORD [esp+temp], esi   ; backup temp2 in temp
+ 
+     ; Find the number of bits needed for the magnitude of the coefficient
+     movpic      ebp, POINTER [esp+gotptr]                        ; load GOT address (ebp)
+-    movzx       edx, byte [GOTOFF(ebp, EXTN(jpeg_nbits_table) + ecx)]  ; nbits = JPEG_NBITS(temp);
+-    mov         dword [esp+temp2], edx                           ; backup nbits in temp2
++    movzx       edx, byte [GOTOFF(ebp, jpeg_nbits_table + ecx)]  ; nbits = JPEG_NBITS(temp);
++    mov         DWORD [esp+temp2], edx                           ; backup nbits in temp2
+ 
+     ; Emit the Huffman-coded symbol for the number of bits
+     mov         ebp, POINTER [eax+24]         ; After this point, arguments are not accessible anymore
+@@ -239,13 +242,13 @@ EXTN(jsimd_huff_encode_one_block_sse2):
+     movzx       ecx, byte [ebp + edx + 1024]  ; size = dctbl->ehufsi[nbits];
+     EMIT_BITS   eax                           ; EMIT_BITS(code, size)
+ 
+-    mov         ecx, dword [esp+temp2]        ; restore nbits
++    mov         ecx, DWORD [esp+temp2]        ; restore nbits
+ 
+     ; Mask off any extra bits in code
+     mov         eax, 1
+     shl         eax, cl
+     dec         eax
+-    and         eax, dword [esp+temp]   ; temp2 &= (((JLONG)1)<<nbits) - 1;
++    and         eax, DWORD [esp+temp]   ; temp2 &= (((JLONG)1)<<nbits) - 1;
+ 
+     ; Emit that number of bits of the value, if positive,
+     ; or the complement of its magnitude, if negative.
+@@ -288,22 +291,22 @@ EXTN(jsimd_huff_encode_one_block_sse2):
+     jz          near .ELOOP
+     lea         esi, [esi+ecx*2]        ; k += r;
+     shr         edx, cl                 ; index >>= r;
+-    mov         dword [esp+temp3], edx
++    mov         DWORD [esp+temp3], edx
+ .BRLOOP:
+     cmp         ecx, 16                       ; while (r > 15) {
+     jl          near .ERLOOP
+     sub         ecx, 16                       ; r -= 16;
+-    mov         dword [esp+temp], ecx
++    mov         DWORD [esp+temp], ecx
+     mov         eax, INT [ebp + 240 * 4]      ; code_0xf0 = actbl->ehufco[0xf0];
+     movzx       ecx, byte [ebp + 1024 + 240]  ; size_0xf0 = actbl->ehufsi[0xf0];
+     EMIT_BITS   eax                           ; EMIT_BITS(code_0xf0, size_0xf0)
+-    mov         ecx, dword [esp+temp]
++    mov         ecx, DWORD [esp+temp]
+     jmp         .BRLOOP
+ .ERLOOP:
+     movsx       eax, word [esi]                                  ; temp = t1[k];
+     movpic      edx, POINTER [esp+gotptr]                        ; load GOT address (edx)
+-    movzx       eax, byte [GOTOFF(edx, EXTN(jpeg_nbits_table) + eax)]  ; nbits = JPEG_NBITS(temp);
+-    mov         dword [esp+temp2], eax
++    movzx       eax, byte [GOTOFF(edx, jpeg_nbits_table + eax)]  ; nbits = JPEG_NBITS(temp);
++    mov         DWORD [esp+temp2], eax
+     ; Emit Huffman symbol for run length / number of bits
+     shl         ecx, 4                        ; temp3 = (r << 4) + nbits;
+     add         ecx, eax
+@@ -313,13 +316,13 @@ EXTN(jsimd_huff_encode_one_block_sse2):
+ 
+     movsx       edx, word [esi+DCTSIZE2*2]    ; temp2 = t2[k];
+     ; Mask off any extra bits in code
+-    mov         ecx, dword [esp+temp2]
++    mov         ecx, DWORD [esp+temp2]
+     mov         eax, 1
+     shl         eax, cl
+     dec         eax
+     and         eax, edx                ; temp2 &= (((JLONG)1)<<nbits) - 1;
+     EMIT_BITS   eax                     ; PUT_BITS(temp2, nbits)
+-    mov         edx, dword [esp+temp3]
++    mov         edx, DWORD [esp+temp3]
+     add         esi, 2                  ; ++k;
+     shr         edx, 1                  ; index >>= 1;
+ 
+@@ -349,29 +352,29 @@ EXTN(jsimd_huff_encode_one_block_sse2):
+     shr         edx, cl                 ; index >>= r;
+     add         ecx, eax
+     lea         esi, [esi+ecx*2]        ; k += r;
+-    mov         dword [esp+temp3], edx
++    mov         DWORD [esp+temp3], edx
+     jmp         .BRLOOP2
+ .BLOOP2:
+     bsf         ecx, edx                ; r = __builtin_ctzl(index);
+     jz          near .ELOOP2
+     lea         esi, [esi+ecx*2]        ; k += r;
+     shr         edx, cl                 ; index >>= r;
+-    mov         dword [esp+temp3], edx
++    mov         DWORD [esp+temp3], edx
+ .BRLOOP2:
+     cmp         ecx, 16                       ; while (r > 15) {
+     jl          near .ERLOOP2
+     sub         ecx, 16                       ; r -= 16;
+-    mov         dword [esp+temp], ecx
++    mov         DWORD [esp+temp], ecx
+     mov         eax, INT [ebp + 240 * 4]      ; code_0xf0 = actbl->ehufco[0xf0];
+     movzx       ecx, byte [ebp + 1024 + 240]  ; size_0xf0 = actbl->ehufsi[0xf0];
+     EMIT_BITS   eax                           ; EMIT_BITS(code_0xf0, size_0xf0)
+-    mov         ecx, dword [esp+temp]
++    mov         ecx, DWORD [esp+temp]
+     jmp         .BRLOOP2
+ .ERLOOP2:
+     movsx       eax, word [esi]         ; temp = t1[k];
+     bsr         eax, eax                ; nbits = 32 - __builtin_clz(temp);
+     inc         eax
+-    mov         dword [esp+temp2], eax
++    mov         DWORD [esp+temp2], eax
+     ; Emit Huffman symbol for run length / number of bits
+     shl         ecx, 4                        ; temp3 = (r << 4) + nbits;
+     add         ecx, eax
+@@ -381,13 +384,13 @@ EXTN(jsimd_huff_encode_one_block_sse2):
+ 
+     movsx       edx, word [esi+DCTSIZE2*2]    ; temp2 = t2[k];
+     ; Mask off any extra bits in code
+-    mov         ecx, dword [esp+temp2]
++    mov         ecx, DWORD [esp+temp2]
+     mov         eax, 1
+     shl         eax, cl
+     dec         eax
+     and         eax, edx                ; temp2 &= (((JLONG)1)<<nbits) - 1;
+     EMIT_BITS   eax                     ; PUT_BITS(temp2, nbits)
+-    mov         edx, dword [esp+temp3]
++    mov         edx, DWORD [esp+temp3]
+     add         esi, 2                  ; ++k;
+     shr         edx, 1                  ; index >>= 1;
+ 
+@@ -404,8 +407,8 @@ EXTN(jsimd_huff_encode_one_block_sse2):
+     mov         eax, [esp+buffer]
+     pop         esi
+     ; Save put_buffer & put_bits
+-    mov         dword [esi+8], put_buffer  ; state->cur.put_buffer = put_buffer;
+-    mov         dword [esi+12], put_bits   ; state->cur.put_bits = put_bits;
++    mov         DWORD [esi+8], put_buffer  ; state->cur.put_buffer = put_buffer;
++    mov         DWORD [esi+12], put_bits   ; state->cur.put_bits = put_bits;
+ 
+     pop         ebp
+     pop         edi
+diff --git a/simd/i386/jcphuff-sse2.asm b/simd/i386/jcphuff-sse2.asm
+index 8b731783..e35a7d8b 100644
+--- a/simd/i386/jcphuff-sse2.asm
++++ b/simd/i386/jcphuff-sse2.asm
+@@ -15,6 +15,8 @@
+ ;
+ ; This file contains an SSE2 implementation of data preparation for progressive
+ ; Huffman encoding.  See jcphuff.c for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jcsample-avx2.asm b/simd/i386/jcsample-avx2.asm
+index 0a20802d..5bcdefd5 100644
+--- a/simd/i386/jcsample-avx2.asm
++++ b/simd/i386/jcsample-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jcsample-mmx.asm b/simd/i386/jcsample-mmx.asm
+index 2c223eeb..faf42345 100644
+--- a/simd/i386/jcsample-mmx.asm
++++ b/simd/i386/jcsample-mmx.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jcsample-sse2.asm b/simd/i386/jcsample-sse2.asm
+index 4fea60d2..b10fa836 100644
+--- a/simd/i386/jcsample-sse2.asm
++++ b/simd/i386/jcsample-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jdcolext-avx2.asm b/simd/i386/jdcolext-avx2.asm
+index 015be041..46de9b9d 100644
+--- a/simd/i386/jdcolext-avx2.asm
++++ b/simd/i386/jdcolext-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -346,7 +348,7 @@ EXTN(jsimd_ycc_rgb_convert_avx2):
+     vmovd       eax, xmmA
+     cmp         ecx, byte SIZEOF_WORD
+     jb          short .column_st1
+-    mov         word [edi], ax
++    mov         WORD [edi], ax
+     add         edi, byte SIZEOF_WORD
+     sub         ecx, byte SIZEOF_WORD
+     shr         eax, 16
+@@ -355,7 +357,7 @@ EXTN(jsimd_ycc_rgb_convert_avx2):
+     ; space.
+     test        ecx, ecx
+     jz          short .nextrow
+-    mov         byte [edi], al
++    mov         BYTE [edi], al
+ 
+ %else  ; RGB_PIXELSIZE == 4 ; -----------
+ 
+diff --git a/simd/i386/jdcolext-mmx.asm b/simd/i386/jdcolext-mmx.asm
+index 5813cfcb..cd2cb3f9 100644
+--- a/simd/i386/jdcolext-mmx.asm
++++ b/simd/i386/jdcolext-mmx.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -278,7 +280,7 @@ EXTN(jsimd_ycc_rgb_convert_mmx):
+     movd        eax, mmA
+     cmp         ecx, byte SIZEOF_DWORD
+     jb          short .column_st2
+-    mov         dword [edi+0*SIZEOF_DWORD], eax
++    mov         DWORD [edi+0*SIZEOF_DWORD], eax
+     psrlq       mmA, DWORD_BIT
+     movd        eax, mmA
+     sub         ecx, byte SIZEOF_DWORD
+@@ -286,14 +288,14 @@ EXTN(jsimd_ycc_rgb_convert_mmx):
+ .column_st2:
+     cmp         ecx, byte SIZEOF_WORD
+     jb          short .column_st1
+-    mov         word [edi+0*SIZEOF_WORD], ax
++    mov         WORD [edi+0*SIZEOF_WORD], ax
+     shr         eax, WORD_BIT
+     sub         ecx, byte SIZEOF_WORD
+     add         edi, byte SIZEOF_WORD
+ .column_st1:
+     cmp         ecx, byte SIZEOF_BYTE
+     jb          short .nextrow
+-    mov         byte [edi+0*SIZEOF_BYTE], al
++    mov         BYTE [edi+0*SIZEOF_BYTE], al
+ 
+ %else  ; RGB_PIXELSIZE == 4 ; -----------
+ 
+@@ -365,7 +367,7 @@ EXTN(jsimd_ycc_rgb_convert_mmx):
+ .column_st4:
+     cmp         ecx, byte SIZEOF_MMWORD/8
+     jb          short .nextrow
+-    movd        dword [edi+0*SIZEOF_DWORD], mmA
++    movd        DWORD [edi+0*SIZEOF_DWORD], mmA
+ 
+ %endif  ; RGB_PIXELSIZE ; ---------------
+ 
+diff --git a/simd/i386/jdcolext-sse2.asm b/simd/i386/jdcolext-sse2.asm
+index d5572b32..0fcb0067 100644
+--- a/simd/i386/jdcolext-sse2.asm
++++ b/simd/i386/jdcolext-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -318,7 +320,7 @@ EXTN(jsimd_ycc_rgb_convert_sse2):
+     movd        eax, xmmA
+     cmp         ecx, byte SIZEOF_WORD
+     jb          short .column_st1
+-    mov         word [edi], ax
++    mov         WORD [edi], ax
+     add         edi, byte SIZEOF_WORD
+     sub         ecx, byte SIZEOF_WORD
+     shr         eax, 16
+@@ -327,7 +329,7 @@ EXTN(jsimd_ycc_rgb_convert_sse2):
+     ; space.
+     test        ecx, ecx
+     jz          short .nextrow
+-    mov         byte [edi], al
++    mov         BYTE [edi], al
+ 
+ %else  ; RGB_PIXELSIZE == 4 ; -----------
+ 
+diff --git a/simd/i386/jdcolor-avx2.asm b/simd/i386/jdcolor-avx2.asm
+index e05b60d0..d2f86e65 100644
+--- a/simd/i386/jdcolor-avx2.asm
++++ b/simd/i386/jdcolor-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jdcolor-mmx.asm b/simd/i386/jdcolor-mmx.asm
+index fb7e7bcc..8f5a3b3f 100644
+--- a/simd/i386/jdcolor-mmx.asm
++++ b/simd/i386/jdcolor-mmx.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jdcolor-sse2.asm b/simd/i386/jdcolor-sse2.asm
+index b7362553..ae553dba 100644
+--- a/simd/i386/jdcolor-sse2.asm
++++ b/simd/i386/jdcolor-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jdmerge-avx2.asm b/simd/i386/jdmerge-avx2.asm
+index 711e6792..17318440 100644
+--- a/simd/i386/jdmerge-avx2.asm
++++ b/simd/i386/jdmerge-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jdmerge-mmx.asm b/simd/i386/jdmerge-mmx.asm
+index 6e8311d4..607bf39f 100644
+--- a/simd/i386/jdmerge-mmx.asm
++++ b/simd/i386/jdmerge-mmx.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jdmerge-sse2.asm b/simd/i386/jdmerge-sse2.asm
+index e32f90aa..ddb1d5e7 100644
+--- a/simd/i386/jdmerge-sse2.asm
++++ b/simd/i386/jdmerge-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jdmrgext-avx2.asm b/simd/i386/jdmrgext-avx2.asm
+index e35f7282..cde48653 100644
+--- a/simd/i386/jdmrgext-avx2.asm
++++ b/simd/i386/jdmrgext-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -352,7 +354,7 @@ EXTN(jsimd_h2v1_merged_upsample_avx2):
+     vmovd       eax, xmmA
+     cmp         ecx, byte SIZEOF_WORD
+     jb          short .column_st1
+-    mov         word [edi], ax
++    mov         WORD [edi], ax
+     add         edi, byte SIZEOF_WORD
+     sub         ecx, byte SIZEOF_WORD
+     shr         eax, 16
+@@ -361,7 +363,7 @@ EXTN(jsimd_h2v1_merged_upsample_avx2):
+     ; space.
+     test        ecx, ecx
+     jz          short .endcolumn
+-    mov         byte [edi], al
++    mov         BYTE [edi], al
+ 
+ %else  ; RGB_PIXELSIZE == 4 ; -----------
+ 
+diff --git a/simd/i386/jdmrgext-mmx.asm b/simd/i386/jdmrgext-mmx.asm
+index eb3e36b4..4b9e35d8 100644
+--- a/simd/i386/jdmrgext-mmx.asm
++++ b/simd/i386/jdmrgext-mmx.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -281,7 +283,7 @@ EXTN(jsimd_h2v1_merged_upsample_mmx):
+     movd        eax, mmA
+     cmp         ecx, byte SIZEOF_DWORD
+     jb          short .column_st2
+-    mov         dword [edi+0*SIZEOF_DWORD], eax
++    mov         DWORD [edi+0*SIZEOF_DWORD], eax
+     psrlq       mmA, DWORD_BIT
+     movd        eax, mmA
+     sub         ecx, byte SIZEOF_DWORD
+@@ -289,14 +291,14 @@ EXTN(jsimd_h2v1_merged_upsample_mmx):
+ .column_st2:
+     cmp         ecx, byte SIZEOF_WORD
+     jb          short .column_st1
+-    mov         word [edi+0*SIZEOF_WORD], ax
++    mov         WORD [edi+0*SIZEOF_WORD], ax
+     shr         eax, WORD_BIT
+     sub         ecx, byte SIZEOF_WORD
+     add         edi, byte SIZEOF_WORD
+ .column_st1:
+     cmp         ecx, byte SIZEOF_BYTE
+     jb          short .endcolumn
+-    mov         byte [edi+0*SIZEOF_BYTE], al
++    mov         BYTE [edi+0*SIZEOF_BYTE], al
+ 
+ %else  ; RGB_PIXELSIZE == 4 ; -----------
+ 
+@@ -371,7 +373,7 @@ EXTN(jsimd_h2v1_merged_upsample_mmx):
+ .column_st4:
+     cmp         ecx, byte SIZEOF_MMWORD/8
+     jb          short .endcolumn
+-    movd        dword [edi+0*SIZEOF_DWORD], mmA
++    movd        DWORD [edi+0*SIZEOF_DWORD], mmA
+ 
+ %endif  ; RGB_PIXELSIZE ; ---------------
+ 
+diff --git a/simd/i386/jdmrgext-sse2.asm b/simd/i386/jdmrgext-sse2.asm
+index c113dc4d..ac4697ef 100644
+--- a/simd/i386/jdmrgext-sse2.asm
++++ b/simd/i386/jdmrgext-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -323,7 +325,7 @@ EXTN(jsimd_h2v1_merged_upsample_sse2):
+     movd        eax, xmmA
+     cmp         ecx, byte SIZEOF_WORD
+     jb          short .column_st1
+-    mov         word [edi], ax
++    mov         WORD [edi], ax
+     add         edi, byte SIZEOF_WORD
+     sub         ecx, byte SIZEOF_WORD
+     shr         eax, 16
+@@ -332,7 +334,7 @@ EXTN(jsimd_h2v1_merged_upsample_sse2):
+     ; space.
+     test        ecx, ecx
+     jz          short .endcolumn
+-    mov         byte [edi], al
++    mov         BYTE [edi], al
+ 
+ %else  ; RGB_PIXELSIZE == 4 ; -----------
+ 
+diff --git a/simd/i386/jdsample-avx2.asm b/simd/i386/jdsample-avx2.asm
+index a800c35e..61ce511c 100644
+--- a/simd/i386/jdsample-avx2.asm
++++ b/simd/i386/jdsample-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jdsample-mmx.asm b/simd/i386/jdsample-mmx.asm
+index 12c49f0e..1f810fab 100644
+--- a/simd/i386/jdsample-mmx.asm
++++ b/simd/i386/jdsample-mmx.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jdsample-sse2.asm b/simd/i386/jdsample-sse2.asm
+index 4e28d2f4..f0da6269 100644
+--- a/simd/i386/jdsample-sse2.asm
++++ b/simd/i386/jdsample-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/i386/jfdctflt-3dn.asm b/simd/i386/jfdctflt-3dn.asm
+index 322ab163..1d45865b 100644
+--- a/simd/i386/jfdctflt-3dn.asm
++++ b/simd/i386/jfdctflt-3dn.asm
+@@ -17,6 +17,8 @@
+ ; This file contains a floating-point implementation of the forward DCT
+ ; (Discrete Cosine Transform). The following code is based directly on
+ ; the IJG's original jfdctflt.c; see the jfdctflt.c for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/i386/jfdctflt-sse.asm b/simd/i386/jfdctflt-sse.asm
+index 86952c64..1faf8352 100644
+--- a/simd/i386/jfdctflt-sse.asm
++++ b/simd/i386/jfdctflt-sse.asm
+@@ -17,6 +17,8 @@
+ ; This file contains a floating-point implementation of the forward DCT
+ ; (Discrete Cosine Transform). The following code is based directly on
+ ; the IJG's original jfdctflt.c; see the jfdctflt.c for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/i386/jfdctfst-mmx.asm b/simd/i386/jfdctfst-mmx.asm
+index 80645a50..0271901c 100644
+--- a/simd/i386/jfdctfst-mmx.asm
++++ b/simd/i386/jfdctfst-mmx.asm
+@@ -18,6 +18,8 @@
+ ; the forward DCT (Discrete Cosine Transform). The following code is
+ ; based directly on the IJG's original jfdctfst.c; see the jfdctfst.c
+ ; for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/i386/jfdctfst-sse2.asm b/simd/i386/jfdctfst-sse2.asm
+index 446fa7a6..f09dadd9 100644
+--- a/simd/i386/jfdctfst-sse2.asm
++++ b/simd/i386/jfdctfst-sse2.asm
+@@ -18,6 +18,8 @@
+ ; the forward DCT (Discrete Cosine Transform). The following code is
+ ; based directly on the IJG's original jfdctfst.c; see the jfdctfst.c
+ ; for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/i386/jfdctint-avx2.asm b/simd/i386/jfdctint-avx2.asm
+index 97de2302..ae258eee 100644
+--- a/simd/i386/jfdctint-avx2.asm
++++ b/simd/i386/jfdctint-avx2.asm
+@@ -18,6 +18,8 @@
+ ; forward DCT (Discrete Cosine Transform). The following code is based
+ ; directly on the IJG's original jfdctint.c; see the jfdctint.c for
+ ; more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/i386/jfdctint-mmx.asm b/simd/i386/jfdctint-mmx.asm
+index 3ade9d49..c6bd9597 100644
+--- a/simd/i386/jfdctint-mmx.asm
++++ b/simd/i386/jfdctint-mmx.asm
+@@ -18,6 +18,8 @@
+ ; forward DCT (Discrete Cosine Transform). The following code is based
+ ; directly on the IJG's original jfdctint.c; see the jfdctint.c for
+ ; more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/i386/jfdctint-sse2.asm b/simd/i386/jfdctint-sse2.asm
+index 71b684c4..d67dcc1b 100644
+--- a/simd/i386/jfdctint-sse2.asm
++++ b/simd/i386/jfdctint-sse2.asm
+@@ -18,6 +18,8 @@
+ ; forward DCT (Discrete Cosine Transform). The following code is based
+ ; directly on the IJG's original jfdctint.c; see the jfdctint.c for
+ ; more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/i386/jidctflt-3dn.asm b/simd/i386/jidctflt-3dn.asm
+index 87951910..73aa18d0 100644
+--- a/simd/i386/jidctflt-3dn.asm
++++ b/simd/i386/jidctflt-3dn.asm
+@@ -17,6 +17,8 @@
+ ; This file contains a floating-point implementation of the inverse DCT
+ ; (Discrete Cosine Transform). The following code is based directly on
+ ; the IJG's original jidctflt.c; see the jidctflt.c for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -90,23 +92,23 @@ EXTN(jsimd_idct_float_3dnow):
+     alignx      16, 7
+ .columnloop:
+ %ifndef NO_ZERO_COLUMN_TEST_FLOAT_3DNOW
+-    mov         eax, dword [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
+     jnz         short .columnDCT
+ 
+     pushpic     ebx                     ; save GOT address
+-    mov         ebx, dword [DWBLOCK(3,0,esi,SIZEOF_JCOEF)]
+-    mov         eax, dword [DWBLOCK(4,0,esi,SIZEOF_JCOEF)]
+-    or          ebx, dword [DWBLOCK(5,0,esi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(6,0,esi,SIZEOF_JCOEF)]
+-    or          ebx, dword [DWBLOCK(7,0,esi,SIZEOF_JCOEF)]
++    mov         ebx, DWORD [DWBLOCK(3,0,esi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(4,0,esi,SIZEOF_JCOEF)]
++    or          ebx, DWORD [DWBLOCK(5,0,esi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(6,0,esi,SIZEOF_JCOEF)]
++    or          ebx, DWORD [DWBLOCK(7,0,esi,SIZEOF_JCOEF)]
+     or          eax, ebx
+     poppic      ebx                     ; restore GOT address
+     jnz         short .columnDCT
+ 
+     ; -- AC terms all zero
+ 
+-    movd        mm0, dword [DWBLOCK(0,0,esi,SIZEOF_JCOEF)]
++    movd        mm0, DWORD [DWBLOCK(0,0,esi,SIZEOF_JCOEF)]
+ 
+     punpcklwd   mm0, mm0
+     psrad       mm0, (DWORD_BIT-WORD_BIT)
+@@ -133,10 +135,10 @@ EXTN(jsimd_idct_float_3dnow):
+ 
+     ; -- Even part
+ 
+-    movd        mm0, dword [DWBLOCK(0,0,esi,SIZEOF_JCOEF)]
+-    movd        mm1, dword [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
+-    movd        mm2, dword [DWBLOCK(4,0,esi,SIZEOF_JCOEF)]
+-    movd        mm3, dword [DWBLOCK(6,0,esi,SIZEOF_JCOEF)]
++    movd        mm0, DWORD [DWBLOCK(0,0,esi,SIZEOF_JCOEF)]
++    movd        mm1, DWORD [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
++    movd        mm2, DWORD [DWBLOCK(4,0,esi,SIZEOF_JCOEF)]
++    movd        mm3, DWORD [DWBLOCK(6,0,esi,SIZEOF_JCOEF)]
+ 
+     punpcklwd   mm0, mm0
+     punpcklwd   mm1, mm1
+@@ -180,10 +182,10 @@ EXTN(jsimd_idct_float_3dnow):
+ 
+     ; -- Odd part
+ 
+-    movd        mm2, dword [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
+-    movd        mm3, dword [DWBLOCK(3,0,esi,SIZEOF_JCOEF)]
+-    movd        mm5, dword [DWBLOCK(5,0,esi,SIZEOF_JCOEF)]
+-    movd        mm1, dword [DWBLOCK(7,0,esi,SIZEOF_JCOEF)]
++    movd        mm2, DWORD [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
++    movd        mm3, DWORD [DWBLOCK(3,0,esi,SIZEOF_JCOEF)]
++    movd        mm5, DWORD [DWBLOCK(5,0,esi,SIZEOF_JCOEF)]
++    movd        mm1, DWORD [DWBLOCK(7,0,esi,SIZEOF_JCOEF)]
+ 
+     punpcklwd   mm2, mm2
+     punpcklwd   mm3, mm3
+diff --git a/simd/i386/jidctflt-sse.asm b/simd/i386/jidctflt-sse.asm
+index b27ecfdf..386650f0 100644
+--- a/simd/i386/jidctflt-sse.asm
++++ b/simd/i386/jidctflt-sse.asm
+@@ -17,6 +17,8 @@
+ ; This file contains a floating-point implementation of the inverse DCT
+ ; (Discrete Cosine Transform). The following code is based directly on
+ ; the IJG's original jidctflt.c; see the jidctflt.c for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -100,8 +102,8 @@ EXTN(jsimd_idct_float_sse):
+     alignx      16, 7
+ .columnloop:
+ %ifndef NO_ZERO_COLUMN_TEST_FLOAT_SSE
+-    mov         eax, dword [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
+     jnz         near .columnDCT
+ 
+     movq        mm0, MMWORD [MMBLOCK(1,0,esi,SIZEOF_JCOEF)]
+diff --git a/simd/i386/jidctflt-sse2.asm b/simd/i386/jidctflt-sse2.asm
+index c646eaef..9de71392 100644
+--- a/simd/i386/jidctflt-sse2.asm
++++ b/simd/i386/jidctflt-sse2.asm
+@@ -17,6 +17,8 @@
+ ; This file contains a floating-point implementation of the inverse DCT
+ ; (Discrete Cosine Transform). The following code is based directly on
+ ; the IJG's original jidctflt.c; see the jidctflt.c for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -100,8 +102,8 @@ EXTN(jsimd_idct_float_sse2):
+     alignx      16, 7
+ .columnloop:
+ %ifndef NO_ZERO_COLUMN_TEST_FLOAT_SSE
+-    mov         eax, dword [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
+     jnz         near .columnDCT
+ 
+     movq        xmm1, XMM_MMWORD [MMBLOCK(1,0,esi,SIZEOF_JCOEF)]
+diff --git a/simd/i386/jidctfst-mmx.asm b/simd/i386/jidctfst-mmx.asm
+index 24622d43..d3e8a5d6 100644
+--- a/simd/i386/jidctfst-mmx.asm
++++ b/simd/i386/jidctfst-mmx.asm
+@@ -18,6 +18,8 @@
+ ; the inverse DCT (Discrete Cosine Transform). The following code is
+ ; based directly on the IJG's original jidctfst.c; see the jidctfst.c
+ ; for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -121,8 +123,8 @@ EXTN(jsimd_idct_ifast_mmx):
+     alignx      16, 7
+ .columnloop:
+ %ifndef NO_ZERO_COLUMN_TEST_IFAST_MMX
+-    mov         eax, dword [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
+     jnz         short .columnDCT
+ 
+     movq        mm0, MMWORD [MMBLOCK(1,0,esi,SIZEOF_JCOEF)]
+diff --git a/simd/i386/jidctfst-sse2.asm b/simd/i386/jidctfst-sse2.asm
+index 19704ffa..83bc414a 100644
+--- a/simd/i386/jidctfst-sse2.asm
++++ b/simd/i386/jidctfst-sse2.asm
+@@ -18,6 +18,8 @@
+ ; the inverse DCT (Discrete Cosine Transform). The following code is
+ ; based directly on the IJG's original jidctfst.c; see the jidctfst.c
+ ; for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -116,8 +118,8 @@ EXTN(jsimd_idct_ifast_sse2):
+     mov         esi, JCOEFPTR [coef_block(eax)]  ; inptr
+ 
+ %ifndef NO_ZERO_COLUMN_TEST_IFAST_SSE2
+-    mov         eax, dword [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
+     jnz         near .columnDCT
+ 
+     movdqa      xmm0, XMMWORD [XMMBLOCK(1,0,esi,SIZEOF_JCOEF)]
+diff --git a/simd/i386/jidctint-avx2.asm b/simd/i386/jidctint-avx2.asm
+index c371985c..b3b7b14f 100644
+--- a/simd/i386/jidctint-avx2.asm
++++ b/simd/i386/jidctint-avx2.asm
+@@ -18,6 +18,8 @@
+ ; inverse DCT (Discrete Cosine Transform). The following code is based
+ ; directly on the IJG's original jidctint.c; see the jidctint.c for
+ ; more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -318,8 +320,8 @@ EXTN(jsimd_idct_islow_avx2):
+     mov         esi, JCOEFPTR [coef_block(eax)]  ; inptr
+ 
+ %ifndef NO_ZERO_COLUMN_TEST_ISLOW_AVX2
+-    mov         eax, dword [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
+     jnz         near .columnDCT
+ 
+     movdqa      xmm0, XMMWORD [XMMBLOCK(1,0,esi,SIZEOF_JCOEF)]
+diff --git a/simd/i386/jidctint-mmx.asm b/simd/i386/jidctint-mmx.asm
+index 4f07f567..6ca6d060 100644
+--- a/simd/i386/jidctint-mmx.asm
++++ b/simd/i386/jidctint-mmx.asm
+@@ -18,6 +18,8 @@
+ ; inverse DCT (Discrete Cosine Transform). The following code is based
+ ; directly on the IJG's original jidctint.c; see the jidctint.c for
+ ; more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -134,8 +136,8 @@ EXTN(jsimd_idct_islow_mmx):
+     alignx      16, 7
+ .columnloop:
+ %ifndef NO_ZERO_COLUMN_TEST_ISLOW_MMX
+-    mov         eax, dword [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
+     jnz         short .columnDCT
+ 
+     movq        mm0, MMWORD [MMBLOCK(1,0,esi,SIZEOF_JCOEF)]
+diff --git a/simd/i386/jidctint-sse2.asm b/simd/i386/jidctint-sse2.asm
+index e442fdd2..a6bd00a9 100644
+--- a/simd/i386/jidctint-sse2.asm
++++ b/simd/i386/jidctint-sse2.asm
+@@ -18,6 +18,8 @@
+ ; inverse DCT (Discrete Cosine Transform). The following code is based
+ ; directly on the IJG's original jidctint.c; see the jidctint.c for
+ ; more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -129,8 +131,8 @@ EXTN(jsimd_idct_islow_sse2):
+     mov         esi, JCOEFPTR [coef_block(eax)]  ; inptr
+ 
+ %ifndef NO_ZERO_COLUMN_TEST_ISLOW_SSE2
+-    mov         eax, dword [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
+     jnz         near .columnDCT
+ 
+     movdqa      xmm0, XMMWORD [XMMBLOCK(1,0,esi,SIZEOF_JCOEF)]
+diff --git a/simd/i386/jidctred-mmx.asm b/simd/i386/jidctred-mmx.asm
+index e2307e1c..336ee3b9 100644
+--- a/simd/i386/jidctred-mmx.asm
++++ b/simd/i386/jidctred-mmx.asm
+@@ -18,6 +18,8 @@
+ ; output: either 4x4 or 2x2 pixels from an 8x8 DCT block.
+ ; The following code is based directly on the IJG's original jidctred.c;
+ ; see the jidctred.c for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -142,8 +144,8 @@ EXTN(jsimd_idct_4x4_mmx):
+     alignx      16, 7
+ .columnloop:
+ %ifndef NO_ZERO_COLUMN_TEST_4X4_MMX
+-    mov         eax, dword [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
+     jnz         short .columnDCT
+ 
+     movq        mm0, MMWORD [MMBLOCK(1,0,esi,SIZEOF_JCOEF)]
+@@ -462,16 +464,16 @@ EXTN(jsimd_idct_4x4_mmx):
+ 
+     mov         edx, JSAMPROW [edi+0*SIZEOF_JSAMPROW]
+     mov         esi, JSAMPROW [edi+2*SIZEOF_JSAMPROW]
+-    movd        dword [edx+eax*SIZEOF_JSAMPLE], mm1
+-    movd        dword [esi+eax*SIZEOF_JSAMPLE], mm0
++    movd        DWORD [edx+eax*SIZEOF_JSAMPLE], mm1
++    movd        DWORD [esi+eax*SIZEOF_JSAMPLE], mm0
+ 
+     psrlq       mm1, 4*BYTE_BIT
+     psrlq       mm0, 4*BYTE_BIT
+ 
+     mov         edx, JSAMPROW [edi+1*SIZEOF_JSAMPROW]
+     mov         esi, JSAMPROW [edi+3*SIZEOF_JSAMPROW]
+-    movd        dword [edx+eax*SIZEOF_JSAMPLE], mm1
+-    movd        dword [esi+eax*SIZEOF_JSAMPLE], mm0
++    movd        DWORD [edx+eax*SIZEOF_JSAMPLE], mm1
++    movd        DWORD [esi+eax*SIZEOF_JSAMPLE], mm0
+ 
+     emms                                ; empty MMX state
+ 
+@@ -686,8 +688,8 @@ EXTN(jsimd_idct_2x2_mmx):
+ 
+     mov         edx, JSAMPROW [edi+0*SIZEOF_JSAMPROW]
+     mov         esi, JSAMPROW [edi+1*SIZEOF_JSAMPROW]
+-    mov         word [edx+eax*SIZEOF_JSAMPLE], bx
+-    mov         word [esi+eax*SIZEOF_JSAMPLE], cx
++    mov         WORD [edx+eax*SIZEOF_JSAMPLE], bx
++    mov         WORD [esi+eax*SIZEOF_JSAMPLE], cx
+ 
+     emms                                ; empty MMX state
+ 
+diff --git a/simd/i386/jidctred-sse2.asm b/simd/i386/jidctred-sse2.asm
+index 6e56494e..97838baf 100644
+--- a/simd/i386/jidctred-sse2.asm
++++ b/simd/i386/jidctred-sse2.asm
+@@ -18,6 +18,8 @@
+ ; output: either 4x4 or 2x2 pixels from an 8x8 DCT block.
+ ; The following code is based directly on the IJG's original jidctred.c;
+ ; see the jidctred.c for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -137,8 +139,8 @@ EXTN(jsimd_idct_4x4_sse2):
+     mov         esi, JCOEFPTR [coef_block(eax)]  ; inptr
+ 
+ %ifndef NO_ZERO_COLUMN_TEST_4X4_SSE2
+-    mov         eax, dword [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,esi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,esi,SIZEOF_JCOEF)]
+     jnz         short .columnDCT
+ 
+     movdqa      xmm0, XMMWORD [XMMBLOCK(1,0,esi,SIZEOF_JCOEF)]
+@@ -576,8 +578,8 @@ EXTN(jsimd_idct_2x2_sse2):
+ 
+     mov         edx, JSAMPROW [edi+0*SIZEOF_JSAMPROW]
+     mov         esi, JSAMPROW [edi+1*SIZEOF_JSAMPROW]
+-    mov         word [edx+eax*SIZEOF_JSAMPLE], bx
+-    mov         word [esi+eax*SIZEOF_JSAMPLE], cx
++    mov         WORD [edx+eax*SIZEOF_JSAMPLE], bx
++    mov         WORD [esi+eax*SIZEOF_JSAMPLE], cx
+ 
+     pop         edi
+     pop         esi
+diff --git a/simd/i386/jquant-3dn.asm b/simd/i386/jquant-3dn.asm
+index 5cb60caa..1767f444 100644
+--- a/simd/i386/jquant-3dn.asm
++++ b/simd/i386/jquant-3dn.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/i386/jquant-mmx.asm b/simd/i386/jquant-mmx.asm
+index 61305c62..98932db6 100644
+--- a/simd/i386/jquant-mmx.asm
++++ b/simd/i386/jquant-mmx.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/i386/jquant-sse.asm b/simd/i386/jquant-sse.asm
+index 218adc97..cc244c4b 100644
+--- a/simd/i386/jquant-sse.asm
++++ b/simd/i386/jquant-sse.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/i386/jquantf-sse2.asm b/simd/i386/jquantf-sse2.asm
+index a881ab50..8d1201c0 100644
+--- a/simd/i386/jquantf-sse2.asm
++++ b/simd/i386/jquantf-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/i386/jquanti-avx2.asm b/simd/i386/jquanti-avx2.asm
+index 5ed6bec2..ea8e1a1e 100644
+--- a/simd/i386/jquanti-avx2.asm
++++ b/simd/i386/jquanti-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/i386/jquanti-sse2.asm b/simd/i386/jquanti-sse2.asm
+index 0a509408..2a69494b 100644
+--- a/simd/i386/jquanti-sse2.asm
++++ b/simd/i386/jquanti-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/i386/jsimdcpu.asm b/simd/i386/jsimdcpu.asm
+index ddcafa9e..0af4eecf 100644
+--- a/simd/i386/jsimdcpu.asm
++++ b/simd/i386/jsimdcpu.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/nasm/jcolsamp.inc b/simd/nasm/jcolsamp.inc
+index 6f6d7f29..a2d5b494 100644
+--- a/simd/nasm/jcolsamp.inc
++++ b/simd/nasm/jcolsamp.inc
+@@ -7,6 +7,8 @@
+ ; Based on the x86 SIMD extension for IJG JPEG library
+ ; Copyright (C) 1999-2006, MIYASAKA Masaru.
+ ; For conditions of distribution and use, see copyright notice in jsimdext.inc
++;
++; [TAB8]
+ 
+ ; --------------------------------------------------------------------------
+ 
+diff --git a/simd/nasm/jdct.inc b/simd/nasm/jdct.inc
+index 9192f66f..79d51460 100644
+--- a/simd/nasm/jdct.inc
++++ b/simd/nasm/jdct.inc
+@@ -7,6 +7,8 @@
+ ; Based on the x86 SIMD extension for IJG JPEG library
+ ; Copyright (C) 1999-2006, MIYASAKA Masaru.
+ ; For conditions of distribution and use, see copyright notice in jsimdext.inc
++;
++; [TAB8]
+ 
+ ; Each IDCT routine is responsible for range-limiting its results and
+ ; converting them to unsigned form (0..MAXJSAMPLE).  The raw outputs could
+diff --git a/simd/nasm/jsimdext.inc b/simd/nasm/jsimdext.inc
+index 11fe8ef3..b40901f0 100644
+--- a/simd/nasm/jsimdext.inc
++++ b/simd/nasm/jsimdext.inc
+@@ -24,6 +24,8 @@
+ ; 2. Altered source versions must be plainly marked as such, and must not be
+ ;    misrepresented as being the original software.
+ ; 3. This notice may not be removed or altered from any source distribution.
++;
++; [TAB8]
+ 
+ ; ==========================================================================
+ ;  System-dependent configurations
+@@ -165,19 +167,19 @@ section .note.GNU-stack noalloc noexec nowrite progbits
+ %define XMM_DWORD
+ %define XMM_MMWORD
+ 
+-%define SIZEOF_BYTE   1                 ; sizeof(byte)
+-%define SIZEOF_WORD   2                 ; sizeof(word)
+-%define SIZEOF_DWORD  4                 ; sizeof(dword)
+-%define SIZEOF_QWORD  8                 ; sizeof(qword)
+-%define SIZEOF_OWORD  16                ; sizeof(oword)
+-%define SIZEOF_YWORD  32                ; sizeof(yword)
++%define SIZEOF_BYTE   1                 ; sizeof(BYTE)
++%define SIZEOF_WORD   2                 ; sizeof(WORD)
++%define SIZEOF_DWORD  4                 ; sizeof(DWORD)
++%define SIZEOF_QWORD  8                 ; sizeof(QWORD)
++%define SIZEOF_OWORD  16                ; sizeof(OWORD)
++%define SIZEOF_YWORD  32                ; sizeof(YWORD)
+ 
+ %define BYTE_BIT      8                 ; CHAR_BIT in C
+-%define WORD_BIT      16                ; sizeof(word)*BYTE_BIT
+-%define DWORD_BIT     32                ; sizeof(dword)*BYTE_BIT
+-%define QWORD_BIT     64                ; sizeof(qword)*BYTE_BIT
+-%define OWORD_BIT     128               ; sizeof(oword)*BYTE_BIT
+-%define YWORD_BIT     256               ; sizeof(yword)*BYTE_BIT
++%define WORD_BIT      16                ; sizeof(WORD)*BYTE_BIT
++%define DWORD_BIT     32                ; sizeof(DWORD)*BYTE_BIT
++%define QWORD_BIT     64                ; sizeof(QWORD)*BYTE_BIT
++%define OWORD_BIT     128               ; sizeof(OWORD)*BYTE_BIT
++%define YWORD_BIT     256               ; sizeof(YWORD)*BYTE_BIT
+ 
+ ; --------------------------------------------------------------------------
+ ;  External Symbol Name
+diff --git a/simd/x86_64/jccolext-avx2.asm b/simd/x86_64/jccolext-avx2.asm
+index 10d28348..5fa3848c 100644
+--- a/simd/x86_64/jccolext-avx2.asm
++++ b/simd/x86_64/jccolext-avx2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -94,12 +96,12 @@ EXTN(jsimd_rgb_ycc_convert_avx2):
+     test        cl, SIZEOF_BYTE
+     jz          short .column_ld2
+     sub         rcx, byte SIZEOF_BYTE
+-    movzx       rax, byte [rsi+rcx]
++    movzx       rax, BYTE [rsi+rcx]
+ .column_ld2:
+     test        cl, SIZEOF_WORD
+     jz          short .column_ld4
+     sub         rcx, byte SIZEOF_WORD
+-    movzx       rdx, word [rsi+rcx]
++    movzx       rdx, WORD [rsi+rcx]
+     shl         rax, WORD_BIT
+     or          rax, rdx
+ .column_ld4:
+diff --git a/simd/x86_64/jccolext-sse2.asm b/simd/x86_64/jccolext-sse2.asm
+index 2c914d31..b1486c0b 100644
+--- a/simd/x86_64/jccolext-sse2.asm
++++ b/simd/x86_64/jccolext-sse2.asm
+@@ -12,6 +12,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -93,12 +95,12 @@ EXTN(jsimd_rgb_ycc_convert_sse2):
+     test        cl, SIZEOF_BYTE
+     jz          short .column_ld2
+     sub         rcx, byte SIZEOF_BYTE
+-    movzx       rax, byte [rsi+rcx]
++    movzx       rax, BYTE [rsi+rcx]
+ .column_ld2:
+     test        cl, SIZEOF_WORD
+     jz          short .column_ld4
+     sub         rcx, byte SIZEOF_WORD
+-    movzx       rdx, word [rsi+rcx]
++    movzx       rdx, WORD [rsi+rcx]
+     shl         rax, WORD_BIT
+     or          rax, rdx
+ .column_ld4:
+diff --git a/simd/x86_64/jccolor-avx2.asm b/simd/x86_64/jccolor-avx2.asm
+index 16b78298..f9f4be06 100644
+--- a/simd/x86_64/jccolor-avx2.asm
++++ b/simd/x86_64/jccolor-avx2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/x86_64/jccolor-sse2.asm b/simd/x86_64/jccolor-sse2.asm
+index e2955c21..3e46601d 100644
+--- a/simd/x86_64/jccolor-sse2.asm
++++ b/simd/x86_64/jccolor-sse2.asm
+@@ -12,6 +12,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/x86_64/jcgray-avx2.asm b/simd/x86_64/jcgray-avx2.asm
+index 591255bb..0ec24104 100644
+--- a/simd/x86_64/jcgray-avx2.asm
++++ b/simd/x86_64/jcgray-avx2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/x86_64/jcgray-sse2.asm b/simd/x86_64/jcgray-sse2.asm
+index e389904f..edf9222e 100644
+--- a/simd/x86_64/jcgray-sse2.asm
++++ b/simd/x86_64/jcgray-sse2.asm
+@@ -12,6 +12,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/x86_64/jcgryext-avx2.asm b/simd/x86_64/jcgryext-avx2.asm
+index 175b60de..79e2aa01 100644
+--- a/simd/x86_64/jcgryext-avx2.asm
++++ b/simd/x86_64/jcgryext-avx2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -86,12 +88,12 @@ EXTN(jsimd_rgb_gray_convert_avx2):
+     test        cl, SIZEOF_BYTE
+     jz          short .column_ld2
+     sub         rcx, byte SIZEOF_BYTE
+-    movzx       rax, byte [rsi+rcx]
++    movzx       rax, BYTE [rsi+rcx]
+ .column_ld2:
+     test        cl, SIZEOF_WORD
+     jz          short .column_ld4
+     sub         rcx, byte SIZEOF_WORD
+-    movzx       rdx, word [rsi+rcx]
++    movzx       rdx, WORD [rsi+rcx]
+     shl         rax, WORD_BIT
+     or          rax, rdx
+ .column_ld4:
+diff --git a/simd/x86_64/jcgryext-sse2.asm b/simd/x86_64/jcgryext-sse2.asm
+index 873be805..9c3ae5ef 100644
+--- a/simd/x86_64/jcgryext-sse2.asm
++++ b/simd/x86_64/jcgryext-sse2.asm
+@@ -12,6 +12,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -85,12 +87,12 @@ EXTN(jsimd_rgb_gray_convert_sse2):
+     test        cl, SIZEOF_BYTE
+     jz          short .column_ld2
+     sub         rcx, byte SIZEOF_BYTE
+-    movzx       rax, byte [rsi+rcx]
++    movzx       rax, BYTE [rsi+rcx]
+ .column_ld2:
+     test        cl, SIZEOF_WORD
+     jz          short .column_ld4
+     sub         rcx, byte SIZEOF_WORD
+-    movzx       rdx, word [rsi+rcx]
++    movzx       rdx, WORD [rsi+rcx]
+     shl         rax, WORD_BIT
+     or          rax, rdx
+ .column_ld4:
+diff --git a/simd/x86_64/jchuff-sse2.asm b/simd/x86_64/jchuff-sse2.asm
+index aa78fd5c..1b091ad1 100644
+--- a/simd/x86_64/jchuff-sse2.asm
++++ b/simd/x86_64/jchuff-sse2.asm
+@@ -17,6 +17,8 @@
+ ; This file contains an SSE2 implementation for Huffman coding of one block.
+ ; The following code is based directly on jchuff.c; see jchuff.c for more
+ ; details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+@@ -198,7 +200,7 @@ EXTN(jsimd_huff_encode_one_block_sse2):
+     mov         buffer, r11                  ; r11 is now sratch
+ 
+     mov         put_buffer, MMWORD [r10+16]  ; put_buffer = state->cur.put_buffer;
+-    mov         put_bits,    dword [r10+24]  ; put_bits = state->cur.put_bits;
++    mov         put_bits,    DWORD [r10+24]  ; put_bits = state->cur.put_bits;
+     push        r10                          ; r10 is now scratch
+ 
+     ; Encode the DC coefficient difference per section F.1.2.1
+@@ -331,7 +333,7 @@ EXTN(jsimd_huff_encode_one_block_sse2):
+     pop         r10
+     ; Save put_buffer & put_bits
+     mov         MMWORD [r10+16], put_buffer  ; state->cur.put_buffer = put_buffer;
+-    mov         dword  [r10+24], put_bits    ; state->cur.put_bits = put_bits;
++    mov         DWORD  [r10+24], put_bits    ; state->cur.put_bits = put_bits;
+ 
+     pop         rbx
+     uncollect_args 6
+diff --git a/simd/x86_64/jcphuff-sse2.asm b/simd/x86_64/jcphuff-sse2.asm
+index 8ed44728..a9446b7a 100644
+--- a/simd/x86_64/jcphuff-sse2.asm
++++ b/simd/x86_64/jcphuff-sse2.asm
+@@ -16,6 +16,8 @@
+ ;
+ ; This file contains an SSE2 implementation of data preparation for progressive
+ ; Huffman encoding.  See jcphuff.c for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/x86_64/jcsample-avx2.asm b/simd/x86_64/jcsample-avx2.asm
+index d9922bb4..9d5a8618 100644
+--- a/simd/x86_64/jcsample-avx2.asm
++++ b/simd/x86_64/jcsample-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/x86_64/jcsample-sse2.asm b/simd/x86_64/jcsample-sse2.asm
+index 0f107e9a..1b315364 100644
+--- a/simd/x86_64/jcsample-sse2.asm
++++ b/simd/x86_64/jcsample-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/x86_64/jdcolext-avx2.asm b/simd/x86_64/jdcolext-avx2.asm
+index 677b8ed8..e2b96c73 100644
+--- a/simd/x86_64/jdcolext-avx2.asm
++++ b/simd/x86_64/jdcolext-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -332,7 +334,7 @@ EXTN(jsimd_ycc_rgb_convert_avx2):
+     vmovd       eax, xmmA
+     cmp         rcx, byte SIZEOF_WORD
+     jb          short .column_st1
+-    mov         word [rdi], ax
++    mov         WORD [rdi], ax
+     add         rdi, byte SIZEOF_WORD
+     sub         rcx, byte SIZEOF_WORD
+     shr         rax, 16
+@@ -341,7 +343,7 @@ EXTN(jsimd_ycc_rgb_convert_avx2):
+     ; space.
+     test        rcx, rcx
+     jz          short .nextrow
+-    mov         byte [rdi], al
++    mov         BYTE [rdi], al
+ 
+ %else  ; RGB_PIXELSIZE == 4 ; -----------
+ 
+diff --git a/simd/x86_64/jdcolext-sse2.asm b/simd/x86_64/jdcolext-sse2.asm
+index 071aa629..a94954bb 100644
+--- a/simd/x86_64/jdcolext-sse2.asm
++++ b/simd/x86_64/jdcolext-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -304,7 +306,7 @@ EXTN(jsimd_ycc_rgb_convert_sse2):
+     movd        eax, xmmA
+     cmp         rcx, byte SIZEOF_WORD
+     jb          short .column_st1
+-    mov         word [rdi], ax
++    mov         WORD [rdi], ax
+     add         rdi, byte SIZEOF_WORD
+     sub         rcx, byte SIZEOF_WORD
+     shr         rax, 16
+@@ -313,7 +315,7 @@ EXTN(jsimd_ycc_rgb_convert_sse2):
+     ; space.
+     test        rcx, rcx
+     jz          short .nextrow
+-    mov         byte [rdi], al
++    mov         BYTE [rdi], al
+ 
+ %else  ; RGB_PIXELSIZE == 4 ; -----------
+ 
+diff --git a/simd/x86_64/jdcolor-avx2.asm b/simd/x86_64/jdcolor-avx2.asm
+index 43de9db0..abad1766 100644
+--- a/simd/x86_64/jdcolor-avx2.asm
++++ b/simd/x86_64/jdcolor-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/x86_64/jdcolor-sse2.asm b/simd/x86_64/jdcolor-sse2.asm
+index b3f1fec0..e7079f60 100644
+--- a/simd/x86_64/jdcolor-sse2.asm
++++ b/simd/x86_64/jdcolor-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/x86_64/jdmerge-avx2.asm b/simd/x86_64/jdmerge-avx2.asm
+index 9515a170..ca3f063c 100644
+--- a/simd/x86_64/jdmerge-avx2.asm
++++ b/simd/x86_64/jdmerge-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/x86_64/jdmerge-sse2.asm b/simd/x86_64/jdmerge-sse2.asm
+index aedccc20..f3e09fa8 100644
+--- a/simd/x86_64/jdmerge-sse2.asm
++++ b/simd/x86_64/jdmerge-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/x86_64/jdmrgext-avx2.asm b/simd/x86_64/jdmrgext-avx2.asm
+index bb733c58..04e8a945 100644
+--- a/simd/x86_64/jdmrgext-avx2.asm
++++ b/simd/x86_64/jdmrgext-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -337,7 +339,7 @@ EXTN(jsimd_h2v1_merged_upsample_avx2):
+     vmovd       eax, xmmA
+     cmp         rcx, byte SIZEOF_WORD
+     jb          short .column_st1
+-    mov         word [rdi], ax
++    mov         WORD [rdi], ax
+     add         rdi, byte SIZEOF_WORD
+     sub         rcx, byte SIZEOF_WORD
+     shr         rax, 16
+@@ -346,7 +348,7 @@ EXTN(jsimd_h2v1_merged_upsample_avx2):
+     ; space.
+     test        rcx, rcx
+     jz          short .endcolumn
+-    mov         byte [rdi], al
++    mov         BYTE [rdi], al
+ 
+ %else  ; RGB_PIXELSIZE == 4 ; -----------
+ 
+diff --git a/simd/x86_64/jdmrgext-sse2.asm b/simd/x86_64/jdmrgext-sse2.asm
+index b176a4cd..1cc33455 100644
+--- a/simd/x86_64/jdmrgext-sse2.asm
++++ b/simd/x86_64/jdmrgext-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jcolsamp.inc"
+ 
+@@ -308,7 +310,7 @@ EXTN(jsimd_h2v1_merged_upsample_sse2):
+     movd        eax, xmmA
+     cmp         rcx, byte SIZEOF_WORD
+     jb          short .column_st1
+-    mov         word [rdi], ax
++    mov         WORD [rdi], ax
+     add         rdi, byte SIZEOF_WORD
+     sub         rcx, byte SIZEOF_WORD
+     shr         rax, 16
+@@ -317,7 +319,7 @@ EXTN(jsimd_h2v1_merged_upsample_sse2):
+     ; space.
+     test        rcx, rcx
+     jz          short .endcolumn
+-    mov         byte [rdi], al
++    mov         BYTE [rdi], al
+ 
+ %else  ; RGB_PIXELSIZE == 4 ; -----------
+ 
+diff --git a/simd/x86_64/jdsample-avx2.asm b/simd/x86_64/jdsample-avx2.asm
+index fc274a95..10fa5c45 100644
+--- a/simd/x86_64/jdsample-avx2.asm
++++ b/simd/x86_64/jdsample-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/x86_64/jdsample-sse2.asm b/simd/x86_64/jdsample-sse2.asm
+index 20e07670..d8ccda9b 100644
+--- a/simd/x86_64/jdsample-sse2.asm
++++ b/simd/x86_64/jdsample-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/simd/x86_64/jfdctflt-sse.asm b/simd/x86_64/jfdctflt-sse.asm
+index ef279664..26f9fb6a 100644
+--- a/simd/x86_64/jfdctflt-sse.asm
++++ b/simd/x86_64/jfdctflt-sse.asm
+@@ -17,6 +17,8 @@
+ ; This file contains a floating-point implementation of the forward DCT
+ ; (Discrete Cosine Transform). The following code is based directly on
+ ; the IJG's original jfdctflt.c; see the jfdctflt.c for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/x86_64/jfdctfst-sse2.asm b/simd/x86_64/jfdctfst-sse2.asm
+index 2e1bfe6e..aaf8b9e3 100644
+--- a/simd/x86_64/jfdctfst-sse2.asm
++++ b/simd/x86_64/jfdctfst-sse2.asm
+@@ -18,6 +18,8 @@
+ ; the forward DCT (Discrete Cosine Transform). The following code is
+ ; based directly on the IJG's original jfdctfst.c; see the jfdctfst.c
+ ; for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/x86_64/jfdctint-avx2.asm b/simd/x86_64/jfdctint-avx2.asm
+index 6ad4cf0b..448f47d4 100644
+--- a/simd/x86_64/jfdctint-avx2.asm
++++ b/simd/x86_64/jfdctint-avx2.asm
+@@ -18,6 +18,8 @@
+ ; forward DCT (Discrete Cosine Transform). The following code is based
+ ; directly on the IJG's original jfdctint.c; see the jfdctint.c for
+ ; more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/x86_64/jfdctint-sse2.asm b/simd/x86_64/jfdctint-sse2.asm
+index 5d0de3cf..ef16a52a 100644
+--- a/simd/x86_64/jfdctint-sse2.asm
++++ b/simd/x86_64/jfdctint-sse2.asm
+@@ -18,6 +18,8 @@
+ ; forward DCT (Discrete Cosine Transform). The following code is based
+ ; directly on the IJG's original jfdctint.c; see the jfdctint.c for
+ ; more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/x86_64/jidctflt-sse2.asm b/simd/x86_64/jidctflt-sse2.asm
+index ab95e1a6..b676ef39 100644
+--- a/simd/x86_64/jidctflt-sse2.asm
++++ b/simd/x86_64/jidctflt-sse2.asm
+@@ -17,6 +17,8 @@
+ ; This file contains a floating-point implementation of the inverse DCT
+ ; (Discrete Cosine Transform). The following code is based directly on
+ ; the IJG's original jidctflt.c; see the jidctflt.c for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -93,8 +95,8 @@ EXTN(jsimd_idct_float_sse2):
+     mov         rcx, DCTSIZE/4          ; ctr
+ .columnloop:
+ %ifndef NO_ZERO_COLUMN_TEST_FLOAT_SSE
+-    mov         eax, dword [DWBLOCK(1,0,rsi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,rsi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,rsi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,rsi,SIZEOF_JCOEF)]
+     jnz         near .columnDCT
+ 
+     movq        xmm1, XMM_MMWORD [MMBLOCK(1,0,rsi,SIZEOF_JCOEF)]
+diff --git a/simd/x86_64/jidctfst-sse2.asm b/simd/x86_64/jidctfst-sse2.asm
+index a66a6811..c6c42f9b 100644
+--- a/simd/x86_64/jidctfst-sse2.asm
++++ b/simd/x86_64/jidctfst-sse2.asm
+@@ -18,6 +18,8 @@
+ ; the inverse DCT (Discrete Cosine Transform). The following code is
+ ; based directly on the IJG's original jidctfst.c; see the jidctfst.c
+ ; for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -109,8 +111,8 @@ EXTN(jsimd_idct_ifast_sse2):
+     mov         rsi, r11                ; inptr
+ 
+ %ifndef NO_ZERO_COLUMN_TEST_IFAST_SSE2
+-    mov         eax, dword [DWBLOCK(1,0,rsi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,rsi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,rsi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,rsi,SIZEOF_JCOEF)]
+     jnz         near .columnDCT
+ 
+     movdqa      xmm0, XMMWORD [XMMBLOCK(1,0,rsi,SIZEOF_JCOEF)]
+diff --git a/simd/x86_64/jidctint-avx2.asm b/simd/x86_64/jidctint-avx2.asm
+index 50270f47..b60b44f2 100644
+--- a/simd/x86_64/jidctint-avx2.asm
++++ b/simd/x86_64/jidctint-avx2.asm
+@@ -18,6 +18,8 @@
+ ; inverse DCT (Discrete Cosine Transform). The following code is based
+ ; directly on the IJG's original jidctint.c; see the jidctint.c for
+ ; more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -290,8 +292,8 @@ EXTN(jsimd_idct_islow_avx2):
+     ; ---- Pass 1: process columns.
+ 
+ %ifndef NO_ZERO_COLUMN_TEST_ISLOW_AVX2
+-    mov         eax, dword [DWBLOCK(1,0,r11,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,r11,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,r11,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,r11,SIZEOF_JCOEF)]
+     jnz         near .columnDCT
+ 
+     movdqa      xmm0, XMMWORD [XMMBLOCK(1,0,r11,SIZEOF_JCOEF)]
+diff --git a/simd/x86_64/jidctint-sse2.asm b/simd/x86_64/jidctint-sse2.asm
+index 034530c2..83fc344b 100644
+--- a/simd/x86_64/jidctint-sse2.asm
++++ b/simd/x86_64/jidctint-sse2.asm
+@@ -18,6 +18,8 @@
+ ; inverse DCT (Discrete Cosine Transform). The following code is based
+ ; directly on the IJG's original jidctint.c; see the jidctint.c for
+ ; more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -122,8 +124,8 @@ EXTN(jsimd_idct_islow_sse2):
+     mov         rsi, r11                ; inptr
+ 
+ %ifndef NO_ZERO_COLUMN_TEST_ISLOW_SSE2
+-    mov         eax, dword [DWBLOCK(1,0,rsi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,rsi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,rsi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,rsi,SIZEOF_JCOEF)]
+     jnz         near .columnDCT
+ 
+     movdqa      xmm0, XMMWORD [XMMBLOCK(1,0,rsi,SIZEOF_JCOEF)]
+diff --git a/simd/x86_64/jidctred-sse2.asm b/simd/x86_64/jidctred-sse2.asm
+index 7fbfcc51..af64fdc2 100644
+--- a/simd/x86_64/jidctred-sse2.asm
++++ b/simd/x86_64/jidctred-sse2.asm
+@@ -18,6 +18,8 @@
+ ; output: either 4x4 or 2x2 pixels from an 8x8 DCT block.
+ ; The following code is based directly on the IJG's original jidctred.c;
+ ; see the jidctred.c for more details.
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+@@ -130,8 +132,8 @@ EXTN(jsimd_idct_4x4_sse2):
+     mov         rsi, r11                ; inptr
+ 
+ %ifndef NO_ZERO_COLUMN_TEST_4X4_SSE2
+-    mov         eax, dword [DWBLOCK(1,0,rsi,SIZEOF_JCOEF)]
+-    or          eax, dword [DWBLOCK(2,0,rsi,SIZEOF_JCOEF)]
++    mov         eax, DWORD [DWBLOCK(1,0,rsi,SIZEOF_JCOEF)]
++    or          eax, DWORD [DWBLOCK(2,0,rsi,SIZEOF_JCOEF)]
+     jnz         short .columnDCT
+ 
+     movdqa      xmm0, XMMWORD [XMMBLOCK(1,0,rsi,SIZEOF_JCOEF)]
+@@ -560,8 +562,8 @@ EXTN(jsimd_idct_2x2_sse2):
+ 
+     mov         rdx, JSAMPROW [rdi+0*SIZEOF_JSAMPROW]
+     mov         rsi, JSAMPROW [rdi+1*SIZEOF_JSAMPROW]
+-    mov         word [rdx+rax*SIZEOF_JSAMPLE], bx
+-    mov         word [rsi+rax*SIZEOF_JSAMPLE], cx
++    mov         WORD [rdx+rax*SIZEOF_JSAMPLE], bx
++    mov         WORD [rsi+rax*SIZEOF_JSAMPLE], cx
+ 
+     pop         rbx
+     uncollect_args 4
+diff --git a/simd/x86_64/jquantf-sse2.asm b/simd/x86_64/jquantf-sse2.asm
+index 83596a91..4600eecc 100644
+--- a/simd/x86_64/jquantf-sse2.asm
++++ b/simd/x86_64/jquantf-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/x86_64/jquanti-avx2.asm b/simd/x86_64/jquanti-avx2.asm
+index 5f04d223..b7243e43 100644
+--- a/simd/x86_64/jquanti-avx2.asm
++++ b/simd/x86_64/jquanti-avx2.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/x86_64/jquanti-sse2.asm b/simd/x86_64/jquanti-sse2.asm
+index bb6fa69e..7ff7275f 100644
+--- a/simd/x86_64/jquanti-sse2.asm
++++ b/simd/x86_64/jquanti-sse2.asm
+@@ -13,6 +13,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ %include "jdct.inc"
+diff --git a/simd/x86_64/jsimdcpu.asm b/simd/x86_64/jsimdcpu.asm
+index 705f813d..a905282a 100644
+--- a/simd/x86_64/jsimdcpu.asm
++++ b/simd/x86_64/jsimdcpu.asm
+@@ -14,6 +14,8 @@
+ ; assembler (including Borland's Turbo Assembler).
+ ; NASM is available from http://nasm.sourceforge.net/ or
+ ; http://sourceforge.net/project/showfiles.php?group_id=6208
++;
++; [TAB8]
+ 
+ %include "jsimdext.inc"
+ 
+diff --git a/tjbench.c b/tjbench.c
+index e098f3bb..be6d23ca 100644
+--- a/tjbench.c
++++ b/tjbench.c
+@@ -39,18 +39,17 @@
+ 
+ 
+ #define THROW(op, err) { \
+-  fprintf(stderr, "ERROR in line %d while %s:\n%s\n", __LINE__, op, err); \
++  printf("ERROR in line %d while %s:\n%s\n", __LINE__, op, err); \
+   retval = -1;  goto bailout; \
+ }
+ #define THROW_UNIX(m)  THROW(m, strerror(errno))
+ 
+-static char tjErrorStr[JMSG_LENGTH_MAX] = "\0",
+-            tjErrorMsg[JMSG_LENGTH_MAX] = "\0";
+-static int tjErrorLine = -1, tjErrorCode = -1;
++char tjErrorStr[JMSG_LENGTH_MAX] = "\0", tjErrorMsg[JMSG_LENGTH_MAX] = "\0";
++int tjErrorLine = -1, tjErrorCode = -1;
+ 
+ #define THROW_TJG(m) { \
+-  fprintf(stderr, "ERROR in line %d while %s:\n%s\n", __LINE__, m, \
+-          tjGetErrorStr2(NULL)); \
++  printf("ERROR in line %d while %s:\n%s\n", __LINE__, m, \
++         tjGetErrorStr2(NULL)); \
+   retval = -1;  goto bailout; \
+ }
+ 
+@@ -66,37 +65,35 @@ static int tjErrorLine = -1, tjErrorCode = -1;
+       strncpy(tjErrorMsg, m, JMSG_LENGTH_MAX - 1); \
+       tjErrorCode = _tjErrorCode; \
+       tjErrorLine = __LINE__; \
+-      fprintf(stderr, "WARNING in line %d while %s:\n%s\n", __LINE__, m, \
+-              _tjErrorStr); \
++      printf("WARNING in line %d while %s:\n%s\n", __LINE__, m, _tjErrorStr); \
+     } \
+   } else { \
+-    fprintf(stderr, "%s in line %d while %s:\n%s\n", \
+-            _tjErrorCode == TJERR_WARNING ? "WARNING" : "ERROR", __LINE__, m, \
+-            _tjErrorStr); \
++    printf("%s in line %d while %s:\n%s\n", \
++           _tjErrorCode == TJERR_WARNING ? "WARNING" : "ERROR", __LINE__, m, \
++           _tjErrorStr); \
+     retval = -1;  goto bailout; \
+   } \
+ }
+ 
+-static int flags = TJFLAG_NOREALLOC, compOnly = 0, decompOnly = 0, doYUV = 0,
++int flags = TJFLAG_NOREALLOC, compOnly = 0, decompOnly = 0, doYUV = 0,
+   quiet = 0, doTile = 0, pf = TJPF_BGR, yuvPad = 1, doWrite = 1;
+-static char *ext = "ppm";
+-static const char *pixFormatStr[TJ_NUMPF] = {
++char *ext = "ppm";
++const char *pixFormatStr[TJ_NUMPF] = {
+   "RGB", "BGR", "RGBX", "BGRX", "XBGR", "XRGB", "GRAY", "", "", "", "", "CMYK"
+ };
+-static const char *subNameLong[TJ_NUMSAMP] = {
++const char *subNameLong[TJ_NUMSAMP] = {
+   "4:4:4", "4:2:2", "4:2:0", "GRAY", "4:4:0", "4:1:1"
+ };
+-static const char *csName[TJ_NUMCS] = {
++const char *csName[TJ_NUMCS] = {
+   "RGB", "YCbCr", "GRAY", "CMYK", "YCCK"
+ };
+-static const char *subName[TJ_NUMSAMP] = {
++const char *subName[TJ_NUMSAMP] = {
+   "444", "422", "420", "GRAY", "440", "411"
+ };
+-static tjscalingfactor *scalingFactors = NULL, sf = { 1, 1 };
+-static int nsf = 0, xformOp = TJXOP_NONE, xformOpt = 0;
+-static int (*customFilter) (short *, tjregion, tjregion, int, int,
+-                            tjtransform *);
+-static double benchTime = 5.0, warmup = 1.0;
++tjscalingfactor *scalingFactors = NULL, sf = { 1, 1 };
++int nsf = 0, xformOp = TJXOP_NONE, xformOpt = 0;
++int (*customFilter) (short *, tjregion, tjregion, int, int, tjtransform *);
++double benchTime = 5.0, warmup = 1.0;
+ 
+ 
+ static char *formatName(int subsamp, int cs, char *buf)
+@@ -174,7 +171,7 @@ static int decomp(unsigned char *srcBuf, unsigned char **jpegBuf,
+   }
+   /* Set the destination buffer to gray so we know whether the decompressor
+      attempted to write to it */
+-  memset(dstBuf, 127, (size_t)pitch * scaledh);
++  memset(dstBuf, 127, pitch * scaledh);
+ 
+   if (doYUV) {
+     int width = doTile ? tilew : scaledw;
+@@ -196,7 +193,7 @@ static int decomp(unsigned char *srcBuf, unsigned char **jpegBuf,
+     double start = getTime();
+ 
+     for (row = 0, dstPtr = dstBuf; row < ntilesh;
+-         row++, dstPtr += (size_t)pitch * tileh) {
++         row++, dstPtr += pitch * tileh) {
+       for (col = 0, dstPtr2 = dstPtr; col < ntilesw;
+            col++, tile++, dstPtr2 += ps * tilew) {
+         int width = doTile ? min(tilew, w - col * tilew) : scaledw;
+@@ -234,27 +231,25 @@ static int decomp(unsigned char *srcBuf, unsigned char **jpegBuf,
+   handle = NULL;
+ 
+   if (quiet) {
+-    fprintf(stderr, "%-6s%s",
+-            sigfig((double)(w * h) / 1000000. * (double)iter / elapsed, 4,
+-                   tempStr, 1024),
++    printf("%-6s%s",
++           sigfig((double)(w * h) / 1000000. * (double)iter / elapsed, 4,
++                  tempStr, 1024),
+            quiet == 2 ? "\n" : "  ");
+     if (doYUV)
+-      fprintf(stderr, "%s\n",
+-              sigfig((double)(w * h) / 1000000. * (double)iter / elapsedDecode,
+-                     4, tempStr, 1024));
+-    else if (quiet != 2) fprintf(stderr, "\n");
++      printf("%s\n",
++             sigfig((double)(w * h) / 1000000. * (double)iter / elapsedDecode,
++                    4, tempStr, 1024));
++    else if (quiet != 2) printf("\n");
+   } else {
+-    fprintf(stderr, "%s --> Frame rate:         %f fps\n",
+-            doYUV ? "Decomp to YUV" : "Decompress   ", (double)iter / elapsed);
+-    fprintf(stderr,
+-            "                  Throughput:         %f Megapixels/sec\n",
+-            (double)(w * h) / 1000000. * (double)iter / elapsed);
++    printf("%s --> Frame rate:         %f fps\n",
++           doYUV ? "Decomp to YUV" : "Decompress   ", (double)iter / elapsed);
++    printf("                  Throughput:         %f Megapixels/sec\n",
++           (double)(w * h) / 1000000. * (double)iter / elapsed);
+     if (doYUV) {
+-      fprintf(stderr, "YUV Decode    --> Frame rate:         %f fps\n",
+-              (double)iter / elapsedDecode);
+-      fprintf(stderr,
+-              "                  Throughput:         %f Megapixels/sec\n",
+-              (double)(w * h) / 1000000. * (double)iter / elapsedDecode);
++      printf("YUV Decode    --> Frame rate:         %f fps\n",
++             (double)iter / elapsedDecode);
++      printf("                  Throughput:         %f Megapixels/sec\n",
++             (double)(w * h) / 1000000. * (double)iter / elapsedDecode);
+     }
+   }
+ 
+@@ -276,7 +271,7 @@ static int decomp(unsigned char *srcBuf, unsigned char **jpegBuf,
+   ptr = strrchr(tempStr, '.');
+   snprintf(ptr, 1024 - (ptr - tempStr), "-err.%s", ext);
+   if (srcBuf && sf.num == 1 && sf.denom == 1) {
+-    if (!quiet) fprintf(stderr, "Compression error written to %s.\n", tempStr);
++    if (!quiet) printf("Compression error written to %s.\n", tempStr);
+     if (subsamp == TJ_GRAYSCALE) {
+       unsigned long index, index2;
+ 
+@@ -309,8 +304,8 @@ static int decomp(unsigned char *srcBuf, unsigned char **jpegBuf,
+ bailout:
+   if (file) fclose(file);
+   if (handle) tjDestroy(handle);
+-  if (dstBufAlloc) free(dstBuf);
+-  free(yuvBuf);
++  if (dstBuf && dstBufAlloc) free(dstBuf);
++  if (yuvBuf) free(yuvBuf);
+   return retval;
+ }
+ 
+@@ -338,9 +333,9 @@ static int fullTest(unsigned char *srcBuf, int w, int h, int subsamp,
+     THROW_UNIX("allocating temporary image buffer");
+ 
+   if (!quiet)
+-    fprintf(stderr, ">>>>>  %s (%s) <--> JPEG %s Q%d  <<<<<\n", pfStr,
+-            (flags & TJFLAG_BOTTOMUP) ? "Bottom-up" : "Top-down",
+-            subNameLong[subsamp], jpegQual);
++    printf(">>>>>  %s (%s) <--> JPEG %s Q%d  <<<<<\n", pfStr,
++           (flags & TJFLAG_BOTTOMUP) ? "Bottom-up" : "Top-down",
++           subNameLong[subsamp], jpegQual);
+ 
+   for (tilew = doTile ? 8 : w, tileh = doTile ? 8 : h; ;
+        tilew *= 2, tileh *= 2) {
+@@ -369,9 +364,9 @@ static int fullTest(unsigned char *srcBuf, int w, int h, int subsamp,
+ 
+     /* Compression test */
+     if (quiet == 1)
+-      fprintf(stderr, "%-4s (%s)  %-5s    %-3d   ", pfStr,
+-              (flags & TJFLAG_BOTTOMUP) ? "BU" : "TD", subNameLong[subsamp],
+-              jpegQual);
++      printf("%-4s (%s)  %-5s    %-3d   ", pfStr,
++             (flags & TJFLAG_BOTTOMUP) ? "BU" : "TD", subNameLong[subsamp],
++             jpegQual);
+     for (i = 0; i < h; i++)
+       memcpy(&tmpBuf[pitch * i], &srcBuf[w * ps * i], w * ps);
+     if ((handle = tjInitCompress()) == NULL)
+@@ -435,51 +430,45 @@ static int fullTest(unsigned char *srcBuf, int w, int h, int subsamp,
+     if (tjDestroy(handle) == -1) THROW_TJ("executing tjDestroy()");
+     handle = NULL;
+ 
+-    if (quiet == 1) fprintf(stderr, "%-5d  %-5d   ", tilew, tileh);
++    if (quiet == 1) printf("%-5d  %-5d   ", tilew, tileh);
+     if (quiet) {
+       if (doYUV)
+-        fprintf(stderr, "%-6s%s",
+-                sigfig((double)(w * h) / 1000000. *
+-                       (double)iter / elapsedEncode, 4, tempStr, 1024),
+-                quiet == 2 ? "\n" : "  ");
+-      fprintf(stderr, "%-6s%s",
+-              sigfig((double)(w * h) / 1000000. * (double)iter / elapsed, 4,
+-                     tempStr, 1024),
+-              quiet == 2 ? "\n" : "  ");
+-      fprintf(stderr, "%-6s%s",
+-              sigfig((double)(w * h * ps) / (double)totalJpegSize, 4, tempStr2,
+-                     80),
+-              quiet == 2 ? "\n" : "  ");
++        printf("%-6s%s",
++               sigfig((double)(w * h) / 1000000. *
++                      (double)iter / elapsedEncode, 4, tempStr, 1024),
++               quiet == 2 ? "\n" : "  ");
++      printf("%-6s%s",
++             sigfig((double)(w * h) / 1000000. * (double)iter / elapsed, 4,
++                    tempStr, 1024),
++             quiet == 2 ? "\n" : "  ");
++      printf("%-6s%s",
++             sigfig((double)(w * h * ps) / (double)totalJpegSize, 4, tempStr2,
++                    80),
++             quiet == 2 ? "\n" : "  ");
+     } else {
+-      fprintf(stderr, "\n%s size: %d x %d\n", doTile ? "Tile" : "Image", tilew,
+-              tileh);
++      printf("\n%s size: %d x %d\n", doTile ? "Tile" : "Image", tilew, tileh);
+       if (doYUV) {
+-        fprintf(stderr, "Encode YUV    --> Frame rate:         %f fps\n",
+-                (double)iter / elapsedEncode);
+-        fprintf(stderr, "                  Output image size:  %lu bytes\n",
+-                yuvSize);
+-        fprintf(stderr, "                  Compression ratio:  %f:1\n",
+-                (double)(w * h * ps) / (double)yuvSize);
+-        fprintf(stderr,
+-                "                  Throughput:         %f Megapixels/sec\n",
+-                (double)(w * h) / 1000000. * (double)iter / elapsedEncode);
+-        fprintf(stderr,
+-                "                  Output bit stream:  %f Megabits/sec\n",
+-                (double)yuvSize * 8. / 1000000. * (double)iter / elapsedEncode);
++        printf("Encode YUV    --> Frame rate:         %f fps\n",
++               (double)iter / elapsedEncode);
++        printf("                  Output image size:  %lu bytes\n", yuvSize);
++        printf("                  Compression ratio:  %f:1\n",
++               (double)(w * h * ps) / (double)yuvSize);
++        printf("                  Throughput:         %f Megapixels/sec\n",
++               (double)(w * h) / 1000000. * (double)iter / elapsedEncode);
++        printf("                  Output bit stream:  %f Megabits/sec\n",
++               (double)yuvSize * 8. / 1000000. * (double)iter / elapsedEncode);
+       }
+-      fprintf(stderr, "%s --> Frame rate:         %f fps\n",
+-              doYUV ? "Comp from YUV" : "Compress     ",
+-              (double)iter / elapsed);
+-      fprintf(stderr, "                  Output image size:  %d bytes\n",
+-              totalJpegSize);
+-      fprintf(stderr, "                  Compression ratio:  %f:1\n",
+-              (double)(w * h * ps) / (double)totalJpegSize);
+-      fprintf(stderr,
+-              "                  Throughput:         %f Megapixels/sec\n",
+-              (double)(w * h) / 1000000. * (double)iter / elapsed);
+-      fprintf(stderr,
+-              "                  Output bit stream:  %f Megabits/sec\n",
+-              (double)totalJpegSize * 8. / 1000000. * (double)iter / elapsed);
++      printf("%s --> Frame rate:         %f fps\n",
++             doYUV ? "Comp from YUV" : "Compress     ",
++             (double)iter / elapsed);
++      printf("                  Output image size:  %d bytes\n",
++             totalJpegSize);
++      printf("                  Compression ratio:  %f:1\n",
++             (double)(w * h * ps) / (double)totalJpegSize);
++      printf("                  Throughput:         %f Megapixels/sec\n",
++             (double)(w * h) / 1000000. * (double)iter / elapsed);
++      printf("                  Output bit stream:  %f Megabits/sec\n",
++             (double)totalJpegSize * 8. / 1000000. * (double)iter / elapsed);
+     }
+     if (tilew == w && tileh == h && doWrite) {
+       snprintf(tempStr, 1024, "%s_%s_Q%d.jpg", fileName, subName[subsamp],
+@@ -489,7 +478,7 @@ static int fullTest(unsigned char *srcBuf, int w, int h, int subsamp,
+       if (fwrite(jpegBuf[0], jpegSize[0], 1, file) != 1)
+         THROW_UNIX("writing reference image");
+       fclose(file);  file = NULL;
+-      if (!quiet) fprintf(stderr, "Reference image written to %s\n", tempStr);
++      if (!quiet) printf("Reference image written to %s\n", tempStr);
+     }
+ 
+     /* Decompression test */
+@@ -497,10 +486,10 @@ static int fullTest(unsigned char *srcBuf, int w, int h, int subsamp,
+       if (decomp(srcBuf, jpegBuf, jpegSize, tmpBuf, w, h, subsamp, jpegQual,
+                  fileName, tilew, tileh) == -1)
+         goto bailout;
+-    } else if (quiet == 1) fprintf(stderr, "N/A\n");
++    }
+ 
+     for (i = 0; i < ntilesw * ntilesh; i++) {
+-      tjFree(jpegBuf[i]);
++      if (jpegBuf[i]) tjFree(jpegBuf[i]);
+       jpegBuf[i] = NULL;
+     }
+     free(jpegBuf);  jpegBuf = NULL;
+@@ -513,16 +502,18 @@ static int fullTest(unsigned char *srcBuf, int w, int h, int subsamp,
+   }
+ 
+ bailout:
+-  if (file) fclose(file);
++  if (file) { fclose(file);  file = NULL; }
+   if (jpegBuf) {
+-    for (i = 0; i < ntilesw * ntilesh; i++)
+-      tjFree(jpegBuf[i]);
++    for (i = 0; i < ntilesw * ntilesh; i++) {
++      if (jpegBuf[i]) tjFree(jpegBuf[i]);
++      jpegBuf[i] = NULL;
++    }
++    free(jpegBuf);  jpegBuf = NULL;
+   }
+-  free(jpegBuf);
+-  free(yuvBuf);
+-  free(jpegSize);
+-  free(tmpBuf);
+-  if (handle) tjDestroy(handle);
++  if (yuvBuf) { free(yuvBuf);  yuvBuf = NULL; }
++  if (jpegSize) { free(jpegSize);  jpegSize = NULL; }
++  if (tmpBuf) { free(tmpBuf);  tmpBuf = NULL; }
++  if (handle) { tjDestroy(handle);  handle = NULL; }
+   return retval;
+ }
+ 
+@@ -571,20 +562,18 @@ static int decompTest(char *fileName)
+   }
+ 
+   if (quiet == 1) {
+-    fprintf(stderr, "All performance values in Mpixels/sec\n\n");
+-    fprintf(stderr,
+-            "Bitmap     JPEG   JPEG     %s  %s   Xform   Comp    Decomp  ",
+-            doTile ? "Tile " : "Image", doTile ? "Tile " : "Image");
+-    if (doYUV) fprintf(stderr, "Decode");
+-    fprintf(stderr, "\n");
+-    fprintf(stderr,
+-        "Format     CS     Subsamp  Width  Height  Perf    Ratio   Perf    ");
+-    if (doYUV) fprintf(stderr, "Perf");
+-    fprintf(stderr, "\n\n");
++    printf("All performance values in Mpixels/sec\n\n");
++    printf("Bitmap     JPEG   JPEG     %s  %s   Xform   Comp    Decomp  ",
++           doTile ? "Tile " : "Image", doTile ? "Tile " : "Image");
++    if (doYUV) printf("Decode");
++    printf("\n");
++    printf("Format     CS     Subsamp  Width  Height  Perf    Ratio   Perf    ");
++    if (doYUV) printf("Perf");
++    printf("\n\n");
+   } else if (!quiet)
+-    fprintf(stderr, ">>>>>  JPEG %s --> %s (%s)  <<<<<\n",
+-            formatName(subsamp, cs, tempStr), pixFormatStr[pf],
+-            (flags & TJFLAG_BOTTOMUP) ? "Bottom-up" : "Top-down");
++    printf(">>>>>  JPEG %s --> %s (%s)  <<<<<\n",
++           formatName(subsamp, cs, tempStr), pixFormatStr[pf],
++           (flags & TJFLAG_BOTTOMUP) ? "Bottom-up" : "Top-down");
+ 
+   for (tilew = doTile ? 16 : w, tileh = doTile ? 16 : h; ;
+        tilew *= 2, tileh *= 2) {
+@@ -614,16 +603,15 @@ static int decompTest(char *fileName)
+ 
+     tw = w;  th = h;  ttilew = tilew;  ttileh = tileh;
+     if (!quiet) {
+-      fprintf(stderr, "\n%s size: %d x %d", doTile ? "Tile" : "Image", ttilew,
+-              ttileh);
++      printf("\n%s size: %d x %d", doTile ? "Tile" : "Image", ttilew, ttileh);
+       if (sf.num != 1 || sf.denom != 1)
+-        fprintf(stderr, " --> %d x %d", TJSCALED(tw, sf), TJSCALED(th, sf));
+-      fprintf(stderr, "\n");
++        printf(" --> %d x %d", TJSCALED(tw, sf), TJSCALED(th, sf));
++      printf("\n");
+     } else if (quiet == 1) {
+-      fprintf(stderr, "%-4s (%s)  %-5s  %-5s    ", pixFormatStr[pf],
+-              (flags & TJFLAG_BOTTOMUP) ? "BU" : "TD", csName[cs],
+-              subNameLong[subsamp]);
+-      fprintf(stderr, "%-5d  %-5d   ", tilew, tileh);
++      printf("%-4s (%s)  %-5s  %-5s    ", pixFormatStr[pf],
++             (flags & TJFLAG_BOTTOMUP) ? "BU" : "TD", csName[cs],
++             subNameLong[subsamp]);
++      printf("%-5d  %-5d   ", tilew, tileh);
+     }
+ 
+     tsubsamp = subsamp;
+@@ -693,29 +681,27 @@ static int decompTest(char *fileName)
+         totalJpegSize += jpegSize[tile];
+ 
+       if (quiet) {
+-        fprintf(stderr, "%-6s%s%-6s%s",
+-                sigfig((double)(w * h) / 1000000. / elapsed, 4, tempStr, 80),
+-                quiet == 2 ? "\n" : "  ",
+-                sigfig((double)(w * h * ps) / (double)totalJpegSize, 4,
+-                       tempStr2, 80),
+-                quiet == 2 ? "\n" : "  ");
++        printf("%-6s%s%-6s%s",
++               sigfig((double)(w * h) / 1000000. / elapsed, 4, tempStr, 80),
++               quiet == 2 ? "\n" : "  ",
++               sigfig((double)(w * h * ps) / (double)totalJpegSize, 4,
++                      tempStr2, 80),
++               quiet == 2 ? "\n" : "  ");
+       } else if (!quiet) {
+-        fprintf(stderr, "Transform     --> Frame rate:         %f fps\n",
+-                1.0 / elapsed);
+-        fprintf(stderr, "                  Output image size:  %lu bytes\n",
+-                totalJpegSize);
+-        fprintf(stderr, "                  Compression ratio:  %f:1\n",
+-                (double)(w * h * ps) / (double)totalJpegSize);
+-        fprintf(stderr,
+-                "                  Throughput:         %f Megapixels/sec\n",
+-                (double)(w * h) / 1000000. / elapsed);
+-        fprintf(stderr,
+-                "                  Output bit stream:  %f Megabits/sec\n",
+-                (double)totalJpegSize * 8. / 1000000. / elapsed);
++        printf("Transform     --> Frame rate:         %f fps\n",
++               1.0 / elapsed);
++        printf("                  Output image size:  %lu bytes\n",
++               totalJpegSize);
++        printf("                  Compression ratio:  %f:1\n",
++               (double)(w * h * ps) / (double)totalJpegSize);
++        printf("                  Throughput:         %f Megapixels/sec\n",
++               (double)(w * h) / 1000000. / elapsed);
++        printf("                  Output bit stream:  %f Megabits/sec\n",
++               (double)totalJpegSize * 8. / 1000000. / elapsed);
+       }
+     } else {
+-      if (quiet == 1) fprintf(stderr, "N/A     N/A     ");
+-      tjFree(jpegBuf[0]);
++      if (quiet == 1) printf("N/A     N/A     ");
++      if (jpegBuf[0]) tjFree(jpegBuf[0]);
+       jpegBuf[0] = NULL;
+       decompsrc = 1;
+     }
+@@ -727,28 +713,30 @@ static int decompTest(char *fileName)
+                  decompsrc ? &srcSize : jpegSize, NULL, tw, th, tsubsamp, 0,
+                  fileName, ttilew, ttileh) == -1)
+         goto bailout;
+-    } else if (quiet == 1) fprintf(stderr, "N/A\n");
++    } else if (quiet == 1) printf("N/A\n");
+ 
+     for (i = 0; i < ntilesw * ntilesh; i++) {
+-      tjFree(jpegBuf[i]);
++      if (jpegBuf[i]) tjFree(jpegBuf[i]);
+       jpegBuf[i] = NULL;
+     }
+     free(jpegBuf);  jpegBuf = NULL;
+-    free(jpegSize);  jpegSize = NULL;
++    if (jpegSize) { free(jpegSize);  jpegSize = NULL; }
+ 
+     if (tilew == w && tileh == h) break;
+   }
+ 
+ bailout:
+-  if (file) fclose(file);
++  if (file) { fclose(file);  file = NULL; }
+   if (jpegBuf) {
+-    for (i = 0; i < ntilesw * ntilesh; i++)
+-      tjFree(jpegBuf[i]);
++    for (i = 0; i < ntilesw * ntilesh; i++) {
++      if (jpegBuf[i]) tjFree(jpegBuf[i]);
++      jpegBuf[i] = NULL;
++    }
++    free(jpegBuf);  jpegBuf = NULL;
+   }
+-  free(jpegBuf);
+-  free(jpegSize);
+-  free(srcBuf);
+-  free(t);
++  if (jpegSize) { free(jpegSize);  jpegSize = NULL; }
++  if (srcBuf) { free(srcBuf);  srcBuf = NULL; }
++  if (t) { free(t);  t = NULL; }
+   if (handle) { tjDestroy(handle);  handle = NULL; }
+   return retval;
+ }
+@@ -824,11 +812,8 @@ static void usage(char *progName)
+   exit(1);
+ }
+ 
+-#ifndef GTEST
++
+ int main(int argc, char *argv[])
+-#else
+-int tjbench(int argc, char *argv[])
+-#endif
+ {
+   unsigned char *srcBuf = NULL;
+   int w = 0, h = 0, i, j, minQual = -1, maxQual = -1;
+@@ -847,7 +832,7 @@ int tjbench(int argc, char *argv[])
+       decompOnly = 1;
+   }
+ 
+-  fprintf(stderr, "\n");
++  printf("\n");
+ 
+   if (!decompOnly) {
+     minArg = 3;
+@@ -867,16 +852,16 @@ int tjbench(int argc, char *argv[])
+       if (!strcasecmp(argv[i], "-tile")) {
+         doTile = 1;  xformOpt |= TJXOPT_CROP;
+       } else if (!strcasecmp(argv[i], "-fastupsample")) {
+-        fprintf(stderr, "Using fast upsampling code\n\n");
++        printf("Using fast upsampling code\n\n");
+         flags |= TJFLAG_FASTUPSAMPLE;
+       } else if (!strcasecmp(argv[i], "-fastdct")) {
+-        fprintf(stderr, "Using fastest DCT/IDCT algorithm\n\n");
++        printf("Using fastest DCT/IDCT algorithm\n\n");
+         flags |= TJFLAG_FASTDCT;
+       } else if (!strcasecmp(argv[i], "-accuratedct")) {
+-        fprintf(stderr, "Using most accurate DCT/IDCT algorithm\n\n");
++        printf("Using most accurate DCT/IDCT algorithm\n\n");
+         flags |= TJFLAG_ACCURATEDCT;
+       } else if (!strcasecmp(argv[i], "-progressive")) {
+-        fprintf(stderr, "Using progressive entropy coding\n\n");
++        printf("Using progressive entropy coding\n\n");
+         flags |= TJFLAG_PROGRESSIVE;
+       } else if (!strcasecmp(argv[i], "-rgb"))
+         pf = TJPF_RGB;
+@@ -944,13 +929,13 @@ int tjbench(int argc, char *argv[])
+ 
+         if (tempd >= 0.0) warmup = tempd;
+         else usage(argv[0]);
+-        fprintf(stderr, "Warmup time = %.1f seconds\n\n", warmup);
++        printf("Warmup time = %.1f seconds\n\n", warmup);
+       } else if (!strcasecmp(argv[i], "-alloc"))
+         flags &= (~TJFLAG_NOREALLOC);
+       else if (!strcasecmp(argv[i], "-bmp"))
+         ext = "bmp";
+       else if (!strcasecmp(argv[i], "-yuv")) {
+-        fprintf(stderr, "Testing YUV planar encoding/decoding\n\n");
++        printf("Testing YUV planar encoding/decoding\n\n");
+         doYUV = 1;
+       } else if (!strcasecmp(argv[i], "-yuvpad") && i < argc - 1) {
+         int tempi = atoi(argv[++i]);
+@@ -981,14 +966,14 @@ int tjbench(int argc, char *argv[])
+   }
+ 
+   if ((sf.num != 1 || sf.denom != 1) && doTile) {
+-    fprintf(stderr, "Disabling tiled compression/decompression tests, because those tests do not\n");
+-    fprintf(stderr, "work when scaled decompression is enabled.\n");
++    printf("Disabling tiled compression/decompression tests, because those tests do not\n");
++    printf("work when scaled decompression is enabled.\n");
+     doTile = 0;
+   }
+ 
+   if ((flags & TJFLAG_NOREALLOC) == 0 && doTile) {
+-    fprintf(stderr, "Disabling tiled compression/decompression tests, because those tests do not\n");
+-    fprintf(stderr, "work when dynamic JPEG buffer allocation is enabled.\n\n");
++    printf("Disabling tiled compression/decompression tests, because those tests do not\n");
++    printf("work when dynamic JPEG buffer allocation is enabled.\n\n");
+     doTile = 0;
+   }
+ 
+@@ -1000,47 +985,47 @@ int tjbench(int argc, char *argv[])
+   }
+ 
+   if (quiet == 1 && !decompOnly) {
+-    fprintf(stderr, "All performance values in Mpixels/sec\n\n");
+-    fprintf(stderr, "Bitmap     JPEG     JPEG  %s  %s   ",
+-            doTile ? "Tile " : "Image", doTile ? "Tile " : "Image");
+-    if (doYUV) fprintf(stderr, "Encode  ");
+-    fprintf(stderr, "Comp    Comp    Decomp  ");
+-    if (doYUV) fprintf(stderr, "Decode");
+-    fprintf(stderr, "\n");
+-    fprintf(stderr, "Format     Subsamp  Qual  Width  Height  ");
+-    if (doYUV) fprintf(stderr, "Perf    ");
+-    fprintf(stderr, "Perf    Ratio   Perf    ");
+-    if (doYUV) fprintf(stderr, "Perf");
+-    fprintf(stderr, "\n\n");
++    printf("All performance values in Mpixels/sec\n\n");
++    printf("Bitmap     JPEG     JPEG  %s  %s   ",
++           doTile ? "Tile " : "Image", doTile ? "Tile " : "Image");
++    if (doYUV) printf("Encode  ");
++    printf("Comp    Comp    Decomp  ");
++    if (doYUV) printf("Decode");
++    printf("\n");
++    printf("Format     Subsamp  Qual  Width  Height  ");
++    if (doYUV) printf("Perf    ");
++    printf("Perf    Ratio   Perf    ");
++    if (doYUV) printf("Perf");
++    printf("\n\n");
+   }
+ 
+   if (decompOnly) {
+     decompTest(argv[1]);
+-    fprintf(stderr, "\n");
++    printf("\n");
+     goto bailout;
+   }
+   if (subsamp >= 0 && subsamp < TJ_NUMSAMP) {
+     for (i = maxQual; i >= minQual; i--)
+       fullTest(srcBuf, w, h, subsamp, i, argv[1]);
+-    fprintf(stderr, "\n");
++    printf("\n");
+   } else {
+     if (pf != TJPF_CMYK) {
+       for (i = maxQual; i >= minQual; i--)
+         fullTest(srcBuf, w, h, TJSAMP_GRAY, i, argv[1]);
+-      fprintf(stderr, "\n");
++      printf("\n");
+     }
+     for (i = maxQual; i >= minQual; i--)
+       fullTest(srcBuf, w, h, TJSAMP_420, i, argv[1]);
+-    fprintf(stderr, "\n");
++    printf("\n");
+     for (i = maxQual; i >= minQual; i--)
+       fullTest(srcBuf, w, h, TJSAMP_422, i, argv[1]);
+-    fprintf(stderr, "\n");
++    printf("\n");
+     for (i = maxQual; i >= minQual; i--)
+       fullTest(srcBuf, w, h, TJSAMP_444, i, argv[1]);
+-    fprintf(stderr, "\n");
++    printf("\n");
+   }
+ 
+ bailout:
+-  tjFree(srcBuf);
++  if (srcBuf) tjFree(srcBuf);
+   return retval;
+ }
+diff --git a/tjunittest.c b/tjunittest.c
+index af409a56..da7c6ffa 100644
+--- a/tjunittest.c
++++ b/tjunittest.c
+@@ -46,7 +46,6 @@
+ #endif
+ 
+ 
+-#ifndef GTEST
+ static void usage(char *progName)
+ {
+   printf("\nUSAGE: %s [options]\n\n", progName);
+@@ -58,47 +57,44 @@ static void usage(char *progName)
+   printf("-bmp = tjLoadImage()/tjSaveImage() unit test\n\n");
+   exit(1);
+ }
+-#endif
+ 
+ 
+ #define THROW_TJ() { \
+-  fprintf(stderr, "TurboJPEG ERROR:\n%s\n", tjGetErrorStr()); \
++  printf("TurboJPEG ERROR:\n%s\n", tjGetErrorStr()); \
+   BAILOUT() \
+ }
+ #define TRY_TJ(f) { if ((f) == -1) THROW_TJ(); }
+ #define THROW(m) { printf("ERROR: %s\n", m);  BAILOUT() }
+ #define THROW_MD5(filename, md5sum, ref) { \
+-  fprintf(stderr, "\n%s has an MD5 sum of %s.\n   Should be %s.\n", filename, \
+-          md5sum, ref); \
++  printf("\n%s has an MD5 sum of %s.\n   Should be %s.\n", filename, md5sum, \
++         ref); \
+   BAILOUT() \
+ }
+ 
+-static const char *subNameLong[TJ_NUMSAMP] = {
++const char *subNameLong[TJ_NUMSAMP] = {
+   "4:4:4", "4:2:2", "4:2:0", "GRAY", "4:4:0", "4:1:1"
+ };
+-static const char *subName[TJ_NUMSAMP] = {
++const char *subName[TJ_NUMSAMP] = {
+   "444", "422", "420", "GRAY", "440", "411"
+ };
+ 
+-static const char *pixFormatStr[TJ_NUMPF] = {
++const char *pixFormatStr[TJ_NUMPF] = {
+   "RGB", "BGR", "RGBX", "BGRX", "XBGR", "XRGB", "Grayscale",
+   "RGBA", "BGRA", "ABGR", "ARGB", "CMYK"
+ };
+ 
+-static const int _3byteFormats[] = { TJPF_RGB, TJPF_BGR };
+-static const int _4byteFormats[] = {
++const int _3byteFormats[] = { TJPF_RGB, TJPF_BGR };
++const int _4byteFormats[] = {
+   TJPF_RGBX, TJPF_BGRX, TJPF_XBGR, TJPF_XRGB, TJPF_CMYK
+ };
+-static const int _onlyGray[] = { TJPF_GRAY };
+-static const int _onlyRGB[] = { TJPF_RGB };
++const int _onlyGray[] = { TJPF_GRAY };
++const int _onlyRGB[] = { TJPF_RGB };
+ 
+-static int doYUV = 0, alloc = 0, pad = 4;
++int doYUV = 0, alloc = 0, pad = 4;
+ 
+-static int exitStatus = 0;
++int exitStatus = 0;
+ #define BAILOUT() { exitStatus = -1;  goto bailout; }
+ 
+-static const size_t filePathSize = 1024;
+-
+ 
+ static void initBuf(unsigned char *buf, int w, int h, int pf, int flags)
+ {
+@@ -157,24 +153,22 @@ static void initBuf(unsigned char *buf, int w, int h, int pf, int flags)
+ 
+ #define CHECKVAL(v, cv) { \
+   if (v < cv - 1 || v > cv + 1) { \
+-    fprintf(stderr, "\nComp. %s at %d,%d should be %d, not %d\n", #v, row, \
+-            col, cv, v); \
++    printf("\nComp. %s at %d,%d should be %d, not %d\n", #v, row, col, cv, \
++           v); \
+     retval = 0;  exitStatus = -1;  goto bailout; \
+   } \
+ }
+ 
+ #define CHECKVAL0(v) { \
+   if (v > 1) { \
+-    fprintf(stderr, "\nComp. %s at %d,%d should be 0, not %d\n", #v, row, \
+-            col, v); \
++    printf("\nComp. %s at %d,%d should be 0, not %d\n", #v, row, col, v); \
+     retval = 0;  exitStatus = -1;  goto bailout; \
+   } \
+ }
+ 
+ #define CHECKVAL255(v) { \
+   if (v < 254) { \
+-    fprintf(stderr, "\nComp. %s at %d,%d should be 255, not %d\n", #v, row, \
+-            col, v); \
++    printf("\nComp. %s at %d,%d should be 255, not %d\n", #v, row, col, v); \
+     retval = 0;  exitStatus = -1;  goto bailout; \
+   } \
+ }
+@@ -259,16 +253,15 @@ bailout:
+     for (row = 0; row < h; row++) {
+       for (col = 0; col < w; col++) {
+         if (pf == TJPF_CMYK)
+-          fprintf(stderr, "%.3d/%.3d/%.3d/%.3d ", buf[(row * w + col) * ps],
+-                  buf[(row * w + col) * ps + 1], buf[(row * w + col) * ps + 2],
+-                  buf[(row * w + col) * ps + 3]);
++          printf("%.3d/%.3d/%.3d/%.3d ", buf[(row * w + col) * ps],
++                 buf[(row * w + col) * ps + 1], buf[(row * w + col) * ps + 2],
++                 buf[(row * w + col) * ps + 3]);
+         else
+-          fprintf(stderr, "%.3d/%.3d/%.3d ",
+-                  buf[(row * w + col) * ps + roffset],
+-                  buf[(row * w + col) * ps + goffset],
+-                  buf[(row * w + col) * ps + boffset]);
++          printf("%.3d/%.3d/%.3d ", buf[(row * w + col) * ps + roffset],
++                 buf[(row * w + col) * ps + goffset],
++                 buf[(row * w + col) * ps + boffset]);
+       }
+-      fprintf(stderr, "\n");
++      printf("\n");
+     }
+   }
+   return retval;
+@@ -327,21 +320,21 @@ bailout:
+   if (retval == 0) {
+     for (row = 0; row < ph; row++) {
+       for (col = 0; col < pw; col++)
+-        fprintf(stderr, "%.3d ", buf[ypitch * row + col]);
+-      fprintf(stderr, "\n");
++        printf("%.3d ", buf[ypitch * row + col]);
++      printf("\n");
+     }
+-    fprintf(stderr, "\n");
++    printf("\n");
+     for (row = 0; row < ch; row++) {
+       for (col = 0; col < cw; col++)
+-        fprintf(stderr, "%.3d ", buf[ypitch * ph + (uvpitch * row + col)]);
+-      fprintf(stderr, "\n");
++        printf("%.3d ", buf[ypitch * ph + (uvpitch * row + col)]);
++      printf("\n");
+     }
+-    fprintf(stderr, "\n");
++    printf("\n");
+     for (row = 0; row < ch; row++) {
+       for (col = 0; col < cw; col++)
+-        fprintf(stderr, "%.3d ",
+-                buf[ypitch * ph + uvpitch * ch + (uvpitch * row + col)]);
+-      fprintf(stderr, "\n");
++        printf("%.3d ",
++               buf[ypitch * ph + uvpitch * ch + (uvpitch * row + col)]);
++      printf("\n");
+     }
+   }
+ 
+@@ -352,16 +345,10 @@ bailout:
+ static void writeJPEG(unsigned char *jpegBuf, unsigned long jpegSize,
+                       char *filename)
+ {
+-#if defined(ANDROID) && defined(GTEST)
+-  char path[filePathSize];
+-  snprintf(path, filePathSize, "/sdcard/%s", filename);
+-  FILE *file = fopen(path, "wb");
+-#else
+   FILE *file = fopen(filename, "wb");
+-#endif
++
+   if (!file || fwrite(jpegBuf, jpegSize, 1, file) != 1) {
+-    fprintf(stderr, "ERROR: Could not write to %s.\n%s\n", filename,
+-            strerror(errno));
++    printf("ERROR: Could not write to %s.\n%s\n", filename, strerror(errno));
+     BAILOUT()
+   }
+ 
+@@ -374,7 +361,7 @@ static void compTest(tjhandle handle, unsigned char **dstBuf,
+                      unsigned long *dstSize, int w, int h, int pf,
+                      char *basename, int subsamp, int jpegQual, int flags)
+ {
+-  char tempStr[filePathSize];
++  char tempStr[1024];
+   unsigned char *srcBuf = NULL, *yuvBuf = NULL;
+   const char *pfStr = pixFormatStr[pf];
+   const char *buStrLong =
+@@ -399,33 +386,32 @@ static void compTest(tjhandle handle, unsigned char **dstBuf,
+       THROW("Memory allocation failure");
+     memset(yuvBuf, 0, yuvSize);
+ 
+-    fprintf(stderr, "%s %s -> YUV %s ... ", pfStr, buStrLong,
+-            subNameLong[subsamp]);
++    printf("%s %s -> YUV %s ... ", pfStr, buStrLong, subNameLong[subsamp]);
+     TRY_TJ(tjEncodeYUV3(handle2, srcBuf, w, 0, h, pf, yuvBuf, pad, subsamp,
+                         flags));
+     tjDestroy(handle2);
+-    if (checkBufYUV(yuvBuf, w, h, subsamp, sf)) fprintf(stderr, "Passed.\n");
+-    else fprintf(stderr, "FAILED!\n");
++    if (checkBufYUV(yuvBuf, w, h, subsamp, sf)) printf("Passed.\n");
++    else printf("FAILED!\n");
+ 
+-    fprintf(stderr, "YUV %s %s -> JPEG Q%d ... ", subNameLong[subsamp],
+-            buStrLong, jpegQual);
++    printf("YUV %s %s -> JPEG Q%d ... ", subNameLong[subsamp], buStrLong,
++           jpegQual);
+     TRY_TJ(tjCompressFromYUV(handle, yuvBuf, w, pad, h, subsamp, dstBuf,
+                              dstSize, jpegQual, flags));
+   } else {
+-    fprintf(stderr, "%s %s -> %s Q%d ... ", pfStr, buStrLong,
+-            subNameLong[subsamp], jpegQual);
++    printf("%s %s -> %s Q%d ... ", pfStr, buStrLong, subNameLong[subsamp],
++           jpegQual);
+     TRY_TJ(tjCompress2(handle, srcBuf, w, 0, h, pf, dstBuf, dstSize, subsamp,
+                        jpegQual, flags));
+   }
+ 
+-  snprintf(tempStr, filePathSize, "%s_enc_%s_%s_%s_Q%d.jpg", basename, pfStr,
+-           buStr, subName[subsamp], jpegQual);
++  snprintf(tempStr, 1024, "%s_enc_%s_%s_%s_Q%d.jpg", basename, pfStr, buStr,
++           subName[subsamp], jpegQual);
+   writeJPEG(*dstBuf, *dstSize, tempStr);
+-  fprintf(stderr, "Done.\n  Result in %s\n", tempStr);
++  printf("Done.\n  Result in %s\n", tempStr);
+ 
+ bailout:
+-  free(yuvBuf);
+-  free(srcBuf);
++  if (yuvBuf) free(yuvBuf);
++  if (srcBuf) free(srcBuf);
+ }
+ 
+ 
+@@ -461,40 +447,39 @@ static void _decompTest(tjhandle handle, unsigned char *jpegBuf,
+       THROW("Memory allocation failure");
+     memset(yuvBuf, 0, yuvSize);
+ 
+-    fprintf(stderr, "JPEG -> YUV %s ", subNameLong[subsamp]);
++    printf("JPEG -> YUV %s ", subNameLong[subsamp]);
+     if (sf.num != 1 || sf.denom != 1)
+-      fprintf(stderr, "%d/%d ... ", sf.num, sf.denom);
+-    else fprintf(stderr, "... ");
++      printf("%d/%d ... ", sf.num, sf.denom);
++    else printf("... ");
+     TRY_TJ(tjDecompressToYUV2(handle, jpegBuf, jpegSize, yuvBuf, scaledWidth,
+                               pad, scaledHeight, flags));
+     if (checkBufYUV(yuvBuf, scaledWidth, scaledHeight, subsamp, sf))
+-      fprintf(stderr, "Passed.\n");
+-    else fprintf(stderr, "FAILED!\n");
++      printf("Passed.\n");
++    else printf("FAILED!\n");
+ 
+-    fprintf(stderr, "YUV %s -> %s %s ... ", subNameLong[subsamp],
+-            pixFormatStr[pf],
+-            (flags & TJFLAG_BOTTOMUP) ? "Bottom-Up" : "Top-Down ");
++    printf("YUV %s -> %s %s ... ", subNameLong[subsamp], pixFormatStr[pf],
++           (flags & TJFLAG_BOTTOMUP) ? "Bottom-Up" : "Top-Down ");
+     TRY_TJ(tjDecodeYUV(handle2, yuvBuf, pad, subsamp, dstBuf, scaledWidth, 0,
+                        scaledHeight, pf, flags));
+     tjDestroy(handle2);
+   } else {
+-    fprintf(stderr, "JPEG -> %s %s ", pixFormatStr[pf],
+-            (flags & TJFLAG_BOTTOMUP) ? "Bottom-Up" : "Top-Down ");
++    printf("JPEG -> %s %s ", pixFormatStr[pf],
++           (flags & TJFLAG_BOTTOMUP) ? "Bottom-Up" : "Top-Down ");
+     if (sf.num != 1 || sf.denom != 1)
+-      fprintf(stderr, "%d/%d ... ", sf.num, sf.denom);
+-    else fprintf(stderr, "... ");
++      printf("%d/%d ... ", sf.num, sf.denom);
++    else printf("... ");
+     TRY_TJ(tjDecompress2(handle, jpegBuf, jpegSize, dstBuf, scaledWidth, 0,
+                          scaledHeight, pf, flags));
+   }
+ 
+   if (checkBuf(dstBuf, scaledWidth, scaledHeight, pf, subsamp, sf, flags))
+-    fprintf(stderr, "Passed.");
+-  else fprintf(stderr, "FAILED!");
+-  fprintf(stderr, "\n");
++    printf("Passed.");
++  else printf("FAILED!");
++  printf("\n");
+ 
+ bailout:
+-  free(yuvBuf);
+-  free(dstBuf);
++  if (yuvBuf) free(yuvBuf);
++  if (dstBuf) free(dstBuf);
+ }
+ 
+ 
+@@ -553,19 +538,19 @@ static void doTest(int w, int h, const int *formats, int nformats, int subsamp,
+                flags);
+       decompTest(dhandle, dstBuf, size, w, h, pf, basename, subsamp, flags);
+       if (pf >= TJPF_RGBX && pf <= TJPF_XRGB) {
+-        fprintf(stderr, "\n");
++        printf("\n");
+         decompTest(dhandle, dstBuf, size, w, h, pf + (TJPF_RGBA - TJPF_RGBX),
+                    basename, subsamp, flags);
+       }
+-      fprintf(stderr, "\n");
++      printf("\n");
+     }
+   }
+-  fprintf(stderr, "--------------------\n\n");
++  printf("--------------------\n\n");
+ 
+ bailout:
+   if (chandle) tjDestroy(chandle);
+   if (dhandle) tjDestroy(dhandle);
+-  tjFree(dstBuf);
++  if (dstBuf) tjFree(dstBuf);
+ }
+ 
+ 
+@@ -582,7 +567,6 @@ bailout:
+ }
+ #endif
+ 
+-#ifndef GTEST
+ static void overflowTest(void)
+ {
+   /* Ensure that the various buffer size functions don't overflow */
+@@ -604,7 +588,6 @@ static void overflowTest(void)
+ bailout:
+   return;
+ }
+-#endif
+ 
+ 
+ static void bufSizeTest(void)
+@@ -616,14 +599,13 @@ static void bufSizeTest(void)
+ 
+   if ((handle = tjInitCompress()) == NULL) THROW_TJ();
+ 
+-  fprintf(stderr, "Buffer size regression test\n");
++  printf("Buffer size regression test\n");
+   for (subsamp = 0; subsamp < TJ_NUMSAMP; subsamp++) {
+     for (w = 1; w < 48; w++) {
+       int maxh = (w == 1) ? 2048 : 48;
+ 
+       for (h = 1; h < maxh; h++) {
+-        if (h % 100 == 0)
+-          fprintf(stderr, "%.4d x %.4d\b\b\b\b\b\b\b\b\b\b\b", w, h);
++        if (h % 100 == 0) printf("%.4d x %.4d\b\b\b\b\b\b\b\b\b\b\b", w, h);
+         if ((srcBuf = (unsigned char *)malloc(w * h * 4)) == NULL)
+           THROW("Memory allocation failure");
+         if (!alloc || doYUV) {
+@@ -680,11 +662,11 @@ static void bufSizeTest(void)
+       }
+     }
+   }
+-  fprintf(stderr, "Done.      \n");
++  printf("Done.      \n");
+ 
+ bailout:
+-  free(srcBuf);
+-  tjFree(dstBuf);
++  if (srcBuf) free(srcBuf);
++  if (dstBuf) tjFree(dstBuf);
+   if (handle) tjDestroy(handle);
+ }
+ 
+@@ -777,8 +759,7 @@ static int cmpBitmap(unsigned char *buf, int width, int pitch, int height,
+ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
+                      int flags)
+ {
+-  const size_t filenameSize = 80;
+-  char filename[filenameSize], *md5sum, md5buf[65];
++  char filename[80], *md5sum, md5buf[65];
+   int ps = tjPixelSize[pf], pitch = PAD(width * ps, align), loadWidth = 0,
+     loadHeight = 0, retval = 0, pixelFormat = pf;
+   unsigned char *buf = NULL;
+@@ -796,14 +777,8 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
+     THROW("Could not allocate memory");
+   initBitmap(buf, width, pitch, height, pf, flags);
+ 
+-#if defined(ANDROID) && defined(GTEST)
+-  snprintf(filename, filenameSize, "/sdcard/test_bmp_%s_%d_%s.%s",
+-           pixFormatStr[pf], align, (flags & TJFLAG_BOTTOMUP) ? "bu" : "td",
+-           ext);
+-#else
+-  snprintf(filename, filenameSize, "test_bmp_%s_%d_%s.%s", pixFormatStr[pf],
+-           align, (flags & TJFLAG_BOTTOMUP) ? "bu" : "td", ext);
+-#endif
++  snprintf(filename, 80, "test_bmp_%s_%d_%s.%s", pixFormatStr[pf], align,
++           (flags & TJFLAG_BOTTOMUP) ? "bu" : "td", ext);
+   TRY_TJ(tjSaveImage(filename, buf, width, pitch, height, pf, flags));
+   md5sum = MD5File(filename, md5buf);
+   if (strcasecmp(md5sum, md5ref))
+@@ -814,11 +789,11 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
+                          flags)) == NULL)
+     THROW_TJ();
+   if (width != loadWidth || height != loadHeight) {
+-    fprintf(stderr, "\n   Image dimensions of %s are bogus\n", filename);
++    printf("\n   Image dimensions of %s are bogus\n", filename);
+     retval = -1;  goto bailout;
+   }
+   if (!cmpBitmap(buf, width, pitch, height, pf, flags, 0)) {
+-    fprintf(stderr, "\n   Pixel data in %s is bogus\n", filename);
++    printf("\n   Pixel data in %s is bogus\n", filename);
+     retval = -1;  goto bailout;
+   }
+   if (pf == TJPF_GRAY) {
+@@ -829,7 +804,7 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
+       THROW_TJ();
+     pitch = PAD(width * tjPixelSize[pf], align);
+     if (!cmpBitmap(buf, width, pitch, height, pf, flags, 1)) {
+-      fprintf(stderr, "\n   Converting %s to RGB failed\n", filename);
++      printf("\n   Converting %s to RGB failed\n", filename);
+       retval = -1;  goto bailout;
+     }
+ 
+@@ -840,7 +815,7 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
+       THROW_TJ();
+     pitch = PAD(width * tjPixelSize[pf], align);
+     if (!cmpBitmap(buf, width, pitch, height, pf, flags, 1)) {
+-      fprintf(stderr, "\n   Converting %s to CMYK failed\n", filename);
++      printf("\n   Converting %s to CMYK failed\n", filename);
+       retval = -1;  goto bailout;
+     }
+   }
+@@ -857,15 +832,14 @@ static int doBmpTest(const char *ext, int width, int align, int height, int pf,
+        pixelFormat != TJPF_BGR) ||
+       (pf != TJPF_GRAY && !strcasecmp(ext, "ppm") &&
+        pixelFormat != TJPF_RGB)) {
+-    fprintf(stderr,
+-            "\n   tjLoadImage() returned unexpected pixel format: %s\n",
+-            pixFormatStr[pixelFormat]);
++    printf("\n   tjLoadImage() returned unexpected pixel format: %s\n",
++           pixFormatStr[pixelFormat]);
+     retval = -1;
+   }
+   unlink(filename);
+ 
+ bailout:
+-  tjFree(buf);
++  if (buf) tjFree(buf);
+   if (exitStatus < 0) return exitStatus;
+   return retval;
+ }
+@@ -877,31 +851,31 @@ static int bmpTest(void)
+ 
+   for (align = 1; align <= 8; align *= 2) {
+     for (format = 0; format < TJ_NUMPF; format++) {
+-      fprintf(stderr, "%s Top-Down BMP (row alignment = %d bytes)  ...  ",
+-              pixFormatStr[format], align);
++      printf("%s Top-Down BMP (row alignment = %d bytes)  ...  ",
++             pixFormatStr[format], align);
+       if (doBmpTest("bmp", width, align, height, format, 0) == -1)
+         return -1;
+-      fprintf(stderr, "OK.\n");
++      printf("OK.\n");
+ 
+-      fprintf(stderr, "%s Top-Down PPM (row alignment = %d bytes)  ...  ",
+-              pixFormatStr[format], align);
++      printf("%s Top-Down PPM (row alignment = %d bytes)  ...  ",
++             pixFormatStr[format], align);
+       if (doBmpTest("ppm", width, align, height, format,
+                     TJFLAG_BOTTOMUP) == -1)
+         return -1;
+-      fprintf(stderr, "OK.\n");
++      printf("OK.\n");
+ 
+-      fprintf(stderr, "%s Bottom-Up BMP (row alignment = %d bytes)  ...  ",
+-              pixFormatStr[format], align);
++      printf("%s Bottom-Up BMP (row alignment = %d bytes)  ...  ",
++             pixFormatStr[format], align);
+       if (doBmpTest("bmp", width, align, height, format, 0) == -1)
+         return -1;
+-      fprintf(stderr, "OK.\n");
++      printf("OK.\n");
+ 
+-      fprintf(stderr, "%s Bottom-Up PPM (row alignment = %d bytes)  ...  ",
+-              pixFormatStr[format], align);
++      printf("%s Bottom-Up PPM (row alignment = %d bytes)  ...  ",
++             pixFormatStr[format], align);
+       if (doBmpTest("ppm", width, align, height, format,
+                     TJFLAG_BOTTOMUP) == -1)
+         return -1;
+-      fprintf(stderr, "OK.\n");
++      printf("OK.\n");
+     }
+   }
+ 
+@@ -909,220 +883,6 @@ static int bmpTest(void)
+ }
+ 
+ 
+-#ifdef GTEST
+-static void initTJUnitTest(int yuv, int noyuvpad, int autoalloc)
+-{
+-  doYUV = yuv ? 1 : 0;
+-  pad = noyuvpad ? 1 : 4;
+-  alloc = autoalloc ? 1 : 0;
+-
+-  exitStatus = 0;
+-}
+-
+-
+-int testBmp(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  return bmpTest();
+-}
+-
+-
+-int testThreeByte444(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  doTest(35, 39, _3byteFormats, 2, TJSAMP_444, "test");
+-  return exitStatus;
+-}
+-
+-
+-int testFourByte444(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  int num4bf = doYUV ? 4 : 5;
+-  doTest(39, 41, _4byteFormats, num4bf, TJSAMP_444, "test");
+-  return exitStatus;
+-}
+-
+-
+-int testThreeByte422(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  doTest(41, 35, _3byteFormats, 2, TJSAMP_422, "test");
+-  return exitStatus;
+-}
+-
+-
+-int testFourByte422(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  int num4bf = doYUV ? 4 : 5;
+-  doTest(35, 39, _4byteFormats, num4bf, TJSAMP_422, "test");
+-  return exitStatus;
+-}
+-
+-
+-int testThreeByte420(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  doTest(39, 41, _3byteFormats, 2, TJSAMP_420, "test");
+-  return exitStatus;
+-}
+-
+-
+-int testFourByte420(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  int num4bf = doYUV ? 4 : 5;
+-  doTest(41, 35, _4byteFormats, num4bf, TJSAMP_420, "test");
+-  return exitStatus;
+-}
+-
+-
+-int testThreeByte440(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  doTest(35, 39, _3byteFormats, 2, TJSAMP_440, "test");
+-  return exitStatus;
+-}
+-
+-
+-int testFourByte440(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  int num4bf = doYUV ? 4 : 5;
+-  doTest(39, 41, _4byteFormats, num4bf, TJSAMP_440, "test");
+-  return exitStatus;
+-}
+-
+-
+-int testThreeByte411(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  doTest(41, 35, _3byteFormats, 2, TJSAMP_411, "test");
+-  return exitStatus;
+-}
+-
+-
+-int testFourByte411(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  int num4bf = doYUV ? 4 : 5;
+-  doTest(35, 39, _4byteFormats, num4bf, TJSAMP_411, "test");
+-  return exitStatus;
+-}
+-
+-
+-int testOnlyGray(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  doTest(39, 41, _onlyGray, 1, TJSAMP_GRAY, "test");
+-  return exitStatus;
+-}
+-
+-
+-int testThreeByteGray(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  doTest(41, 35, _3byteFormats, 2, TJSAMP_GRAY, "test");
+-  return exitStatus;
+-}
+-
+-
+-int testFourByteGray(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  doTest(35, 39, _4byteFormats, 4, TJSAMP_GRAY, "test");
+-  return exitStatus;
+-}
+-
+-
+-int testBufSize(int yuv, int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(yuv, noyuvpad, autoalloc);
+-
+-  bufSizeTest();
+-  return exitStatus;
+-}
+-
+-
+-int testYUVOnlyRGB444(int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(1, noyuvpad, autoalloc);
+-
+-  doTest(48, 48, _onlyRGB, 1, TJSAMP_444, "test_yuv0");
+-  return exitStatus;
+-}
+-
+-
+-int testYUVOnlyRGB422(int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(1, noyuvpad, autoalloc);
+-
+-  doTest(48, 48, _onlyRGB, 1, TJSAMP_422, "test_yuv0");
+-  return exitStatus;
+-}
+-
+-
+-int testYUVOnlyRGB420(int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(1, noyuvpad, autoalloc);
+-
+-  doTest(48, 48, _onlyRGB, 1, TJSAMP_420, "test_yuv0");
+-  return exitStatus;
+-}
+-
+-
+-int testYUVOnlyRGB440(int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(1, noyuvpad, autoalloc);
+-
+-  doTest(48, 48, _onlyRGB, 1, TJSAMP_440, "test_yuv0");
+-  return exitStatus;
+-}
+-
+-
+-int testYUVOnlyRGB411(int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(1, noyuvpad, autoalloc);
+-
+-  doTest(48, 48, _onlyRGB, 1, TJSAMP_411, "test_yuv0");
+-  return exitStatus;
+-}
+-
+-
+-int testYUVOnlyRGBGray(int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(1, noyuvpad, autoalloc);
+-
+-  doTest(48, 48, _onlyRGB, 1, TJSAMP_GRAY, "test_yuv0");
+-  return exitStatus;
+-}
+-
+-
+-int testYUVOnlyGrayGray(int noyuvpad, int autoalloc)
+-{
+-  initTJUnitTest(1, noyuvpad, autoalloc);
+-
+-  doTest(48, 48, _onlyGray, 1, TJSAMP_GRAY, "test_yuv0");
+-  return exitStatus;
+-}
+-
+-#else
+-
+ int main(int argc, char *argv[])
+ {
+   int i, num4bf = 5;
+@@ -1169,4 +929,3 @@ int main(int argc, char *argv[])
+ 
+   return exitStatus;
+ }
+-#endif
+diff --git a/turbojpeg-jni.c b/turbojpeg-jni.c
+index 93634501..99924794 100644
+--- a/turbojpeg-jni.c
++++ b/turbojpeg-jni.c
+@@ -1232,9 +1232,9 @@ bailout:
+     free(dstBufs);
+   }
+   SAFE_RELEASE(jsrcBuf, jpegBuf);
+-  free(jdstBufs);
+-  free(dstSizes);
+-  free(t);
++  if (jdstBufs) free(jdstBufs);
++  if (dstSizes) free(dstSizes);
++  if (t) free(t);
+   return jdstSizes;
+ }
+ 
+diff --git a/turbojpeg.c b/turbojpeg.c
+index e63d1134..3a1e3a98 100644
+--- a/turbojpeg.c
++++ b/turbojpeg.c
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C)2009-2020 D. R. Commander.  All Rights Reserved.
++ * Copyright (C)2009-2019 D. R. Commander.  All Rights Reserved.
+  *
+  * Redistribution and use in source and binary forms, with or without
+  * modification, are permitted provided that the following conditions are met:
+@@ -43,7 +43,6 @@
+ #include "transupp.h"
+ #include "./jpegcomp.h"
+ #include "./cdjpeg.h"
+-#include "jconfigint.h"
+ 
+ extern void jpeg_mem_dest_tj(j_compress_ptr, unsigned char **, unsigned long *,
+                              boolean);
+@@ -56,7 +55,7 @@ extern void jpeg_mem_src_tj(j_decompress_ptr, const unsigned char *,
+ 
+ /* Error handling (based on example in example.txt) */
+ 
+-static THREAD_LOCAL char errStr[JMSG_LENGTH_MAX] = "No error";
++static char errStr[JMSG_LENGTH_MAX] = "No error";
+ 
+ struct my_error_mgr {
+   struct jpeg_error_mgr pub;
+@@ -369,9 +368,9 @@ static int getSubsamp(j_decompress_ptr dinfo)
+           D_MAX_BLOCKS_IN_MCU / pixelsize[i] && i == TJSAMP_444) {
+         int match = 0;
+         for (k = 1; k < dinfo->num_components; k++) {
+-          if (dinfo->comp_info[k].h_samp_factor ==
++          if (dinfo->comp_info[i].h_samp_factor ==
+               dinfo->comp_info[0].h_samp_factor &&
+-              dinfo->comp_info[k].v_samp_factor ==
++              dinfo->comp_info[i].v_samp_factor ==
+               dinfo->comp_info[0].v_samp_factor)
+             match++;
+           if (match == dinfo->num_components - 1) {
+@@ -433,7 +432,7 @@ DLLEXPORT int tjDestroy(tjhandle handle)
+ 
+ DLLEXPORT void tjFree(unsigned char *buf)
+ {
+-  free(buf);
++  if (buf) free(buf);
+ }
+ 
+ 
+@@ -463,7 +462,7 @@ static tjhandle _tjInitCompress(tjinstance *this)
+ 
+   if (setjmp(this->jerr.setjmp_buffer)) {
+     /* If we get here, the JPEG code has signaled an error. */
+-    free(this);
++    if (this) free(this);
+     return NULL;
+   }
+ 
+@@ -693,7 +692,7 @@ DLLEXPORT int tjCompress2(tjhandle handle, const unsigned char *srcBuf,
+ 
+ bailout:
+   if (cinfo->global_state > CSTATE_START) jpeg_abort_compress(cinfo);
+-  free(row_pointer);
++  if (row_pointer) free(row_pointer);
+   if (this->jerr.warning) retval = -1;
+   this->jerr.stopOnWarning = FALSE;
+   return retval;
+@@ -867,13 +866,13 @@ DLLEXPORT int tjEncodeYUVPlanes(tjhandle handle, const unsigned char *srcBuf,
+ 
+ bailout:
+   if (cinfo->global_state > CSTATE_START) jpeg_abort_compress(cinfo);
+-  free(row_pointer);
++  if (row_pointer) free(row_pointer);
+   for (i = 0; i < MAX_COMPONENTS; i++) {
+-    free(tmpbuf[i]);
+-    free(_tmpbuf[i]);
+-    free(tmpbuf2[i]);
+-    free(_tmpbuf2[i]);
+-    free(outbuf[i]);
++    if (tmpbuf[i] != NULL) free(tmpbuf[i]);
++    if (_tmpbuf[i] != NULL) free(_tmpbuf[i]);
++    if (tmpbuf2[i] != NULL) free(tmpbuf2[i]);
++    if (_tmpbuf2[i] != NULL) free(_tmpbuf2[i]);
++    if (outbuf[i] != NULL) free(outbuf[i]);
+   }
+   if (this->jerr.warning) retval = -1;
+   this->jerr.stopOnWarning = FALSE;
+@@ -1063,10 +1062,10 @@ DLLEXPORT int tjCompressFromYUVPlanes(tjhandle handle,
+ bailout:
+   if (cinfo->global_state > CSTATE_START) jpeg_abort_compress(cinfo);
+   for (i = 0; i < MAX_COMPONENTS; i++) {
+-    free(tmpbuf[i]);
+-    free(inbuf[i]);
++    if (tmpbuf[i]) free(tmpbuf[i]);
++    if (inbuf[i]) free(inbuf[i]);
+   }
+-  free(_tmpbuf);
++  if (_tmpbuf) free(_tmpbuf);
+   if (this->jerr.warning) retval = -1;
+   this->jerr.stopOnWarning = FALSE;
+   return retval;
+@@ -1131,7 +1130,7 @@ static tjhandle _tjInitDecompress(tjinstance *this)
+ 
+   if (setjmp(this->jerr.setjmp_buffer)) {
+     /* If we get here, the JPEG code has signaled an error. */
+-    free(this);
++    if (this) free(this);
+     return NULL;
+   }
+ 
+@@ -1314,7 +1313,7 @@ DLLEXPORT int tjDecompress2(tjhandle handle, const unsigned char *jpegBuf,
+ 
+ bailout:
+   if (dinfo->global_state > DSTATE_START) jpeg_abort_decompress(dinfo);
+-  free(row_pointer);
++  if (row_pointer) free(row_pointer);
+   if (this->jerr.warning) retval = -1;
+   this->jerr.stopOnWarning = FALSE;
+   return retval;
+@@ -1520,11 +1519,11 @@ DLLEXPORT int tjDecodeYUVPlanes(tjhandle handle,
+ 
+ bailout:
+   if (dinfo->global_state > DSTATE_START) jpeg_abort_decompress(dinfo);
+-  free(row_pointer);
++  if (row_pointer) free(row_pointer);
+   for (i = 0; i < MAX_COMPONENTS; i++) {
+-    free(tmpbuf[i]);
+-    free(_tmpbuf[i]);
+-    free(inbuf[i]);
++    if (tmpbuf[i] != NULL) free(tmpbuf[i]);
++    if (_tmpbuf[i] != NULL) free(_tmpbuf[i]);
++    if (inbuf[i] != NULL) free(inbuf[i]);
+   }
+   if (this->jerr.warning) retval = -1;
+   this->jerr.stopOnWarning = FALSE;
+@@ -1649,8 +1648,10 @@ DLLEXPORT int tjDecompressToYUVPlanes(tjhandle handle,
+ 
+     iw[i] = compptr->width_in_blocks * dctsize;
+     ih = compptr->height_in_blocks * dctsize;
+-    pw[i] = tjPlaneWidth(i, dinfo->output_width, jpegSubsamp);
+-    ph[i] = tjPlaneHeight(i, dinfo->output_height, jpegSubsamp);
++    pw[i] = PAD(dinfo->output_width, dinfo->max_h_samp_factor) *
++            compptr->h_samp_factor / dinfo->max_h_samp_factor;
++    ph[i] = PAD(dinfo->output_height, dinfo->max_v_samp_factor) *
++            compptr->v_samp_factor / dinfo->max_v_samp_factor;
+     if (iw[i] != pw[i] || ih != ph[i]) usetmpbuf = 1;
+     th[i] = compptr->v_samp_factor * dctsize;
+     tmpbufsize += iw[i] * th[i];
+@@ -1732,10 +1733,10 @@ DLLEXPORT int tjDecompressToYUVPlanes(tjhandle handle,
+ bailout:
+   if (dinfo->global_state > DSTATE_START) jpeg_abort_decompress(dinfo);
+   for (i = 0; i < MAX_COMPONENTS; i++) {
+-    free(tmpbuf[i]);
+-    free(outbuf[i]);
++    if (tmpbuf[i]) free(tmpbuf[i]);
++    if (outbuf[i]) free(outbuf[i]);
+   }
+-  free(_tmpbuf);
++  if (_tmpbuf) free(_tmpbuf);
+   if (this->jerr.warning) retval = -1;
+   this->jerr.stopOnWarning = FALSE;
+   return retval;
+@@ -1907,11 +1908,10 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
+     if (xinfo[i].crop) {
+       if ((t[i].r.x % xinfo[i].iMCU_sample_width) != 0 ||
+           (t[i].r.y % xinfo[i].iMCU_sample_height) != 0) {
+-        snprintf(this->errStr, JMSG_LENGTH_MAX,
++        snprintf(errStr, JMSG_LENGTH_MAX,
+                  "To crop this JPEG image, x must be a multiple of %d\n"
+                  "and y must be a multiple of %d.\n",
+                  xinfo[i].iMCU_sample_width, xinfo[i].iMCU_sample_height);
+-        this->isInstanceError = TRUE;
+         retval = -1;  goto bailout;
+       }
+     }
+@@ -1980,7 +1980,7 @@ DLLEXPORT int tjTransform(tjhandle handle, const unsigned char *jpegBuf,
+ bailout:
+   if (cinfo->global_state > CSTATE_START) jpeg_abort_compress(cinfo);
+   if (dinfo->global_state > DSTATE_START) jpeg_abort_decompress(dinfo);
+-  free(xinfo);
++  if (xinfo) free(xinfo);
+   if (this->jerr.warning) retval = -1;
+   this->jerr.stopOnWarning = FALSE;
+   return retval;
+@@ -2075,7 +2075,7 @@ DLLEXPORT unsigned char *tjLoadImage(const char *filename, int *width,
+ bailout:
+   if (handle) tjDestroy(handle);
+   if (file) fclose(file);
+-  if (retval < 0) { free(dstBuf);  dstBuf = NULL; }
++  if (retval < 0 && dstBuf) { free(dstBuf);  dstBuf = NULL; }
+   return dstBuf;
+ }
+ 
+diff --git a/turbojpeg.h b/turbojpeg.h
+index f3209dd3..9c0a3713 100644
+--- a/turbojpeg.h
++++ b/turbojpeg.h
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (C)2009-2015, 2017, 2020 D. R. Commander.  All Rights Reserved.
++ * Copyright (C)2009-2015, 2017 D. R. Commander.  All Rights Reserved.
+  *
+  * Redistribution and use in source and binary forms, with or without
+  * modification, are permitted provided that the following conditions are met:
+@@ -1636,8 +1636,7 @@ DLLEXPORT int tjSaveImage(const char *filename, unsigned char *buffer,
+  * (re)allocated by the compression and transform functions or that were
+  * manually allocated using #tjAlloc().
+  *
+- * @param buffer address of the buffer to free.  If the address is NULL, then
+- * this function has no effect.
++ * @param buffer address of the buffer to free
+  *
+  * @sa tjAlloc()
+  */
+@@ -1650,7 +1649,7 @@ DLLEXPORT void tjFree(unsigned char *buffer);
+  * @param handle a handle to a TurboJPEG compressor, decompressor, or
+  * transformer instance, or NULL if the error was generated by a global
+  * function (but note that retrieving the error message for a global function
+- * is thread-safe only on platforms that support thread-local storage.)
++ * is not thread-safe.)
+  *
+  * @return a descriptive error message explaining why the last command failed.
+  */
+-- 
+2.17.1
+

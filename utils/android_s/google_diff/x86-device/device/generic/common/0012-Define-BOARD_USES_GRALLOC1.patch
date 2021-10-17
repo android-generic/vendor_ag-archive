@@ -1,0 +1,26 @@
+From 79cc4e541353ed795cbc27231e23a2e6358a6e9a Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Thu, 15 Apr 2021 16:34:44 -0400
+Subject: [PATCH 12/36] Define BOARD_USES_GRALLOC1
+
+Newer mesa can be compiled with both BOARD_USES_DRM_GRALLOC and
+BOARD_USES_GRALLOC1 and select proper implementation at runtime.
+---
+ BoardConfig.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 8580206..793e2d9 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -59,6 +59,7 @@ USE_INTEL_OMX_COMPONENTS := true
+ USE_OPENGL_RENDERER := true
+ NUM_FRAMEBUFFER_SURFACE_BUFFERS ?= 3
+ BOARD_USES_DRM_GRALLOC := true
++BOARD_USES_GRALLOC1 := true
+ BOARD_USES_DRM_HWCOMPOSER ?= true
+ 
+ USE_CAMERA_STUB ?= false
+-- 
+2.17.1
+

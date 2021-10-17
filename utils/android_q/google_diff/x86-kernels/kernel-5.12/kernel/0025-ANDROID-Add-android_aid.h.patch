@@ -1,0 +1,49 @@
+From c00f1201f29cf2130eaa6d5a1e921b9c742bc50a Mon Sep 17 00:00:00 2001
+From: Robert Love <rlove@google.com>
+Date: Wed, 15 Oct 2008 15:34:49 -0400
+Subject: [PATCH 025/100] ANDROID: Add android_aid.h
+
+Add <linux/android_aid.h>, our mapping of AID defines to gid numbers.
+
+Change-Id: I3a02eb2b5c7e336e3de0cb45d8e04ec82f7281b4
+Signed-off-by: Robert Love <rlove@google.com>
+Signed-off-by: youling257 <youling257@gmail.com>
+---
+ include/linux/android_aid.h | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+ create mode 100644 include/linux/android_aid.h
+
+diff --git a/include/linux/android_aid.h b/include/linux/android_aid.h
+new file mode 100644
+index 000000000000..dc66530e5fc7
+--- /dev/null
++++ b/include/linux/android_aid.h
+@@ -0,0 +1,25 @@
++/* include/linux/android_aid.h
++ *
++ * Copyright (C) 2008 Google, Inc.
++ *
++ * This software is licensed under the terms of the GNU General Public
++ * License version 2, as published by the Free Software Foundation, and
++ * may be copied, distributed, and modified under those terms.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ */
++
++#ifndef _LINUX_ANDROID_AID_H
++#define _LINUX_ANDROID_AID_H
++
++/* AIDs that the kernel treats differently */
++#define AID_OBSOLETE_000 KGIDT_INIT(3001)  /* was NET_BT_ADMIN */
++#define AID_OBSOLETE_001 KGIDT_INIT(3002)  /* was NET_BT */
++#define AID_INET         KGIDT_INIT(3003)
++#define AID_NET_RAW      KGIDT_INIT(3004)
++
++#endif
+-- 
+2.17.1
+

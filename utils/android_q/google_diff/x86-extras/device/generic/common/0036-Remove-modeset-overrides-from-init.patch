@@ -1,0 +1,70 @@
+From 05d76258a498b7d6f4d563645a21d3e3d110f1b6 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 1 May 2021 22:06:01 -0400
+Subject: [PATCH 36/36] Remove modeset overrides from init
+
+Change-Id: If6057f8b7be68cd959706916bff274d129b042ce
+---
+ init.sh | 39 ---------------------------------------
+ 1 file changed, 39 deletions(-)
+
+diff --git a/init.sh b/init.sh
+index 0a1479c..e42a6c0 100644
+--- a/init.sh
++++ b/init.sh
+@@ -188,33 +188,6 @@ function init_hal_gralloc()
+ {
+ 	[ "$VULKAN" = "1" ] && GRALLOC=gbm
+ 	
+-	case "$(cat /proc/fb | head -1)" in
+-		0*amdgpudrmfb)
+-			if [ "$AMDGPU_MODESET" != "0" ]; then
+-				modprobe amdgpu
+-			fi			
+-			;;
+-		0*radeondrmfb)
+-			if [ "$RADEON_MODESET" != "0" ]; then
+-				modprobe radeon
+-			fi			
+-			;;
+-		0*nouveau*)
+-			if [ "$NOUVEAU_MODESET" != "0" ]; then
+-				modprobe nouveau
+-			fi			
+-			;;
+-		0*i915drmfb|0*inteldrmfb)
+-			if [ "$I915_MODESET" != "0" ]; then
+-				modprobe i915
+-			fi
+-			;;
+-		"")
+-			;;
+-		0*)
+-			;;
+-	esac
+-
+ 	case "$(cat /proc/fb | head -1)" in
+ 		*virtio*drmfb|*DRM*emulated)
+ 			HWC=${HWC:-drm}
+@@ -637,18 +610,6 @@ for c in `cat /proc/cmdline`; do
+ 					DPI=*)
+ 						set_property ro.sf.lcd_density "$DPI"
+ 						;;
+-					nouveau.modeset=0)
+-						NOUVEAU_MODESET=0
+-						;;
+-					amdgpu.modeset=0)
+-						AMDGPU_MODESET=0
+-						;;
+-					radeon.modeset=0)
+-						RADEON_MODESET=0
+-						;;
+-					i915.modeset=0)
+-						I915_MODESET=0
+-						;;
+ 				esac
+ 				[ "$SETUPWIZARD" = "0" ] && set_property ro.setupwizard.mode DISABLED
+ 			fi
+-- 
+2.17.1
+

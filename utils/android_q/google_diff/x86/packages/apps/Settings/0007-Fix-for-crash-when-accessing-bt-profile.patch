@@ -1,0 +1,34 @@
+From d82efc0ee69e94d4d618992e56b922d43dc79399 Mon Sep 17 00:00:00 2001
+From: Nitin Rawat <nitin.rawat@intel.com>
+Date: Fri, 10 May 2019 21:05:07 +0530
+Subject: [PATCH 7/9] Fix for crash when accessing bt profile
+
+Settings app crashes when it tries to access bt profile
+or tries to connect disconnect connected devices
+
+Fixed the null object reference of profile object
+while calling isProfileReady() method
+
+Change-Id: I83ef7af8c3e12a371760d02b3c07bc0082094a97
+Tracked-On:
+Signed-off-by: Nitin Rawat <nitin.rawat@intel.com>
+---
+ .../settings/bluetooth/BluetoothDetailsProfilesController.java  | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/com/android/settings/bluetooth/BluetoothDetailsProfilesController.java b/src/com/android/settings/bluetooth/BluetoothDetailsProfilesController.java
+index 2b007b2773..a9c59af6c9 100644
+--- a/src/com/android/settings/bluetooth/BluetoothDetailsProfilesController.java
++++ b/src/com/android/settings/bluetooth/BluetoothDetailsProfilesController.java
+@@ -276,7 +276,7 @@ public class BluetoothDetailsProfilesController extends BluetoothDetailsControll
+     @Override
+     protected void refresh() {
+         for (LocalBluetoothProfile profile : getProfiles()) {
+-            if (!profile.isProfileReady()) {
++            if (profile == null || !profile.isProfileReady()) {
+                 continue;
+             }
+             SwitchPreference pref = mProfilesContainer.findPreference(
+-- 
+2.17.1
+

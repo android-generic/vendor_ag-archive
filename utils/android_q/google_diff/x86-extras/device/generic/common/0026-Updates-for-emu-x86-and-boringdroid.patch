@@ -1,0 +1,43 @@
+From 3830317fd54c3373d77f5189548b22fe95077cac Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 30 Apr 2021 22:06:08 -0400
+Subject: [PATCH 26/36] Updates for emu-x86 and boringdroid
+
+Change-Id: I1d118a12df8ac8081934d75445ee22166187c728
+---
+ device.mk | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
+
+diff --git a/device.mk b/device.mk
+index 2fe1207..8b65575 100644
+--- a/device.mk
++++ b/device.mk
+@@ -134,5 +134,25 @@ $(call inherit-product-if-exists,$(if $(wildcard vendor/google/products/gms.mk),
+ # Get native bridge settings
+ $(call inherit-product-if-exists,$(LOCAL_PATH)/nativebridge/nativebridge.mk)
+ $(call inherit-product-if-exists, vendor/google/emu-x86/target/libndk_translation.mk)
++$(call inherit-product-if-exists, vendor/google/emu-x86/target/native_bridge_arm_on_x86.mk)
++NDK_TRANSLATION_PREINSTALL := google
++PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.nativebridge=1
+ 
+ $(call inherit-product,$(if $(wildcard $(PRODUCT_DIR)packages.mk),$(PRODUCT_DIR),$(LOCAL_PATH)/)packages.mk)
++
++
++# Widevine addons
++$(call inherit-product-if-exists, vendor/google/emu-x86/target/widevine.mk)
++
++
++ifeq ($(USE_EMU_GAPPS),true)
++
++$(call inherit-product-if-exists, vendor/google/emu-x86/target/gapps.mk)
++
++endif
++
++# Boringdroid
++$(call inherit-product-if-exists, vendor/boringdroid/boringdroid.mk)
++
++# foss apps
++$(call inherit-product-if-exists, vendor/foss/foss.mk)
+-- 
+2.17.1
+

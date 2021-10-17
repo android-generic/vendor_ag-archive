@@ -1,0 +1,52 @@
+From 9619bd14b8d4e7a5c5c60f1fc8ee3de5443c72b9 Mon Sep 17 00:00:00 2001
+From: Arne Coucheron <arco68@gmail.com>
+Date: Sat, 4 Jan 2020 10:32:23 +0100
+Subject: [PATCH 6/7] Enable legacy adaptive playback for QCOM_BSP_LEGACY
+
+Adaptive playback got broken in Q, and this is needed
+to fix issues with video playback in apps like YouTube etc.
+
+Change-Id: Ieb440b93222e67043eb5ceda50c0b5eea3198695
+---
+ media/libstagefright/omx/Android.bp          | 8 ++++++++
+ media/libstagefright/omx/OMXNodeInstance.cpp | 4 ++++
+ 2 files changed, 12 insertions(+)
+
+diff --git a/media/libstagefright/omx/Android.bp b/media/libstagefright/omx/Android.bp
+index 7d03d98ccf..b14fec3f50 100644
+--- a/media/libstagefright/omx/Android.bp
++++ b/media/libstagefright/omx/Android.bp
+@@ -64,6 +64,14 @@ cc_library_shared {
+         "-Wno-documentation",
+     ],
+ 
++    product_variables: {
++        bliss: {
++            uses_qcom_bsp_legacy: {
++                cppflags: ["-DQCOM_BSP_LEGACY"],
++            },
++        },
++    },
++
+     sanitize: {
+         misc_undefined: [
+             "signed-integer-overflow",
+diff --git a/media/libstagefright/omx/OMXNodeInstance.cpp b/media/libstagefright/omx/OMXNodeInstance.cpp
+index ddb4ba0bc3..daabed26d9 100644
+--- a/media/libstagefright/omx/OMXNodeInstance.cpp
++++ b/media/libstagefright/omx/OMXNodeInstance.cpp
+@@ -377,7 +377,11 @@ OMXNodeInstance::OMXNodeInstance(
+     mGraphicBufferEnabled[0] = false;
+     mGraphicBufferEnabled[1] = false;
+     mIsSecure = AString(name).endsWith(".secure");
++#ifdef QCOM_BSP_LEGACY
++    mLegacyAdaptiveExperiment = true;
++#else
+     mLegacyAdaptiveExperiment = ADebug::isExperimentEnabled("legacy-adaptive");
++#endif
+ }
+ 
+ OMXNodeInstance::~OMXNodeInstance() {
+-- 
+2.17.1
+

@@ -1,0 +1,51 @@
+From 3cc577507e633547a9443551c1dad9c1dceee98e Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Fri, 16 Apr 2021 17:32:40 -0400
+Subject: [PATCH 2/4] Fix AAC decoding
+
+AAC codec must now implement getting
+OMX_IndexParamAudioAndroidAacDrcPresentation.
+
+See https://cs.android.com/android/_/android/platform/frameworks/av/+/936718f931eb50cefccd0c2e1862c4d802c2af3b
+---
+ omx/SoftFFmpegAudio.cpp | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
+
+diff --git a/omx/SoftFFmpegAudio.cpp b/omx/SoftFFmpegAudio.cpp
+index ef4975d..c3ee5c6 100644
+--- a/omx/SoftFFmpegAudio.cpp
++++ b/omx/SoftFFmpegAudio.cpp
+@@ -335,6 +335,30 @@ OMX_ERRORTYPE SoftFFmpegAudio::internalGetParameter(
+             return OMX_ErrorNone;
+         }
+ 
++        case OMX_IndexParamAudioAndroidAacDrcPresentation:
++        {
++            OMX_AUDIO_PARAM_ANDROID_AACDRCPRESENTATIONTYPE *aacPresParams =
++                 (OMX_AUDIO_PARAM_ANDROID_AACDRCPRESENTATIONTYPE *)params;
++
++            if (!isValidOMXParam(aacPresParams)) {
++                return OMX_ErrorBadParameter;
++            }
++
++            // Return unspecified values (see frameworks/native/headers/media_plugin/media/openmax/OMX_AudioExt.h)
++            // Android 11 requires AAC codec to support getting DRC information.
++
++            aacPresParams->nDrcEffectType = -2;
++            aacPresParams->nDrcAlbumMode = -1;
++            aacPresParams->nDrcBoost = -1;
++            aacPresParams->nDrcCut = -1;
++            aacPresParams->nHeavyCompression = -1;
++            aacPresParams->nTargetReferenceLevel = -1;
++            aacPresParams->nEncodedTargetLevel = -1;
++            aacPresParams ->nDrcOutputLoudness = -2;
++
++            return OMX_ErrorNone;
++        }
++
+         case OMX_IndexParamAudioMp3:
+         {
+             OMX_AUDIO_PARAM_MP3TYPE *profile =
+-- 
+2.30.2
+

@@ -1,0 +1,35 @@
+From af482266bd1cedbd1cc993a41cadafab63e7fea1 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 28 Jun 2020 01:54:42 +0200
+Subject: [PATCH 084/106] DO NOT MERGE: drm/amdgpu: DC support for Kaveri and
+ older
+
+This reverts commit d9fda24.
+
+NOTE: LVDS and VGA connector types are not supported
+---
+ drivers/gpu/drm/amd/amdgpu/amdgpu_device.c | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
+index cab1ebaf6d62..79809432a4c4 100644
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_device.c
+@@ -2998,14 +2998,6 @@ bool amdgpu_device_asic_has_dc_support(enum amd_asic_type asic_type)
+ 	case CHIP_KAVERI:
+ 	case CHIP_KABINI:
+ 	case CHIP_MULLINS:
+-		/*
+-		 * We have systems in the wild with these ASICs that require
+-		 * LVDS and VGA support which is not supported with DC.
+-		 *
+-		 * Fallback to the non-DC driver here by default so as not to
+-		 * cause regressions.
+-		 */
+-		return amdgpu_dc > 0;
+ 	case CHIP_HAWAII:
+ 	case CHIP_CARRIZO:
+ 	case CHIP_STONEY:
+-- 
+2.17.1
+

@@ -1,0 +1,39 @@
+From 974178f76f82da106eae5f1727eca2927880211b Mon Sep 17 00:00:00 2001
+From: Victor Bo <bvoid@yandex.ru>
+Date: Fri, 5 Jun 2020 04:19:48 +0300
+Subject: [PATCH 5/5] add more space after network indicator
+
+Change-Id: I3df9723b8c178f407b3e8931358557ead812ddf7
+---
+ .../internal/statusbar/NetworkTraffic.java         | 14 +++++++++++---
+ 1 file changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/sdk/src/java/org/lineageos/internal/statusbar/NetworkTraffic.java b/sdk/src/java/org/lineageos/internal/statusbar/NetworkTraffic.java
+index b0960680..4114e585 100644
+--- a/sdk/src/java/org/lineageos/internal/statusbar/NetworkTraffic.java
++++ b/sdk/src/java/org/lineageos/internal/statusbar/NetworkTraffic.java
+@@ -289,10 +289,18 @@ public class NetworkTraffic extends TextView {
+                     break;
+             }
+ 
+-            if (mShowUnits) {
+-                return value + " " + unit;
++            if (!mHideArrows) {
++                if (mShowUnits) {
++                    return value + " " + unit;
++                } else {
++                    return value;
++                }
+             } else {
+-                return value;
++                if (mShowUnits) {
++                    return value + " " + unit + " ";
++                } else {
++                    return value + " ";
++                }
+             }
+         }
+     };
+-- 
+2.25.1
+

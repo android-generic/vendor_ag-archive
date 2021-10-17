@@ -1,0 +1,25 @@
+From f078d1c0ec7625a416230a1d99b8ddac8a5506a4 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Mon, 1 Jun 2020 08:43:11 -0400
+Subject: [PATCH 2/2] Comment out BoardConfigKernel for PC builds
+
+---
+ config/BoardConfigTESLA.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/config/BoardConfigTESLA.mk b/config/BoardConfigTESLA.mk
+index 3b95547..c872b8c 100644
+--- a/config/BoardConfigTESLA.mk
++++ b/config/BoardConfigTESLA.mk
+@@ -3,7 +3,7 @@
+ #    BOARD_HAL_STATIC_LIBRARIES := libhealthd.cm
+ #endif
+ 
+-include vendor/tesla/config/BoardConfigKernel.mk
++# include vendor/tesla/config/BoardConfigKernel.mk
+ 
+ ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+ include vendor/tesla/config/BoardConfigQcom.mk
+-- 
+2.17.1
+

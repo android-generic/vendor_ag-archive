@@ -1,0 +1,137 @@
+From f60aff7df5eac87902a0967475abaae88fc5aa33 Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@outlook.com>
+Date: Wed, 2 Sep 2020 00:15:03 +0800
+Subject: [PATCH 13/17] Expose package-windowing-mode-overlay for definning
+ windowing mode
+
+The location is /data/system_ce/0/package-windowing-mode-overlay.
+
+The example content is:
+
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <int name="com.android.contacts" value="1" />
+    <int name="com.android.messaging" value="1" />
+</map>
+
+So the current windowing mode checking chain is:
+1. If pc mode is enabled, we should set all package to undefined, and let system
+   to calculate windowing mode based on package config.
+2. If package is in our defined pc disallowed list, we should set it to undefined.
+3. If package has windowing mode defined in overlay shared preferences, we should use
+   whatever defined in that file. The frameworks will not change it, and leave it to
+   other system apps or user. If you want to set specific package to specific windowing
+   mode, just to modify it with key for package name and int value for windowing mode,
+   based on WindowConfiguration definition.
+4. If non of above, we will try to get windowing mode of package from saved shared
+   preferences, what will be modified when user changing window mode with shortcut
+   or decor caption bar. The default is WINDOWING_MODE_FREEFORM.
+
+Signed-off-by: utzcoz <utzcoz@outlook.com>
+---
+ .../android/internal/BoringdroidManager.java  | 31 +++++++++++++++++++
+ .../server/wm/LaunchParamsPersister.java      | 11 +++++++
+ 2 files changed, 42 insertions(+)
+
+diff --git a/core/java/com/android/internal/BoringdroidManager.java b/core/java/com/android/internal/BoringdroidManager.java
+index 0695a20db9d2..0b1168734fab 100644
+--- a/core/java/com/android/internal/BoringdroidManager.java
++++ b/core/java/com/android/internal/BoringdroidManager.java
+@@ -39,6 +39,7 @@ public class BoringdroidManager {
+ 
+     private static final String PACKAGE_WINDOW_BOUNDS_NAME = "package-window-bounds";
+     private static final String PACKAGE_WINDOWING_MODE_NAME = "package-windowing-mode";
++    private static final String PACKAGE_WINDOWING_MODE_OVERLAY_NAME = "package-windowing-mode-overlay";
+     private static final List<String> DISALLOWED_LIST = new ArrayList<>();
+     private static final String TAG = "BoringdroidConfig";
+ 
+@@ -67,6 +68,13 @@ public class BoringdroidManager {
+         );
+     }
+ 
++    private static File getPackageWindowingModeOverlayFile() {
++        return new File(
++                Environment.getDataSystemCeDirectory(UserHandle.myUserId())
++                        + File.separator + PACKAGE_WINDOWING_MODE_OVERLAY_NAME
++        );
++    }
++
+     private static File getPackageWindowBoundsName() {
+         return new File(
+                 Environment.getDataSystemCeDirectory(UserHandle.myUserId())
+@@ -95,6 +103,18 @@ public class BoringdroidManager {
+                     + ", before file is ready");
+             return WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+         }
++        // Okay, there is a checking chain for package windowing mode:
++        // 1. If pc mode is enabled, we should set all package to undefined, and let system
++        //    to calculate windowing mode based on package config.
++        // 2. If package is in our defined pc disallowed list, we should set it to undefined.
++        // 3. If package has windowing mode defined in overlay shared preferences, we should use
++        //    whatever defined in that file. The frameworks will not change it, and leave it to
++        //    other system apps or user. If you want to set specific package to specific windowing
++        //    mode, just to modify it with key for package name and int value for windowing mode,
++        //    based on WindowConfiguration definition.
++        // 4. If non of above, we will try to get windowing mode of package from saved shared
++        //    preferences, what will be modified when user changing window mode with shortcut
++        //    or decor caption bar. The default is WINDOWING_MODE_FREEFORM.
+         if (!BoringdroidManager.isPCModeEnabled()) {
+             return WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+         }
+@@ -103,6 +123,17 @@ public class BoringdroidManager {
+         if (isInPCModeDisallowedList(packageName)) {
+             return WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+         }
++        SharedPreferences overlaySharedPreferences =
++                context.getSharedPreferences(
++                        getPackageWindowingModeOverlayFile(),
++                        Context.MODE_PRIVATE
++                );
++        int overlayWindowingMode = overlaySharedPreferences.getInt(packageName, -1);
++        Slog.d(TAG, "Found overlay windowing mode " + overlayWindowingMode
++                + ", for package " + packageName);
++        if (overlayWindowingMode != -1) {
++            return overlayWindowingMode;
++        }
+         SharedPreferences sharedPreferences =
+                 context.getSharedPreferences(getPackageWindowingModeFile(), Context.MODE_PRIVATE);
+         // We hope the default windowing mode is freeform.
+diff --git a/services/core/java/com/android/server/wm/LaunchParamsPersister.java b/services/core/java/com/android/server/wm/LaunchParamsPersister.java
+index d364a3765c22..4dd6f10b7d19 100644
+--- a/services/core/java/com/android/server/wm/LaunchParamsPersister.java
++++ b/services/core/java/com/android/server/wm/LaunchParamsPersister.java
+@@ -16,6 +16,7 @@
+ 
+ package com.android.server.wm;
+ 
++import android.app.WindowConfiguration;
+ import android.content.ComponentName;
+ import android.content.pm.PackageList;
+ import android.content.pm.PackageManagerInternal;
+@@ -29,6 +30,7 @@ import android.util.SparseArray;
+ import android.util.Xml;
+ import android.view.DisplayInfo;
+ 
++import com.android.internal.BoringdroidManager;
+ import com.android.internal.annotations.VisibleForTesting;
+ import com.android.internal.util.FastXmlSerializer;
+ import com.android.server.LocalServices;
+@@ -267,6 +269,15 @@ class LaunchParamsPersister {
+         }
+         outParams.mWindowingMode = persistableParams.mWindowingMode;
+         outParams.mBounds.set(persistableParams.mBounds);
++        // region @boringdroid
++        if (name != null
++                && BoringdroidManager.getPackageWindowingMode(
++                        WindowManagerService.getWMSContext(), name.getPackageName())
++                != WindowConfiguration.WINDOWING_MODE_FREEFORM) {
++            outParams.mWindowingMode = WindowConfiguration.WINDOWING_MODE_UNDEFINED;
++            outParams.mBounds.setEmpty();
++        }
++        // endregion
+     }
+ 
+     void removeRecordForPackage(String packageName) {
+-- 
+2.17.1
+

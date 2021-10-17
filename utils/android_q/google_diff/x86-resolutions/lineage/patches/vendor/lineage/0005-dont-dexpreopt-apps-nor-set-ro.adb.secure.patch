@@ -1,0 +1,48 @@
+From e6044460bf194d35223f641423862e5b834b3e21 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 28 Aug 2020 09:54:12 -0400
+Subject: [PATCH 2/2] dont dexpreopt apps nor set ro.adb.secure
+
+---
+ config/common.mk | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/config/common.mk b/config/common.mk
+index 0dd2e301..45dd4c26 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -13,13 +13,13 @@ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += \
+     ro.com.google.clientidbase=$(PRODUCT_GMS_CLIENTID_BASE)
+ endif
+ 
+-ifeq ($(TARGET_BUILD_VARIANT),eng)
++#~ ifeq ($(TARGET_BUILD_VARIANT),eng)
+ # Disable ADB authentication
+-PRODUCT_SYSTEM_DEFAULT_PROPERTIES += ro.adb.secure=0
+-else
++#~ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += ro.adb.secure=0
++#~ else
+ # Enable ADB authentication
+-PRODUCT_SYSTEM_DEFAULT_PROPERTIES += ro.adb.secure=1
+-endif
++#~ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += ro.adb.secure=1
++#~ endif
+ 
+ # Backup Tool
+ PRODUCT_COPY_FILES += \
+@@ -186,9 +186,9 @@ endif
+ endif
+ 
+ # Dex preopt
+-PRODUCT_DEXPREOPT_SPEED_APPS += \
+-    SystemUI \
+-    TrebuchetQuickStep
++#~ PRODUCT_DEXPREOPT_SPEED_APPS += \
++#~     SystemUI \
++#~     TrebuchetQuickStep
+ 
+ PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS += vendor/lineage/overlay
+ DEVICE_PACKAGE_OVERLAYS += vendor/lineage/overlay/common
+-- 
+2.17.1
+

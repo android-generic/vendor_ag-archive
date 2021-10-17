@@ -1,0 +1,52 @@
+From 5018427ea035983592c7541acf43d62954b880ad Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Mon, 10 Aug 2020 22:20:26 -0400
+Subject: [PATCH] Fix conflicts with ROM settings
+
+---
+ Android.mk | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index e19714d593..d560cf4bf0 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -2,9 +2,7 @@ LOCAL_PATH:= $(call my-dir)
+ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES := \
+-        $(call all-logtags-files-under, src) \
+-        $(call all-java-files-under,../../../external/koush/Widgets/Widgets/src) \
+-        $(call all-java-files-under,../../../external/koush/Superuser/Superuser/src)
++        $(call all-logtags-files-under, src)
+ 
+ LOCAL_MODULE := settings-logtags
+ 
+@@ -26,6 +24,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
+ LOCAL_SRC_FILES += $(call all-java-files-under, ../DU-Changelog/app/src/main/java)
+ LOCAL_SRC_FILES += $(call all-java-files-under, ../DU-Tweaks/src)
+ LOCAL_SRC_FILES += $(call all-java-files-under, ../../../external/google/SettingsGoogle/src)
++LOCAL_SRC_FILES += $(call all-java-files-under, ../../../external/koush/Widgets/Widgets/src)
++LOCAL_SRC_FILES += $(call all-java-files-under, ../../../external/koush/Superuser/Superuser/src)
+ 
+ LOCAL_STATIC_ANDROID_LIBRARIES := \
+     androidx-constraintlayout_constraintlayout \
+@@ -77,13 +77,13 @@ LOCAL_AAPT_FLAGS := --auto-add-overlay \
+     --extra-packages com.dirtyunicorns.tweaks \
+     --extra-packages github.com.st235.lib_expandablebottombar
+ 
+-LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res \
++LOCAL_RESOURCE_DIR += \
+     external/koush/Widgets/Widgets/res \
+     external/koush/Superuser/Superuser/res
+ 
+ LOCAL_AAPT_INCLUDE_ALL_RESOURCES := true
+ 
+-LOCAL_AAPT_FLAGS := --auto-add-overlay \
++LOCAL_AAPT_FLAGS +=  \
+     --extra-packages com.koushikdutta.superuser:com.koushikdutta.widgets
+ 
+ ifneq ($(INCREMENTAL_BUILDS),)
+-- 
+2.17.1
+

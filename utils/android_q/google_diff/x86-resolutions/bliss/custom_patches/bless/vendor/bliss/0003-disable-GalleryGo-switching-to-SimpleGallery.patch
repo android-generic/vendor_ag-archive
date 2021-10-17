@@ -1,0 +1,27 @@
+From d2c60abac0dbf4423ac1c3088716b492d3666e21 Mon Sep 17 00:00:00 2001
+From: Victor Bo <bvoid@yandex.ru>
+Date: Fri, 8 May 2020 19:43:41 +0300
+Subject: [PATCH 3/3] disable GalleryGo, switching to SimpleGallery
+
+	modified:   config/bliss_packages.mk
+
+Change-Id: Ic6fbad5876e7f6aec38ddb9b81da71dcea808e1b
+---
+ config/bliss_packages.mk | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/config/bliss_packages.mk b/config/bliss_packages.mk
+index 59f6e27c..e10718f9 100644
+--- a/config/bliss_packages.mk
++++ b/config/bliss_packages.mk
+@@ -60,7 +60,6 @@ PRODUCT_PACKAGES += \
+     BlissPapers \
+     OPScreenRecorder \
+     NexusWallpapersStubPrebuilt2019Static \
+-    GalleryGoPrebuilt \
+     AboutBliss \
+     BlissStatistics \
+     Contacts \
+-- 
+2.25.1
+

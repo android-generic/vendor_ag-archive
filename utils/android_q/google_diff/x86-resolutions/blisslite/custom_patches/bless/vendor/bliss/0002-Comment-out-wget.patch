@@ -1,0 +1,40 @@
+From 41e8abf4fd6ce93d67032099a59ac30faf8964ed Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 6 Jun 2020 16:46:35 -0400
+Subject: [PATCH] Comment out wget
+
+We add our own through busybox
+
+Change-Id: Ifeba40ebbb582169099f373fea66baec0287e715
+---
+ prebuilt/common/Android.mk | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/prebuilt/common/Android.mk b/prebuilt/common/Android.mk
+index 3f671746..bdb21a0f 100644
+--- a/prebuilt/common/Android.mk
++++ b/prebuilt/common/Android.mk
+@@ -1,13 +1,13 @@
+ LOCAL_PATH := $(call my-dir)
+ 
+ # a wrapper for curl which provides wget syntax, for compatibility
+-include $(CLEAR_VARS)
+-LOCAL_MODULE := wget
+-LOCAL_SRC_FILES := bin/wget
+-LOCAL_MODULE_TAGS := optional
+-LOCAL_MODULE_CLASS := EXECUTABLES
+-LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
+-include $(BUILD_PREBUILT)
++#include $(CLEAR_VARS)
++#LOCAL_MODULE := wget
++#LOCAL_SRC_FILES := bin/wget
++#OCAL_MODULE_TAGS := optional
++#LOCAL_MODULE_CLASS := EXECUTABLES
++#LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
++#include $(BUILD_PREBUILT)
+ 
+ ################################
+ # Copies the APN list file into $(TARGET_COPY_OUT_PRODUCT)/etc for the product as apns-conf.xml.
+-- 
+2.17.1
+

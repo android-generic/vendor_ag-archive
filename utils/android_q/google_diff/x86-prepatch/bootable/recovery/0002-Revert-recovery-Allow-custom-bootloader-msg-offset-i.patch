@@ -1,0 +1,48 @@
+From 0fb5c6e96b1bf4fae5ddcd14264081ae6f103662 Mon Sep 17 00:00:00 2001
+From: Alessandro Astone <ales.astone@gmail.com>
+Date: Fri, 11 Jan 2019 18:46:44 +0100
+Subject: [PATCH 2/2] Revert "recovery: Allow custom bootloader msg offset in
+ block misc"
+
+This reverts commit c26cdf0020225ee968faee8208423f1141af8830.
+---
+ bootloader_message/Android.bp                          |  1 -
+ .../include/bootloader_message/bootloader_message.h    | 10 +++++-----
+ 2 files changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/bootloader_message/Android.bp b/bootloader_message/Android.bp
+index f23b1dea..6443a077 100644
+--- a/bootloader_message/Android.bp
++++ b/bootloader_message/Android.bp
+@@ -16,7 +16,6 @@
+ 
+ cc_defaults {
+     name: "libbootloader_message_defaults",
+-    defaults: ["bootloader_message_offset_defaults"],
+     srcs: ["bootloader_message.cpp"],
+     cflags: [
+         "-Wall",
+diff --git a/bootloader_message/include/bootloader_message/bootloader_message.h b/bootloader_message/include/bootloader_message/bootloader_message.h
+index 387692b9..e4cf09b2 100644
+--- a/bootloader_message/include/bootloader_message/bootloader_message.h
++++ b/bootloader_message/include/bootloader_message/bootloader_message.h
+@@ -29,11 +29,11 @@
+ // 32K - 64K    System space, used for miscellanious AOSP features. See below.
+ // Note that these offsets are admitted by bootloader,recovery and uncrypt, so they
+ // are not configurable without changing all of them.
+-constexpr size_t BOOTLOADER_MESSAGE_OFFSET_IN_MISC = BOARD_RECOVERY_BLDRMSG_OFFSET;
+-constexpr size_t VENDOR_SPACE_OFFSET_IN_MISC = 2 * 1024 + BOARD_RECOVERY_BLDRMSG_OFFSET;
+-constexpr size_t WIPE_PACKAGE_OFFSET_IN_MISC = 16 * 1024 + BOARD_RECOVERY_BLDRMSG_OFFSET;
+-constexpr size_t SYSTEM_SPACE_OFFSET_IN_MISC = 32 * 1024 + BOARD_RECOVERY_BLDRMSG_OFFSET;
+-constexpr size_t SYSTEM_SPACE_SIZE_IN_MISC = 32 * 1024 + BOARD_RECOVERY_BLDRMSG_OFFSET;
++constexpr size_t BOOTLOADER_MESSAGE_OFFSET_IN_MISC = 0;
++constexpr size_t VENDOR_SPACE_OFFSET_IN_MISC = 2 * 1024;
++constexpr size_t WIPE_PACKAGE_OFFSET_IN_MISC = 16 * 1024;
++constexpr size_t SYSTEM_SPACE_OFFSET_IN_MISC = 32 * 1024;
++constexpr size_t SYSTEM_SPACE_SIZE_IN_MISC = 32 * 1024;
+ 
+ /* Bootloader Message (2-KiB)
+  *
+-- 
+2.17.1
+

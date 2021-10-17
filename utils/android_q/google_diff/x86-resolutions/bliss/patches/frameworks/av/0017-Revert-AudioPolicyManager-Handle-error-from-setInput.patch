@@ -1,0 +1,63 @@
+From 81ce25d96b175e222f7c754c8690d29fe43ed415 Mon Sep 17 00:00:00 2001
+From: Mikhail Naganov <mnaganov@google.com>
+Date: Mon, 1 Jul 2019 15:07:19 -0700
+Subject: [PATCH 1/2] Revert "AudioPolicyManager: Handle error from
+ setInputDevice in startInput"
+
+This reverts commit fdb2a9aa196c190696e024ea3337b1bd217b6dbd.
+---
+ .../managerdefault/AudioPolicyManager.cpp     | 21 +++++--------------
+ 1 file changed, 5 insertions(+), 16 deletions(-)
+
+diff --git a/services/audiopolicy/managerdefault/AudioPolicyManager.cpp b/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
+index 055bb2c2e7..00ddcc9de1 100644
+--- a/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
++++ b/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
+@@ -2239,22 +2239,16 @@ status_t AudioPolicyManager::startInput(audio_port_handle_t portId)
+         return status;
+     }
+ 
+-    // increment activity count before calling getNewInputDevice() below as only active sessions
++  // increment activity count before calling getNewInputDevice() below as only active sessions
+     // are considered for device selection
+     inputDesc->setClientActive(client, true);
+ 
+     // indicate active capture to sound trigger service if starting capture from a mic on
+     // primary HW module
+     sp<DeviceDescriptor> device = getNewInputDevice(inputDesc);
+-    if (device != nullptr) {
+-        status = setInputDevice(input, device, true /* force */);
+-    } else {
+-        ALOGW("%s no new input device can be found for descriptor %d",
+-                __FUNCTION__, inputDesc->getId());
+-        status = BAD_VALUE;
+-    }
++    setInputDevice(input, device, true /* force */);
+ 
+-    if (status == NO_ERROR && inputDesc->activeCount() == 1) {
++    if (inputDesc->activeCount()  == 1) {
+         sp<AudioPolicyMix> policyMix = inputDesc->mPolicyMix.promote();
+         // if input maps to a dynamic policy with an activity listener, notify of state change
+         if ((policyMix != NULL)
+@@ -2285,16 +2279,11 @@ status_t AudioPolicyManager::startInput(audio_port_handle_t portId)
+                         address, "remote-submix", AUDIO_FORMAT_DEFAULT);
+             }
+         }
+-    } else if (status != NO_ERROR) {
+-        // Restore client activity state.
+-        inputDesc->setClientActive(client, false);
+-        inputDesc->stop();
+     }
+ 
+-    ALOGV("%s input %d source = %d status = %d exit",
+-            __FUNCTION__, input, client->source(), status);
++    ALOGV("%s input %d source = %d exit", __FUNCTION__, input, client->source());
+ 
+-    return status;
++    return NO_ERROR;
+ }
+ 
+ status_t AudioPolicyManager::stopInput(audio_port_handle_t portId)
+-- 
+2.17.1
+

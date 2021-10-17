@@ -1,0 +1,82 @@
+From feceae1de9bef7a59a45b79dbf7ded21f0299589 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Mon, 14 Jan 2019 00:06:59 +0800
+Subject: [PATCH 4/5] xf86drm: add drmOpenByFB
+
+The new function looks up the DRM device with specified type
+associated with the specified framebuffer and opens it.
+
+Signed-off-by: Chih-Wei Huang <cwhuang@linux.org.tw>
+---
+ xf86drm.c | 42 ++++++++++++++++++++++++++++++++++++++++++
+ xf86drm.h |  1 +
+ 2 files changed, 43 insertions(+)
+
+diff --git a/xf86drm.c b/xf86drm.c
+index d240476b..05220d4a 100644
+--- a/xf86drm.c
++++ b/xf86drm.c
+@@ -789,6 +789,48 @@ int drmOpenRender(int minor)
+     return drmOpenMinor(minor, 0, DRM_NODE_RENDER);
+ }
+ 
++/**
++ * Open the DRM device with specified type of specified framebuffer.
++ *
++ * Looks up the associated DRM device with specified type of the
++ * specified framebuffer and opens it.
++ *
++ * \param fb the index of framebuffer.
++ * \param type the device node type to open, PRIMARY, CONTROL or RENDER
++ *
++ * \return a file descriptor on success, or a negative value on error.
++ *
++ */
++drm_public int drmOpenByFB(int fb, int type)
++{
++#ifdef __linux__
++    DIR *sysdir;
++    struct dirent *ent;
++    char buf[64];
++    const char *name = drmGetMinorName(type);
++    int fd = -1, len = strlen(name);
++
++    snprintf(buf, sizeof(buf), "/sys/class/graphics/fb%d/device/drm", fb);
++    sysdir = opendir(buf);
++    if (!sysdir)
++        return -errno;
++
++    while ((ent = readdir(sysdir))) {
++        if (!strncmp(ent->d_name, name, len)) {
++            snprintf(buf, sizeof(buf), "%s/%s", DRM_DIR_NAME, ent->d_name);
++            fd = open(buf, O_RDWR | O_CLOEXEC, 0);
++            break;
++        }
++    }
++
++    closedir(sysdir);
++    return fd;
++#else
++#warning "Missing implementation of drmOpenByFB"
++    return -EINVAL;
++#endif
++}
++
+ /**
+  * Free the version information returned by drmGetVersion().
+  *
+diff --git a/xf86drm.h b/xf86drm.h
+index 7773d71a..031077fa 100644
+--- a/xf86drm.h
++++ b/xf86drm.h
+@@ -570,6 +570,7 @@ extern int           drmOpenWithType(const char *name, const char *busid,
+ 
+ extern int           drmOpenControl(int minor);
+ extern int           drmOpenRender(int minor);
++extern int           drmOpenByFB(int fb, int type);
+ extern int           drmClose(int fd);
+ extern drmVersionPtr drmGetVersion(int fd);
+ extern drmVersionPtr drmGetLibVersion(int fd);
+-- 
+2.17.1
+

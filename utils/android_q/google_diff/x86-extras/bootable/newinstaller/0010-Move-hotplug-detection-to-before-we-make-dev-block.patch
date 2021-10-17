@@ -1,0 +1,32 @@
+From 33e5c6eebcd93cc5a560a798ccef090a9b04741a Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Mon, 4 Mar 2019 21:01:23 -0500
+Subject: [PATCH 10/11] Move hotplug detection to before we make /dev/block
+
+---
+ initrd/init | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/initrd/init b/initrd/init
+index a4733a2e..a79a5f6e 100755
+--- a/initrd/init
++++ b/initrd/init
+@@ -46,10 +46,13 @@ if test x"$HAS_CTTY" != x"Yes"; then
+ 	if test -z "$DEBUG" || test -n "$INSTALL"; then
+ 		echo 0 0 0 0 > /proc/sys/kernel/printk
+ 	fi
+-	# initialise /dev (first time)
+-	mkdir -p /dev/block
++	# populate /dev
+ 	echo /sbin/mdev > /proc/sys/kernel/hotplug
+ 	mdev -s
++	sleep 3
++	# initialise /dev (first time)
++	mkdir -p /dev/block
++	echo 0 > /proc/sys/kernel/printk
+ 	# re-run this script with a controlling tty
+ 	exec env HAS_CTTY=Yes setsid cttyhack /bin/sh "$0" "$@"
+ fi
+-- 
+2.17.1
+

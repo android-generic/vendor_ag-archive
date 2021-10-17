@@ -1,0 +1,31 @@
+From 9cd908c84c2d6a46b9a0987e7b4ffb1ba3ab3fbf Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 30 Aug 2019 12:47:50 +0800
+Subject: [PATCH 16/16] libEGL: remove incorrect error message
+
+The logic in commit 0c8552ec5 is reversed.
+
+Fixes: 0c8552ec5 ("libEGL: select pixel format by EGL_NATIVE_VISUAL_ID")
+Reported-by: Michael Goffioul <michael.goffioul@gmail.com>
+---
+ opengl/libs/EGL/egl_platform_entries.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/opengl/libs/EGL/egl_platform_entries.cpp b/opengl/libs/EGL/egl_platform_entries.cpp
+index 6efda00a3..c7edc91e0 100644
+--- a/opengl/libs/EGL/egl_platform_entries.cpp
++++ b/opengl/libs/EGL/egl_platform_entries.cpp
+@@ -670,9 +670,9 @@ void getNativePixelFormat(EGLDisplay dpy, egl_connection_t* cnx, EGLConfig confi
+             if (colorDepth > 24) {
+                 *format = HAL_PIXEL_FORMAT_RGBA_1010102;
+             } else if (cnx->egl.eglGetConfigAttrib(dpy, config, EGL_NATIVE_VISUAL_ID, &colorDepth)) {
+-                ALOGE("eglGetConfigAttrib(EGL_NATIVE_VISUAL_ID) failed: %#x", eglGetError());
+                 *format = android_pixel_format(colorDepth);
+             } else {
++                ALOGE("eglGetConfigAttrib(EGL_NATIVE_VISUAL_ID) failed: %#x", eglGetError());
+                 *format = HAL_PIXEL_FORMAT_RGBA_8888;
+             }
+         } else {
+-- 
+2.21.0
+

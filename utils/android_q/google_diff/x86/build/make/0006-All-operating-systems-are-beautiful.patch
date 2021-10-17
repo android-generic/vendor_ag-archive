@@ -1,0 +1,39 @@
+From 21d4f2583e288e0f0b1e2f9e532337090c465d80 Mon Sep 17 00:00:00 2001
+From: "Christopher N. Hesse" <raymanfx@gmail.com>
+Date: Wed, 16 Sep 2015 14:29:36 +0200
+Subject: [PATCH 06/17] All operating systems are beautiful
+
+Thou shalt not discriminate OS X.
+Allow building otapackage on darwin.
+
+Change-Id: I9c993d44ca74cb15631ea25d6105a3398ea57e95
+---
+ core/Makefile | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 80f0e79727..8d7e6d8014 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -3493,10 +3493,6 @@ endif
+ # -----------------------------------------------------------------
+ # host tools needed to build dist and OTA packages
+ 
+-ifeq ($(BUILD_OS),darwin)
+-  build_ota_package := false
+-  build_otatools_package := false
+-else
+   # set build_ota_package, and allow opt-out below
+   build_ota_package := true
+   ifeq ($(TARGET_SKIP_OTA_PACKAGE),true)
+@@ -3526,7 +3522,6 @@ else
+   ifeq ($(TARGET_SKIP_OTATOOLS_PACKAGE),true)
+     build_otatools_package := false
+   endif
+-endif
+ 
+ ifeq ($(build_otatools_package),true)
+ OTATOOLS :=  $(HOST_OUT_EXECUTABLES)/minigzip \
+-- 
+2.17.1
+

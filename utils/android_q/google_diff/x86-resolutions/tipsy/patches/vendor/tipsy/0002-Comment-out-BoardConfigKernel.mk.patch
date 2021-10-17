@@ -1,0 +1,25 @@
+From 65d8b3cd59cc244b869682d67526d7a7a7e49591 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 3 Jun 2020 21:53:34 -0400
+Subject: [PATCH 2/2] Comment out BoardConfigKernel.mk
+
+---
+ config/BoardConfigTipsy.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/config/BoardConfigTipsy.mk b/config/BoardConfigTipsy.mk
+index 3a82476..b887aaf 100644
+--- a/config/BoardConfigTipsy.mk
++++ b/config/BoardConfigTipsy.mk
+@@ -4,7 +4,7 @@ ifeq (true,false)
+     BOARD_HAL_STATIC_LIBRARIES := libhealthd.lineage
+ endif
+ 
+-include vendor/tipsy/config/BoardConfigKernel.mk
++# include vendor/tipsy/config/BoardConfigKernel.mk
+ 
+ ifeq ($(BOARD_USES_QCOM_HARDWARE),true)
+ include vendor/tipsy/config/BoardConfigQcom.mk
+-- 
+2.17.1
+

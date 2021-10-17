@@ -1,0 +1,53 @@
+From 9449300f02671ae9b9d2c5db5f97f3811b546b3b Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Tue, 15 Sep 2020 06:53:56 -0400
+Subject: [PATCH 03/17] Use manifest fragments for USB, WiFi and supplicant HAL
+
+These HAL are now defined in their own manifest fragment, and must be
+removed from the main manifest to avoid conflict (as they use the same
+major version).
+---
+ manifest.xml | 27 ---------------------------
+ 1 file changed, 27 deletions(-)
+
+diff --git a/manifest.xml b/manifest.xml
+index eab267b..8dd2bb2 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -157,33 +157,6 @@
+         </interface>
+         <fqname>@2.0::ISoundTriggerHw/default</fqname>
+     </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.usb</name>
+-        <transport>hwbinder</transport>
+-        <version>1.0</version>
+-        <interface>
+-            <name>IUsb</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.wifi</name>
+-        <transport>hwbinder</transport>
+-        <version>1.3</version>
+-        <interface>
+-            <name>IWifi</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+-    <hal format="hidl">
+-        <name>android.hardware.wifi.supplicant</name>
+-        <transport>hwbinder</transport>
+-        <version>1.1</version>
+-        <interface>
+-            <name>ISupplicant</name>
+-            <instance>default</instance>
+-        </interface>
+-    </hal>
+     <hal format="hidl">
+         <name>android.hardware.drm</name>
+         <transport>hwbinder</transport>
+-- 
+2.30.2
+

@@ -1,0 +1,38 @@
+From 3416235d0fa2d415abd4217eda597419dec8f483 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Fri, 13 Aug 2021 16:16:24 +0200
+Subject: [PATCH] AndroidRuntime: add apex_available to
+ libandroid_runtime_threads_headers
+
+Fixes the following building error:
+
+error: frameworks/av/apex/Android.bp:161:1: module "com.android.media.swcodec" variant "android_common_com.android.media.swcodec_image": "libbi
+nder" requires "libandroid_runtime_threads_headers" that doesn't list the APEX under 'apex_available'.
+...
+Consider adding "com.android.media.swcodec" to 'apex_available' property of "libandroid_runtime_threads_headers"
+
+Inspired by similar commit "AndroidRuntime: Expose GetJavaVM"
+https://android.googlesource.com/platform/frameworks/base/+/c8a33f1688323596cf29481d22655e2e9679c5d0%5E%21/
+
+Change-Id: Ia541ed30f134ed58b40306b8003bd72300182b2a
+---
+ core/jni/Android.bp | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/core/jni/Android.bp b/core/jni/Android.bp
+index 75d8354336ce..9eae743c026b 100644
+--- a/core/jni/Android.bp
++++ b/core/jni/Android.bp
+@@ -355,4 +355,9 @@ cc_library_headers {
+         "//frameworks/native/libs/binder",
+     ],
+     export_include_dirs: ["include_threads"],
++    apex_available: [
++        "//apex_available:platform",
++        "com.android.media",
++        "com.android.media.swcodec",
++    ],
+ }
+-- 
+2.25.1
+

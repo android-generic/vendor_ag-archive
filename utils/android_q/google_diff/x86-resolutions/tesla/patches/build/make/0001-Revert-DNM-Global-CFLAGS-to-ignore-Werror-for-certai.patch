@@ -1,0 +1,36 @@
+From 21e0874eaa456ff2450f17061edf756ba53e72e7 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Tue, 18 Aug 2020 22:33:19 -0400
+Subject: [PATCH] Revert "DNM: Global CFLAGS to ignore -Werror for certain
+ warnings"
+
+This reverts commit a1f5e794f01f7865007dab928943c76d89408e89.
+---
+ core/binary.mk | 11 -----------
+ 1 file changed, 11 deletions(-)
+
+diff --git a/core/binary.mk b/core/binary.mk
+index 03a9c0843..400eb0961 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -1514,17 +1514,6 @@ ifneq (HEADER_LIBRARIES,$(LOCAL_MODULE_CLASS))
+   endif
+ endif
+ 
+-
+-# Temporary Fix to ignore errors till repos have fixes for these
+-my_cflags += -Wall -Werror -Wno-unused-variable -Wno-unused-value -Wno-unused-function \
+-             -Wno-unused-label -Wno-user-defined-warnings -Wno-unused-parameter -Wno-char-subscripts \
+-             -Wno-string-plus-int -Wno-sometimes-uninitialized -Wno-format-extra-args -Wno-format \
+-             -Wno-parentheses-equality -Wno-macro-redefined -Wno-logical-op-parentheses \
+-             -Wno-parentheses -Wno-unused-private-field -Wno-missing-braces -Wno-implicit-function-declaration \
+-             -Wno-pointer-arith -Wno-gnu-designator -Wno-constant-logical-operand -Wno-incompatible-pointer-types \
+-             -Wno-address-of-packed-member -Wno-enum-conversion -Wno-self-assign -Wno-reorder -Wno-implicit-fallthrough \
+-             -Wno-switch -Wno-visibility -Wno-enum-compare-switch
+-
+ # Disable clang-tidy if it is not found.
+ ifeq ($(PATH_TO_CLANG_TIDY),)
+   my_tidy_enabled := false
+-- 
+2.17.1
+

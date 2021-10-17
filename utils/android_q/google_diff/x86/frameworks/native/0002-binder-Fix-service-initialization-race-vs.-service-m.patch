@@ -1,0 +1,103 @@
+From b8f19b9f59f420cb842401e49d5db86f85003f3c Mon Sep 17 00:00:00 2001
+From: Andy Ross <andy.ross@windriver.com>
+Date: Tue, 19 Feb 2013 14:39:34 -0800
+Subject: [PATCH 02/16] binder: Fix service initialization race vs. service
+ manager
+
+The framework relies on the global IServiceManager running before a
+BinderService object is instantiated.  But there was no detection of
+the error condition when it was not (specifically: mediaserver can be
+initialized before system_server), and in fact the default error
+behavior (kill the proxy object) ensured that the process would never
+be able to add services again.  Retry the addService() code, and allow
+transient binder failures for the special case of the service manager
+proxy.
+
+Issue: AXIA-1706
+Change-Id: Icac10bb0f47a2fe33ac9605a13633b83afa3ebff
+Signed-off-by: Andy Ross <andy.ross@windriver.com>
+---
+ libs/binder/BpBinder.cpp        | 12 +++++++++---
+ libs/binder/IServiceManager.cpp | 31 +++++++++++++++++++++++--------
+ 2 files changed, 32 insertions(+), 11 deletions(-)
+
+diff --git a/libs/binder/BpBinder.cpp b/libs/binder/BpBinder.cpp
+index ec170f7a6..bd882a0c1 100644
+--- a/libs/binder/BpBinder.cpp
++++ b/libs/binder/BpBinder.cpp
+@@ -210,14 +210,20 @@ status_t BpBinder::dump(int fd, const Vector<String16>& args)
+ status_t BpBinder::transact(
+     uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
+ {
+-    // Once a binder has died, it will never come back to life.
++    // Once a binder has died, it will never come back to life.  But
++    // note that the special case of the global service manager cannot
++    // die; there is no guarantee in the framework that it will be
++    // alive before a binder service object is instantiated, so we
++    // ignore errors for that special object so that
++    // IServiceManager::addService() calls can be retried.
+     if (mAlive) {
+         status_t status = IPCThreadState::self()->transact(
+             mHandle, code, data, reply, flags);
+-        if (status == DEAD_OBJECT) mAlive = 0;
++        if (status == DEAD_OBJECT)
++            if (this != ProcessState::self()->getContextObject(nullptr).get())
++                mAlive = 0;
+         return status;
+     }
+-
+     return DEAD_OBJECT;
+ }
+ 
+diff --git a/libs/binder/IServiceManager.cpp b/libs/binder/IServiceManager.cpp
+index 4ba6c2a92..25d6c28a8 100644
+--- a/libs/binder/IServiceManager.cpp
++++ b/libs/binder/IServiceManager.cpp
+@@ -32,6 +32,8 @@
+ 
+ #include <unistd.h>
+ 
++#define ADD_SERVICE_RETRY_SECS 10
++
+ namespace android {
+ 
+ sp<IServiceManager> defaultServiceManager()
+@@ -182,14 +184,27 @@ public:
+ 
+     virtual status_t addService(const String16& name, const sp<IBinder>& service,
+                                 bool allowIsolated, int dumpsysPriority) {
+-        Parcel data, reply;
+-        data.writeInterfaceToken(IServiceManager::getInterfaceDescriptor());
+-        data.writeString16(name);
+-        data.writeStrongBinder(service);
+-        data.writeInt32(allowIsolated ? 1 : 0);
+-        data.writeInt32(dumpsysPriority);
+-        status_t err = remote()->transact(ADD_SERVICE_TRANSACTION, data, &reply);
+-        return err == NO_ERROR ? reply.readExceptionCode() : err;
++        status_t err;
++        for (int i=0; i<ADD_SERVICE_RETRY_SECS; i++) {
++            Parcel data, reply;
++            data.writeInterfaceToken(IServiceManager::getInterfaceDescriptor());
++            data.writeString16(name);
++            data.writeStrongBinder(service);
++            data.writeInt32(allowIsolated ? 1 : 0);
++            data.writeInt32(dumpsysPriority);
++            err = remote()->transact(ADD_SERVICE_TRANSACTION, data, &reply);
++            if (err == NO_ERROR)
++                return reply.readExceptionCode();
++            if (i != ADD_SERVICE_RETRY_SECS) {
++                ALOGI("addService() %s failed (err %d - no service manager yet?).  Retrying...",
++                      String8(name).string(), err);
++                sleep(1);
++            } else {
++                ALOGE("addService() %s failed (err %d).  Giving up.",
++                      String8(name).string(), err);
++            }
++        }
++        return err;
+     }
+ 
+     virtual Vector<String16> listServices(int dumpsysPriority) {
+-- 
+2.21.0
+

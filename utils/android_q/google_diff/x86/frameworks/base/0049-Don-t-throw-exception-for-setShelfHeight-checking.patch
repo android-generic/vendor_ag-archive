@@ -1,0 +1,43 @@
+From 861782d4cbe93f7da54d09ec7f2dd4eb47e8c55e Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@outlook.com>
+Date: Sun, 13 Sep 2020 16:45:34 +0800
+Subject: [PATCH 16/17] Don't throw exception for setShelfHeight checking
+
+If we change default overview recents component, the Launcher3QuickStep
+will crash because it doesn't have STATE_BAR permission and is not
+recents app when it tryies to invoke setShelfHeight. We will change
+default recents app, and keep Launcher3QuickStep, so we should disable
+throwing exception, and just do nothing for method invokeing.
+
+Signed-off-by: utzcoz <utzcoz@outlook.com>
+---
+ .../com/android/server/wm/WindowManagerService.java | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/services/core/java/com/android/server/wm/WindowManagerService.java b/services/core/java/com/android/server/wm/WindowManagerService.java
+index 48ed1b8f0335..2c022f7bddaa 100644
+--- a/services/core/java/com/android/server/wm/WindowManagerService.java
++++ b/services/core/java/com/android/server/wm/WindowManagerService.java
+@@ -5683,8 +5683,17 @@ public class WindowManagerService extends IWindowManager.Stub
+ 
+     @Override
+     public void setShelfHeight(boolean visible, int shelfHeight) {
+-        mAtmInternal.enforceCallerIsRecentsOrHasPermission(android.Manifest.permission.STATUS_BAR,
+-                "setShelfHeight()");
++        // region @boringdroid
++        try {
++            mAtmInternal.enforceCallerIsRecentsOrHasPermission(android.Manifest.permission.STATUS_BAR,
++                    "setShelfHeight()");
++        } catch (SecurityException e) {
++            Slog.e(TAG, "Need permision android.Manifest.permission.STATUS_BAR for setShelfHeight", e);
++            return;
++        }
++        // mAtmInternal.enforceCallerIsRecentsOrHasPermission(android.Manifest.permission.STATUS_BAR,
++        //         "setShelfHeight()");
++        // endregion
+         synchronized (mGlobalLock) {
+             getDefaultDisplayContentLocked().getPinnedStackController().setAdjustedForShelf(visible,
+                     shelfHeight);
+-- 
+2.17.1
+

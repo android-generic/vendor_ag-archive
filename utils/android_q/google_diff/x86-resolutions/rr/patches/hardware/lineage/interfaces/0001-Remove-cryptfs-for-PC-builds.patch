@@ -1,0 +1,873 @@
+From 744dff31c6ae372c08ad55ddf5d5b9d370653bc2 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 26 Aug 2020 19:27:45 -0400
+Subject: [PATCH] Remove cryptfs for PC builds
+
+---
+ cryptfshw/1.0/Android.bp                      |  31 ---
+ cryptfshw/1.0/CryptfsHw.cpp                   | 120 ------------
+ cryptfshw/1.0/CryptfsHw.h                     |  59 ------
+ cryptfshw/1.0/CryptfsHwUtils.cpp              |  48 -----
+ cryptfshw/1.0/CryptfsHwUtils.h                |  36 ----
+ cryptfshw/1.0/ICryptfsHwController.h          |  41 ----
+ cryptfshw/1.0/Types.h                         |  43 -----
+ cryptfshw/1.0/qsee/Android.bp                 |  51 -----
+ cryptfshw/1.0/qsee/QSEEComController.cpp      | 178 ------------------
+ cryptfshw/1.0/qsee/QSEEComController.h        |  60 ------
+ cryptfshw/1.0/qsee/service.cpp                |  23 ---
+ ...hardware.cryptfshw@1.0-service-qti.qsee.rc |   5 -
+ cryptfshw/1.0/service.impl.h                  |  63 -------
+ 13 files changed, 758 deletions(-)
+ delete mode 100644 cryptfshw/1.0/Android.bp
+ delete mode 100644 cryptfshw/1.0/CryptfsHw.cpp
+ delete mode 100644 cryptfshw/1.0/CryptfsHw.h
+ delete mode 100644 cryptfshw/1.0/CryptfsHwUtils.cpp
+ delete mode 100644 cryptfshw/1.0/CryptfsHwUtils.h
+ delete mode 100644 cryptfshw/1.0/ICryptfsHwController.h
+ delete mode 100644 cryptfshw/1.0/Types.h
+ delete mode 100644 cryptfshw/1.0/qsee/Android.bp
+ delete mode 100644 cryptfshw/1.0/qsee/QSEEComController.cpp
+ delete mode 100644 cryptfshw/1.0/qsee/QSEEComController.h
+ delete mode 100644 cryptfshw/1.0/qsee/service.cpp
+ delete mode 100644 cryptfshw/1.0/qsee/vendor.qti.hardware.cryptfshw@1.0-service-qti.qsee.rc
+ delete mode 100644 cryptfshw/1.0/service.impl.h
+
+diff --git a/cryptfshw/1.0/Android.bp b/cryptfshw/1.0/Android.bp
+deleted file mode 100644
+index fe511ff..0000000
+--- a/cryptfshw/1.0/Android.bp
++++ /dev/null
+@@ -1,31 +0,0 @@
+-// Copyright (C) 2019 The LineageOS Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-cc_library_static {
+-    name: "vendor.qti.hardware.cryptfshw@1.0-base",
+-    vendor: true,
+-    defaults: ["hidl_defaults"],
+-    srcs: [
+-        "CryptfsHw.cpp",
+-        "CryptfsHwUtils.cpp",
+-    ],
+-    export_include_dirs: ["."],
+-    header_libs: ["generated_kernel_headers"],
+-    shared_libs: [
+-        "libbase",
+-        "libhidlbase",
+-        "libutils",
+-        "vendor.qti.hardware.cryptfshw@1.0",
+-    ]
+-}
+diff --git a/cryptfshw/1.0/CryptfsHw.cpp b/cryptfshw/1.0/CryptfsHw.cpp
+deleted file mode 100644
+index ded06b2..0000000
+--- a/cryptfshw/1.0/CryptfsHw.cpp
++++ /dev/null
+@@ -1,120 +0,0 @@
+-/*
+- * Copyright (C) 2019 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#define LOG_TAG "vendor.qti.hardware.cryptfshw@1.0-impl-qti"
+-
+-#include "CryptfsHw.h"
+-
+-#include <android-base/logging.h>
+-#include <android-base/properties.h>
+-#include <android-base/unique_fd.h>
+-#include <dlfcn.h>
+-#include <linux/qseecom.h>
+-
+-#include "Types.h"
+-
+-namespace vendor {
+-namespace qti {
+-namespace hardware {
+-namespace cryptfshw {
+-namespace V1_0 {
+-namespace implementation {
+-
+-using ::android::base::GetProperty;
+-using ::android::base::unique_fd;
+-
+-namespace {
+-bool IsHwDiskEncryption(const hidl_string& encryption_mode) {
+-    if (encryption_mode == "aes-xts") {
+-        LOG_TO(SYSTEM, DEBUG) << "HW based disk encryption is enabled";
+-        return true;
+-    }
+-    return false;
+-}
+-};  // anonymous namespace
+-
+-CryptfsHw::CryptfsHw(std::unique_ptr<ICryptfsHwController> controller)
+-    : controller_(std::move(controller)) {
+-    std::string bootdevice = GetProperty("ro.boot.bootdevice", "");
+-
+-    if (bootdevice.find("ufs") != std::string::npos) {
+-        /*
+-         * All UFS based devices has ICE in it. So we dont need
+-         * to check if corresponding device exists or not
+-         */
+-        usage_ = CRYPTFS_HW_KM_USAGE_UFS_ICE_DISK_ENCRYPTION;
+-    } else if (bootdevice.find("sdhc") != std::string::npos && access("/dev/icesdcc", F_OK) != -1) {
+-        usage_ = CRYPTFS_HW_KM_USAGE_SDCC_ICE_DISK_ENCRYPTION;
+-    } else {
+-        usage_ = CRYPTFS_HW_KM_USAGE_DISK_ENCRYPTION;
+-    }
+-}
+-
+-// Methods from ::vendor::qti::hardware::cryptfshw::V1_0::ICryptfsHw follow.
+-Return<int32_t> CryptfsHw::setIceParam(uint32_t flag) {
+-#ifdef QSEECOM_IOCTL_SET_ICE_INFO
+-    int32_t ret = -1;
+-    qseecom_ice_data_t ice_data;
+-    unique_fd qseecom_fd(open("/dev/qseecom", O_RDWR));
+-    if (qseecom_fd < 0) return ret;
+-    ice_data.flag = static_cast<int>(flag);
+-    ret = ioctl(qseecom_fd, QSEECOM_IOCTL_SET_ICE_INFO, &ice_data);
+-    return ret;
+-#else
+-    (void)flag;
+-    return -1;
+-#endif
+-}
+-
+-Return<int32_t> CryptfsHw::setKey(const hidl_string& passwd, const hidl_string& enc_mode) {
+-    int err = -1;
+-
+-    if (!IsHwDiskEncryption(enc_mode)) return err;
+-
+-    err = controller_->createKey(usage_, passwd.c_str());
+-    if (err < 0) {
+-        if (ERR_MAX_PASSWORD_ATTEMPTS == err)
+-            LOG_TO(SYSTEM, INFO) << "Maximum wrong password attempts reached, will erase userdata";
+-    }
+-
+-    return err;
+-}
+-
+-Return<int32_t> CryptfsHw::updateKey(const hidl_string& oldpw, const hidl_string& newpw,
+-                                     const hidl_string& enc_mode) {
+-    int err = -1;
+-
+-    if (!IsHwDiskEncryption(enc_mode)) return err;
+-
+-    err = controller_->updateKey(usage_, oldpw.c_str(), newpw.c_str());
+-    if (err < 0) {
+-        if (ERR_MAX_PASSWORD_ATTEMPTS == err)
+-            LOG_TO(SYSTEM, INFO) << "Maximum wrong password attempts reached, will erase userdata";
+-    }
+-
+-    return err;
+-}
+-
+-Return<int32_t> CryptfsHw::clearKey() {
+-    return controller_->wipeKey(usage_);
+-}
+-
+-}  // namespace implementation
+-}  // namespace V1_0
+-}  // namespace cryptfshw
+-}  // namespace hardware
+-}  // namespace qti
+-}  // namespace vendor
+diff --git a/cryptfshw/1.0/CryptfsHw.h b/cryptfshw/1.0/CryptfsHw.h
+deleted file mode 100644
+index 5295a4d..0000000
+--- a/cryptfshw/1.0/CryptfsHw.h
++++ /dev/null
+@@ -1,59 +0,0 @@
+-/*
+- * Copyright (C) 2019 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#pragma once
+-
+-#include <android-base/macros.h>
+-#include <vendor/qti/hardware/cryptfshw/1.0/ICryptfsHw.h>
+-
+-#include <memory>
+-
+-#include "ICryptfsHwController.h"
+-
+-namespace vendor {
+-namespace qti {
+-namespace hardware {
+-namespace cryptfshw {
+-namespace V1_0 {
+-namespace implementation {
+-
+-using ::android::hardware::hidl_string;
+-using ::android::hardware::Return;
+-
+-class CryptfsHw : public ICryptfsHw {
+-  public:
+-    CryptfsHw(std::unique_ptr<ICryptfsHwController> controller);
+-
+-    // Methods from ::vendor::qti::hardware::cryptfshw::V1_0::ICryptfsHw follow.
+-    Return<int32_t> setIceParam(uint32_t flag) override;
+-    Return<int32_t> setKey(const hidl_string& passwd, const hidl_string& enc_mode) override;
+-    Return<int32_t> updateKey(const hidl_string& oldpw, const hidl_string& newpw,
+-                              const hidl_string& enc_mode) override;
+-    Return<int32_t> clearKey() override;
+-
+-  private:
+-    std::unique_ptr<ICryptfsHwController> controller_;
+-    int usage_;
+-
+-    DISALLOW_IMPLICIT_CONSTRUCTORS(CryptfsHw);
+-};
+-
+-}  // namespace implementation
+-}  // namespace V1_0
+-}  // namespace cryptfshw
+-}  // namespace hardware
+-}  // namespace qti
+-}  // namespace vendor
+diff --git a/cryptfshw/1.0/CryptfsHwUtils.cpp b/cryptfshw/1.0/CryptfsHwUtils.cpp
+deleted file mode 100644
+index 8efbe68..0000000
+--- a/cryptfshw/1.0/CryptfsHwUtils.cpp
++++ /dev/null
+@@ -1,48 +0,0 @@
+-/*
+- * Copyright (C) 2019 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#include "CryptfsHwUtils.h"
+-
+-#include <algorithm>
+-#include <cstring>
+-
+-namespace vendor {
+-namespace qti {
+-namespace hardware {
+-namespace cryptfshw {
+-namespace V1_0 {
+-namespace implementation {
+-
+-void* secure_memset(void* v, int c, size_t n) {
+-    auto p = reinterpret_cast<volatile unsigned char*>(v);
+-    while (n--) *p++ = c;
+-    return v;
+-}
+-
+-void GetTmpPasswd(const char* passwd, unsigned char* tmp_passwd, size_t buf_len) {
+-    secure_memset(tmp_passwd, 0, buf_len);
+-    if (passwd) {
+-        size_t passwd_len = strnlen(passwd, buf_len);
+-        memcpy(tmp_passwd, passwd, passwd_len);
+-    }
+-}
+-
+-}  // namespace implementation
+-}  // namespace V1_0
+-}  // namespace cryptfshw
+-}  // namespace hardware
+-}  // namespace qti
+-}  // namespace vendor
+diff --git a/cryptfshw/1.0/CryptfsHwUtils.h b/cryptfshw/1.0/CryptfsHwUtils.h
+deleted file mode 100644
+index 47d97c0..0000000
+--- a/cryptfshw/1.0/CryptfsHwUtils.h
++++ /dev/null
+@@ -1,36 +0,0 @@
+-/*
+- * Copyright (C) 2019 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#pragma once
+-
+-#include <cstddef>
+-
+-namespace vendor {
+-namespace qti {
+-namespace hardware {
+-namespace cryptfshw {
+-namespace V1_0 {
+-namespace implementation {
+-
+-void* secure_memset(void* v, int c, size_t n);
+-void GetTmpPasswd(const char* passwd, unsigned char* tmp_passwd, size_t buf_len);
+-
+-}  // namespace implementation
+-}  // namespace V1_0
+-}  // namespace cryptfshw
+-}  // namespace hardware
+-}  // namespace qti
+-}  // namespace vendor
+diff --git a/cryptfshw/1.0/ICryptfsHwController.h b/cryptfshw/1.0/ICryptfsHwController.h
+deleted file mode 100644
+index 0748140..0000000
+--- a/cryptfshw/1.0/ICryptfsHwController.h
++++ /dev/null
+@@ -1,41 +0,0 @@
+-/*
+- * Copyright (C) 2019 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#pragma once
+-
+-namespace vendor {
+-namespace qti {
+-namespace hardware {
+-namespace cryptfshw {
+-namespace V1_0 {
+-namespace implementation {
+-
+-// interface wrapper
+-class ICryptfsHwController {
+-  public:
+-    virtual ~ICryptfsHwController() = default;
+-
+-    virtual int createKey(int usage, const char* passwd) = 0;
+-    virtual int updateKey(int usage, const char* oldpw, const char* newpw) = 0;
+-    virtual int wipeKey(int usage) = 0;
+-};
+-
+-}  // namespace implementation
+-}  // namespace V1_0
+-}  // namespace cryptfshw
+-}  // namespace hardware
+-}  // namespace qti
+-}  // namespace vendor
+diff --git a/cryptfshw/1.0/Types.h b/cryptfshw/1.0/Types.h
+deleted file mode 100644
+index 604afd4..0000000
+--- a/cryptfshw/1.0/Types.h
++++ /dev/null
+@@ -1,43 +0,0 @@
+-/*
+- * Copyright (C) 2019 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#pragma once
+-
+-/*
+- * When device comes up or when user tries to change the password, user can
+- * try wrong password upto a certain number of times. If user enters wrong
+- * password further, HW would wipe all disk encryption related crypto data
+- * and would return an error ERR_MAX_PASSWORD_ATTEMPTS to VOLD. VOLD would
+- * wipe userdata partition once this error is received.
+- */
+-constexpr auto ERR_MAX_PASSWORD_ATTEMPTS = -10;
+-constexpr auto MAX_PASSWORD_LEN = 32;
+-constexpr auto QTI_ICE_STORAGE_UFS = 1;
+-constexpr auto QTI_ICE_STORAGE_SDCC = 2;
+-
+-constexpr auto CRYPTFS_HW_UP_CHECK_COUNT = 10;
+-constexpr auto CRYPTFS_HW_CREATE_KEY_FAILED = -7;
+-constexpr auto CRYPTFS_HW_WIPE_KEY_FAILED = -8;
+-constexpr auto CRYPTFS_HW_UPDATE_KEY_FAILED = -9;
+-constexpr auto CRYPTFS_HW_KMS_MAX_FAILURE = -10;
+-
+-enum cryptfs_hw_key_management_usage_type {
+-    CRYPTFS_HW_KM_USAGE_DISK_ENCRYPTION = 0x01,
+-    CRYPTFS_HW_KM_USAGE_FILE_ENCRYPTION = 0x02,
+-    CRYPTFS_HW_KM_USAGE_UFS_ICE_DISK_ENCRYPTION = 0x03,
+-    CRYPTFS_HW_KM_USAGE_SDCC_ICE_DISK_ENCRYPTION = 0x04,
+-    CRYPTFS_HW_KM_USAGE_MAX
+-};
+diff --git a/cryptfshw/1.0/qsee/Android.bp b/cryptfshw/1.0/qsee/Android.bp
+deleted file mode 100644
+index b06e286..0000000
+--- a/cryptfshw/1.0/qsee/Android.bp
++++ /dev/null
+@@ -1,51 +0,0 @@
+-// Copyright (C) 2019 The LineageOS Project
+-//
+-// Licensed under the Apache License, Version 2.0 (the "License");
+-// you may not use this file except in compliance with the License.
+-// You may obtain a copy of the License at
+-//
+-//      http://www.apache.org/licenses/LICENSE-2.0
+-//
+-// Unless required by applicable law or agreed to in writing, software
+-// distributed under the License is distributed on an "AS IS" BASIS,
+-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-// See the License for the specific language governing permissions and
+-// limitations under the License.
+-
+-cc_binary {
+-    name: "vendor.qti.hardware.cryptfshw@1.0-service-qti.qsee",
+-    defaults: ["hidl_defaults"],
+-    relative_install_path: "hw",
+-    vendor: true,
+-    init_rc: ["vendor.qti.hardware.cryptfshw@1.0-service-qti.qsee.rc"],
+-    owner: "qti",
+-    srcs: [
+-        "QSEEComController.cpp",
+-        "service.cpp",
+-    ],
+-    arch: {
+-        arm: {
+-            shared_libs: [
+-                "libhwbinder",
+-            ],
+-            cflags: ["-DARCH_ARM_32"],
+-        },
+-    },
+-    product_variables: {
+-        lineage: {
+-            should_wait_for_qsee: {
+-                cflags: ["-DWAIT_FOR_QSEE"],
+-            },
+-        },
+-    },
+-    header_libs: ["generated_kernel_headers"],
+-    shared_libs: [
+-        "libbase",
+-        "libdl",
+-        "libhidlbase",
+-        "libhidltransport",
+-        "libutils",
+-        "vendor.qti.hardware.cryptfshw@1.0",
+-    ],
+-    static_libs: ["vendor.qti.hardware.cryptfshw@1.0-base"],
+-}
+diff --git a/cryptfshw/1.0/qsee/QSEEComController.cpp b/cryptfshw/1.0/qsee/QSEEComController.cpp
+deleted file mode 100644
+index 9cc5b2b..0000000
+--- a/cryptfshw/1.0/qsee/QSEEComController.cpp
++++ /dev/null
+@@ -1,178 +0,0 @@
+-/*
+- * Copyright (C) 2019 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#define LOG_TAG "vendor.qti.hardware.cryptfshw@1.0-impl-qti.qsee"
+-
+-#include "QSEEComController.h"
+-
+-#include <CryptfsHwUtils.h>
+-#include <Types.h>
+-#include <android-base/logging.h>
+-#include <android-base/properties.h>
+-#include <dlfcn.h>
+-
+-#include <thread>
+-
+-namespace {
+-constexpr char kFilename[] = "libQSEEComAPI.so";
+-
+-#ifdef WAIT_FOR_QSEE
+-bool IsQseecomUp() {
+-    using namespace std::chrono_literals;
+-    for (size_t i = 0; i < CRYPTFS_HW_UP_CHECK_COUNT; i++) {
+-        if (::android::base::GetBoolProperty("sys.keymaster.loaded", false)) {
+-            return true;
+-        }
+-        std::this_thread::sleep_for(100ms);
+-    }
+-
+-    LOG(ERROR) << "Timed out waiting for QSEECom";
+-    return false;
+-}
+-#endif
+-}  // anonymous namespace
+-
+-namespace vendor {
+-namespace qti {
+-namespace hardware {
+-namespace cryptfshw {
+-namespace V1_0 {
+-namespace implementation {
+-namespace qsee {
+-
+-Controller::Controller() {
+-    std::shared_ptr<void> handle(dlopen(kFilename, RTLD_LAZY | RTLD_LOCAL), [this](void* p) {
+-        mFn_create_key = nullptr;
+-        mFn_update_key_user_info = nullptr;
+-        mFn_wipe_key = nullptr;
+-
+-        if (p != nullptr) {
+-            int err = dlclose(p);
+-            p = nullptr;
+-            if (err != 0) {
+-                LOG(ERROR) << "FAILED TO CLOSE LIBRARY " << kFilename;
+-            }
+-        }
+-    });
+-    if (handle == nullptr) {
+-        LOG(ERROR) << "FAILED TO LOAD LIBRARY " << kFilename << ": " << dlerror();
+-        return;
+-    }
+-
+-#ifdef WAIT_FOR_QSEE
+-    if (!IsQseecomUp()) {
+-        LOG_TO(SYSTEM, ERROR)
+-                << "Timed out waiting for QSEECom listeners. Aborting FDE key operation";
+-        return;
+-    }
+-#endif
+-
+-    handle_ = handle;
+-    mFn_create_key = loadFunction<int (*)(int, void*)>("QSEECom_create_key");
+-    mFn_update_key_user_info =
+-            loadFunction<int (*)(int, void*, void*)>("QSEECom_update_key_user_info");
+-    mFn_wipe_key = loadFunction<int (*)(int)>("QSEECom_wipe_key");
+-}
+-
+-template <typename Function>
+-Function Controller::loadFunction(const char* name) {
+-    void* fn = dlsym(handle_.get(), name);
+-    if (fn == nullptr) {
+-        LOG(ERROR) << "loadFunction -- failed to load function " << name;
+-    }
+-    return reinterpret_cast<Function>(fn);
+-}
+-
+-int Controller::createKey(int usage, const char* passwd) {
+-    int32_t ret;
+-    unsigned char hash32[MAX_PASSWORD_LEN];
+-
+-    if (mFn_create_key == nullptr) return CRYPTFS_HW_UPDATE_KEY_FAILED;
+-
+-    GetTmpPasswd(passwd, hash32, MAX_PASSWORD_LEN);
+-
+-    ret = mFn_create_key(usage, hash32);
+-    if (ret) {
+-        LOG_TO(SYSTEM, ERROR) << "Error::Qseecom call to create encryption key for usage " << usage
+-                              << " failed with ret = " << ret << ", errno = " << errno;
+-        if (errno == ERANGE) {
+-            ret = CRYPTFS_HW_KMS_MAX_FAILURE;
+-        } else {
+-            ret = CRYPTFS_HW_CREATE_KEY_FAILED;
+-        }
+-    } else {
+-        LOG_TO(SYSTEM, ERROR) << "SUCESS::Qseecom call to create encryption key for usage " << usage
+-                              << " success with ret = " << ret;
+-    }
+-
+-    secure_memset(hash32, 0, MAX_PASSWORD_LEN);
+-
+-    return ret;
+-}
+-
+-int Controller::updateKey(int usage, const char* oldpw, const char* newpw) {
+-    int32_t ret;
+-    unsigned char current_hash32[MAX_PASSWORD_LEN], new_hash32[MAX_PASSWORD_LEN];
+-
+-    if (mFn_update_key_user_info == nullptr) return CRYPTFS_HW_UPDATE_KEY_FAILED;
+-
+-    GetTmpPasswd(oldpw, current_hash32, MAX_PASSWORD_LEN);
+-    GetTmpPasswd(newpw, new_hash32, MAX_PASSWORD_LEN);
+-
+-    ret = mFn_update_key_user_info(usage, current_hash32, new_hash32);
+-    if (ret) {
+-        LOG_TO(SYSTEM, ERROR) << "Error::Qseecom call to update the encryption key for usage "
+-                              << usage << " failed with ret = " << ret << ", errno = " << errno;
+-        if (errno == ERANGE) {
+-            ret = CRYPTFS_HW_KMS_MAX_FAILURE;
+-        } else {
+-            ret = CRYPTFS_HW_UPDATE_KEY_FAILED;
+-        }
+-    } else {
+-        LOG_TO(SYSTEM, ERROR) << "SUCCESS::Qseecom call to update the encryption key for usage "
+-                              << usage << " success with ret = " << ret;
+-    }
+-
+-    secure_memset(current_hash32, 0, MAX_PASSWORD_LEN);
+-    secure_memset(new_hash32, 0, MAX_PASSWORD_LEN);
+-
+-    return ret;
+-}
+-
+-int Controller::wipeKey(int usage) {
+-    int32_t ret;
+-
+-    if (mFn_wipe_key == nullptr) return CRYPTFS_HW_UPDATE_KEY_FAILED;
+-
+-    ret = mFn_wipe_key(usage);
+-    if (ret) {
+-        LOG_TO(SYSTEM, ERROR) << "Error::Qseecom call to wipe the encryption key for usage "
+-                              << usage << " failed with ret = " << ret << ", errno = " << errno;
+-        ret = CRYPTFS_HW_WIPE_KEY_FAILED;
+-    } else {
+-        LOG_TO(SYSTEM, ERROR) << "SUCCESS::Qseecom call to wipe the encryption key for usage "
+-                              << usage << " success with ret = " << ret;
+-    }
+-    return ret;
+-}
+-
+-}  // namespace qsee
+-}  // namespace implementation
+-}  // namespace V1_0
+-}  // namespace cryptfshw
+-}  // namespace hardware
+-}  // namespace qti
+-}  // namespace vendor
+diff --git a/cryptfshw/1.0/qsee/QSEEComController.h b/cryptfshw/1.0/qsee/QSEEComController.h
+deleted file mode 100644
+index 6593b2c..0000000
+--- a/cryptfshw/1.0/qsee/QSEEComController.h
++++ /dev/null
+@@ -1,60 +0,0 @@
+-/*
+- * Copyright (C) 2019 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#pragma once
+-
+-#include <ICryptfsHwController.h>
+-#include <android-base/macros.h>
+-
+-#include <memory>
+-
+-namespace vendor {
+-namespace qti {
+-namespace hardware {
+-namespace cryptfshw {
+-namespace V1_0 {
+-namespace implementation {
+-namespace qsee {
+-
+-// interface wrapper
+-class Controller : public ICryptfsHwController {
+-  public:
+-    Controller();
+-    int createKey(int usage, const char* passwd) override;
+-    int updateKey(int usage, const char* oldpw, const char* newpw) override;
+-    int wipeKey(int usage) override;
+-
+-  private:
+-    template <typename Function>
+-    Function loadFunction(const char* name);
+-    std::shared_ptr<void> handle_;
+-
+-    int (*mFn_create_key)(int, void*);
+-    int (*mFn_update_key_user_info)(int, void*, void*);
+-    int (*mFn_wipe_key)(int);
+-
+-    DISALLOW_COPY_AND_ASSIGN(Controller);
+-    Controller(Controller&&) = delete;
+-    Controller& operator=(Controller&&) = delete;
+-};
+-
+-}  // namespace qsee
+-}  // namespace implementation
+-}  // namespace V1_0
+-}  // namespace cryptfshw
+-}  // namespace hardware
+-}  // namespace qti
+-}  // namespace vendor
+diff --git a/cryptfshw/1.0/qsee/service.cpp b/cryptfshw/1.0/qsee/service.cpp
+deleted file mode 100644
+index 5c9100e..0000000
+--- a/cryptfshw/1.0/qsee/service.cpp
++++ /dev/null
+@@ -1,23 +0,0 @@
+-/*
+- * Copyright (C) 2019 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#define LOG_TAG "vendor.qti.hardware.cryptfshw@1.0-service-qti.qsee"
+-// #define LOG_NDEBUG 0
+-
+-#include "QSEEComController.h"
+-
+-#define CRYPTFS_HW_BACKEND qsee
+-#include <service.impl.h>
+diff --git a/cryptfshw/1.0/qsee/vendor.qti.hardware.cryptfshw@1.0-service-qti.qsee.rc b/cryptfshw/1.0/qsee/vendor.qti.hardware.cryptfshw@1.0-service-qti.qsee.rc
+deleted file mode 100644
+index 8e17d46..0000000
+--- a/cryptfshw/1.0/qsee/vendor.qti.hardware.cryptfshw@1.0-service-qti.qsee.rc
++++ /dev/null
+@@ -1,5 +0,0 @@
+-service cryptfshw-1-0 /vendor/bin/hw/vendor.qti.hardware.cryptfshw@1.0-service-qti.qsee
+-    class early_hal
+-    user system
+-    group system
+-    writepid /dev/cpuset/system-background/tasks
+diff --git a/cryptfshw/1.0/service.impl.h b/cryptfshw/1.0/service.impl.h
+deleted file mode 100644
+index 3a10d07..0000000
+--- a/cryptfshw/1.0/service.impl.h
++++ /dev/null
+@@ -1,63 +0,0 @@
+-/*
+- * Copyright (C) 2019 The LineageOS Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-#ifndef CRYPTFS_HW_BACKEND
+-#error "CRYPTFS_HW_BACKEND must be set before including this file."
+-#endif
+-
+-#include <android-base/logging.h>
+-#include <hidl/HidlTransportSupport.h>
+-
+-#ifdef ARCH_ARM_32
+-#include <hwbinder/ProcessState.h>
+-#endif
+-
+-#include <CryptfsHw.h>
+-
+-using ::android::OK;
+-using ::android::status_t;
+-using ::android::hardware::configureRpcThreadpool;
+-using ::android::hardware::joinRpcThreadpool;
+-
+-using ::vendor::qti::hardware::cryptfshw::V1_0::implementation::CryptfsHw;
+-using ::vendor::qti::hardware::cryptfshw::V1_0::implementation::ICryptfsHwController;
+-using ::vendor::qti::hardware::cryptfshw::V1_0::implementation::CRYPTFS_HW_BACKEND::Controller;
+-
+-int main() {
+-#ifdef ARCH_ARM_32
+-    android::hardware::ProcessState::initWithMmapSize((size_t)16384);
+-#endif
+-
+-    LOG(DEBUG) << "CryptfsHw HAL service is starting.";
+-
+-    auto controller = std::make_unique<Controller>();
+-    android::sp<CryptfsHw> cryptfsHw = new CryptfsHw(std::move(controller));
+-
+-    configureRpcThreadpool(1, true /*callerWillJoin*/);
+-
+-    status_t status = cryptfsHw->registerAsService();
+-    if (status == OK) {
+-        LOG(DEBUG) << "CryptfsHw HAL service is ready.";
+-        joinRpcThreadpool();
+-    } else {
+-        LOG(ERROR) << "Could not register service for CryptfsHw HAL CryptfsHw Iface (" << status
+-                   << ")";
+-    }
+-
+-    // In normal operation, we don't expect the thread pool to shutdown
+-    LOG(ERROR) << "CryptfsHw HAL service is shutting down.";
+-    return 1;
+-}
+-- 
+2.17.1
+

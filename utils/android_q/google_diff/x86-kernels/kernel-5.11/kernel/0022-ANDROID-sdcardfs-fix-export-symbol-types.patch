@@ -1,0 +1,69 @@
+From 739533016183d87b74bd4f5bdbc5d3d1093e3285 Mon Sep 17 00:00:00 2001
+From: Greg Kroah-Hartman <gregkh@google.com>
+Date: Thu, 23 Apr 2020 12:26:40 +0200
+Subject: [PATCH 022/106] ANDROID: sdcardfs: fix export symbol types
+
+In commit c0dbfed5ff9f ("ANDROID: sdcardfs: Enable modular sdcardfs") a
+number of core vfs functions were exported, but they needed to be set as
+_GPL symbols.
+
+Fix this up by properly setting the export type of these symbols.
+
+Bug: 35142419
+Cc: Daniel Rosenberg <drosen@google.com>
+Cc: Alistair Strachan <astrachan@google.com>
+Cc: Yongqin Liu <yongqin.liu@linaro.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@google.com>
+Change-Id: I3169efeb5b525c536958b1354318cf0fcd07e6e1
+---
+ fs/fs_struct.c  | 4 ++--
+ fs/read_write.c | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/fs/fs_struct.c b/fs/fs_struct.c
+index a38f5abe46ac..1238f247b68a 100644
+--- a/fs/fs_struct.c
++++ b/fs/fs_struct.c
+@@ -46,7 +46,7 @@ void set_fs_pwd(struct fs_struct *fs, const struct path *path)
+ 	if (old_pwd.dentry)
+ 		path_put(&old_pwd);
+ }
+-EXPORT_SYMBOL(set_fs_pwd);
++EXPORT_SYMBOL_GPL(set_fs_pwd);
+ 
+ static inline int replace_path(struct path *p, const struct path *old, const struct path *new)
+ {
+@@ -92,7 +92,7 @@ void free_fs_struct(struct fs_struct *fs)
+ 	path_put(&fs->pwd);
+ 	kmem_cache_free(fs_cachep, fs);
+ }
+-EXPORT_SYMBOL(free_fs_struct);
++EXPORT_SYMBOL_GPL(free_fs_struct);
+ 
+ void exit_fs(struct task_struct *tsk)
+ {
+diff --git a/fs/read_write.c b/fs/read_write.c
+index 7b14b57c79bf..10b4943a7f1d 100644
+--- a/fs/read_write.c
++++ b/fs/read_write.c
+@@ -504,7 +504,7 @@ ssize_t vfs_read(struct file *file, char __user *buf, size_t count, loff_t *pos)
+ 	return ret;
+ }
+ 
+-EXPORT_SYMBOL(vfs_read);
++EXPORT_SYMBOL_GPL(vfs_read);
+ 
+ static ssize_t new_sync_write(struct file *filp, const char __user *buf, size_t len, loff_t *ppos)
+ {
+@@ -615,7 +615,7 @@ ssize_t vfs_write(struct file *file, const char __user *buf, size_t count, loff_
+ 	file_end_write(file);
+ 	return ret;
+ }
+-EXPORT_SYMBOL(vfs_write);
++EXPORT_SYMBOL_GPL(vfs_write);
+ 
+ /* file_ppos returns &file->f_pos or NULL if file is stream */
+ static inline loff_t *file_ppos(struct file *file)
+-- 
+2.17.1
+

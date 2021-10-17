@@ -1,0 +1,70 @@
+From 356425bdc45e4432ac0fe6a460a86b13866cba71 Mon Sep 17 00:00:00 2001
+From: Daniel Leung <daniel.leung@intel.com>
+Date: Thu, 13 Sep 2012 13:43:41 -0700
+Subject: [PATCH 01/16] Prevent EventHub from adding input device twice
+
+When Android first starts up, it scans /dev/input for input devices.
+In some rare instances, the EventHub gets another notification that
+some device nodes are created. It then proceeds to add the same
+input device again. This causes the system to get two events per
+touch or key stroke.
+
+This adds a check to prevent adding the same device if the operation
+is triggerd by inotify.
+
+Issue: AXIA-858
+Change-Id: I68b02594f1c7f14067611735db0b3763378ec7ea
+Signed-off-by: Daniel Leung <daniel.leung@intel.com>
+---
+ services/inputflinger/EventHub.cpp | 13 +++++++++++--
+ services/inputflinger/EventHub.h   |  1 +
+ 2 files changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/services/inputflinger/EventHub.cpp b/services/inputflinger/EventHub.cpp
+index ce5627271..7ffd2525a 100644
+--- a/services/inputflinger/EventHub.cpp
++++ b/services/inputflinger/EventHub.cpp
+@@ -1186,9 +1186,18 @@ void EventHub::unregisterVideoDeviceFromEpollLocked(const TouchVideoDevice& vide
+     }
+ }
+ 
+-status_t EventHub::openDeviceLocked(const char* devicePath) {
++status_t EventHub::openDeviceLocked(const char *devicePath) {
++    return openDeviceLocked(devicePath, false);
++}
++
++status_t EventHub::openDeviceLocked(const char *devicePath, bool ignoreAlreadyOpened) {
+     char buffer[80];
+ 
++    if (ignoreAlreadyOpened && (getDeviceByPathLocked(devicePath) != 0)) {
++        ALOGV("Ignoring device '%s' that has already been opened.", devicePath);
++        return 0;
++    }
++
+     ALOGV("Opening device: %s", devicePath);
+ 
+     int fd = open(devicePath, O_RDWR | O_CLOEXEC | O_NONBLOCK);
+@@ -1829,7 +1838,7 @@ status_t EventHub::readNotifyLocked() {
+             if (event->wd == mInputWd) {
+                 std::string filename = StringPrintf("%s/%s", DEVICE_PATH, event->name);
+                 if(event->mask & IN_CREATE) {
+-                    openDeviceLocked(filename.c_str());
++                    openDeviceLocked(filename.c_str(), true);
+                 } else {
+                     ALOGI("Removing device '%s' due to inotify event\n", filename.c_str());
+                     closeDeviceByPathLocked(filename.c_str());
+diff --git a/services/inputflinger/EventHub.h b/services/inputflinger/EventHub.h
+index 63a20ef3e..8763e12cf 100644
+--- a/services/inputflinger/EventHub.h
++++ b/services/inputflinger/EventHub.h
+@@ -377,6 +377,7 @@ private:
+     };
+ 
+     status_t openDeviceLocked(const char* devicePath);
++    status_t openDeviceLocked(const char *devicePath, bool ignoreAlreadyOpened);
+     void openVideoDeviceLocked(const std::string& devicePath);
+     void createVirtualKeyboardLocked();
+     void addDeviceLocked(Device* device);
+-- 
+2.21.0
+

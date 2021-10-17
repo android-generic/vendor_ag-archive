@@ -1,0 +1,680 @@
+From 1a5927b9fd64037060332d08aa68936d6df366aa Mon Sep 17 00:00:00 2001
+From: Koushik Dutta <koushd@gmail.com>
+Date: Thu, 28 Feb 2013 14:49:24 -0800
+Subject: [PATCH] Settings: Add Superuser entry
+
+Amended for oreo-x86 porting by cwhuang.
+
+Squashed commit of the following:
+
+Author: Koushik Dutta <koushd@gmail.com>
+Switch to new Superuser
+Change-Id: I9d91392ad6fbc9953d19059ab59b91d214c00e0c
+
+Author: Danny Baumann <dannybaumann@web.de>
+Hide Superuser entry if root access for apps is disabled.
+Change-Id: Ibb77ba5a0fccf22564a26b8b1e13f7762c65718e
+
+Author: Ricardo Cerqueira <cyanogenmod@cerqueira.org>
+Development: Root for apps is unavailable if the su daemon isn't running
+
+The superuser options are tied to the Superuser app variant we use,
+which in turn is tied to the su daemon. No daemon, no menu options.
+Change-Id: I41d58e62986759336ab38e67f26a558c2eed5aa3
+
+Change-Id: I9d91392ad6fbc9953d19059ab59b91d214c00e0c
+---
+ Android.mk                                    |  13 +-
+ AndroidManifest.xml                           |  88 +++++
+ proguard.flags                                |   2 +
+ src/com/android/settings/Settings.java        |   1 +
+ .../android/settings/SettingsActivity.java    |   6 +
+ .../core/gateway/SettingsGateway.java         |   2 +
+ .../core/gateway/SettingsGateway.java.orig    | 337 ++++++++++++++++++
+ .../superuser/MultitaskSuRequestActivity.java |   4 +
+ .../cyanogenmod/superuser/NotifyActivity.java |   4 +
+ .../superuser/PolicyNativeFragment.java       |   4 +
+ .../superuser/RequestActivity.java            |   4 +
+ .../cyanogenmod/superuser/SuReceiver.java     |   4 +
+ .../RootAccessPreferenceController.java       |   7 +
+ 13 files changed, 475 insertions(+), 1 deletion(-)
+ create mode 100644 src/com/android/settings/core/gateway/SettingsGateway.java.orig
+ create mode 100644 src/com/android/settings/cyanogenmod/superuser/MultitaskSuRequestActivity.java
+ create mode 100644 src/com/android/settings/cyanogenmod/superuser/NotifyActivity.java
+ create mode 100644 src/com/android/settings/cyanogenmod/superuser/PolicyNativeFragment.java
+ create mode 100644 src/com/android/settings/cyanogenmod/superuser/RequestActivity.java
+ create mode 100644 src/com/android/settings/cyanogenmod/superuser/SuReceiver.java
+
+diff --git a/Android.mk b/Android.mk
+index 052fd8cac0..e19714d593 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -2,7 +2,9 @@ LOCAL_PATH:= $(call my-dir)
+ include $(CLEAR_VARS)
+ 
+ LOCAL_SRC_FILES := \
+-        $(call all-logtags-files-under, src)
++        $(call all-logtags-files-under, src) \
++        $(call all-java-files-under,../../../external/koush/Widgets/Widgets/src) \
++        $(call all-java-files-under,../../../external/koush/Superuser/Superuser/src)
+ 
+ LOCAL_MODULE := settings-logtags
+ 
+@@ -75,6 +77,15 @@ LOCAL_AAPT_FLAGS := --auto-add-overlay \
+     --extra-packages com.dirtyunicorns.tweaks \
+     --extra-packages github.com.st235.lib_expandablebottombar
+ 
++LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res \
++    external/koush/Widgets/Widgets/res \
++    external/koush/Superuser/Superuser/res
++
++LOCAL_AAPT_INCLUDE_ALL_RESOURCES := true
++
++LOCAL_AAPT_FLAGS := --auto-add-overlay \
++    --extra-packages com.koushikdutta.superuser:com.koushikdutta.widgets
++
+ ifneq ($(INCREMENTAL_BUILDS),)
+     LOCAL_PROGUARD_ENABLED := disabled
+     LOCAL_JACK_ENABLED := incremental
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 00653fc04e..8bea621dcf 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -102,6 +102,30 @@
+     <uses-permission android:name="android.permission.CAMERA" />
+     <uses-permission android:name="android.permission.MEDIA_CONTENT_CONTROL" />
+ 
++    <permission
++        android:name="android.permission.REQUEST_SUPERUSER"
++        android:protectionLevel="signature" />
++
++    <permission
++        android:name="android.permission.REPORT_SUPERUSER"
++        android:protectionLevel="signature" />
++
++    <permission-group
++        android:name="android.permission-group.SUPERUSER"
++        android:description="@string/superuser_description_more"
++        android:icon="@drawable/ic_action_permission"
++        android:label="@string/superuser"
++        android:priority="10000" />
++
++    <permission
++        android:name="android.permission.ACCESS_SUPERUSER"
++        android:description="@string/superuser_description_more"
++        android:icon="@drawable/ic_action_permission"
++        android:label="@string/superuser_description"
++        android:logo="@drawable/ic_action_permission"
++        android:permissionGroup="android.permission-group.SUPERUSER"
++        android:protectionLevel="dangerous" />
++
+     <application android:label="@string/settings_label"
+             android:icon="@drawable/ic_launcher_settings"
+             android:theme="@style/Theme.Settings"
+@@ -115,6 +139,48 @@
+             android:appComponentFactory="androidx.core.app.CoreComponentFactory">
+ 
+         <uses-library android:name="org.apache.http.legacy" />
++
++        <!-- Only system/su can open this activity -->
++        <!-- This activity will then call the MultitaskSuRequestActivity to create a new task stack -->
++        <activity
++            android:name=".cyanogenmod.superuser.RequestActivity"
++            android:configChanges="keyboardHidden|orientation|screenSize"
++            android:label="@string/superuser"
++            android:launchMode="singleTask"
++            android:excludeFromRecents="true"
++            android:permission="android.permission.REQUEST_SUPERUSER"
++            android:process=":superuser"
++            android:taskAffinity="com.android.settings.superuser"
++            android:theme="@style/RequestThemeDark" />
++        <!-- Only system/su can open this activity -->
++        <!-- This is activity is started in multiuser mode when the user invoking su -->
++        <!-- is not the device owner (user id 0). -->
++        <activity
++            android:name=".cyanogenmod.superuser.NotifyActivity"
++            android:configChanges="keyboardHidden|orientation|screenSize"
++            android:label="@string/superuser"
++            android:launchMode="singleTask"
++            android:excludeFromRecents="true"
++            android:permission="android.permission.REQUEST_SUPERUSER"
++            android:process=":superuser"
++            android:taskAffinity="com.android.settings.superuser"
++            android:theme="@style/RequestThemeDark" />
++
++        <!-- Multiple instances of this activity can be running for multiple su requests -->
++        <activity
++            android:name=".cyanogenmod.superuser.MultitaskSuRequestActivity"
++            android:configChanges="keyboardHidden|orientation|screenSize"
++            android:excludeFromRecents="true"
++            android:exported="false"
++            android:label="@string/request"
++            android:process=":superuser"
++            android:taskAffinity="com.android.settings.superuser"
++            android:theme="@style/RequestThemeDark" />
++
++        <receiver
++            android:name=".cyanogenmod.superuser.SuReceiver"
++            android:permission="android.permission.REPORT_SUPERUSER" />
++
+         <!-- Settings -->
+ 
+         <activity android:name=".homepage.SettingsHomepageActivity"
+@@ -1992,6 +2058,28 @@
+                 android:value="com.android.settings.print.PrintJobSettingsFragment" />
+         </activity>
+ 
++        <activity android:name="Settings$SuperuserActivity"
++                android:label="@string/superuser"
++                android:icon="@drawable/ic_action_permission"
++                android:taskAffinity="com.android.settings"
++                android:parentActivityName="Settings$AccountDashboardActivity">
++            <intent-filter>
++                <action android:name="android.intent.action.MAIN" />
++                <category android:name="android.intent.category.DEFAULT" />
++            </intent-filter>
++            <intent-filter android:priority="3">
++                <action android:name="com.android.settings.action.SETTINGS" />
++            </intent-filter>
++            <meta-data android:name="com.android.settings.summary"
++                android:resource="@string/superuser_description"/>
++            <meta-data android:name="com.android.settings.category"
++                android:value="com.android.settings.category.ia.accounts" />
++            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
++                android:value="com.android.settings.cyanogenmod.superuser.PolicyNativeFragment" />
++            <meta-data android:name="com.android.settings.PRIMARY_PROFILE_CONTROLLED"
++                android:value="true" />
++        </activity>
++
+         <activity android:name=".development.AppPicker"
+                   android:label="@string/select_application"
+                   android:theme="@android:style/Theme.DeviceDefault.Light.Dialog" />
+diff --git a/proguard.flags b/proguard.flags
+index c69734072e..c3305e0952 100644
+--- a/proguard.flags
++++ b/proguard.flags
+@@ -7,6 +7,8 @@
+ 
+ # Keep all Fragments in this package, which are used by reflection.
+ -keep public class com.android.settings.** extends androidx.fragment.app.Fragment
++-keep public class com.android.settings.cyanogenmod.superuser.**
++-keep public class com.koushikdutta.**
+ 
+ # Keep all preference controllers needed by slice and DashboardFragment.
+ -keep class * extends com.android.settings.core.BasePreferenceController {
+diff --git a/src/com/android/settings/Settings.java b/src/com/android/settings/Settings.java
+index a52a3ec36c..63a730652d 100644
+--- a/src/com/android/settings/Settings.java
++++ b/src/com/android/settings/Settings.java
+@@ -110,6 +110,7 @@ public class Settings extends SettingsActivity {
+     public static class PaymentSettingsActivity extends SettingsActivity { /* empty */ }
+     public static class PrintSettingsActivity extends SettingsActivity { /* empty */ }
+     public static class PrintJobSettingsActivity extends SettingsActivity { /* empty */ }
++    public static class SuperuserActivity extends SettingsActivity { /* empty */ }
+     public static class ZenModeSettingsActivity extends SettingsActivity { /* empty */ }
+     public static class ZenModeBehaviorSettingsActivity extends SettingsActivity { /* empty */ }
+     public static class ZenModeBlockedEffectsSettingsActivity extends SettingsActivity { /* empty */ }
+diff --git a/src/com/android/settings/SettingsActivity.java b/src/com/android/settings/SettingsActivity.java
+index 3b01b327ea..8c9676f728 100644
+--- a/src/com/android/settings/SettingsActivity.java
++++ b/src/com/android/settings/SettingsActivity.java
+@@ -56,6 +56,7 @@ import com.android.settings.core.SettingsBaseActivity;
+ import com.android.settings.core.SubSettingLauncher;
+ import com.android.settings.core.gateway.SettingsGateway;
+ import com.android.settings.dashboard.DashboardFeatureProvider;
++import com.android.settings.development.RootAccessPreferenceController;
+ import com.android.settings.homepage.TopLevelSettings;
+ import com.android.settings.overlay.FeatureFactory;
+ import com.android.settings.wfd.WifiDisplaySettings;
+@@ -625,6 +626,11 @@ public class SettingsActivity extends SettingsBaseActivity
+                         && !Utils.isMonkeyRunning(), isAdmin)
+                 || somethingChanged;
+ 
++        somethingChanged = setTileEnabled(changedList, new ComponentName(packageName,
++                        Settings.SuperuserActivity.class.getName()),
++                RootAccessPreferenceController.isRootForAppsEnabled(), isAdmin)
++                || somethingChanged;
++
+         final boolean showDev = DevelopmentSettingsEnabler.isDevelopmentSettingsEnabled(this)
+                 && !Utils.isMonkeyRunning();
+         somethingChanged = setTileEnabled(changedList, new ComponentName(packageName,
+diff --git a/src/com/android/settings/core/gateway/SettingsGateway.java b/src/com/android/settings/core/gateway/SettingsGateway.java
+index aaa6647db4..ff224b30a4 100644
+--- a/src/com/android/settings/core/gateway/SettingsGateway.java
++++ b/src/com/android/settings/core/gateway/SettingsGateway.java
+@@ -61,6 +61,7 @@ import com.android.settings.connecteddevice.AdvancedConnectedDeviceDashboardFrag
+ import com.android.settings.connecteddevice.ConnectedDeviceDashboardFragment;
+ import com.android.settings.connecteddevice.PreviouslyConnectedDeviceDashboardFragment;
+ import com.android.settings.connecteddevice.usb.UsbDetailsFragment;
++import com.android.settings.cyanogenmod.superuser.PolicyNativeFragment;
+ import com.android.settings.datausage.DataSaverSummary;
+ import com.android.settings.datausage.DataUsageList;
+ import com.android.settings.datausage.DataUsageSummary;
+@@ -227,6 +228,7 @@ public class SettingsGateway {
+             ZenAccessSettings.class.getName(),
+             ZenAccessDetails.class.getName(),
+             ZenModeAutomationSettings.class.getName(),
++            PolicyNativeFragment.class.getName(),
+             PrintSettingsFragment.class.getName(),
+             PrintJobSettingsFragment.class.getName(),
+             TrustedCredentialsSettings.class.getName(),
+diff --git a/src/com/android/settings/core/gateway/SettingsGateway.java.orig b/src/com/android/settings/core/gateway/SettingsGateway.java.orig
+new file mode 100644
+index 0000000000..aaa6647db4
+--- /dev/null
++++ b/src/com/android/settings/core/gateway/SettingsGateway.java.orig
+@@ -0,0 +1,337 @@
++/*
++ * Copyright (C) 2016 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.core.gateway;
++
++import com.android.settings.DateTimeSettings;
++import com.android.settings.DisplaySettings;
++import com.android.settings.IccLockSettings;
++import com.android.settings.MasterClear;
++import com.android.settings.Settings;
++import com.android.settings.StartThemes;
++import com.android.settings.TestingSettings;
++import com.android.settings.TetherSettings;
++import com.android.settings.TrustedCredentialsSettings;
++import com.android.settings.accessibility.AccessibilityDetailsSettingsFragment;
++import com.android.settings.accessibility.AccessibilitySettings;
++import com.android.settings.accessibility.AccessibilitySettingsForSetupWizard;
++import com.android.settings.accessibility.CaptionPropertiesFragment;
++import com.android.settings.accessibility.ToggleDaltonizerPreferenceFragment;
++import com.android.settings.accounts.AccountDashboardFragment;
++import com.android.settings.accounts.AccountSyncSettings;
++import com.android.settings.accounts.ChooseAccountFragment;
++import com.android.settings.accounts.ManagedProfileSettings;
++import com.android.settings.applications.AppAndNotificationDashboardFragment;
++import com.android.settings.applications.ProcessStatsSummary;
++import com.android.settings.applications.ProcessStatsUi;
++import com.android.settings.applications.UsageAccessDetails;
++import com.android.settings.applications.appinfo.AppInfoDashboardFragment;
++import com.android.settings.applications.appinfo.DrawOverlayDetails;
++import com.android.settings.applications.appinfo.ExternalSourcesDetails;
++import com.android.settings.applications.appinfo.WriteSettingsDetails;
++import com.android.settings.applications.appops.BackgroundCheckSummary;
++import com.android.settings.applications.assist.ManageAssist;
++import com.android.settings.applications.manageapplications.ManageApplications;
++import com.android.settings.applications.managedomainurls.ManageDomainUrls;
++import com.android.settings.applications.specialaccess.deviceadmin.DeviceAdminSettings;
++import com.android.settings.applications.specialaccess.pictureinpicture.PictureInPictureDetails;
++import com.android.settings.applications.specialaccess.pictureinpicture.PictureInPictureSettings;
++import com.android.settings.applications.specialaccess.vrlistener.VrListenerSettings;
++import com.android.settings.applications.specialaccess.zenaccess.ZenAccessDetails;
++import com.android.settings.backup.PrivacySettings;
++import com.android.settings.backup.ToggleBackupSettingFragment;
++import com.android.settings.backup.UserBackupSettingsActivity;
++import com.android.settings.biometrics.face.FaceSettings;
++import com.android.settings.biometrics.fingerprint.FingerprintSettings;
++import com.android.settings.bluetooth.BluetoothDeviceDetailsFragment;
++import com.android.settings.connecteddevice.AdvancedConnectedDeviceDashboardFragment;
++import com.android.settings.connecteddevice.ConnectedDeviceDashboardFragment;
++import com.android.settings.connecteddevice.PreviouslyConnectedDeviceDashboardFragment;
++import com.android.settings.connecteddevice.usb.UsbDetailsFragment;
++import com.android.settings.datausage.DataSaverSummary;
++import com.android.settings.datausage.DataUsageList;
++import com.android.settings.datausage.DataUsageSummary;
++import com.android.settings.deletionhelper.AutomaticStorageManagerSettings;
++import com.android.settings.development.DevelopmentSettingsDashboardFragment;
++import com.android.settings.deviceinfo.PrivateVolumeForget;
++import com.android.settings.deviceinfo.PrivateVolumeSettings;
++import com.android.settings.deviceinfo.PublicVolumeSettings;
++import com.android.settings.deviceinfo.StorageDashboardFragment;
++import com.android.settings.deviceinfo.StorageSettings;
++import com.android.settings.deviceinfo.aboutphone.MyDeviceInfoFragment;
++import com.android.settings.deviceinfo.firmwareversion.FirmwareVersionSettings;
++import com.android.settings.deviceinfo.legal.ModuleLicensesDashboard;
++import com.android.settings.display.BatteryLightSettings;
++import com.android.settings.display.NightDisplaySettings;
++import com.android.settings.display.darkmode.DarkModeSettingsFragment;
++import com.android.settings.dream.DreamSettings;
++import com.android.settings.enterprise.EnterprisePrivacySettings;
++import com.android.settings.fuelgauge.AdvancedPowerUsageDetail;
++import com.android.settings.fuelgauge.PowerUsageSummary;
++import com.android.settings.fuelgauge.batterysaver.BatterySaverScheduleSettings;
++import com.android.settings.fuelgauge.batterysaver.BatterySaverSettings;
++import com.android.settings.gestures.AssistGestureSettings;
++import com.android.settings.gestures.DoubleTapPowerSettings;
++import com.android.settings.gestures.DoubleTapScreenSettings;
++import com.android.settings.gestures.DoubleTwistGestureSettings;
++import com.android.settings.gestures.GlobalActionsPanelSettings;
++import com.android.settings.gestures.PickupGestureSettings;
++import com.android.settings.gestures.SwipeToNotificationSettings;
++import com.android.settings.gestures.SystemNavigationGestureSettings;
++import com.android.settings.inputmethod.AvailableVirtualKeyboardFragment;
++import com.android.settings.inputmethod.KeyboardLayoutPickerFragment;
++import com.android.settings.inputmethod.PhysicalKeyboardFragment;
++import com.android.settings.inputmethod.SpellCheckersSettings;
++import com.android.settings.inputmethod.UserDictionaryList;
++import com.android.settings.inputmethod.UserDictionarySettings;
++import com.android.settings.language.LanguageAndInputSettings;
++import com.android.settings.localepicker.LocaleListEditor;
++import com.android.settings.location.LocationSettings;
++import com.android.settings.location.ScanningSettings;
++import com.android.settings.network.ApnEditor;
++import com.android.settings.network.ApnSettings;
++import com.android.settings.network.MobileNetworkListFragment;
++import com.android.settings.network.NetworkDashboardFragment;
++import com.android.settings.nfc.AndroidBeam;
++import com.android.settings.nfc.PaymentSettings;
++import com.android.settings.notification.AppBubbleNotificationSettings;
++import com.android.settings.notification.AppNotificationSettings;
++import com.android.settings.notification.ChannelNotificationSettings;
++import com.android.settings.notification.ConfigureNotificationSettings;
++import com.android.settings.notification.NotificationAccessSettings;
++import com.android.settings.notification.NotificationAssistantPicker;
++import com.android.settings.notification.NotificationStation;
++import com.android.settings.notification.SoundSettings;
++import com.android.settings.notification.ZenAccessSettings;
++import com.android.settings.notification.ZenModeAutomationSettings;
++import com.android.settings.notification.ZenModeBlockedEffectsSettings;
++import com.android.settings.notification.ZenModeEventRuleSettings;
++import com.android.settings.notification.ZenModeScheduleRuleSettings;
++import com.android.settings.notification.ZenModeSettings;
++import com.android.settings.password.ChooseLockPassword;
++import com.android.settings.password.ChooseLockPattern;
++import com.android.settings.print.PrintJobSettingsFragment;
++import com.android.settings.print.PrintSettingsFragment;
++import com.android.settings.privacy.PrivacyDashboardFragment;
++import com.android.settings.security.CryptKeeperSettings;
++import com.android.settings.security.LockscreenDashboardFragment;
++import com.android.settings.security.SecuritySettings;
++import com.android.settings.shortcut.CreateShortcut;
++import com.android.settings.sim.SimSettings;
++import com.android.settings.support.SupportDashboardActivity;
++import com.android.settings.system.AndroidX86DashboardFragment;
++import com.android.settings.system.ResetDashboardFragment;
++import com.android.settings.system.SystemDashboardFragment;
++import com.android.settings.tts.TextToSpeechSettings;
++import com.android.settings.users.UserSettings;
++import com.android.settings.vpn2.VpnSettings;
++import com.android.settings.wallpaper.WallpaperTypeSettings;
++import com.android.settings.webview.WebViewAppPicker;
++import com.android.settings.wfd.WifiDisplaySettings;
++import com.android.settings.wifi.ConfigureWifiSettings;
++import com.android.settings.wifi.WifiAPITest;
++import com.android.settings.wifi.WifiInfo;
++import com.android.settings.wifi.WifiSettings;
++import com.android.settings.wifi.calling.WifiCallingDisclaimerFragment;
++import com.android.settings.wifi.calling.WifiCallingSettings;
++import com.android.settings.wifi.p2p.WifiP2pSettings;
++import com.android.settings.wifi.savedaccesspoints.SavedAccessPointsWifiSettings;
++import com.android.settings.wifi.tether.WifiTetherSettings;
++
++import com.dirtyunicorns.tweaks.DirtyTweaks;
++
++public class SettingsGateway {
++
++    /**
++     * A list of fragment that can be hosted by SettingsActivity. SettingsActivity will throw a
++     * security exception if the fragment it needs to display is not in this list.
++     */
++    public static final String[] ENTRY_FRAGMENTS = {
++            AdvancedConnectedDeviceDashboardFragment.class.getName(),
++            CreateShortcut.class.getName(),
++            WifiSettings.class.getName(),
++            ConfigureWifiSettings.class.getName(),
++            SavedAccessPointsWifiSettings.class.getName(),
++            SimSettings.class.getName(),
++            TetherSettings.class.getName(),
++            WifiP2pSettings.class.getName(),
++            WifiTetherSettings.class.getName(),
++            BackgroundCheckSummary.class.getName(),
++            VpnSettings.class.getName(),
++            DataSaverSummary.class.getName(),
++            DateTimeSettings.class.getName(),
++            LocaleListEditor.class.getName(),
++            AvailableVirtualKeyboardFragment.class.getName(),
++            LanguageAndInputSettings.class.getName(),
++            SpellCheckersSettings.class.getName(),
++            UserDictionaryList.class.getName(),
++            UserDictionarySettings.class.getName(),
++            DisplaySettings.class.getName(),
++            MyDeviceInfoFragment.class.getName(),
++            ModuleLicensesDashboard.class.getName(),
++            ManageApplications.class.getName(),
++            FirmwareVersionSettings.class.getName(),
++            ManageAssist.class.getName(),
++            ProcessStatsUi.class.getName(),
++            NotificationStation.class.getName(),
++            LocationSettings.class.getName(),
++            PrivacyDashboardFragment.class.getName(),
++            ScanningSettings.class.getName(),
++            SecuritySettings.class.getName(),
++            UsageAccessDetails.class.getName(),
++            PrivacySettings.class.getName(),
++            DeviceAdminSettings.class.getName(),
++            AccessibilityDetailsSettingsFragment.class.getName(),
++            AccessibilitySettings.class.getName(),
++            AccessibilitySettingsForSetupWizard.class.getName(),
++            CaptionPropertiesFragment.class.getName(),
++            ToggleDaltonizerPreferenceFragment.class.getName(),
++            TextToSpeechSettings.class.getName(),
++            StorageSettings.class.getName(),
++            PrivateVolumeForget.class.getName(),
++            PrivateVolumeSettings.class.getName(),
++            PublicVolumeSettings.class.getName(),
++            DevelopmentSettingsDashboardFragment.class.getName(),
++            AndroidBeam.class.getName(),
++            WifiDisplaySettings.class.getName(),
++            PowerUsageSummary.class.getName(),
++            AccountSyncSettings.class.getName(),
++            AssistGestureSettings.class.getName(),
++            FaceSettings.class.getName(),
++            FingerprintSettings.FingerprintSettingsFragment.class.getName(),
++            SwipeToNotificationSettings.class.getName(),
++            DoubleTapPowerSettings.class.getName(),
++            DoubleTapScreenSettings.class.getName(),
++            PickupGestureSettings.class.getName(),
++            DoubleTwistGestureSettings.class.getName(),
++            SystemNavigationGestureSettings.class.getName(),
++            CryptKeeperSettings.class.getName(),
++            DataUsageSummary.class.getName(),
++            DreamSettings.class.getName(),
++            UserSettings.class.getName(),
++            NotificationAccessSettings.class.getName(),
++            AppBubbleNotificationSettings.class.getName(),
++            ZenAccessSettings.class.getName(),
++            ZenAccessDetails.class.getName(),
++            ZenModeAutomationSettings.class.getName(),
++            PrintSettingsFragment.class.getName(),
++            PrintJobSettingsFragment.class.getName(),
++            TrustedCredentialsSettings.class.getName(),
++            PaymentSettings.class.getName(),
++            KeyboardLayoutPickerFragment.class.getName(),
++            PhysicalKeyboardFragment.class.getName(),
++            ZenModeSettings.class.getName(),
++            SoundSettings.class.getName(),
++            ConfigureNotificationSettings.class.getName(),
++            ChooseLockPassword.ChooseLockPasswordFragment.class.getName(),
++            ChooseLockPattern.ChooseLockPatternFragment.class.getName(),
++            AppInfoDashboardFragment.class.getName(),
++            BatterySaverSettings.class.getName(),
++            AppNotificationSettings.class.getName(),
++            NotificationAssistantPicker.class.getName(),
++            ChannelNotificationSettings.class.getName(),
++            ApnSettings.class.getName(),
++            ApnEditor.class.getName(),
++            WifiCallingSettings.class.getName(),
++            ZenModeScheduleRuleSettings.class.getName(),
++            ZenModeEventRuleSettings.class.getName(),
++            ZenModeBlockedEffectsSettings.class.getName(),
++            ProcessStatsUi.class.getName(),
++            AdvancedPowerUsageDetail.class.getName(),
++            ProcessStatsSummary.class.getName(),
++            DrawOverlayDetails.class.getName(),
++            WriteSettingsDetails.class.getName(),
++            ExternalSourcesDetails.class.getName(),
++            WallpaperTypeSettings.class.getName(),
++            VrListenerSettings.class.getName(),
++            PictureInPictureSettings.class.getName(),
++            PictureInPictureDetails.class.getName(),
++            ManagedProfileSettings.class.getName(),
++            ChooseAccountFragment.class.getName(),
++            IccLockSettings.class.getName(),
++            TestingSettings.class.getName(),
++            WifiAPITest.class.getName(),
++            WifiInfo.class.getName(),
++            MasterClear.class.getName(),
++            BatteryLightSettings.class.getName(),
++            ResetDashboardFragment.class.getName(),
++            NightDisplaySettings.class.getName(),
++            ManageDomainUrls.class.getName(),
++            AutomaticStorageManagerSettings.class.getName(),
++            StorageDashboardFragment.class.getName(),
++            SystemDashboardFragment.class.getName(),
++            NetworkDashboardFragment.class.getName(),
++            ConnectedDeviceDashboardFragment.class.getName(),
++            UsbDetailsFragment.class.getName(),
++            AppAndNotificationDashboardFragment.class.getName(),
++            WifiCallingDisclaimerFragment.class.getName(),
++            AccountDashboardFragment.class.getName(),
++            AndroidX86DashboardFragment.class.getName(),
++            EnterprisePrivacySettings.class.getName(),
++            WebViewAppPicker.class.getName(),
++            LockscreenDashboardFragment.class.getName(),
++            BluetoothDeviceDetailsFragment.class.getName(),
++            DataUsageList.class.getName(),
++            ToggleBackupSettingFragment.class.getName(),
++            PreviouslyConnectedDeviceDashboardFragment.class.getName(),
++            BatterySaverScheduleSettings.class.getName(),
++            MobileNetworkListFragment.class.getName(),
++            GlobalActionsPanelSettings.class.getName(),
++            DirtyTweaks.class.getName(),
++            StartThemes.class.getName(),
++            DarkModeSettingsFragment.class.getName()
++    };
++
++    public static final String[] SETTINGS_FOR_RESTRICTED = {
++            // Home page
++            Settings.NetworkDashboardActivity.class.getName(),
++            Settings.ConnectedDeviceDashboardActivity.class.getName(),
++            Settings.AppAndNotificationDashboardActivity.class.getName(),
++            Settings.AndroidX86DashboardActivity.class.getName(),
++            Settings.DisplaySettingsActivity.class.getName(),
++            Settings.SoundSettingsActivity.class.getName(),
++            Settings.StorageDashboardActivity.class.getName(),
++            Settings.PowerUsageSummaryActivity.class.getName(),
++            Settings.AccountDashboardActivity.class.getName(),
++            Settings.PrivacySettingsActivity.class.getName(),
++            Settings.SecurityDashboardActivity.class.getName(),
++            Settings.AccessibilitySettingsActivity.class.getName(),
++            Settings.SystemDashboardActivity.class.getName(),
++            SupportDashboardActivity.class.getName(),
++            // Home page > Network & Internet
++            Settings.WifiSettingsActivity.class.getName(),
++            Settings.DataUsageSummaryActivity.class.getName(),
++            // Home page > Connected devices
++            Settings.BluetoothSettingsActivity.class.getName(),
++            Settings.WifiDisplaySettingsActivity.class.getName(),
++            Settings.PrintSettingsActivity.class.getName(),
++            // Home page > Apps & Notifications
++            Settings.UserSettingsActivity.class.getName(),
++            Settings.ConfigureNotificationSettingsActivity.class.getName(),
++            Settings.ManageApplicationsActivity.class.getName(),
++            Settings.PaymentSettingsActivity.class.getName(),
++            // Home page > Security & screen lock
++            Settings.LocationSettingsActivity.class.getName(),
++            // Home page > System
++            Settings.LanguageAndInputSettingsActivity.class.getName(),
++            Settings.DateTimeSettingsActivity.class.getName(),
++            Settings.EnterprisePrivacySettingsActivity.class.getName(),
++            Settings.MyDeviceInfoActivity.class.getName(),
++            Settings.ModuleLicensesActivity.class.getName(),
++            UserBackupSettingsActivity.class.getName(),
++            Settings.DirtyTweaksActivity.class.getName()
++    };
++}
+\ No newline at end of file
+diff --git a/src/com/android/settings/cyanogenmod/superuser/MultitaskSuRequestActivity.java b/src/com/android/settings/cyanogenmod/superuser/MultitaskSuRequestActivity.java
+new file mode 100644
+index 0000000000..0103076368
+--- /dev/null
++++ b/src/com/android/settings/cyanogenmod/superuser/MultitaskSuRequestActivity.java
+@@ -0,0 +1,4 @@
++package com.android.settings.cyanogenmod.superuser;
++
++public class MultitaskSuRequestActivity extends com.koushikdutta.superuser.MultitaskSuRequestActivity {
++}
+\ No newline at end of file
+diff --git a/src/com/android/settings/cyanogenmod/superuser/NotifyActivity.java b/src/com/android/settings/cyanogenmod/superuser/NotifyActivity.java
+new file mode 100644
+index 0000000000..23aa6a720d
+--- /dev/null
++++ b/src/com/android/settings/cyanogenmod/superuser/NotifyActivity.java
+@@ -0,0 +1,4 @@
++package com.android.settings.cyanogenmod.superuser;
++
++public class NotifyActivity extends com.koushikdutta.superuser.NotifyActivity {
++}
+\ No newline at end of file
+diff --git a/src/com/android/settings/cyanogenmod/superuser/PolicyNativeFragment.java b/src/com/android/settings/cyanogenmod/superuser/PolicyNativeFragment.java
+new file mode 100644
+index 0000000000..1c74543bfc
+--- /dev/null
++++ b/src/com/android/settings/cyanogenmod/superuser/PolicyNativeFragment.java
+@@ -0,0 +1,4 @@
++package com.android.settings.cyanogenmod.superuser;
++
++public class PolicyNativeFragment extends com.koushikdutta.superuser.PolicyNativeFragment {
++}
+\ No newline at end of file
+diff --git a/src/com/android/settings/cyanogenmod/superuser/RequestActivity.java b/src/com/android/settings/cyanogenmod/superuser/RequestActivity.java
+new file mode 100644
+index 0000000000..e6deca49cd
+--- /dev/null
++++ b/src/com/android/settings/cyanogenmod/superuser/RequestActivity.java
+@@ -0,0 +1,4 @@
++package com.android.settings.cyanogenmod.superuser;
++
++public class RequestActivity extends com.koushikdutta.superuser.RequestActivity {
++}
+\ No newline at end of file
+diff --git a/src/com/android/settings/cyanogenmod/superuser/SuReceiver.java b/src/com/android/settings/cyanogenmod/superuser/SuReceiver.java
+new file mode 100644
+index 0000000000..c4f9174b04
+--- /dev/null
++++ b/src/com/android/settings/cyanogenmod/superuser/SuReceiver.java
+@@ -0,0 +1,4 @@
++package com.android.settings.cyanogenmod.superuser;
++
++public class SuReceiver extends com.koushikdutta.superuser.SuReceiver {
++}
+\ No newline at end of file
+diff --git a/src/com/android/settings/development/RootAccessPreferenceController.java b/src/com/android/settings/development/RootAccessPreferenceController.java
+index c6c1d2b891..04bd24ffc5 100644
+--- a/src/com/android/settings/development/RootAccessPreferenceController.java
++++ b/src/com/android/settings/development/RootAccessPreferenceController.java
+@@ -108,6 +108,13 @@ public class RootAccessPreferenceController extends DeveloperOptionsPreferenceCo
+         updatePreference();
+     }
+ 
++    public static boolean isRootForAppsEnabled() {
++        int value = SystemProperties.getInt(ROOT_ACCESS_PROPERTY, 0);
++        boolean daemonState =
++                SystemProperties.get("init.svc.su_daemon", "absent").equals("running");
++        return daemonState && (value == 1 || value == 3);
++    }
++
+     private void writeRootAccessOptions(Object newValue) {
+         String oldValue = SystemProperties.get(ROOT_ACCESS_PROPERTY, "0");
+         SystemProperties.set(ROOT_ACCESS_PROPERTY, newValue.toString());
+-- 
+2.17.1
+

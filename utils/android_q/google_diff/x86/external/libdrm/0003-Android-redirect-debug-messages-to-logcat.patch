@@ -1,0 +1,61 @@
+From 863c2d3e6e54d8824760084c5b9c0b57302703a4 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 11 Jan 2019 17:19:39 +0800
+Subject: [PATCH 3/5] Android: redirect debug messages to logcat
+
+---
+ Android.bp |  1 +
+ xf86drm.c  | 10 ++++++++++
+ 2 files changed, 11 insertions(+)
+
+diff --git a/Android.bp b/Android.bp
+index 6fe434c6..f1a5ed9b 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -63,4 +63,5 @@ cc_library {
+         "-Wno-sign-compare",
+         "-Wno-tautological-compare",
+     ],
++    shared_libs: ["liblog"],
+ }
+diff --git a/xf86drm.c b/xf86drm.c
+index 390e1eb1..d240476b 100644
+--- a/xf86drm.c
++++ b/xf86drm.c
+@@ -69,6 +69,10 @@
+ 
+ #include "util_math.h"
+ 
++#ifdef __ANDROID__
++#include <log/log.h>
++#endif
++
+ #ifdef __OpenBSD__
+ #define DRM_PRIMARY_MINOR_NAME  "drm"
+ #define DRM_CONTROL_MINOR_NAME  "drmC"
+@@ -138,16 +142,22 @@ void drmSetServerInfo(drmServerInfoPtr info)
+ static int DRM_PRINTFLIKE(1, 0)
+ drmDebugPrint(const char *format, va_list ap)
+ {
++#ifdef __ANDROID__
++    return __android_log_vprint(ANDROID_LOG_DEBUG, "libdrm", format, ap);
++#else
+     return vfprintf(stderr, format, ap);
++#endif
+ }
+ 
+ void
+ drmMsg(const char *format, ...)
+ {
+     va_list ap;
++#ifndef __ANDROID__
+     const char *env;
+     if (((env = getenv("LIBGL_DEBUG")) && strstr(env, "verbose")) ||
+         (drm_server_info && drm_server_info->debug_print))
++#endif
+     {
+         va_start(ap, format);
+         if (drm_server_info) {
+-- 
+2.17.1
+

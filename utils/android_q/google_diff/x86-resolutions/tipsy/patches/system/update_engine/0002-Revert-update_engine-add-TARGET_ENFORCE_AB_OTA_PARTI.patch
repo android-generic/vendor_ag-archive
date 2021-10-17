@@ -1,0 +1,82 @@
+From 7be958cb928d52f252b5c4ed9b60dc74c308a5c8 Mon Sep 17 00:00:00 2001
+From: maxwen <max.weninger@gmail.com>
+Date: Sun, 24 Nov 2019 15:00:17 +0100
+Subject: [PATCH 2/2] Revert "update_engine: add
+ TARGET_ENFORCE_AB_OTA_PARTITION_LIST variable"
+
+This reverts commit fb3adb9cd33ecc391577ade12742dd1fdf1e9665.
+---
+ Android.bp                          | 14 --------------
+ payload_consumer/delta_performer.cc |  9 ---------
+ 2 files changed, 23 deletions(-)
+
+diff --git a/Android.bp b/Android.bp
+index a43d6461..b117067a 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -184,13 +184,6 @@ cc_library_static {
+         "payload_consumer/xz_extent_writer.cc",
+         "payload_consumer/fec_file_descriptor.cc",
+     ],
+-    product_variables: {
+-        carbon: {
+-            target_enforce_ab_ota_partition_list: {
+-                cflags: ["-DTARGET_ENFORCE_AB_OTA_PARTITION_LIST"],
+-            },
+-        },
+-    },
+ }
+ 
+ // libupdate_engine_boot_control (type: static_library)
+@@ -514,13 +507,6 @@ cc_library_static {
+         "payload_generator/topological_sort.cc",
+         "payload_generator/xz_android.cc",
+     ],
+-    product_variables: {
+-        carbon: {
+-            target_enforce_ab_ota_partition_list: {
+-                cflags: ["-DTARGET_ENFORCE_AB_OTA_PARTITION_LIST"],
+-            },
+-        },
+-    },
+ }
+ 
+ // delta_generator (type: executable)
+diff --git a/payload_consumer/delta_performer.cc b/payload_consumer/delta_performer.cc
+index 018cb4b7..d76a959e 100644
+--- a/payload_consumer/delta_performer.cc
++++ b/payload_consumer/delta_performer.cc
+@@ -952,9 +952,6 @@ bool DeltaPerformer::InitPartitionMetadata() {
+       for (const auto& partition_name : group.partition_names()) {
+         auto it = partition_sizes.find(partition_name);
+         if (it == partition_sizes.end()) {
+-#ifdef TARGET_ENFORCE_AB_OTA_PARTITION_LIST
+-          continue;
+-#else
+           // TODO(tbao): Support auto-filling partition info for framework-only
+           // OTA.
+           LOG(ERROR) << "dynamic_partition_metadata contains partition "
+@@ -962,7 +959,6 @@ bool DeltaPerformer::InitPartitionMetadata() {
+                      << " but it is not part of the manifest. "
+                      << "This is not supported.";
+           return false;
+-#endif
+         }
+         e.partitions.push_back({partition_name, it->second});
+       }
+@@ -971,12 +967,7 @@ bool DeltaPerformer::InitPartitionMetadata() {
+   }
+ 
+   bool metadata_updated = false;
+-#ifdef TARGET_ENFORCE_AB_OTA_PARTITION_LIST
+-  LOG(INFO) << "Skip metadata update because device has set TARGET_ENFORCE_AB_OTA_PARTITION_LIST";
+-  metadata_updated = true;
+-#else
+   prefs_->GetBoolean(kPrefsDynamicPartitionMetadataUpdated, &metadata_updated);
+-#endif
+   if (!boot_control_->InitPartitionMetadata(
+           install_plan_->target_slot, partition_metadata, !metadata_updated)) {
+     LOG(ERROR) << "Unable to initialize partition metadata for slot "
+-- 
+2.17.1
+

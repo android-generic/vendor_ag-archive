@@ -1,0 +1,246 @@
+From 3d3af611b9706e5ddb4b5a1e7a532f0721dbade7 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Mon, 20 Apr 2020 23:04:02 +0800
+Subject: [PATCH 2/2] Add powerbtnd thread
+
+Also send wakeup key on resume to ensure the system wakes up
+normally.
+
+Conflicts:
+	suspend/1.0/default/SystemSuspend.cpp
+---
+ suspend/1.0/default/SystemSuspend.cpp         | 150 ++++++++++++++++++
+ suspend/1.0/default/SystemSuspend.h           |   2 +
+ .../android.system.suspend@1.0-service.rc     |   2 +-
+ 3 files changed, 153 insertions(+), 1 deletion(-)
+
+diff --git a/suspend/1.0/default/SystemSuspend.cpp b/suspend/1.0/default/SystemSuspend.cpp
+index 4245a05..c5c83c7 100644
+--- a/suspend/1.0/default/SystemSuspend.cpp
++++ b/suspend/1.0/default/SystemSuspend.cpp
+@@ -19,20 +19,27 @@
+ #include <android-base/file.h>
+ #include <android-base/logging.h>
+ #include <android-base/properties.h>
++#include <android-base/stringprintf.h>
+ #include <android-base/strings.h>
+ #include <fcntl.h>
+ #include <hidl/Status.h>
+ #include <hwbinder/IPCThreadState.h>
++
++#include <linux/uinput.h>
++#include <dirent.h>
++#include <poll.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ 
+ #include <string>
+ #include <thread>
+ 
++using ::android::base::GetBoolProperty;
+ using ::android::base::GetProperty;
+ using ::android::base::Error;
+ using ::android::base::ReadFdToString;
+ using ::android::base::WriteStringToFd;
++using ::android::base::StringPrintf;
+ using ::android::hardware::Void;
+ using ::std::string;
+ 
+@@ -47,6 +54,146 @@ static const char kSleepState[] = "mem";
+ static constexpr char kSysPowerWakeLock[] = "/sys/power/wake_lock";
+ static constexpr char kSysPowerWakeUnlock[] = "/sys/power/wake_unlock";
+ 
++class PowerbtndThread {
++   public:
++    PowerbtndThread();
++    void sendKeyPower(bool longpress);
++    void sendKeyWakeup();
++
++   private:
++    void emitKey(int key_code, int val);
++    void run();
++    unique_fd mUinputFd;
++};
++
++PowerbtndThread::PowerbtndThread()
++    : mUinputFd(open("/dev/uinput", O_WRONLY | O_NDELAY))
++{
++    if (mUinputFd < 0) {
++        LOG(ERROR) << "could not open uinput device: " << strerror(errno);
++        return;
++    }
++
++    struct uinput_user_dev ud;
++    memset(&ud, 0, sizeof(ud));
++    strcpy(ud.name, "Android Power Button");
++    write(mUinputFd, &ud, sizeof(ud));
++    ioctl(mUinputFd, UI_SET_EVBIT, EV_KEY);
++    ioctl(mUinputFd, UI_SET_KEYBIT, KEY_POWER);
++    ioctl(mUinputFd, UI_SET_KEYBIT, KEY_WAKEUP);
++    ioctl(mUinputFd, UI_DEV_CREATE, 0);
++
++    std::thread([this] { run(); }).detach();
++    LOG(INFO) << "automatic system suspend enabled";
++}
++
++void PowerbtndThread::sendKeyPower(bool longpress)
++{
++    emitKey(KEY_POWER, 1);
++    if (longpress) sleep(2);
++    emitKey(KEY_POWER, 0);
++}
++
++void PowerbtndThread::sendKeyWakeup()
++{
++    emitKey(KEY_WAKEUP, 1);
++    emitKey(KEY_WAKEUP, 0);
++}
++
++void PowerbtndThread::emitKey(int key_code, int val)
++{
++    struct input_event iev;
++    iev.type = EV_KEY;
++    iev.code = key_code;
++    iev.value = val;
++    iev.time.tv_sec = 0;
++    iev.time.tv_usec = 0;
++    write(mUinputFd, &iev, sizeof(iev));
++    iev.type = EV_SYN;
++    iev.code = SYN_REPORT;
++    iev.value = 0;
++    write(mUinputFd, &iev, sizeof(iev));
++    LOG(INFO) << StringPrintf("send key %d (%d) on fd %d", key_code, val, mUinputFd.get());
++}
++
++void PowerbtndThread::run()
++{
++    int cnt = 0, timeout = -1, pollres;
++    bool longpress = true;
++    bool doubleclick = GetBoolProperty("poweroff.doubleclick", false);
++    struct pollfd pfds[3];
++    const char *dirname = "/dev/input";
++
++    if (DIR *dir = opendir(dirname)) {
++        struct dirent *de;
++        while ((cnt < 3) && (de = readdir(dir))) {
++            int fd;
++            char name[PATH_MAX];
++            if (de->d_name[0] != 'e') /* eventX */
++                continue;
++            snprintf(name, PATH_MAX, "%s/%s", dirname, de->d_name);
++            fd = open(name, O_RDWR | O_NONBLOCK);
++            if (fd < 0) {
++                LOG(ERROR) << StringPrintf("could not open %s, %s", name, strerror(errno));
++                continue;
++            }
++            name[sizeof(name) - 1] = '\0';
++            if (ioctl(fd, EVIOCGNAME(sizeof(name) - 1), &name) < 1) {
++                LOG(ERROR) << StringPrintf("could not get device name for %s, %s", name, strerror(errno));
++                name[0] = '\0';
++            }
++            // TODO: parse /etc/excluded-input-devices.xml
++            if (strcmp(name, "Power Button")) {
++                close(fd);
++                continue;
++            }
++
++            LOG(INFO) << StringPrintf("open %s(%s) ok fd=%d", de->d_name, name, fd);
++            pfds[cnt].events = POLLIN;
++            pfds[cnt++].fd = fd;
++        }
++        closedir(dir);
++    }
++
++    while (cnt > 0) {
++        if ((pollres = poll(pfds, cnt, timeout)) < 0) {
++            LOG(ERROR) << "poll error: " << strerror(errno);
++            break;
++        }
++        LOG(VERBOSE) << "pollres=" << pollres << " timeout=" << timeout;
++        if (pollres == 0) {
++            LOG(INFO) << "timeout, send one power key";
++            sendKeyPower(0);
++            timeout = -1;
++            longpress = true;
++            continue;
++        }
++        for (int i = 0; i < cnt; ++i) {
++            if (pfds[i].revents & POLLIN) {
++                struct input_event iev;
++                size_t res = read(pfds[i].fd, &iev, sizeof(iev));
++                if (res < sizeof(iev)) {
++                    LOG(WARNING) << StringPrintf("insufficient input data(%zd)? fd=%d", res, pfds[i].fd);
++                    continue;
++                }
++                LOG(DEBUG) << StringPrintf("type=%d code=%d value=%d from fd=%d", iev.type, iev.code, iev.value, pfds[i].fd);
++                if (iev.type == EV_KEY && iev.code == KEY_POWER && !iev.value) {
++                    if (!doubleclick || timeout > 0) {
++                        sendKeyPower(longpress);
++                        timeout = -1;
++                    } else {
++                        timeout = 1000; // one second
++                    }
++                } else if (iev.type == EV_SYN && iev.code == SYN_REPORT && iev.value) {
++                    LOG(INFO) << "got a resuming event";
++                    longpress = false;
++                    timeout = 1000; // one second
++                }
++            }
++        }
++    }
++}
++
+ // This function assumes that data in fd is small enough that it can be read in one go.
+ // We use this function instead of the ones available in libbase because it doesn't block
+ // indefinitely when reading from socket streams which are used for testing.
+@@ -90,6 +237,7 @@ SystemSuspend::SystemSuspend(unique_fd wakeupCountFd, unique_fd stateFd, unique_
+     : mSuspendCounter(0),
+       mWakeupCountFd(std::move(wakeupCountFd)),
+       mStateFd(std::move(stateFd)),
++      mPwrbtnd(new PowerbtndThread()),
+       mSuspendStatsFd(std::move(suspendStatsFd)),
+       mBaseSleepTime(baseSleepTime),
+       mSleepTime(baseSleepTime),
+@@ -199,6 +347,8 @@ void SystemSuspend::initAutosuspend() {
+ 
+             if (!success) {
+                 PLOG(VERBOSE) << "error writing to /sys/power/state";
++            } else {
++                mPwrbtnd->sendKeyWakeup();
+             }
+ 
+             mControlService->notifyWakeup(success);
+diff --git a/suspend/1.0/default/SystemSuspend.h b/suspend/1.0/default/SystemSuspend.h
+index 83121b5..ec1d862 100644
+--- a/suspend/1.0/default/SystemSuspend.h
++++ b/suspend/1.0/default/SystemSuspend.h
+@@ -42,6 +42,7 @@ using ::android::hardware::Return;
+ 
+ using namespace std::chrono_literals;
+ 
++class PowerbtndThread;
+ class SystemSuspend;
+ 
+ struct SuspendStats {
+@@ -105,6 +106,7 @@ class SystemSuspend : public ISystemSuspend {
+     unique_fd mWakeupCountFd;
+     unique_fd mStateFd;
+     std::string mSleepState;
++    PowerbtndThread *mPwrbtnd;
+ 
+     unique_fd mSuspendStatsFd;
+ 
+diff --git a/suspend/1.0/default/android.system.suspend@1.0-service.rc b/suspend/1.0/default/android.system.suspend@1.0-service.rc
+index c5d3869..f353302 100644
+--- a/suspend/1.0/default/android.system.suspend@1.0-service.rc
++++ b/suspend/1.0/default/android.system.suspend@1.0-service.rc
+@@ -1,5 +1,5 @@
+ service system_suspend /system/bin/hw/android.system.suspend@1.0-service
+     class hal
+     user system
+-    group system wakelock
++    group system wakelock uhid input
+     capabilities BLOCK_SUSPEND
+-- 
+2.17.1
+

@@ -1,0 +1,54 @@
+From b67a090f4883c95cf427ebf537923eba07d17b0f Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 21 Nov 2017 16:36:30 +0800
+Subject: [PATCH 11/30] input: simulate long press properly
+
+The original implementation of long press sends two ACTION_DOWN events
+which would be interpreted as a double tap. For example, sending
+a long press POWER key will launch the camera:
+
+11-21 16:27:37.320  2223  2223 I Input   : injectKeyEvent: KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_POWER, scanCode=0, metaState=0, flags=0x0, repeatCount=0, eventTime=39641, downTime=39641, deviceId=-1, source=0x101 }
+11-21 16:27:37.321  2223  2223 I Input   : injectKeyEvent: KeyEvent { action=ACTION_DOWN, keyCode=KEYCODE_POWER, scanCode=0, metaState=0, flags=0x80, repeatCount=1, eventTime=39641, downTime=39641, deviceId=-1, source=0x101 }
+11-21 16:27:37.322  1411  1565 I GestureLauncherService: Power button double tap gesture detected, launching camera. Interval=0ms
+11-21 16:27:37.322  2223  2223 I Input   : injectKeyEvent: KeyEvent { action=ACTION_UP, keyCode=KEYCODE_POWER, scanCode=0, metaState=0, flags=0x0, repeatCount=0, eventTime=39641, downTime=39641, deviceId=-1, source=0x101 }
+
+This is unexpected and incorrect.
+
+Just simulate the long press by delaying ACTION_UP one second.
+---
+ cmds/input/src/com/android/commands/input/Input.java | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/cmds/input/src/com/android/commands/input/Input.java b/cmds/input/src/com/android/commands/input/Input.java
+index a0777459311b..1da41f48a875 100644
+--- a/cmds/input/src/com/android/commands/input/Input.java
++++ b/cmds/input/src/com/android/commands/input/Input.java
+@@ -192,7 +192,7 @@ public class Input extends BaseCommand {
+         }
+ 
+         private void sendKeyEvent(int inputSource, int keyCode, boolean longpress, int displayId) {
+-            final long now = SystemClock.uptimeMillis();
++            long now = SystemClock.uptimeMillis();
+             int repeatCount = 0;
+ 
+             KeyEvent event = new KeyEvent(now, now, KeyEvent.ACTION_DOWN, keyCode, repeatCount,
+@@ -202,9 +202,13 @@ public class Input extends BaseCommand {
+ 
+             injectKeyEvent(event);
+             if (longpress) {
+-                repeatCount++;
+-                injectKeyEvent(KeyEvent.changeTimeRepeat(event, now, repeatCount,
+-                        KeyEvent.FLAG_LONG_PRESS));
++                try {
++                    Thread.sleep(1000);
++                } catch (InterruptedException e) {
++                    throw new RuntimeException(e);
++                }
++                now = SystemClock.uptimeMillis();
++                event = KeyEvent.changeTimeRepeat(event, now, repeatCount);
+             }
+             injectKeyEvent(KeyEvent.changeAction(event, KeyEvent.ACTION_UP));
+         }
+-- 
+2.17.1
+

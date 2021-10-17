@@ -1,0 +1,28 @@
+From 8014250cc4fd05163e224a58d76fb0f99b89c257 Mon Sep 17 00:00:00 2001
+From: Steve Kondik <steve@cyngn.com>
+Date: Sat, 26 Dec 2015 16:52:22 -0800
+Subject: [PATCH 14/15] stagefright: Copy the thumbnail time
+
+ * In case we do a conversion, we need this to seek the extractor
+   to the right position for extracting a thumbnail.
+
+Change-Id: I003a599c15890aeeb6d2494b219f170ba5b278d8
+---
+ media/libstagefright/FFMPEGSoftCodec.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/media/libstagefright/FFMPEGSoftCodec.cpp b/media/libstagefright/FFMPEGSoftCodec.cpp
+index e4e587ed0d..d86392e727 100644
+--- a/media/libstagefright/FFMPEGSoftCodec.cpp
++++ b/media/libstagefright/FFMPEGSoftCodec.cpp
+@@ -80,6 +80,7 @@ static const MetaKeyEntry MetaKeyTable[] {
+    {kKeyWMAVersion           , "wma-version"            , INT32},  // int32_t
+    {kKeyWMVVersion           , "wmv-version"            , INT32},
+    {kKeyDivXVersion          , "divx-version"           , INT32},
++   {kKeyThumbnailTime        , "thumbnail-time"         , INT64},
+ };
+ 
+ const char* FFMPEGSoftCodec::getMsgKey(int key) {
+-- 
+2.21.0
+

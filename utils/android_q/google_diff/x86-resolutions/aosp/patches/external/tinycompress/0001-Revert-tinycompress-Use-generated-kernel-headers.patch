@@ -1,0 +1,82 @@
+From 8d6bba6b142e71f02cfb52d24fbd6e99f432fd99 Mon Sep 17 00:00:00 2001
+From: Sam Mortimer <sam@mortimer.me.uk>
+Date: Tue, 18 Sep 2018 21:23:09 -0700
+Subject: [PATCH] Revert "tinycompress: Use generated kernel headers"
+
+This reverts commit ec05f8cc336d3a2580561addb8a7aad2efd72cf2.
+---
+ Android.bp      |  2 +-
+ Android.bp.orig | 48 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 49 insertions(+), 1 deletion(-)
+ create mode 100644 Android.bp.orig
+
+diff --git a/Android.bp b/Android.bp
+index 7368369..00a17b3 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -18,7 +18,7 @@ cc_library_shared {
+         "libutils",
+     ],
+     header_libs: [
+-        "generated_kernel_headers",
++        "device_kernel_headers",
+     ],
+     product_variables: {
+         aosp: {
+diff --git a/Android.bp.orig b/Android.bp.orig
+new file mode 100644
+index 0000000..7368369
+--- /dev/null
++++ b/Android.bp.orig
+@@ -0,0 +1,48 @@
++cc_library_shared {
++    name: "libtinycompress",
++    vendor: true,
++
++    cflags: [
++        "-Wall",
++        "-Werror",
++        "-Wno-macro-redefined",
++        "-Wno-unused-function",
++    ],
++    export_include_dirs: ["include"],
++    srcs: [
++        "compress.c",
++        "utils.c",
++    ],
++    shared_libs: [
++        "libcutils",
++        "libutils",
++    ],
++    header_libs: [
++        "generated_kernel_headers",
++    ],
++    product_variables: {
++        aosp: {
++            supports_extended_compress_format: {
++                cflags: ["-DENABLE_EXTENDED_COMPRESS_FORMAT"],
++            },
++        },
++    },
++}
++
++cc_binary {
++    name: "cplay",
++    vendor: true,
++
++    cflags: [
++        "-Wall",
++        "-Werror",
++        "-Wno-macro-redefined"
++    ],
++    local_include_dirs: ["include"],
++    srcs: ["cplay.c"],
++    shared_libs: [
++        "libcutils",
++        "libutils",
++        "libtinycompress",
++    ],
++}
+-- 
+2.17.1
+

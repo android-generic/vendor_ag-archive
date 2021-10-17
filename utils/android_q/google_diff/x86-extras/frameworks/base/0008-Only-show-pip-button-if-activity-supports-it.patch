@@ -1,0 +1,121 @@
+From ef7e7d33c2b5df5d9b8401e68fa220e0fbbb0dd2 Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@outlook.com>
+Date: Sat, 31 Oct 2020 13:52:32 +0800
+Subject: [PATCH 8/8] Only show pip button if activity supports it
+
+Change-Id: Ic15dded12b51a3070bdec802ad41a155637cb802
+Signed-off-by: utzcoz <utzcoz@outlook.com>
+---
+ core/java/android/app/Activity.java           | 16 ++++++++++++-
+ core/java/android/view/Window.java            |  3 +++
+ .../internal/widget/DecorCaptionView.java     | 23 +++++++++++++++----
+ 3 files changed, 36 insertions(+), 6 deletions(-)
+
+diff --git a/core/java/android/app/Activity.java b/core/java/android/app/Activity.java
+index b375eb77825..d860d31a42a 100644
+--- a/core/java/android/app/Activity.java
++++ b/core/java/android/app/Activity.java
+@@ -1016,10 +1016,15 @@ public class Activity extends ContextThemeWrapper
+             return false;
+         }
+         // region @boringdroid
+-        // @Override
++        @Override
+         public void onBackPressed() {
+             Activity.this.onBackPressed();
+         }
++
++        @Override
++        public boolean supportPictureInPictureMode() {
++            return Activity.this.supportPictureInPictureMode();
++        }
+         // endregion
+     };
+ 
+@@ -2928,6 +2933,15 @@ public class Activity extends ContextThemeWrapper
+         return false;
+     }
+ 
++    /**
++     * Check whether the activity supports pip.
++     * @see android.R.attr#supportsPictureInPicture
++     * @hide
++     */
++    public boolean supportPictureInPictureMode() {
++        return mActivityInfo != null && mActivityInfo.supportsPictureInPicture();
++    }
++
+     void dispatchMovedToDisplay(int displayId, Configuration config) {
+         updateDisplay(displayId);
+         onMovedToDisplay(displayId, config);
+diff --git a/core/java/android/view/Window.java b/core/java/android/view/Window.java
+index cd80796c879..67990af9a82 100644
+--- a/core/java/android/view/Window.java
++++ b/core/java/android/view/Window.java
+@@ -657,6 +657,9 @@ public abstract class Window {
+         boolean moveTaskToBack(boolean nonRoot);
+         // region @boringdroid
+         default void onBackPressed() {};
++        default boolean supportPictureInPictureMode() {
++            return false;
++        }
+         // endregion
+     }
+ 
+diff --git a/core/java/com/android/internal/widget/DecorCaptionView.java b/core/java/com/android/internal/widget/DecorCaptionView.java
+index f11ec913a2e..08f75298ad9 100644
+--- a/core/java/com/android/internal/widget/DecorCaptionView.java
++++ b/core/java/com/android/internal/widget/DecorCaptionView.java
+@@ -149,8 +149,11 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+         mOwner.getDecorView().setOutlineProvider(ViewOutlineProvider.BOUNDS);
+         // region @boringdroid
+         mBack = findViewById(R.id.back_window);
+-        // endregion
+         mPip = findViewById(R.id.pip_window);
++        if (mPip != null && !supportPip()) {
++            mPip.setVisibility(View.GONE);
++        }
++        // endregion
+         mMinimize = findViewById(R.id.minimize_window);
+         mMaximize = findViewById(R.id.maximize_window);
+         mClose = findViewById(R.id.close_window);
+@@ -378,14 +381,24 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+         Window.WindowControllerCallback callback = mOwner.getWindowControllerCallback();
+         if (callback != null) {
+             callback.moveTaskToBack(true);
+-		}
++	}
++    }
++
++    // region @boringdroid
++    private boolean supportPip() {
++        Window.WindowControllerCallback callback = mOwner.getWindowControllerCallback();
++        if (callback != null) {
++            return callback.supportPictureInPictureMode();
++        }
++        return false;
+     }
++    // endregion
+ 
+     private void pipWindow() {
+         Window.WindowControllerCallback callback = mOwner.getWindowControllerCallback();
+         if (callback != null) {
+-			callback.enterPictureInPictureModeIfPossible(); /* Send the task to PIP mode if the task supports it. */
+-		}
++	    callback.enterPictureInPictureModeIfPossible(); /* Send the task to PIP mode if the task supports it. */
++	}
+     }
+ 
+     public boolean isCaptionShowing() {
+@@ -402,7 +415,7 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+             mContent = null;
+         }
+     }
+-
++    
+     public View getCaption() {
+         return mCaption;
+     }
+-- 
+2.17.1
+

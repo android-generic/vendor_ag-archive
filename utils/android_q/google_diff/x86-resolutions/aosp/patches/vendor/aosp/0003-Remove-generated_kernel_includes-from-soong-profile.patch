@@ -1,0 +1,48 @@
+From a6b9ac18f59c3ce375c6703194edc862103e447a Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 14 Aug 2020 16:32:06 -0400
+Subject: [PATCH 3/4] Remove generated_kernel_includes from soong profile
+
+Change-Id: Ie93d538f5b6aec3e4678d2a4c2d4faa26177014c
+---
+ build/soong/Android.bp | 27 ---------------------------
+ 1 file changed, 27 deletions(-)
+
+diff --git a/build/soong/Android.bp b/build/soong/Android.bp
+index 7b8529a7..90d5a92f 100644
+--- a/build/soong/Android.bp
++++ b/build/soong/Android.bp
+@@ -23,30 +23,3 @@ bootstrap_go_package {
+     pluginFor: ["soong_build"],
+ }
+ 
+-custom_generator {
+-    name: "generated_kernel_includes",
+-
+-    // The headers make command
+-    cmd: "$(PATH_OVERRIDE_SOONG) $(KERNEL_MAKE_CMD) $(KERNEL_MAKE_FLAGS) -C $(TARGET_KERNEL_HEADERS) O=$(KERNEL_BUILD_OUT_PREFIX)$(genDir) ARCH=$(KERNEL_ARCH) $(KERNEL_CROSS_COMPILE) headers_install",
+-
+-    // Directories that can be imported by a cc_* module generated_headers property
+-    export_include_dirs: [
+-        "usr/audio/include/uapi",
+-        "usr/include",
+-        "usr/include/audio/include/uapi",
+-        "usr/techpack/audio/include",
+-        "usr/audio/include/uapi"
+-    ],
+-
+-    // Sources for dependency tracking
+-    dep_root: "$(TARGET_KERNEL_HEADERS)",
+-    dep_files: [ "Makefile", "include/**/*", "arch/$(KERNEL_ARCH)/include/**/*", "techpack/audio/include/**/*"],
+-}
+-
+-cc_library_headers {
+-    name: "generated_kernel_headers",
+-    generated_headers: ["generated_kernel_includes"],
+-    export_generated_headers: ["generated_kernel_includes"],
+-    vendor_available: true,
+-    recovery_available: true,
+-}
+-- 
+2.17.1
+

@@ -1,0 +1,38 @@
+From 305e4b459176f25c18bafa632cf5811e099240c1 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Fri, 4 Oct 2019 20:04:16 -0400
+Subject: [PATCH] Disable path restriction.
+
+---
+ ui/build/build.go | 2 +-
+ ui/build/path.go  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/ui/build/build.go b/ui/build/build.go
+index 0ae06d61..c2960add 100644
+--- a/ui/build/build.go
++++ b/ui/build/build.go
+@@ -154,7 +154,7 @@ func Build(ctx Context, config Config, what int) {
+ 
+ 	ensureEmptyDirectoriesExist(ctx, config.TempDir())
+ 
+-	SetupPath(ctx, config)
++	//SetupPath(ctx, config)
+ 
+ 	if config.StartGoma() {
+ 		// Ensure start Goma compiler_proxy
+diff --git a/ui/build/path.go b/ui/build/path.go
+index 0e1c02ca..9a087e7e 100644
+--- a/ui/build/path.go
++++ b/ui/build/path.go
+@@ -152,6 +152,6 @@ func SetupPath(ctx Context, config Config) {
+ 	prebuiltsPath, _ := filepath.Abs("prebuilts/build-tools/path/" + runtime.GOOS + "-x86")
+ 	myPath = prebuiltsPath + string(os.PathListSeparator) + myPath
+ 
+-	config.Environment().Set("PATH", myPath)
++	//config.Environment().Set("PATH", myPath)
+ 	config.pathReplaced = true
+ }
+-- 
+2.21.0
+

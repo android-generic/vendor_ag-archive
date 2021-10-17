@@ -1,0 +1,47 @@
+From 531a27622818b0c01a929cb36e0af2c58e706e6e Mon Sep 17 00:00:00 2001
+From: Ethan Chen <intervigil@gmail.com>
+Date: Sat, 9 Feb 2019 22:18:17 -0800
+Subject: [PATCH 08/17] build: Allow build-image-kernel-modules to be called
+ from shell
+
+* $(hide) is a make construct, if $(call build-image-kernel-modules ...)
+  is run by shelling out within make, this breaks.
+* Assume the caller of this function will always hide for it.
+
+Change-Id: I5b56cf9ba76a1f69bcd96966883876381e61983a
+---
+ core/Makefile | 18 +++++++++---------
+ 1 file changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/core/Makefile b/core/Makefile
+index 8d7e6d8014..94cc1f6585 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -1518,15 +1518,15 @@ endef
+ # $(4): staging dir
+ # Depmod requires a well-formed kernel version so 0.0 is used as a placeholder.
+ define build-image-kernel-modules
+-    $(hide) rm -rf $(2)/lib/modules
+-    $(hide) mkdir -p $(2)/lib/modules
+-    $(hide) cp $(1) $(2)/lib/modules/
+-    $(hide) rm -rf $(4)
+-    $(hide) mkdir -p $(4)/lib/modules/0.0/$(3)lib/modules
+-    $(hide) cp $(1) $(4)/lib/modules/0.0/$(3)lib/modules
+-    $(hide) $(DEPMOD) -b $(4) 0.0
+-    $(hide) sed -e 's/\(.*modules.*\):/\/\1:/g' -e 's/ \([^ ]*modules[^ ]*\)/ \/\1/g' $(4)/lib/modules/0.0/modules.dep > $(2)/lib/modules/modules.dep
+-    $(hide) cp $(4)/lib/modules/0.0/modules.alias $(2)/lib/modules
++    rm -rf $(2)/lib/modules
++    mkdir -p $(2)/lib/modules
++    cp $(1) $(2)/lib/modules/
++    rm -rf $(4)
++    mkdir -p $(4)/lib/modules/0.0/$(3)lib/modules
++    cp $(1) $(4)/lib/modules/0.0/$(3)lib/modules
++    $(DEPMOD) -b $(4) 0.0
++    sed -e 's/\(.*modules.*\):/\/\1:/g' -e 's/ \([^ ]*modules[^ ]*\)/ \/\1/g' $(4)/lib/modules/0.0/modules.dep > $(2)/lib/modules/modules.dep
++    cp $(4)/lib/modules/0.0/modules.alias $(2)/lib/modules
+ endef
+ 
+ # -----------------------------------------------------------------
+-- 
+2.17.1
+

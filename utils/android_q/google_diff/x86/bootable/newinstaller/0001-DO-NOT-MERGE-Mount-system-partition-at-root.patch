@@ -1,0 +1,49 @@
+From 12b1c36c25ffe660ddf279c29d2175af9b81bbbe Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Sun, 13 Oct 2019 12:55:12 -0400
+Subject: [PATCH] DO NOT MERGE: Mount system partition at root.
+
+---
+ initrd/init               | 3 +++
+ install/scripts/1-install | 4 ++--
+ 2 files changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/initrd/init b/initrd/init
+index 1e42668..2efe00c 100755
+--- a/initrd/init
++++ b/initrd/init
+@@ -220,6 +220,9 @@ fi
+ # since it conflicts with Android's init
+ echo > /proc/sys/kernel/hotplug
+ 
++# Use correct modprobe location
++echo /bin/modprobe > /proc/sys/kernel/modprobe
++
+ export ANDROID_ROOT=/system
+ 
+ exec ${SWITCH:-switch_root} /android /init
+diff --git a/install/scripts/1-install b/install/scripts/1-install
+index 4964545..a4c0c10 100644
+--- a/install/scripts/1-install
++++ b/install/scripts/1-install
+@@ -213,7 +213,7 @@ format_fs()
+ 	choose "Choose filesystem" "Please select a filesystem to format $1:"
+ 	case "$choice" in
+ 		ext4)
+-			cmd="mkfs.ext3 -L"
++			cmd="mkfs.ext4 -L"
+ 			;;
+ 		ntfs)
+ 			cmd="mkntfs -fL"
+@@ -231,7 +231,7 @@ format_fs()
+ 		$cmd Android-x86 /dev/$1 | awk '{
+ 			# FIXME: very imprecise progress
+ 			if (match($0, "done"))
+-				printf("%d\n", i+=33)
++				printf("%d\n", i+=20)
+ 		}' | progress_bar "Formatting" "Formatting partition $1..."
+ 		convert_fs $1
+ 	elif blkid /dev/$1 | grep -q ext[23]; then
+-- 
+2.24.1
+

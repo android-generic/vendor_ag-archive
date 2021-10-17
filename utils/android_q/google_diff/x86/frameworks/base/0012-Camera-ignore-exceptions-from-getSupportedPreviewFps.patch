@@ -1,0 +1,35 @@
+From 7270984fc4fb9f0db86acc2dfa5f6a3758391c08 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 16 Mar 2018 14:50:39 +0800
+Subject: [PATCH 12/30] Camera: ignore exceptions from
+ getSupportedPreviewFpsRange
+
+---
+ .../android/hardware/camera2/legacy/LegacyMetadataMapper.java | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/core/java/android/hardware/camera2/legacy/LegacyMetadataMapper.java b/core/java/android/hardware/camera2/legacy/LegacyMetadataMapper.java
+index 6953a5b793c3..84b581fb9c2a 100644
+--- a/core/java/android/hardware/camera2/legacy/LegacyMetadataMapper.java
++++ b/core/java/android/hardware/camera2/legacy/LegacyMetadataMapper.java
+@@ -412,7 +412,7 @@ public class LegacyMetadataMapper {
+         /*
+          * control.aeAvailableTargetFpsRanges
+          */
+-        {
++        try {
+             List<int[]> fpsRanges = p.getSupportedPreviewFpsRange();
+             if (fpsRanges == null) {
+                 throw new AssertionError("Supported FPS ranges cannot be null.");
+@@ -429,6 +429,8 @@ public class LegacyMetadataMapper {
+                         (int) Math.ceil(r[Camera.Parameters.PREVIEW_FPS_MAX_INDEX] / 1000.0));
+             }
+             m.set(CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES, ranges);
++        } catch (Exception e) {
++            Log.d(TAG, "ignore any error from getSupportedPreviewFpsRange: ", e);
+         }
+ 
+         /*
+-- 
+2.17.1
+

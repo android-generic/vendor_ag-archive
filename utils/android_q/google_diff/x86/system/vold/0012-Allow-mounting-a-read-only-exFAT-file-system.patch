@@ -1,0 +1,41 @@
+From 97cabd2757ca494ee22cf942a6de283d9c2bc79b Mon Sep 17 00:00:00 2001
+From: server158 <server158@openthos.org>
+Date: Mon, 1 Jun 2020 19:34:05 +0800
+Subject: [PATCH 12/12] Allow mounting a read-only exFAT file system
+
+If exfat::Check() fails, re-check the file system in read-only mode.
+The logic is similar to exfat::Mount().
+---
+ fs/Exfat.cpp | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/fs/Exfat.cpp b/fs/Exfat.cpp
+index 5cc6d36..4ed99b4 100644
+--- a/fs/Exfat.cpp
++++ b/fs/Exfat.cpp
+@@ -42,17 +42,18 @@ bool IsSupported() {
+ status_t Check(const std::string& source) {
+     std::vector<std::string> cmd;
+     cmd.push_back(kFsckPath);
++    cmd.push_back("-a");
+     cmd.push_back(source);
+ 
+     int rc = ForkExecvp(cmd, nullptr, sFsckUntrustedContext);
+     if (rc == 0) {
+         LOG(INFO) << "Check OK";
+         return 0;
+-    } else {
+-        LOG(ERROR) << "Check failed (code " << rc << ")";
+-        errno = EIO;
+-        return -1;
+     }
++
++    // don't write anything to the file system
++    cmd[1] = "-n";
++    return ForkExecvp(cmd, nullptr, sFsckUntrustedContext);
+ }
+ 
+ status_t Mount(const std::string& source, const std::string& target, int ownerUid, int ownerGid,
+-- 
+2.17.1
+

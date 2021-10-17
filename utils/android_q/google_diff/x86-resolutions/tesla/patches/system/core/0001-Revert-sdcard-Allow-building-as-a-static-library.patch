@@ -1,0 +1,90 @@
+From 29796aab030437f4b1ca1f353583808139a81bea Mon Sep 17 00:00:00 2001
+From: Steve Kondik <shade@chemlab.org>
+Date: Fri, 23 Aug 2013 21:12:12 -0700
+Subject: [PATCH] Revert "sdcard: Allow building as a static library"
+
+This reverts commit 81afc976186849c7265dbe078513d63eb1a40e92.
+---
+ sdcard/Android.bp | 21 ++-------------------
+ sdcard/main.c     | 21 ---------------------
+ sdcard/sdcard.cpp |  2 +-
+ 3 files changed, 3 insertions(+), 41 deletions(-)
+ delete mode 100644 sdcard/main.c
+
+diff --git a/sdcard/Android.bp b/sdcard/Android.bp
+index 343ab7911..c096587ba 100644
+--- a/sdcard/Android.bp
++++ b/sdcard/Android.bp
+@@ -1,6 +1,6 @@
+-cc_library_static {
++cc_binary {
+     srcs: ["sdcard.cpp"],
+-    name: "libsdcard",
++    name: "sdcard",
+     cflags: [
+         "-Wall",
+         "-Wno-unused-parameter",
+@@ -15,20 +15,3 @@ cc_library_static {
+         misc_undefined: ["integer"],
+     },
+ }
+-
+-cc_binary {
+-    srcs: ["main.c"],
+-    name: "sdcard",
+-    cflags: [
+-        "-Wall",
+-        "-Wno-unused-parameter",
+-        "-Werror",
+-    ],
+-    static_libs: ["libsdcard"],
+-    shared_libs: [
+-        "libbase",
+-        "libc",
+-        "libcutils",
+-        "libminijail",
+-    ],
+-}
+diff --git a/sdcard/main.c b/sdcard/main.c
+deleted file mode 100644
+index ad2405bdd..000000000
+--- a/sdcard/main.c
++++ /dev/null
+@@ -1,21 +0,0 @@
+-/*
+- * Copyright (C) 2010 The Android Open Source Project
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-extern int sdcard_main(int argc, char **argv);
+-
+-int main(int argc, char **argv) {
+-    return sdcard_main(argc, argv);
+-}
+diff --git a/sdcard/sdcard.cpp b/sdcard/sdcard.cpp
+index 0cc3e10b7..2b358197a 100644
+--- a/sdcard/sdcard.cpp
++++ b/sdcard/sdcard.cpp
+@@ -232,7 +232,7 @@ static int usage() {
+     return 1;
+ }
+ 
+-extern "C" int sdcard_main(int argc, char **argv) {
++int main(int argc, char **argv) {
+     const char *source_path = NULL;
+     const char *label = NULL;
+     uid_t uid = 0;
+-- 
+2.17.1
+

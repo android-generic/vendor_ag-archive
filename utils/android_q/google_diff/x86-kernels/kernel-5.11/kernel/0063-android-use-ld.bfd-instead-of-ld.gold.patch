@@ -1,0 +1,27 @@
+From 192a98647ef5c7374f6a5a066ca6ae3f3728221c Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 25 May 2017 17:16:50 +0800
+Subject: [PATCH 063/106] android: use ld.bfd instead of ld.gold
+
+We build the kernel with android toolchain. But kernel 4.9 needs
+ld.bfd to be linked correctly.
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index de1acaefe87e..4f75e9d5d38a 100644
+--- a/Makefile
++++ b/Makefile
+@@ -436,7 +436,7 @@ READELF		= llvm-readelf
+ STRIP		= llvm-strip
+ else
+ CC		= $(CROSS_COMPILE)gcc
+-LD		= $(CROSS_COMPILE)ld
++LD		= $(CROSS_COMPILE)ld$(if $(wildcard $(lastword $(CROSS_COMPILE))ld.bfd),.bfd)
+ AR		= $(CROSS_COMPILE)ar
+ NM		= $(CROSS_COMPILE)nm
+ OBJCOPY		= $(CROSS_COMPILE)objcopy
+-- 
+2.17.1
+

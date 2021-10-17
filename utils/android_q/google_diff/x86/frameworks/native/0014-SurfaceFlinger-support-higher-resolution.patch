@@ -1,0 +1,28 @@
+From b162e98c996d606ac37176166804474ba65f9c30 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 17 May 2018 17:29:48 +0800
+Subject: [PATCH 14/16] SurfaceFlinger: support higher resolution
+
+---
+ services/surfaceflinger/SurfaceFlinger.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 79504cdf7..676790451 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -831,8 +831,10 @@ status_t SurfaceFlinger::getDisplayConfigs(const sp<IBinder>& displayToken,
+                     density = 140.0f;
+                 } else if (area < 1920 * 1080) {
+                     density = 160.0f;
+-                } else {
++                } else if (area < 2560 * 1600) {
+                     density = 240.0f;
++                } else {
++                    density = 320.0f;
+                 }
+                 ALOGI("auto set density to %f", density);
+             }
+-- 
+2.21.0
+

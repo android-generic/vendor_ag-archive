@@ -1,0 +1,53 @@
+From fd9be707cecd28d88fe58b2e086c092d13cc9b5c Mon Sep 17 00:00:00 2001
+From: Dan Willemsen <dwillemsen@google.com>
+Date: Tue, 27 Aug 2019 00:49:31 -0700
+Subject: [PATCH 03/17] More base_rules.mk optimizations
+
+This saves another 5-15% of makefile eval time (depending on
+target/branch).
+
+I'm not sure if deps-license is still used at all, but we'll only save
+the information for it if it's actually going to run now.
+
+Since the default module tag is "optional", we really don't need to save
+a list of most modules in another variable. I don't see anything that
+really needs to see the list of optional modules.
+
+Test: treehugger
+Change-Id: Iaf54e9932fbe8e61f10bd0c9336fc4fdefea27ab
+---
+ core/base_rules.mk | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/core/base_rules.mk b/core/base_rules.mk
+index d6ab7574b1..d4741099c9 100644
+--- a/core/base_rules.mk
++++ b/core/base_rules.mk
+@@ -890,6 +890,7 @@ INSTALLABLE_FILES.$(LOCAL_INSTALLED_MODULE).MODULE := $(my_register_name)
+ ##########################################################
+ # Track module-level dependencies.
+ # Use $(LOCAL_MODULE) instead of $(my_register_name) to ignore module's bitness.
++ifneq (,$(filter deps-license,$(MAKECMDGOALS)))
+ ALL_DEPS.MODULES := $(ALL_DEPS.MODULES) $(LOCAL_MODULE)
+ ALL_DEPS.$(LOCAL_MODULE).ALL_DEPS := $(sort \
+   $(ALL_MODULES.$(LOCAL_MODULE).ALL_DEPS) \
+@@ -902,6 +903,7 @@ ALL_DEPS.$(LOCAL_MODULE).ALL_DEPS := $(sort \
+   $(LOCAL_JNI_SHARED_LIBRARIES))
+ 
+ ALL_DEPS.$(LOCAL_MODULE).LICENSE := $(sort $(ALL_DEPS.$(LOCAL_MODULE).LICENSE) $(license_files))
++endif
+ 
+ ###########################################################
+ ## Take care of my_module_tags
+@@ -911,7 +913,7 @@ ALL_DEPS.$(LOCAL_MODULE).LICENSE := $(sort $(ALL_DEPS.$(LOCAL_MODULE).LICENSE) $
+ ALL_MODULE_TAGS := $(sort $(ALL_MODULE_TAGS) $(my_module_tags))
+ 
+ # Add this module name to the tag list of each specified tag.
+-$(foreach tag,$(my_module_tags),\
++$(foreach tag,$(filter-out optional,$(my_module_tags)),\
+     $(eval ALL_MODULE_NAME_TAGS.$(tag) := $$(ALL_MODULE_NAME_TAGS.$(tag)) $(my_register_name)))
+ 
+ ###########################################################
+-- 
+2.17.1
+

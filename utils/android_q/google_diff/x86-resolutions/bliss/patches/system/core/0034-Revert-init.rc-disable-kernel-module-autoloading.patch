@@ -1,0 +1,29 @@
+From ba2aebbb3c17f70f4e0ab8d08bf11104be6635cf Mon Sep 17 00:00:00 2001
+From: Eric Biggers <ebiggers@google.com>
+Date: Wed, 11 Mar 2020 09:56:15 -0700
+Subject: [PATCH 3/5] Revert "init.rc: disable kernel module autoloading"
+
+This reverts commit f00d95d987548c8278eecd4cf38ebe9af1726ebe.
+---
+ rootdir/init.rc | 5 -----
+ 1 file changed, 5 deletions(-)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 63524e2daa..ad7b833c1d 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -16,11 +16,6 @@ on early-init
+     # Disable sysrq from keyboard
+     write /proc/sys/kernel/sysrq 0
+ 
+-    # Android doesn't need kernel module autoloading, and it causes SELinux
+-    # denials.  So disable it by setting modprobe to the empty string.  Note: to
+-    # explicitly set a sysctl to an empty string, a trailing newline is needed.
+-    write /proc/sys/kernel/modprobe \n
+-
+     # Set the security context of /adb_keys if present.
+     restorecon /adb_keys
+ 
+-- 
+2.17.1
+

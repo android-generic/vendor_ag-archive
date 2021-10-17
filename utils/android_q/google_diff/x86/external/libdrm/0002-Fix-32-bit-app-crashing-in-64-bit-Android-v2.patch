@@ -1,0 +1,55 @@
+From bade0c6a5b7f2c3981cb779bef2f0a14e9d65c4c Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Tue, 11 Dec 2018 23:22:35 +0100
+Subject: [PATCH 2/5] Fix 32-bit app crashing in 64-bit Android (v2)
+
+Seemingly the 64-bit int is always aligned to 8 in LP64.
+But this is not hold in LP32.
+
+Consequently sizeof(gralloc_drm_handle_t) are different
+between LP64 (which is 18 ints) and LP32 (which is 16 ints).
+As a result, 32-bit apps will crash in 64-bit OS since the
+checking handle->base.numInts != GRALLOC_GBM_HANDLE_NUM_INTS
+is true.
+
+Fix it by always aligning 64-bit int to 8. Besides, to avoid
+additional padding, just exchange the order of data_owner
+and modifier. It aligns modifier to 8 natually.
+This makes gralloc_drm_handle_t fit in 16 ints perfectly.
+
+(v2) gralloc_drm_handle.h patch now applied in gralloc_handle.h
+     and GRALLOC_HANDLE_VERSION updated to 4
+
+Reported-by: Mauro Rossi <issor.oruam@gmail.com>
+Signed-off-by: Chih-Wei Huang <cwhuang@linux.org.tw>
+---
+ android/gralloc_handle.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/android/gralloc_handle.h b/android/gralloc_handle.h
+index bcf753da..d3d975ee 100644
+--- a/android/gralloc_handle.h
++++ b/android/gralloc_handle.h
+@@ -60,16 +60,16 @@ struct gralloc_handle_t {
+ 	uint32_t usage; /* android libhardware usage flags */
+ 
+ 	uint32_t stride; /* the stride in bytes */
+-	uint64_t modifier; /* buffer modifiers */
+-
+ 	int data_owner; /* owner of data (for validation) */
++	uint64_t modifier __attribute__((aligned(8))); /* buffer modifiers */
++
+ 	union {
+ 		void *data; /* pointer to struct gralloc_gbm_bo_t */
+ 		uint64_t reserved;
+ 	} __attribute__((aligned(8)));
+ };
+ 
+-#define GRALLOC_HANDLE_VERSION 3
++#define GRALLOC_HANDLE_VERSION 4
+ #define GRALLOC_HANDLE_MAGIC 0x60585350
+ #define GRALLOC_HANDLE_NUM_FDS 1
+ #define GRALLOC_HANDLE_NUM_INTS (	\
+-- 
+2.17.1
+

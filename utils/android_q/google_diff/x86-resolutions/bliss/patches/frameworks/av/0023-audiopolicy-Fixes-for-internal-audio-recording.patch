@@ -1,0 +1,69 @@
+From 1d98d0d48f744eb4e50a228dc7ad3decdb034d33 Mon Sep 17 00:00:00 2001
+From: jhenrique09 <jhenrique09.mcz@hotmail.com>
+Date: Wed, 21 Aug 2019 22:26:27 -0300
+Subject: [PATCH 2/2] audiopolicy: Fixes for internal audio recording
+
+Syberia: forward port to 10
+
+Change-Id: I393225bb17bdad4306df730c2cdc1e2bac441470
+Signed-off-by: DennySPB <dennyspb@gmail.com>
+Signed-off-by: NurKeinNeid <mralexman3000@gmail.com>
+---
+ services/audiopolicy/enginedefault/src/Engine.cpp    | 12 +++++-------
+ .../managerdefault/AudioPolicyManager.cpp            | 10 +++++++++-
+ 2 files changed, 14 insertions(+), 8 deletions(-)
+
+diff --git a/services/audiopolicy/enginedefault/src/Engine.cpp b/services/audiopolicy/enginedefault/src/Engine.cpp
+index baea665ea0..47df3a713e 100644
+--- a/services/audiopolicy/enginedefault/src/Engine.cpp
++++ b/services/audiopolicy/enginedefault/src/Engine.cpp
+@@ -402,13 +402,6 @@ audio_devices_t Engine::getDeviceForStrategyInt(legacy_strategy strategy,
+     case STRATEGY_REROUTING:
+     case STRATEGY_MEDIA: {
+         uint32_t device2 = AUDIO_DEVICE_NONE;
+-        if (strategy != STRATEGY_SONIFICATION) {
+-            // no sonification on remote submix (e.g. WFD)
+-            if (availableOutputDevices.getDevice(AUDIO_DEVICE_OUT_REMOTE_SUBMIX,
+-                                                 String8("0"), AUDIO_FORMAT_DEFAULT) != 0) {
+-                device2 = availableOutputDevices.types() & AUDIO_DEVICE_OUT_REMOTE_SUBMIX;
+-            }
+-        }
+         if (isInCall() && (strategy == STRATEGY_MEDIA)) {
+             device = getDeviceForStrategyInt(
+                     STRATEGY_PHONE, availableOutputDevices, availableInputDevices, outputs,
+@@ -473,6 +466,11 @@ audio_devices_t Engine::getDeviceForStrategyInt(legacy_strategy strategy,
+         if (device2 == AUDIO_DEVICE_NONE) {
+             device2 = availableOutputDevicesType & AUDIO_DEVICE_OUT_SPEAKER;
+         }
++        if (strategy != STRATEGY_SONIFICATION &&
++                availableOutputDevices.getDevice(AUDIO_DEVICE_OUT_REMOTE_SUBMIX,
++                     String8("0"), AUDIO_FORMAT_DEFAULT) != 0) {
++            device2 |= (availableOutputDevicesType & AUDIO_DEVICE_OUT_REMOTE_SUBMIX);
++        }
+         int device3 = AUDIO_DEVICE_NONE;
+         if (strategy == STRATEGY_MEDIA) {
+             // ARC, SPDIF and AUX_LINE can co-exist with others.
+diff --git a/services/audiopolicy/managerdefault/AudioPolicyManager.cpp b/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
+index 2fb4c8635d..d6bc4233d5 100644
+--- a/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
++++ b/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
+@@ -5785,7 +5785,15 @@ float AudioPolicyManager::computeVolume(IVolumeCurves &curves,
+             volumeDb += SONIFICATION_HEADSET_VOLUME_FACTOR_DB;
+         }
+     }
+-
++    if (!(volumeSource == alarmVolumeSrc || volumeSource == ringVolumeSrc) &&
++            (device & AUDIO_DEVICE_OUT_REMOTE_SUBMIX) &&
++            (device & (AUDIO_DEVICE_OUT_BLUETOOTH_A2DP |
++            AUDIO_DEVICE_OUT_BLUETOOTH_A2DP_HEADPHONES |
++            AUDIO_DEVICE_OUT_WIRED_HEADSET |
++            AUDIO_DEVICE_OUT_WIRED_HEADPHONE |
++            AUDIO_DEVICE_OUT_USB_HEADSET))) {
++        volumeDb = 80.0f;
++    }
+     return volumeDb;
+ }
+ 
+-- 
+2.17.1
+

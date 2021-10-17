@@ -1,0 +1,110 @@
+From 6e58d91f600a174f480a6d5e3f4cd396b339cd4c Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sat, 25 Mar 2017 03:13:40 +0800
+Subject: [PATCH 9/9] DiskInfo: support CD/DVD type
+
+---
+ core/java/android/os/storage/DiskInfo.java | 7 +++++++
+ core/res/res/values-zh-rCN/strings.xml     | 2 ++
+ core/res/res/values-zh-rHK/strings.xml     | 2 ++
+ core/res/res/values-zh-rTW/strings.xml     | 2 ++
+ core/res/res/values/strings.xml            | 5 +++++
+ core/res/res/values/symbols.xml            | 2 ++
+ 6 files changed, 20 insertions(+)
+
+diff --git a/core/java/android/os/storage/DiskInfo.java b/core/java/android/os/storage/DiskInfo.java
+index d3098e54a91..c751002d301 100644
+--- a/core/java/android/os/storage/DiskInfo.java
++++ b/core/java/android/os/storage/DiskInfo.java
+@@ -52,6 +52,7 @@ public class DiskInfo implements Parcelable {
+     public static final int FLAG_USB = 1 << 3;
+     public static final int FLAG_EMMC = 1 << 4;
+     public static final int FLAG_NON_REMOVABLE = 1 << 5;
++    public static final int FLAG_CDROM = 1 << 6;
+ 
+     public final String id;
+     @UnsupportedAppUsage
+@@ -118,6 +119,12 @@ public class DiskInfo implements Parcelable {
+             } else {
+                 return res.getString(com.android.internal.R.string.storage_usb_drive);
+             }
++        } else if ((flags & FLAG_CDROM) != 0) {
++            if (isInteresting(label)) {
++                return res.getString(com.android.internal.R.string.storage_cdrom_label, label);
++            } else {
++                return res.getString(com.android.internal.R.string.storage_cdrom);
++            }
+         } else {
+             return null;
+         }
+diff --git a/core/res/res/values-zh-rCN/strings.xml b/core/res/res/values-zh-rCN/strings.xml
+index a645cd7db90..395f35a552e 100644
+--- a/core/res/res/values-zh-rCN/strings.xml
++++ b/core/res/res/values-zh-rCN/strings.xml
+@@ -1513,6 +1513,8 @@
+     <string name="storage_usb_drive" msgid="448030813201444573">"U 盘"</string>
+     <string name="storage_usb_drive_label" msgid="6631740655876540521">"<xliff:g id="MANUFACTURER">%s</xliff:g> U 盘"</string>
+     <string name="storage_usb" msgid="2391213347883616886">"USB存储器"</string>
++    <string name="storage_cdrom">"CD/DVD 光盘"</string>
++    <string name="storage_cdrom_label">"<xliff:g id="MANUFACTURER">%s</xliff:g> CD/DVD 光盘"</string>
+     <string name="extract_edit_menu_button" msgid="63954536535863040">"修改"</string>
+     <string name="data_usage_warning_title" msgid="9034893717078325845">"数据流量警告"</string>
+     <string name="data_usage_warning_body" msgid="1669325367188029454">"您已使用 <xliff:g id="APP">%s</xliff:g> 的数据流量"</string>
+diff --git a/core/res/res/values-zh-rHK/strings.xml b/core/res/res/values-zh-rHK/strings.xml
+index cb61121b64e..826c88f8952 100644
+--- a/core/res/res/values-zh-rHK/strings.xml
++++ b/core/res/res/values-zh-rHK/strings.xml
+@@ -1513,6 +1513,8 @@
+     <string name="storage_usb_drive" msgid="448030813201444573">"USB 驅動器"</string>
+     <string name="storage_usb_drive_label" msgid="6631740655876540521">"<xliff:g id="MANUFACTURER">%s</xliff:g> USB 驅動器"</string>
+     <string name="storage_usb" msgid="2391213347883616886">"USB 儲存裝置"</string>
++    <string name="storage_cdrom">"CD/DVD 光碟機"</string>
++    <string name="storage_cdrom_label">"<xliff:g id="MANUFACTURER">%s</xliff:g> CD/DVD 光碟機"</string>
+     <string name="extract_edit_menu_button" msgid="63954536535863040">"編輯"</string>
+     <string name="data_usage_warning_title" msgid="9034893717078325845">"數據用量警告"</string>
+     <string name="data_usage_warning_body" msgid="1669325367188029454">"您已使用 <xliff:g id="APP">%s</xliff:g> 流動數據"</string>
+diff --git a/core/res/res/values-zh-rTW/strings.xml b/core/res/res/values-zh-rTW/strings.xml
+index 4d2d86ad985..7eb6a55fde2 100644
+--- a/core/res/res/values-zh-rTW/strings.xml
++++ b/core/res/res/values-zh-rTW/strings.xml
+@@ -1513,6 +1513,8 @@
+     <string name="storage_usb_drive" msgid="448030813201444573">"USB 隨身碟"</string>
+     <string name="storage_usb_drive_label" msgid="6631740655876540521">"<xliff:g id="MANUFACTURER">%s</xliff:g> USB 隨身碟"</string>
+     <string name="storage_usb" msgid="2391213347883616886">"USB 儲存裝置"</string>
++    <string name="storage_cdrom">"CD/DVD 光碟機"</string>
++    <string name="storage_cdrom_label">"<xliff:g id="MANUFACTURER">%s</xliff:g> CD/DVD 光碟機"</string>
+     <string name="extract_edit_menu_button" msgid="63954536535863040">"編輯"</string>
+     <string name="data_usage_warning_title" msgid="9034893717078325845">"數據用量警告"</string>
+     <string name="data_usage_warning_body" msgid="1669325367188029454">"你的數據用量已達 <xliff:g id="APP">%s</xliff:g>"</string>
+diff --git a/core/res/res/values/strings.xml b/core/res/res/values/strings.xml
+index b588e92fd3f..abc90c7ee58 100644
+--- a/core/res/res/values/strings.xml
++++ b/core/res/res/values/strings.xml
+@@ -4052,6 +4052,11 @@
+     <!-- Storage description for USB storage. [CHAR LIMIT=NONE] -->
+     <string name="storage_usb">USB storage</string>
+ 
++    <!-- Storage description for a generic CDROM drive. [CHAR LIMIT=NONE] -->
++    <string name="storage_cdrom">CD/DVD drive</string>
++    <!-- Storage description for a CDROM drive from a specific manufacturer. [CHAR LIMIT=NONE] -->
++    <string name="storage_cdrom_label"><xliff:g id="manufacturer" example="ASUS">%s</xliff:g> CD/DVD drive</string>
++
+     <!-- Button text for the edit menu in input method extract mode. [CHAR LIMIT=16] -->
+     <string name="extract_edit_menu_button">Edit</string>
+ 
+diff --git a/core/res/res/values/symbols.xml b/core/res/res/values/symbols.xml
+index acc40b90dad..897a9973f85 100644
+--- a/core/res/res/values/symbols.xml
++++ b/core/res/res/values/symbols.xml
+@@ -2670,6 +2670,8 @@
+   <java-symbol type="string" name="storage_usb_drive" />
+   <java-symbol type="string" name="storage_usb_drive_label" />
+   <java-symbol type="string" name="storage_usb" />
++  <java-symbol type="string" name="storage_cdrom" />
++  <java-symbol type="string" name="storage_cdrom_label" />
+ 
+   <java-symbol type="drawable" name="ic_eject_24dp" />
+   <java-symbol type="drawable" name="ic_folder_24dp" />
+-- 
+2.17.1
+

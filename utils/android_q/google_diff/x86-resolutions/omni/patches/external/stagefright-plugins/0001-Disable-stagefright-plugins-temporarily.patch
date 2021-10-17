@@ -1,0 +1,23 @@
+From c066e9a38c6987291cd63ecc0dd2110d1df5ce9d Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 22 Mar 2019 11:04:29 +0800
+Subject: [PATCH] Disable stagefright-plugins temporarily
+
+It needs a lot of reworking for pie-x86.
+---
+ Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.mk b/Android.mk
+index 8e17da6..00b6d32 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -21,4 +21,4 @@ LOCAL_PATH := $(call my-dir)
+ SF_COMMON_MK := $(LOCAL_PATH)/common.mk
+ AV_CODEC_LIB := $(if $(filter true,$(BOARD_USE_LIBAV)),libav,ffmpeg)
+ 
+-include $(call first-makefiles-under,$(LOCAL_PATH))
++#include $(call first-makefiles-under,$(LOCAL_PATH))
+-- 
+2.17.1
+

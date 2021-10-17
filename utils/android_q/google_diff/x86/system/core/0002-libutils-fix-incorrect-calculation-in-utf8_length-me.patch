@@ -1,0 +1,54 @@
+From f6896b7054519972af5296e6f68b2619e1521d26 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 8 Aug 2014 18:17:04 +0800
+Subject: [PATCH 02/21] libutils: fix incorrect calculation in utf8_length()
+ method
+
+The first character of utf-8 could be larger than 128. If use signed char
+variable to hold it, it would be treated as negative. That may result in
+some unexpected errors.
+
+For example, without this patch, suppose the code is 0xE88888, then
+first_char is 0xE8 and converted to int32_t type (0xFFFFFFE8) and
+masked with (~to_ignore_mask). The result utf32 is FFF08208
+which is incorrect.
+
+Change-Id: I72b355f380865bc375251eb287fc225fd585a115
+---
+ libutils/Unicode.cpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/libutils/Unicode.cpp b/libutils/Unicode.cpp
+index 24a745ac5..bc08bd115 100644
+--- a/libutils/Unicode.cpp
++++ b/libutils/Unicode.cpp
+@@ -135,7 +135,7 @@ size_t strnlen32(const char32_t *s, size_t maxlen)
+ 
+ static inline int32_t utf32_at_internal(const char* cur, size_t *num_read)
+ {
+-    const char first_char = *cur;
++    const unsigned char first_char = *cur;
+     if ((first_char & 0x80) == 0) { // ASCII
+         *num_read = 1;
+         return *cur;
+@@ -364,7 +364,7 @@ ssize_t utf8_length(const char *src)
+     const char *cur = src;
+     size_t ret = 0;
+     while (*cur != '\0') {
+-        const char first_char = *cur++;
++        const unsigned char first_char = *cur++;
+         if ((first_char & 0x80) == 0) { // ASCII
+             ret += 1;
+             continue;
+@@ -464,7 +464,7 @@ size_t utf8_to_utf32_length(const char *src, size_t src_len)
+     for (cur = src, end = src + src_len, num_to_skip = 1;
+          cur < end;
+          cur += num_to_skip, ret++) {
+-        const char first_char = *cur;
++        const unsigned char first_char = *cur;
+         num_to_skip = 1;
+         if ((first_char & 0x80) == 0) {  // ASCII
+             continue;
+-- 
+2.21.0
+

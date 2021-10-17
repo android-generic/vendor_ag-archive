@@ -1,0 +1,59 @@
+From 63ba51f528497db89e16c182109e45144d1e41d0 Mon Sep 17 00:00:00 2001
+From: Mikhail Naganov <mnaganov@google.com>
+Date: Fri, 10 May 2019 11:26:52 -0700
+Subject: [PATCH 2/2] Revert "Remove usages of USE_XML_AUDIO_POLICY_CONF"
+
+This reverts commit 949bc2d318d5fc70b0c46dd8f05c217cb1da4db7.
+---
+ services/audiopolicy/managerdefault/Android.mk            | 8 ++++++++
+ .../audiopolicy/managerdefault/AudioPolicyManager.cpp     | 8 ++++++++
+ 2 files changed, 16 insertions(+)
+
+diff --git a/services/audiopolicy/managerdefault/Android.mk b/services/audiopolicy/managerdefault/Android.mk
+index c5921c3e6a..684fc9f2ba 100644
+--- a/services/audiopolicy/managerdefault/Android.mk
++++ b/services/audiopolicy/managerdefault/Android.mk
+@@ -15,6 +15,10 @@ LOCAL_SHARED_LIBRARIES := \
+ 
+ ifeq ($(USE_CONFIGURABLE_AUDIO_POLICY), 1)
+ 
++ifneq ($(USE_XML_AUDIO_POLICY_CONF), 1)
++$(error Configurable policy does not support legacy conf file)
++endif #ifneq ($(USE_XML_AUDIO_POLICY_CONF), 1)
++
+ LOCAL_SHARED_LIBRARIES += libaudiopolicyengineconfigurable
+ 
+ else
+@@ -39,6 +43,10 @@ LOCAL_SHARED_LIBRARIES += libmediametrics
+ 
+ LOCAL_SHARED_LIBRARIES += libbinder libhidlbase libxml2
+ 
++ifeq ($(USE_XML_AUDIO_POLICY_CONF), 1)
++LOCAL_CFLAGS += -DUSE_XML_AUDIO_POLICY_CONF
++endif #ifeq ($(USE_XML_AUDIO_POLICY_CONF), 1)
++
+ LOCAL_CFLAGS += -Wall -Werror
+ 
+ LOCAL_MULTILIB := $(AUDIOSERVER_MULTILIB)
+diff --git a/services/audiopolicy/managerdefault/AudioPolicyManager.cpp b/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
+index 00ddcc9de1..2fb4c8635d 100644
+--- a/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
++++ b/services/audiopolicy/managerdefault/AudioPolicyManager.cpp
+@@ -4297,6 +4297,14 @@ AudioPolicyManager::AudioPolicyManager(AudioPolicyClientInterface *clientInterfa
+     initialize();
+ }
+ 
++//  This check is to catch any legacy platform updating to Q without having
++//  switched to XML since its deprecation on O.
++// TODO: after Q release, remove this check and flag as XML is now the only
++//        option and all legacy platform should have transitioned to XML.
++#ifndef USE_XML_AUDIO_POLICY_CONF
++#error Audio policy no longer supports legacy .conf configuration format
++#endif
++
+ void AudioPolicyManager::loadConfig() {
+     if (deserializeAudioPolicyXmlConfig(getConfig()) != NO_ERROR) {
+         ALOGE("could not load audio policy configuration file, setting defaults");
+-- 
+2.17.1
+

@@ -1,0 +1,50 @@
+From a574d8372c7e06737afd5de1397f6059e9508d19 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Wed, 27 Mar 2019 16:55:31 +0800
+Subject: [PATCH 47/54] Input: goodix - invert y axis on Microtech e-tab Pro
+
+The y axis of touchscreen on Microtech e-tab Pro is inverted.
+Apply a quirk similar to commit 8b5a359c.
+
+Signed-off-by: Chih-Wei Huang <cwhuang@linux.org.tw>
+---
+ drivers/input/touchscreen/goodix.c | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/drivers/input/touchscreen/goodix.c b/drivers/input/touchscreen/goodix.c
+index d64009651311..715783cfd484 100644
+--- a/drivers/input/touchscreen/goodix.c
++++ b/drivers/input/touchscreen/goodix.c
+@@ -223,6 +223,19 @@ static const struct dmi_system_id rotated_screen[] = {
+ 	{}
+ };
+ 
++static const struct dmi_system_id y_inverted[] = {
++#if defined(CONFIG_DMI) && defined(CONFIG_X86)
++	{
++		.ident = "Microtech e-tab Pro",
++		.matches = {
++			DMI_MATCH(DMI_SYS_VENDOR, "Microtech"),
++			DMI_MATCH(DMI_PRODUCT_NAME, "e-tab Pro")
++		}
++	},
++#endif
++	{}
++};
++
+ static const struct dmi_system_id nine_bytes_report[] = {
+ #if defined(CONFIG_DMI) && defined(CONFIG_X86)
+ 	{
+@@ -1126,6 +1139,9 @@ static int goodix_configure_dev(struct goodix_ts_data *ts)
+ 		ts->prop.invert_y = true;
+ 		dev_dbg(&ts->client->dev,
+ 			"Applying '180 degrees rotated screen' quirk\n");
++	} else if (dmi_check_system(y_inverted)) {
++		ts->prop.invert_y = true;
++		dev_err(&ts->client->dev, "Applying 'invert y axis' quirk\n");
+ 	}
+ 
+ 	if (dmi_check_system(nine_bytes_report)) {
+-- 
+2.30.2
+

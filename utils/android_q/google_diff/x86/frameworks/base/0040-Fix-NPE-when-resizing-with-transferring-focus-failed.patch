@@ -1,0 +1,93 @@
+From cd96bd4e0bbb4bba682dff7268f94d923a97d7b1 Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@gmail.com>
+Date: Fri, 8 May 2020 00:22:56 +0800
+Subject: [PATCH 06/17] Fix NPE when resizing with transferring focus failed
+
+If InputManager.transferTouchFocus failed when resizing, the
+TaskPositioningController will call TaskPositioner.unregister
+to unregister InputChannel. But the mClientCallback used by
+unregister is initialized by TaskPositioner.startDrag called after
+InputManager.transferTouchFocus, so it will cause NPE problem.
+
+Add NPE checking before using mClientCallback to fix this problem.
+
+Test: atest WmTests:TaskPositioningControllerTests
+
+Change-Id: I245a6a3591975cdbfa6453e490cb88aa2c2fe672
+Signed-off-by: utzcoz <utzcoz@gmail.com>
+(cherry picked from commit 3519e4ebcf57e91120c2586af2a275000722fe3c)
+---
+ .../com/android/server/wm/TaskPositioner.java |  4 ++-
+ .../wm/TaskPositioningControllerTests.java    | 36 +++++++++++++++----
+ 2 files changed, 32 insertions(+), 8 deletions(-)
+
+diff --git a/services/core/java/com/android/server/wm/TaskPositioner.java b/services/core/java/com/android/server/wm/TaskPositioner.java
+index be9756889ff7..7a460d404a8b 100644
+--- a/services/core/java/com/android/server/wm/TaskPositioner.java
++++ b/services/core/java/com/android/server/wm/TaskPositioner.java
+@@ -355,7 +355,9 @@ class TaskPositioner implements IBinder.DeathRecipient {
+         }
+         mDisplayContent.resumeRotationLocked();
+         mDisplayContent = null;
+-        mClientCallback.unlinkToDeath(this, 0 /* flags */);
++        if (mClientCallback != null) {
++            mClientCallback.unlinkToDeath(this, 0 /* flags */);
++        }
+     }
+ 
+     void startDrag(WindowState win, boolean resize, boolean preserveOrientation, float startX,
+diff --git a/services/tests/wmtests/src/com/android/server/wm/TaskPositioningControllerTests.java b/services/tests/wmtests/src/com/android/server/wm/TaskPositioningControllerTests.java
+index eb351b63a469..f56f15de8a58 100644
+--- a/services/tests/wmtests/src/com/android/server/wm/TaskPositioningControllerTests.java
++++ b/services/tests/wmtests/src/com/android/server/wm/TaskPositioningControllerTests.java
+@@ -123,13 +123,7 @@ public class TaskPositioningControllerTests extends WindowTestsBase {
+             assertNull(mTarget.getDragWindowHandleLocked());
+         }
+ 
+-        final DisplayContent content = mock(DisplayContent.class);
+-        when(content.findTaskForResizePoint(anyInt(), anyInt())).thenReturn(mWindow.getTask());
+-        assertNotNull(mWindow.getTask().getTopVisibleAppMainWindow());
+-
+-        mTarget.handleTapOutsideTask(content, 0, 0);
+-        // Wait until the looper processes finishTaskPositioning.
+-        assertTrue(mWm.mH.runWithScissors(() -> { }, TIMEOUT_MS));
++        triggerHandleTapOutsideTask();
+ 
+         synchronized (mWm.mGlobalLock) {
+             assertTrue(mTarget.isPositioningLocked());
+@@ -143,4 +137,32 @@ public class TaskPositioningControllerTests extends WindowTestsBase {
+         assertFalse(mTarget.isPositioningLocked());
+         assertNull(mTarget.getDragWindowHandleLocked());
+     }
++
++    @Test
++    public void testHandleTapOutsideTaskWithTransferTouchFocusFailed() {
++        when(mWm.mInputManager.transferTouchFocus(
++                any(InputChannel.class),
++                any(InputChannel.class))).thenReturn(false);
++        synchronized (mWm.mGlobalLock) {
++            assertFalse(mTarget.isPositioningLocked());
++            assertNull(mTarget.getDragWindowHandleLocked());
++        }
++
++        triggerHandleTapOutsideTask();
++
++        synchronized (mWm.mGlobalLock) {
++            assertFalse(mTarget.isPositioningLocked());
++            assertNull(mTarget.getDragWindowHandleLocked());
++        }
++    }
++
++    private void triggerHandleTapOutsideTask() {
++        final DisplayContent content = mock(DisplayContent.class);
++        when(content.findTaskForResizePoint(anyInt(), anyInt())).thenReturn(mWindow.getTask());
++        assertNotNull(mWindow.getTask().getTopVisibleAppMainWindow());
++
++        mTarget.handleTapOutsideTask(content, 0, 0);
++        // Wait until the looper processes finishTaskPositioning.
++        assertTrue(mWm.mH.runWithScissors(() -> { }, TIMEOUT_MS));
++    }
+ }
+-- 
+2.17.1
+

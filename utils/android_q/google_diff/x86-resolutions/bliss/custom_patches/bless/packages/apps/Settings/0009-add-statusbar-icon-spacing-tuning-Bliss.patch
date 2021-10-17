@@ -1,0 +1,68 @@
+From 84203b69d925ad38da3648af1daefeb516bc134f Mon Sep 17 00:00:00 2001
+From: Victor Bo <bvoid@yandex.ru>
+Date: Sat, 11 Apr 2020 03:07:14 +0300
+Subject: [PATCH 09/12] add statusbar icon spacing tuning (Bliss)
+
+	modified:   res/values/strings.xml
+	modified:   res/xml/display_settings.xml
+	modified:   src/com/android/settings/DisplaySettings.java
+
+Change-Id: I004ad2849e1c8fc3937fed2a834bd666070ec3b3
+---
+ res/values/strings.xml                        | 2 ++
+ res/xml/display_settings.xml                  | 4 ++++
+ src/com/android/settings/DisplaySettings.java | 3 +++
+ 3 files changed, 9 insertions(+)
+
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 6cc265ae5b..dddca608f0 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -10088,6 +10088,8 @@
+     <string name="theme_customization_icon_shape_title">Icon shape</string>
+     <!-- [CHAR_LIMIT=NONE] Developer Settings: Title of the setting which enables overlays to customize the statusbar icon -->
+     <string name="theme_customization_sysui_icon_title">Statusbar Icon</string>
++    <!-- [CHAR_LIMIT=NONE] Developer Settings: Title of the setting which enables overlays to customize the      statusbar icons spacing (e.g. set 2dp paddings). -->
++    <string name="theme_customization_statusbar_title">Status Bar spacing</string>
+     <!-- [CHAR_LIMIT=NONE] Developer Settings: Label for the option that turns off customizations for a given category.-->
+     <string name="theme_customization_device_default">Device default</string>
+ 
+diff --git a/res/xml/display_settings.xml b/res/xml/display_settings.xml
+index 6e788bcaef..907fd69c3d 100644
+--- a/res/xml/display_settings.xml
++++ b/res/xml/display_settings.xml
+@@ -178,6 +178,10 @@
+         android:title="@string/theme_customization_category"
+         android:order="1200"> <!-- Incremented by 100 from last order (i.e. 1100) -->
+ 
++        <ListPreference
++            android:key="android.theme.customization.statusbar"
++            android:title="@string/theme_customization_statusbar_title"/>
++
+     <com.android.settings.display.darkmode.DarkModePreference
+         android:key="dark_ui_mode"
+         android:title="@string/dark_ui_mode"
+diff --git a/src/com/android/settings/DisplaySettings.java b/src/com/android/settings/DisplaySettings.java
+index e606d1c58f..8653292fbb 100644
+--- a/src/com/android/settings/DisplaySettings.java
++++ b/src/com/android/settings/DisplaySettings.java
+@@ -35,6 +35,7 @@ import com.android.settings.display.TapToWakePreferenceController;
+ import com.android.settings.display.ThemePreferenceController;
+ import com.android.settings.display.TimeoutPreferenceController;
+ import com.android.settings.display.VrDisplayPreferenceController;
++import com.android.settings.display.OverlayCategoryPreferenceController;
+ import com.android.settings.search.BaseSearchIndexProvider;
+ import com.android.settings.search.Indexable;
+ import com.android.settingslib.core.AbstractPreferenceController;
+@@ -101,6 +102,8 @@ public class DisplaySettings extends DashboardFragment {
+         controllers.add(new ThemePreferenceController(context));
+         controllers.add(new BrightnessLevelPreferenceController(context, lifecycle));
+         controllers.add(new RefreshRatePreferenceController(context));
++        controllers.add(new OverlayCategoryPreferenceController(context,
++                "android.theme.customization.statusbar"));
+         return controllers;
+     }
+ 
+-- 
+2.25.1
+

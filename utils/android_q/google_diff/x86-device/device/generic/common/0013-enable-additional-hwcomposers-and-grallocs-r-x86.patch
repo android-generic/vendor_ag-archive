@@ -1,0 +1,46 @@
+From 9cde33bcb1fec66731f9c539e84a53f002377397 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 23 Jun 2019 14:53:55 +0200
+Subject: [PATCH 13/36] enable additional hwcomposers and grallocs (r-x86)
+
+HWC=drm_minigbm,intel
+GRALLOC=minigbm,intel
+---
+ BoardConfig.mk  | 7 +++++++
+ gpu/gpu_mesa.mk | 4 ++--
+ 2 files changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 793e2d9..203f2c3 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -98,3 +98,10 @@ USE_XML_AUDIO_POLICY_CONF := 1
+ 
+ BUILD_BROKEN_USES_BUILD_HOST_EXECUTABLE := true
+ BUILD_BROKEN_USES_BUILD_HOST_STATIC_LIBRARY := true
++
++BOARD_USES_MINIGBM := true
++BOARD_USES_MINIGBM_INTEL := true
++BOARD_USES_GRALLOC1 := true
++BOARD_USES_IA_HWCOMPOSER := true
++TARGET_USES_HWC2 ?= true
++#BOARD_USES_VULKAN := true
+diff --git a/gpu/gpu_mesa.mk b/gpu/gpu_mesa.mk
+index 26abe35..e28568f 100644
+--- a/gpu/gpu_mesa.mk
++++ b/gpu/gpu_mesa.mk
+@@ -9,9 +9,9 @@
+ #
+ 
+ PRODUCT_PACKAGES := \
+-    hwcomposer.drm  \
++    hwcomposer.drm hwcomposer.drm_minigbm hwcomposer.intel \
+     gralloc.drm     \
+-    gralloc.gbm     \
++    gralloc.gbm gralloc.minigbm gralloc.intel \
+     libGLES_mesa    \
+     libtxc_dxtn     \
+ 
+-- 
+2.17.1
+

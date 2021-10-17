@@ -1,0 +1,101 @@
+From c3087240906f4fa49b4fef3ec513abf0bf6e2cdc Mon Sep 17 00:00:00 2001
+From: Steve Kondik <steve@cyngn.com>
+Date: Wed, 28 Sep 2016 03:44:50 -0700
+Subject: [PATCH 15/15] stagefright: Trivial FFMPEG fixes
+
+ * Ensure our codecs are never touched for encoders
+ * Don't duplicate InitOMXParams, use utility class
+
+Change-Id: Icde45b4d8b844fdb52b4f11a862ecb57059d17c0
+---
+ media/libstagefright/ACodec.cpp          | 10 +++-------
+ media/libstagefright/Android.bp          |  1 +
+ media/libstagefright/FFMPEGSoftCodec.cpp | 10 +---------
+ 3 files changed, 5 insertions(+), 16 deletions(-)
+
+diff --git a/media/libstagefright/ACodec.cpp b/media/libstagefright/ACodec.cpp
+index f293dab262..9a08f863b0 100644
+--- a/media/libstagefright/ACodec.cpp
++++ b/media/libstagefright/ACodec.cpp
+@@ -3943,11 +3943,7 @@ status_t ACodec::setupVideoEncoder(
+     OMX_VIDEO_CODINGTYPE compressionFormat;
+     err = GetVideoCodingTypeFromMime(mime, &compressionFormat);
+ 
+-    err = FFMPEGSoftCodec::setVideoFormat(err,
+-                msg, mime, mOMX, mOMXNode, mIsEncoder, &compressionFormat,
+-                mComponentName.c_str());
+     if (err != OK) {
+-        ALOGE("Not a supported video mime type: %s", mime);
+         return err;
+     }
+ 
+@@ -5127,7 +5123,7 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
+ 
+                 default:
+                 {
+-                    if (!strncmp(mComponentName.c_str(), "OMX.ffmpeg.", 11)) {
++                    if (!mIsEncoder && !strncmp(mComponentName.c_str(), "OMX.ffmpeg.", 11)) {
+                         err = FFMPEGSoftCodec::getVideoPortFormat(portIndex,
+                                 (int)videoDef->eCompressionFormat, notify, mOMX, mOMXNode);
+                         if (err == OK) {
+@@ -5264,7 +5260,7 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
+ 
+                 case OMX_AUDIO_CodingFLAC:
+                 {
+-                    if (!strncmp(mComponentName.c_str(), "OMX.ffmpeg.", 11)) {
++                    if (!mIsEncoder && !strncmp(mComponentName.c_str(), "OMX.ffmpeg.", 11)) {
+                         err = FFMPEGSoftCodec::getAudioPortFormat(portIndex,
+                                 (int)audioDef->eEncoding, notify, mOMX, mOMXNode);
+                         if (err != OK) {
+@@ -5446,7 +5442,7 @@ status_t ACodec::getPortFormat(OMX_U32 portIndex, sp<AMessage> &notify) {
+                 }
+ 
+                 default:
+-                    if (!strncmp(mComponentName.c_str(), "OMX.ffmpeg.", 11)) {
++                    if (!mIsEncoder && !strncmp(mComponentName.c_str(), "OMX.ffmpeg.", 11)) {
+                         err = FFMPEGSoftCodec::getAudioPortFormat(portIndex,
+                                 (int)audioDef->eEncoding, notify, mOMX, mOMXNode);
+                     }
+diff --git a/media/libstagefright/Android.bp b/media/libstagefright/Android.bp
+index f6742d401d..1d3807771a 100644
+--- a/media/libstagefright/Android.bp
++++ b/media/libstagefright/Android.bp
+@@ -301,6 +301,7 @@ cc_library_static {
+         "libnetd_client",
+         "libutils",
+         "libstagefright_foundation",
++        "libstagefright_omx_utils",
+         "libandroid",
+         "android.hidl.allocator@1.0",
+         "android.hidl.memory@1.0",
+diff --git a/media/libstagefright/FFMPEGSoftCodec.cpp b/media/libstagefright/FFMPEGSoftCodec.cpp
+index d86392e727..2a1689abce 100644
+--- a/media/libstagefright/FFMPEGSoftCodec.cpp
++++ b/media/libstagefright/FFMPEGSoftCodec.cpp
+@@ -28,6 +28,7 @@
+ #include <media/stagefright/foundation/ABitReader.h>
+ 
+ #include <media/stagefright/FFMPEGSoftCodec.h>
++#include <media/stagefright/omx/OMXUtils.h>
+ 
+ #include <media/stagefright/ACodec.h>
+ #include <media/stagefright/MediaCodecList.h>
+@@ -189,15 +190,6 @@ void FFMPEGSoftCodec::convertMessageToMetaDataFF(
+ }
+ 
+ 
+-template<class T>
+-static void InitOMXParams(T *params) {
+-    params->nSize = sizeof(T);
+-    params->nVersion.s.nVersionMajor = 1;
+-    params->nVersion.s.nVersionMinor = 0;
+-    params->nVersion.s.nRevision = 0;
+-    params->nVersion.s.nStep = 0;
+-}
+-
+ const char* FFMPEGSoftCodec::overrideComponentName(
+         uint32_t /*quirks*/, const sp<MetaData> &meta, const char *mime, bool isEncoder) {
+     const char* componentName = NULL;
+-- 
+2.21.0
+

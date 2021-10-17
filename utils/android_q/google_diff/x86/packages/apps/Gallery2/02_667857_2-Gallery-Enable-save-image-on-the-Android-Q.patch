@@ -1,0 +1,98 @@
+From c059a83a207d6eb5058884c5563faa71dc8ac706 Mon Sep 17 00:00:00 2001
+From: "Wang, ArvinX" <arvinx.wang@intel.com>
+Date: Mon, 6 May 2019 14:28:47 +0800
+Subject: [PATCH 2/5] [Gallery] Enable save image on the Android Q
+
+Android Q doesn't allow to access the media "_data" information
+from the mediaProvider, using the display name to access the file
+information.
+
+Change-Id: Ic16b88055b0b028366060adfc816625263d92974
+Tracked-On: https://jira.devtools.intel.com/browse/OAM-79988
+Signed-off-by: Wang, ArvinX <arvinx.wang@intel.com>
+---
+ .../gallery3d/filtershow/tools/SaveImage.java | 48 +++++++++++++++++--
+ 1 file changed, 44 insertions(+), 4 deletions(-)
+
+diff --git a/src/com/android/gallery3d/filtershow/tools/SaveImage.java b/src/com/android/gallery3d/filtershow/tools/SaveImage.java
+index 17d698f15..ecb2ed06d 100644
+--- a/src/com/android/gallery3d/filtershow/tools/SaveImage.java
++++ b/src/com/android/gallery3d/filtershow/tools/SaveImage.java
+@@ -380,7 +380,7 @@ public class SaveImage {
+                     // After this call, mSelectedImageUri will be actually
+                     // pointing at the new file mDestinationFile.
+                     savedUri = SaveImage.linkNewFileToUri(mContext, mSelectedImageUri,
+-                            mDestinationFile, time, !flatten);
++                            mDestinationFile, time, false);
+                 }
+             }
+             if (mCallback != null) {
+@@ -498,6 +498,16 @@ public class SaveImage {
+         // Maintain the suffix during move
+         String to = newSrcFile.getName();
+         String from = srcFile.getName();
++
++        // Android Q doesn't allow to access file real file path from uri
++        if (from.lastIndexOf(".") == -1) {
++            from = getDisplayName(mContext, srcUri);
++        }
++        if (from == null) {
++            Log.d(LOGTAG, "Source file is not a local file, no update.");
++            return srcUri;
++        }
++
+         to = to.substring(to.lastIndexOf("."));
+         from = from.substring(from.lastIndexOf("."));
+
+@@ -588,6 +598,39 @@ public class SaveImage {
+         }
+     }
+
++    private String getDisplayName(Context context, Uri srcUri) {
++        if (srcUri == null) {
++            Log.e(LOGTAG, "srcUri is null.");
++            return null;
++        }
++
++        String scheme = srcUri.getScheme();
++        if (scheme == null) {
++            Log.e(LOGTAG, "scheme is null.");
++            return null;
++        }
++
++        final String[] displayName = new String[1];
++        if (scheme.equals(ContentResolver.SCHEME_CONTENT)) {
++            if (srcUri.getAuthority().equals(MediaStore.AUTHORITY)) {
++                querySource(context, srcUri, new String[] {
++                                ImageColumns.DISPLAY_NAME
++                        },
++                        new ContentResolverQueryCallback() {
++
++                            @Override
++                            public void onCursorResult(Cursor cursor) {
++                                int nameColumnIndex = cursor.getColumnIndex(ImageColumns.DISPLAY_NAME);
++                                displayName[0] = cursor.getString(nameColumnIndex);
++                            }
++                        });
++            }
++        }
++
++        return displayName[0];
++
++    }
++
+     /**
+      * Construct a File object based on the srcUri.
+      * @return The file object. Return null if srcUri is invalid or not a local
+@@ -679,9 +722,6 @@ public class SaveImage {
+                     Images.Media.EXTERNAL_CONTENT_URI, values);
+         } else {
+             context.getContentResolver().update(sourceUri, values, null, null);
+-            if (oldSelectedFile.exists()) {
+-                oldSelectedFile.delete();
+-            }
+         }
+         return result;
+     }
+--
+2.21.0

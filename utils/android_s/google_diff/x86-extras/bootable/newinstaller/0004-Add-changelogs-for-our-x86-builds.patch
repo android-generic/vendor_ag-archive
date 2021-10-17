@@ -1,0 +1,79 @@
+From 516a2b153907f3952b850cde3b6aec74323b97c2 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Tue, 8 Dec 2020 20:36:30 -0500
+Subject: [PATCH 04/11] Add changelogs for our x86 builds
+
+---
+ Android.mk      |  3 +++
+ tools/changelog | 45 +++++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 48 insertions(+)
+ create mode 100755 tools/changelog
+
+diff --git a/Android.mk b/Android.mk
+index 51b90378..e4de5353 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -84,6 +84,9 @@ BUILT_IMG += $(if $(TARGET_PREBUILT_KERNEL),$(TARGET_PREBUILT_KERNEL),$(PRODUCT_
+ ISO_IMAGE := $(PRODUCT_OUT)/$(TARGET_PRODUCT).iso
+ ISOHYBRID := LD_LIBRARY_PATH=$(LOCAL_PATH)/install/lib external/syslinux/bios/utils/isohybrid
+ $(ISO_IMAGE): $(boot_dir) $(BUILT_IMG)
++	# Generate Changelog
++	$(hide) ./bootable/newinstaller/tools/changelog
++	$(hide) mv Changelog.txt $(PRODUCT_OUT)/Changelog-$(BUILD_NAME_VARIANT).txt
+ 	@echo ----- Making iso image ------
+ 	$(hide) sed -i "s|\(Installation CD\)\(.*\)|\1 $(VER)|; s|CMDLINE|$(BOARD_KERNEL_CMDLINE)|" $</isolinux/isolinux.cfg
+ 	$(hide) sed -i "s|VER|$(VER)|; s|CMDLINE|$(BOARD_KERNEL_CMDLINE)|" $</efi/boot/android.cfg
+diff --git a/tools/changelog b/tools/changelog
+new file mode 100755
+index 00000000..b3994b68
+--- /dev/null
++++ b/tools/changelog
+@@ -0,0 +1,45 @@
++#!/bin/sh
++
++BUILD_TOP := $(shell pwd)
++echo $BUILD_TOP
++Changelog=Changelog.txt
++
++DEVICE=$(echo $TARGET_PRODUCT | cut -d "android_")
++echo $DEVICE
++if [ -f $Changelog ];
++then
++	rm -f $Changelog
++fi
++
++touch $Changelog
++
++# Print something to build output
++echo ${bldppl}"Generating changelog..."${txtrst}
++
++for i in $(seq 30);
++do
++export After_Date=`date --date="$i days ago" +%m-%d-%Y`
++k=$(expr $i - 1)
++	export Until_Date=`date --date="$k days ago" +%m-%d-%Y`
++
++	# Line with after --- until was too long for a small ListView
++	echo '====================' >> $Changelog;
++	echo  "     "$Until_Date       >> $Changelog;
++	echo '===================='	>> $Changelog;
++
++while read path;
++do
++    Git_log=`git --git-dir ./${path}/.git log --after=$After_Date --until=$Until_Date --pretty=tformat:"%h  %s  [%an]" --abbrev-commit --abbrev=7`
++    if [ ! -z "${Git_log}" ]; then
++        echo "\n* ${path}\n${Git_log}\n" >> $Changelog;
++    fi
++done < ./.repo/project.list;
++
++done
++sed -i 's/project/   */g' $Changelog
++
++#~ cp $Changelog $BUILD_TOP/out/target/product/$DEVICE/system/etc/
++#~ mv $Changelog $BUILD_TOP/out/target/product/$DEVICE/
++
++#~ cp $Changelog $OUT/system/etc/
++#~ cp $Changelog $OUT/
+-- 
+2.17.1
+

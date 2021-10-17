@@ -1,0 +1,31 @@
+From 4b390c28fa5d0156942f12682c6783f176065c04 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Wed, 18 Mar 2020 16:57:54 -0400
+Subject: [PATCH] Don't recreate build number file if BUILD_NUMBER hasn't
+ changed
+
+---
+ core/main.mk | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/core/main.mk b/core/main.mk
+index e9b1bca4a..348813ebc 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -63,9 +63,11 @@ include $(BUILD_SYSTEM)/clang/config.mk
+ # Write the build number to a file so it can be read back in
+ # without changing the command line every time.  Avoids rebuilds
+ # when using ninja.
+-$(shell mkdir -p $(OUT_DIR) && \
+-    echo -n $(BUILD_NUMBER) > $(OUT_DIR)/build_number.txt)
+ BUILD_NUMBER_FILE := $(OUT_DIR)/build_number.txt
++ifneq ($(shell cat $(BUILD_NUMBER_FILE)),$(BUILD_NUMBER))
++$(shell mkdir -p $(OUT_DIR) && \
++    echo -n $(BUILD_NUMBER) > $(BUILD_NUMBER_FILE))
++endif
+ .KATI_READONLY := BUILD_NUMBER_FILE
+ $(KATI_obsolete_var BUILD_NUMBER,See https://android.googlesource.com/platform/build/+/master/Changes.md#BUILD_NUMBER)
+ 
+-- 
+2.24.1
+

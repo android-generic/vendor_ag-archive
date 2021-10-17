@@ -1,0 +1,110 @@
+From db47679a67d380caf04812730c5c40d855be4920 Mon Sep 17 00:00:00 2001
+From: Sumit Semwal <sumit.semwal@linaro.org>
+Date: Tue, 1 Sep 2020 14:49:00 +0530
+Subject: [PATCH 089/107] mm: memory: Add access_remote_vm_locked variant
+
+This allows accessing a remote vm while the mmap_lock is already
+held by the caller.
+
+While adding support for anonymous vma naming, show_map_vma()
+needs to access the remote vm to get the name of the anonymous vma.
+Since show_map_vma() already holds the mmap_lock, so this _locked
+variant was required.
+
+Signed-off-by: Sumit Semwal <sumit.semwal@linaro.org>
+---
+ include/linux/mm.h |  2 ++
+ mm/memory.c        | 49 ++++++++++++++++++++++++++++++++++++++++------
+ 2 files changed, 45 insertions(+), 6 deletions(-)
+
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index db6ae4d3fb4e..bdf366ba5792 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -1718,6 +1718,8 @@ extern int access_remote_vm(struct mm_struct *mm, unsigned long addr,
+ 		void *buf, int len, unsigned int gup_flags);
+ extern int __access_remote_vm(struct task_struct *tsk, struct mm_struct *mm,
+ 		unsigned long addr, void *buf, int len, unsigned int gup_flags);
++extern int access_remote_vm_locked(struct mm_struct *mm, unsigned long addr,
++				   void *buf, int len, unsigned int gup_flags);
+ 
+ long get_user_pages_remote(struct mm_struct *mm,
+ 			    unsigned long start, unsigned long nr_pages,
+diff --git a/mm/memory.c b/mm/memory.c
+index c48f8df6e502..2695f3216c6a 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -4876,17 +4876,17 @@ EXPORT_SYMBOL_GPL(generic_access_phys);
+ /*
+  * Access another process' address space as given in mm.  If non-NULL, use the
+  * given task for page fault accounting.
++ * This variant assumes that the mmap_lock is already held by the caller, so
++ * doesn't take the mmap_lock.
+  */
+-int __access_remote_vm(struct task_struct *tsk, struct mm_struct *mm,
+-		unsigned long addr, void *buf, int len, unsigned int gup_flags)
++int __access_remote_vm_locked(struct task_struct *tsk, struct mm_struct *mm,
++			      unsigned long addr, void *buf, int len,
++			      unsigned int gup_flags)
+ {
+ 	struct vm_area_struct *vma;
+ 	void *old_buf = buf;
+ 	int write = gup_flags & FOLL_WRITE;
+ 
+-	if (mmap_read_lock_killable(mm))
+-		return 0;
+-
+ 	/* ignore errors, just check how much was successfully transferred */
+ 	while (len) {
+ 		int bytes, ret, offset;
+@@ -4935,9 +4935,46 @@ int __access_remote_vm(struct task_struct *tsk, struct mm_struct *mm,
+ 		buf += bytes;
+ 		addr += bytes;
+ 	}
++	return buf - old_buf;
++}
++
++/*
++ * Access another process' address space as given in mm.  If non-NULL, use the
++ * given task for page fault accounting.
++ */
++int __access_remote_vm(struct task_struct *tsk, struct mm_struct *mm,
++		       unsigned long addr, void *buf, int len, unsigned int gup_flags)
++{
++	int ret;
++
++	if (mmap_read_lock_killable(mm))
++		return 0;
++
++	ret = __access_remote_vm_locked(tsk, mm, addr, buf, len, gup_flags);
+ 	mmap_read_unlock(mm);
+ 
+-	return buf - old_buf;
++	return ret;
++}
++
++/**
++ * access_remote_vm_locked - access another process' address space, without
++ * taking the mmap_lock. This allows nested calls from callers that already have
++ * taken the lock.
++ *
++ * @mm:		the mm_struct of the target address space
++ * @addr:	start address to access
++ * @buf:	source or destination buffer
++ * @len:	number of bytes to transfer
++ * @gup_flags:	flags modifying lookup behaviour
++ *
++ * The caller must hold a reference on @mm, as well as hold the mmap_lock
++ *
++ * Return: number of bytes copied from source to destination.
++ */
++int access_remote_vm_locked(struct mm_struct *mm, unsigned long addr, void *buf,
++			    int len, unsigned int gup_flags)
++{
++	return __access_remote_vm_locked(NULL, mm, addr, buf, len, gup_flags);
+ }
+ 
+ /**
+-- 
+2.17.1
+

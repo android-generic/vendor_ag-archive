@@ -1,0 +1,23 @@
+From 318db1c2b8c37a3c1314f960e4d4985dd724c8e4 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 9 Apr 2021 19:35:31 -0400
+Subject: [PATCH 100/100] update gitignore
+
+---
+ .gitignore | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/.gitignore b/.gitignore
+index 3af66272d6f1..0bcfd85f79d8 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -157,3 +157,6 @@ x509.genkey
+ 
+ # Documentation toolchain
+ sphinx_*/
++
++# AOSP configs
++/configs/
+-- 
+2.17.1
+

@@ -1,0 +1,52 @@
+From 6a6634f64f0aee2cc2543ababd0f3f37d2da0780 Mon Sep 17 00:00:00 2001
+From: Ricardo Cerqueira <cyanogenmod@cerqueira.org>
+Date: Tue, 12 Apr 2011 10:57:22 +0100
+Subject: [PATCH 14/17] Allow a device to generically define its own headers
+
+We have a few cases of devices including specific versions of projects
+just because of modified headers (msm_mdp.h comes to mind), and I just
+had enough of ifdeffing header files for specific cases (the P990 needs
+a lot of these).
+Now... if a target defines a TARGET_SPECIFIC_HEADER_PATH, any headers in
+there will take precedence over the standard ones; for example, on the
+p990, I have
+
+TARGET_SPECIFIC_HEADER_PATH := device/lge/p990/include
+
+which makes, for example, the
+device/lge/p990/include/hardware_legacy/AudioHardwareInterface.h be
+used instead of
+hardware/libhardware_legacy/include/hardware_legacy/AudioHardwareInterface.h
+whenever a source file uses <hardware_legacy/AudioHardwareInterface.h>
+
+Change-Id: I41b62668b60e3f62a6ebd3738d8d2675103a81e6a
+
+build: fix target header overlay
+
+LOCAL_C_INCLUDES as defined by the makefile should be put AFTER
+the overlay includes so the overlay always takes precedence.
+
+Change-Id: I489b2aab6dbacd9122d834f85e07b63ed1271f07
+---
+ core/binary.mk | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/core/binary.mk b/core/binary.mk
+index 5ddf2cd5b3..a498854f9b 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -1306,6 +1306,11 @@ my_tracked_gen_files :=
+ $(foreach f,$(my_tracked_src_files),$(eval my_src_file_obj_$(s):=))
+ my_tracked_src_files :=
+ 
++## Allow a device's own headers to take precedence over global ones
++ifneq ($(TARGET_SPECIFIC_HEADER_PATH),)
++my_c_includes := $(TOPDIR)$(TARGET_SPECIFIC_HEADER_PATH) $(my_c_includes)
++endif
++
+ my_c_includes += $(TOPDIR)$(LOCAL_PATH) $(intermediates) $(generated_sources_dir)
+ 
+ # The platform JNI header is for platform modules only.
+-- 
+2.17.1
+

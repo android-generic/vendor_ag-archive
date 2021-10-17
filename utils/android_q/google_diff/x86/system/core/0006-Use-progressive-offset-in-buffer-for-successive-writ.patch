@@ -1,0 +1,56 @@
+From 09b0e288703ce50db4a7cb153c2b1fc293ee7872 Mon Sep 17 00:00:00 2001
+From: Paul Drews <paul.drews@intel.com>
+Date: Mon, 20 Jun 2011 10:01:24 -0700
+Subject: [PATCH 06/21] Use progressive offset in buffer for successive writes
+
+The code for copying from one raw file to another looped
+back and tried again with a suitably smaller number of bytes
+if the entire buffer was not written on the first try.
+However, it failed to advance an offset in the buffer past
+the bytes that were written.  This could conceivably happen
+under rare circumstances, leading to a corrupted disk image.
+
+This fix defines an offset into the buffer, advancing it by
+the number of bytes written on each successive retry.
+
+Signed-off-by: Paul Drews <paul.drews@intel.com>
+
+Change-Id: I76b8e0b3c0d3b0c32bd2114d0867ac7489808279
+---
+ libdiskconfig/diskutils.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/libdiskconfig/diskutils.c b/libdiskconfig/diskutils.c
+index fe1b4c180..3b73d5e0e 100644
+--- a/libdiskconfig/diskutils.c
++++ b/libdiskconfig/diskutils.c
+@@ -36,6 +36,7 @@ write_raw_image(const char *dst, const char *src, loff_t offset, int test)
+     int dst_fd = -1;
+     int src_fd = -1;
+     uint8_t buffer[2048];
++    ssize_t buf_offset;
+     ssize_t nr_bytes;
+     ssize_t tmp;
+     int done = 0;
+@@ -80,8 +81,9 @@ write_raw_image(const char *dst, const char *src, loff_t offset, int test)
+         if (test)
+             nr_bytes = 0;
+ 
++        buf_offset = 0;
+         while (nr_bytes > 0) {
+-            if ((tmp = write(dst_fd, buffer, nr_bytes)) < 0) {
++            if ((tmp = write(dst_fd, &buffer[buf_offset], nr_bytes)) < 0) {
+                 /* XXX: Should we not even bother with EINTR? */
+                 if (errno == EINTR)
+                     continue;
+@@ -91,6 +93,7 @@ write_raw_image(const char *dst, const char *src, loff_t offset, int test)
+             if (!tmp)
+                 continue;
+             nr_bytes -= tmp;
++            buf_offset += tmp;
+         }
+     }
+ 
+-- 
+2.21.0
+

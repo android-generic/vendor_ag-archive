@@ -1,0 +1,29 @@
+From 6725785c1a0f51dd5163a10ebcf3ba4426322732 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 29 Aug 2020 13:09:49 -0400
+Subject: [PATCH] Build Trebuchet with LOS
+
+Change-Id: Icb49168f9cef6d8716ebcdb466d7b8f0a9f2addb
+---
+ config/common.mk | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/config/common.mk b/config/common.mk
+index 7d971bba..1758d861 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -114,7 +114,10 @@ PRODUCT_PACKAGES += \
+     LineageParts \
+     LineageSettingsProvider \
+     LineageSetupWizard \
+-    Updater
++    Updater \
++    Trebuchet \
++    TrebuchetQuickStep \
++    privapp_whitelist_com.android.launcher3-ext.xml \
+ 
+ # Themes
+ PRODUCT_PACKAGES += \
+-- 
+2.17.1
+

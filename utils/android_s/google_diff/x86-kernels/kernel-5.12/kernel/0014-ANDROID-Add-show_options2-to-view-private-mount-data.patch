@@ -1,0 +1,57 @@
+From 79efbd9de8717bc697c3f99fdf30749a3e4e4200 Mon Sep 17 00:00:00 2001
+From: Daniel Rosenberg <drosen@google.com>
+Date: Tue, 16 Jul 2019 18:09:39 -0700
+Subject: [PATCH 014/100] ANDROID: Add show_options2 to view private mount data
+
+Exposes private fs data via show_options2
+
+Bug: 120446149
+Change-Id: I2d1c06fae274eeac03ac1924ef162f7bbb2f29d0
+Signed-off-by: Daniel Rosenberg <drosen@google.com>
+Signed-off-by: Matthias Maennich <maennich@google.com>
+---
+ fs/proc_namespace.c | 8 ++++++--
+ include/linux/fs.h  | 1 +
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/fs/proc_namespace.c b/fs/proc_namespace.c
+index 392ef5162655..c79cfb30d841 100644
+--- a/fs/proc_namespace.c
++++ b/fs/proc_namespace.c
+@@ -125,7 +125,9 @@ static int show_vfsmnt(struct seq_file *m, struct vfsmount *mnt)
+ 	if (err)
+ 		goto out;
+ 	show_mnt_opts(m, mnt);
+-	if (sb->s_op->show_options)
++	if (sb->s_op->show_options2)
++		err = sb->s_op->show_options2(mnt, m, mnt_path.dentry);
++	else if (sb->s_op->show_options)
+ 		err = sb->s_op->show_options(m, mnt_path.dentry);
+ 	seq_puts(m, " 0 0\n");
+ out:
+@@ -187,7 +189,9 @@ static int show_mountinfo(struct seq_file *m, struct vfsmount *mnt)
+ 	err = show_sb_opts(m, sb);
+ 	if (err)
+ 		goto out;
+-	if (sb->s_op->show_options)
++	if (sb->s_op->show_options2) {
++		err = sb->s_op->show_options2(mnt, m, mnt->mnt_root);
++	} else if (sb->s_op->show_options)
+ 		err = sb->s_op->show_options(m, mnt->mnt_root);
+ 	seq_putc(m, '\n');
+ out:
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index bc96c5fd885f..0ce05c586484 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2039,6 +2039,7 @@ struct super_operations {
+ 	void (*umount_begin) (struct super_block *);
+ 
+ 	int (*show_options)(struct seq_file *, struct dentry *);
++	int (*show_options2)(struct vfsmount *,struct seq_file *, struct dentry *);
+ 	int (*show_devname)(struct seq_file *, struct dentry *);
+ 	int (*show_path)(struct seq_file *, struct dentry *);
+ 	int (*show_stats)(struct seq_file *, struct dentry *);
+-- 
+2.17.1
+

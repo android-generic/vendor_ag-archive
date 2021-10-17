@@ -1,0 +1,33 @@
+From 002fd3311703d5c346628f2fad570396ca004e4e Mon Sep 17 00:00:00 2001
+From: Dan Willemsen <dwillemsen@google.com>
+Date: Mon, 26 Aug 2019 23:25:17 -0700
+Subject: [PATCH 02/17] Improve performance (don't filter ALL_MODULES)
+
+It turns out that this single line was responsible for 28-44% of the
+time we spent parsing makefiles. So instead of filtering across
+$(ALL_MODULES), check to see if a variable that we always would set is
+set.
+
+Test: treehugger
+Test: check kati-build eval time before/after
+Change-Id: I946c2efd060181a4ae9edd3409c53d9b49a58285
+---
+ core/base_rules.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/core/base_rules.mk b/core/base_rules.mk
+index 94aa1e4a92..d6ab7574b1 100644
+--- a/core/base_rules.mk
++++ b/core/base_rules.mk
+@@ -760,7 +760,7 @@ endif  # LOCAL_PRESUBMIT_DISABLED
+ ## Register with ALL_MODULES
+ ###########################################################
+ 
+-ifeq ($(filter $(my_register_name),$(ALL_MODULES)),)
++ifndef ALL_MODULES.$(my_register_name).PATH
+     # These keys are no longer used, they've been replaced by keys that specify
+     # target/host/host_cross (REQUIRED_FROM_TARGET / REQUIRED_FROM_HOST) and similar.
+     #
+-- 
+2.17.1
+

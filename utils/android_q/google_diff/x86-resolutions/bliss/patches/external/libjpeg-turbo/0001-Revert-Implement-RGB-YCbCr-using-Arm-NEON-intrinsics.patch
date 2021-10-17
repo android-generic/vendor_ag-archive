@@ -1,0 +1,1422 @@
+From 119501e3b21d12ea5207f5e57725cf87c84b695f Mon Sep 17 00:00:00 2001
+From: Jonathan Wright <jonathan.wright@arm.com>
+Date: Wed, 1 Jul 2020 15:23:50 +0100
+Subject: [PATCH 1/2] Revert "Implement RGB->YCbCr using Arm NEON intrinsics"
+
+This reverts commit aaed50ecdde6775aad3dbcb750c97d5d2d264545.
+---
+ Android.bp                     |   2 -
+ simd/arm/arm/jccolext-neon.c   | 145 ---------------
+ simd/arm/arm/jsimd_neon.S      | 310 ++++++++++++++++++++++++++++++++
+ simd/arm/arm64/jccolext-neon.c | 312 --------------------------------
+ simd/arm/arm64/jsimd.c         |  30 +++-
+ simd/arm/arm64/jsimd_neon.S    | 319 +++++++++++++++++++++++++++++++++
+ simd/arm/common/jccolor-neon.c | 156 ----------------
+ simd/jsimd.h                   |   7 +
+ 8 files changed, 662 insertions(+), 619 deletions(-)
+ delete mode 100644 simd/arm/arm/jccolext-neon.c
+ delete mode 100644 simd/arm/arm64/jccolext-neon.c
+ delete mode 100644 simd/arm/common/jccolor-neon.c
+
+diff --git a/Android.bp b/Android.bp
+index d55dcb26..9fc74598 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -75,7 +75,6 @@ cc_defaults {
+             srcs: [
+                 "simd/arm/arm/jsimd.c",
+                 "simd/arm/arm/jsimd_neon.S",
+-                "simd/arm/common/jccolor-neon.c",
+                 "simd/arm/common/jcsample-neon.c",
+                 "simd/arm/common/jdcolor-neon.c",
+                 "simd/arm/common/jdmerge-neon.c",
+@@ -90,7 +89,6 @@ cc_defaults {
+             srcs: [
+                 "simd/arm/arm64/jsimd.c",
+                 "simd/arm/arm64/jsimd_neon.S",
+-                "simd/arm/common/jccolor-neon.c",
+                 "simd/arm/common/jcsample-neon.c",
+                 "simd/arm/common/jdcolor-neon.c",
+                 "simd/arm/common/jdmerge-neon.c",
+diff --git a/simd/arm/arm/jccolext-neon.c b/simd/arm/arm/jccolext-neon.c
+deleted file mode 100644
+index 1e631b71..00000000
+--- a/simd/arm/arm/jccolext-neon.c
++++ /dev/null
+@@ -1,145 +0,0 @@
+-/*
+- * jccolext-neon.c - colorspace conversion (Arm NEON)
+- *
+- * Copyright 2020 The Chromium Authors. All Rights Reserved.
+- *
+- * This software is provided 'as-is', without any express or implied
+- * warranty.  In no event will the authors be held liable for any damages
+- * arising from the use of this software.
+- *
+- * Permission is granted to anyone to use this software for any purpose,
+- * including commercial applications, and to alter it and redistribute it
+- * freely, subject to the following restrictions:
+- *
+- * 1. The origin of this software must not be misrepresented; you must not
+- *    claim that you wrote the original software. If you use this software
+- *    in a product, an acknowledgment in the product documentation would be
+- *    appreciated but is not required.
+- * 2. Altered source versions must be plainly marked as such, and must not be
+- *    misrepresented as being the original software.
+- * 3. This notice may not be removed or altered from any source distribution.
+- */
+-
+-/* This file is included by jccolor-neon.c */
+-
+-/*
+- * RGB -> YCbCr conversion is defined by the following equations:
+- *    Y  =  0.29900 * R + 0.58700 * G + 0.11400 * B
+- *    Cb = -0.16874 * R - 0.33126 * G + 0.50000 * B  + 128
+- *    Cr =  0.50000 * R - 0.41869 * G - 0.08131 * B  + 128
+- *
+- * Avoid floating point arithmetic by using shifted integer constants:
+- *    0.29899597 = 19595 * 2^-16
+- *    0.58700561 = 38470 * 2^-16
+- *    0.11399841 =  7471 * 2^-16
+- *    0.16874695 = 11059 * 2^-16
+- *    0.33125305 = 21709 * 2^-16
+- *    0.50000000 = 32768 * 2^-16
+- *    0.41868592 = 27439 * 2^-16
+- *    0.08131409 =  5329 * 2^-16
+- * These constants are defined in jccolor-neon.c
+- *
+- * To ensure rounding gives correct values, we add 0.5 to Cb and Cr.
+- */
+-
+-void jsimd_rgb_ycc_convert_neon(JDIMENSION image_width,
+-                                JSAMPARRAY input_buf,
+-                                JSAMPIMAGE output_buf,
+-                                JDIMENSION output_row,
+-                                int num_rows)
+-{
+-  /* Pointer to RGB(X/A) input data. */
+-  JSAMPROW inptr;
+-  /* Pointers to Y, Cb and Cr output data. */
+-  JSAMPROW outptr0, outptr1, outptr2;
+-
+-  /* Setup conversion constants. */
+-#if defined(__clang__)
+-  const uint16x4x2_t consts = vld1_u16_x2(jsimd_rgb_ycc_neon_consts);
+-#else
+-  /* GCC does not currently support the intrinsic vld1_<type>_x2(). */
+-  const uint16x4_t consts1 = vld1_u16(jsimd_rgb_ycc_neon_consts);
+-  const uint16x4_t consts2 = vld1_u16(jsimd_rgb_ycc_neon_consts + 4);
+-  const uint16x4x2_t consts = { consts1, consts2 };
+-#endif
+-  const uint32x4_t scaled_128_5 = vdupq_n_u32((128 << 16) + 32767);
+-
+-  while (--num_rows >= 0) {
+-    inptr = *input_buf++;
+-    outptr0 = output_buf[0][output_row];
+-    outptr1 = output_buf[1][output_row];
+-    outptr2 = output_buf[2][output_row];
+-    output_row++;
+-
+-    int cols_remaining = image_width;
+-    for (; cols_remaining > 0; cols_remaining -= 8) {
+-
+-      /* To prevent buffer overread by the vector load instructions, the */
+-      /* last (image_width % 8) columns of data are first memcopied to a */
+-      /* temporary buffer large enough to accommodate the vector load. */
+-      if (cols_remaining < 8) {
+-        uint8_t __attribute__((aligned(8))) tmp_buf[8 * RGB_PIXELSIZE];
+-        memcpy(tmp_buf, inptr, cols_remaining * RGB_PIXELSIZE);
+-        inptr = tmp_buf;
+-      }
+-
+-#if RGB_PIXELSIZE == 4
+-      uint8x8x4_t input_pixels = vld4_u8(inptr);
+-#else
+-      uint8x8x3_t input_pixels = vld3_u8(inptr);
+-#endif
+-      uint16x8_t r = vmovl_u8(input_pixels.val[RGB_RED]);
+-      uint16x8_t g = vmovl_u8(input_pixels.val[RGB_GREEN]);
+-      uint16x8_t b = vmovl_u8(input_pixels.val[RGB_BLUE]);
+-
+-      /* Compute Y = 0.29900 * R + 0.58700 * G + 0.11400 * B */
+-      uint32x4_t y_low = vmull_lane_u16(vget_low_u16(r), consts.val[0], 0);
+-      y_low = vmlal_lane_u16(y_low, vget_low_u16(g), consts.val[0], 1);
+-      y_low = vmlal_lane_u16(y_low, vget_low_u16(b), consts.val[0], 2);
+-      uint32x4_t y_high = vmull_lane_u16(vget_high_u16(r), consts.val[0], 0);
+-      y_high = vmlal_lane_u16(y_high, vget_high_u16(g), consts.val[0], 1);
+-      y_high = vmlal_lane_u16(y_high, vget_high_u16(b), consts.val[0], 2);
+-
+-      /* Compute Cb = -0.16874 * R - 0.33126 * G + 0.50000 * B  + 128 */
+-      uint32x4_t cb_low = scaled_128_5;
+-      cb_low = vmlsl_lane_u16(cb_low, vget_low_u16(r), consts.val[0], 3);
+-      cb_low = vmlsl_lane_u16(cb_low, vget_low_u16(g), consts.val[1], 0);
+-      cb_low = vmlal_lane_u16(cb_low, vget_low_u16(b), consts.val[1], 1);
+-      uint32x4_t cb_high = scaled_128_5;
+-      cb_high = vmlsl_lane_u16(cb_high, vget_high_u16(r), consts.val[0], 3);
+-      cb_high = vmlsl_lane_u16(cb_high, vget_high_u16(g), consts.val[1], 0);
+-      cb_high = vmlal_lane_u16(cb_high, vget_high_u16(b), consts.val[1], 1);
+-
+-      /* Compute Cr = 0.50000 * R - 0.41869 * G - 0.08131 * B  + 128 */
+-      uint32x4_t cr_low = scaled_128_5;
+-      cr_low = vmlal_lane_u16(cr_low, vget_low_u16(r), consts.val[1], 1);
+-      cr_low = vmlsl_lane_u16(cr_low, vget_low_u16(g), consts.val[1], 2);
+-      cr_low = vmlsl_lane_u16(cr_low, vget_low_u16(b), consts.val[1], 3);
+-      uint32x4_t cr_high = scaled_128_5;
+-      cr_high = vmlal_lane_u16(cr_high, vget_high_u16(r), consts.val[1], 1);
+-      cr_high = vmlsl_lane_u16(cr_high, vget_high_u16(g), consts.val[1], 2);
+-      cr_high = vmlsl_lane_u16(cr_high, vget_high_u16(b), consts.val[1], 3);
+-
+-      /* Descale Y values (rounding right shift) and narrow to 16-bit. */
+-      uint16x8_t y_u16 = vcombine_u16(vrshrn_n_u32(y_low, 16),
+-                                      vrshrn_n_u32(y_high, 16));
+-      /* Descale Cb values (right shift) and narrow to 16-bit. */
+-      uint16x8_t cb_u16 = vcombine_u16(vshrn_n_u32(cb_low, 16),
+-                                       vshrn_n_u32(cb_high, 16));
+-      /* Descale Cr values (right shift) and narrow to 16-bit. */
+-      uint16x8_t cr_u16 = vcombine_u16(vshrn_n_u32(cr_low, 16),
+-                                       vshrn_n_u32(cr_high, 16));
+-      /* Narrow Y, Cb and Cr values to 8-bit and store to memory. Buffer */
+-      /* overwrite is permitted up to the next multiple of ALIGN_SIZE bytes. */
+-      vst1_u8(outptr0, vmovn_u16(y_u16));
+-      vst1_u8(outptr1, vmovn_u16(cb_u16));
+-      vst1_u8(outptr2, vmovn_u16(cr_u16));
+-
+-      /* Increment pointers. */
+-      inptr += (8 * RGB_PIXELSIZE);
+-      outptr0 += 8;
+-      outptr1 += 8;
+-      outptr2 += 8;
+-    }
+-  }
+-}
+diff --git a/simd/arm/arm/jsimd_neon.S b/simd/arm/arm/jsimd_neon.S
+index 2aac28be..c3797736 100644
+--- a/simd/arm/arm/jsimd_neon.S
++++ b/simd/arm/arm/jsimd_neon.S
+@@ -62,6 +62,316 @@ _\fname:
+ 
+ #define CENTERJSAMPLE  128
+ 
++/*****************************************************************************/
++
++/*
++ * jsimd_extrgb_ycc_convert_neon
++ * jsimd_extbgr_ycc_convert_neon
++ * jsimd_extrgbx_ycc_convert_neon
++ * jsimd_extbgrx_ycc_convert_neon
++ * jsimd_extxbgr_ycc_convert_neon
++ * jsimd_extxrgb_ycc_convert_neon
++ *
++ * Colorspace conversion RGB -> YCbCr
++ */
++
++.macro do_store size
++  .if \size == 8
++    vst1.8          {d20}, [Y]!
++    vst1.8          {d21}, [U]!
++    vst1.8          {d22}, [V]!
++  .elseif \size == 4
++    vst1.8          {d20[0]}, [Y]!
++    vst1.8          {d20[1]}, [Y]!
++    vst1.8          {d20[2]}, [Y]!
++    vst1.8          {d20[3]}, [Y]!
++    vst1.8          {d21[0]}, [U]!
++    vst1.8          {d21[1]}, [U]!
++    vst1.8          {d21[2]}, [U]!
++    vst1.8          {d21[3]}, [U]!
++    vst1.8          {d22[0]}, [V]!
++    vst1.8          {d22[1]}, [V]!
++    vst1.8          {d22[2]}, [V]!
++    vst1.8          {d22[3]}, [V]!
++  .elseif \size == 2
++    vst1.8          {d20[4]}, [Y]!
++    vst1.8          {d20[5]}, [Y]!
++    vst1.8          {d21[4]}, [U]!
++    vst1.8          {d21[5]}, [U]!
++    vst1.8          {d22[4]}, [V]!
++    vst1.8          {d22[5]}, [V]!
++  .elseif \size == 1
++    vst1.8          {d20[6]}, [Y]!
++    vst1.8          {d21[6]}, [U]!
++    vst1.8          {d22[6]}, [V]!
++  .else
++    .error unsupported macroblock size
++  .endif
++.endm
++
++.macro do_load bpp, size
++  .if \bpp == 24
++    .if \size == 8
++      vld3.8        {d10, d11, d12}, [RGB]!
++      pld           [RGB, #128]
++    .elseif \size == 4
++      vld3.8        {d10[0], d11[0], d12[0]}, [RGB]!
++      vld3.8        {d10[1], d11[1], d12[1]}, [RGB]!
++      vld3.8        {d10[2], d11[2], d12[2]}, [RGB]!
++      vld3.8        {d10[3], d11[3], d12[3]}, [RGB]!
++    .elseif \size == 2
++      vld3.8        {d10[4], d11[4], d12[4]}, [RGB]!
++      vld3.8        {d10[5], d11[5], d12[5]}, [RGB]!
++    .elseif \size == 1
++      vld3.8        {d10[6], d11[6], d12[6]}, [RGB]!
++    .else
++      .error unsupported macroblock size
++    .endif
++  .elseif \bpp == 32
++    .if \size == 8
++      vld4.8        {d10, d11, d12, d13}, [RGB]!
++      pld           [RGB, #128]
++    .elseif \size == 4
++      vld4.8        {d10[0], d11[0], d12[0], d13[0]}, [RGB]!
++      vld4.8        {d10[1], d11[1], d12[1], d13[1]}, [RGB]!
++      vld4.8        {d10[2], d11[2], d12[2], d13[2]}, [RGB]!
++      vld4.8        {d10[3], d11[3], d12[3], d13[3]}, [RGB]!
++    .elseif \size == 2
++      vld4.8        {d10[4], d11[4], d12[4], d13[4]}, [RGB]!
++      vld4.8        {d10[5], d11[5], d12[5], d13[5]}, [RGB]!
++    .elseif \size == 1
++      vld4.8        {d10[6], d11[6], d12[6], d13[6]}, [RGB]!
++    .else
++      .error unsupported macroblock size
++    .endif
++  .else
++    .error unsupported bpp
++  .endif
++.endm
++
++.macro generate_jsimd_rgb_ycc_convert_neon colorid, bpp, r_offs, g_offs, b_offs
++
++/*
++ * 2-stage pipelined RGB->YCbCr conversion
++ */
++
++.macro do_rgb_to_yuv_stage1
++    vmovl.u8        q2, d1\r_offs  /* r = { d4, d5 } */
++    vmovl.u8        q3, d1\g_offs  /* g = { d6, d7 } */
++    vmovl.u8        q4, d1\b_offs  /* b = { d8, d9 } */
++    vmull.u16       q7, d4, d0[0]
++    vmlal.u16       q7, d6, d0[1]
++    vmlal.u16       q7, d8, d0[2]
++    vmull.u16       q8, d5, d0[0]
++    vmlal.u16       q8, d7, d0[1]
++    vmlal.u16       q8, d9, d0[2]
++    vrev64.32       q9, q1
++    vrev64.32       q13, q1
++    vmlsl.u16       q9, d4, d0[3]
++    vmlsl.u16       q9, d6, d1[0]
++    vmlal.u16       q9, d8, d1[1]
++    vmlsl.u16       q13, d5, d0[3]
++    vmlsl.u16       q13, d7, d1[0]
++    vmlal.u16       q13, d9, d1[1]
++    vrev64.32       q14, q1
++    vrev64.32       q15, q1
++    vmlal.u16       q14, d4, d1[1]
++    vmlsl.u16       q14, d6, d1[2]
++    vmlsl.u16       q14, d8, d1[3]
++    vmlal.u16       q15, d5, d1[1]
++    vmlsl.u16       q15, d7, d1[2]
++    vmlsl.u16       q15, d9, d1[3]
++.endm
++
++.macro do_rgb_to_yuv_stage2
++    vrshrn.u32      d20, q7, #16
++    vrshrn.u32      d21, q8, #16
++    vshrn.u32       d22, q9, #16
++    vshrn.u32       d23, q13, #16
++    vshrn.u32       d24, q14, #16
++    vshrn.u32       d25, q15, #16
++    vmovn.u16       d20, q10       /* d20 = y */
++    vmovn.u16       d21, q11       /* d21 = u */
++    vmovn.u16       d22, q12       /* d22 = v */
++.endm
++
++.macro do_rgb_to_yuv
++    do_rgb_to_yuv_stage1
++    do_rgb_to_yuv_stage2
++.endm
++
++.macro do_rgb_to_yuv_stage2_store_load_stage1
++      vrshrn.u32      d20, q7, #16
++      vrshrn.u32      d21, q8, #16
++      vshrn.u32       d22, q9, #16
++    vrev64.32       q9, q1
++      vshrn.u32       d23, q13, #16
++    vrev64.32       q13, q1
++      vshrn.u32       d24, q14, #16
++      vshrn.u32       d25, q15, #16
++    do_load         \bpp, 8
++      vmovn.u16       d20, q10     /* d20 = y */
++    vmovl.u8        q2, d1\r_offs  /* r = { d4, d5 } */
++      vmovn.u16       d21, q11     /* d21 = u */
++    vmovl.u8        q3, d1\g_offs  /* g = { d6, d7 } */
++      vmovn.u16       d22, q12     /* d22 = v */
++    vmovl.u8        q4, d1\b_offs  /* b = { d8, d9 } */
++    vmull.u16       q7, d4, d0[0]
++    vmlal.u16       q7, d6, d0[1]
++    vmlal.u16       q7, d8, d0[2]
++      vst1.8          {d20}, [Y]!
++    vmull.u16       q8, d5, d0[0]
++    vmlal.u16       q8, d7, d0[1]
++    vmlal.u16       q8, d9, d0[2]
++    vmlsl.u16       q9, d4, d0[3]
++    vmlsl.u16       q9, d6, d1[0]
++    vmlal.u16       q9, d8, d1[1]
++      vst1.8          {d21}, [U]!
++    vmlsl.u16       q13, d5, d0[3]
++    vmlsl.u16       q13, d7, d1[0]
++    vmlal.u16       q13, d9, d1[1]
++    vrev64.32       q14, q1
++    vrev64.32       q15, q1
++    vmlal.u16       q14, d4, d1[1]
++    vmlsl.u16       q14, d6, d1[2]
++    vmlsl.u16       q14, d8, d1[3]
++      vst1.8          {d22}, [V]!
++    vmlal.u16       q15, d5, d1[1]
++    vmlsl.u16       q15, d7, d1[2]
++    vmlsl.u16       q15, d9, d1[3]
++.endm
++
++.balign 16
++jsimd_\colorid\()_ycc_neon_consts:
++  .short 19595, 38470, 7471,  11059
++  .short 21709, 32768, 27439, 5329
++  .short 32767, 128,   32767, 128
++  .short 32767, 128,   32767, 128
++
++asm_function jsimd_\colorid\()_ycc_convert_neon
++    OUTPUT_WIDTH    .req r0
++    INPUT_BUF       .req r1
++    OUTPUT_BUF      .req r2
++    OUTPUT_ROW      .req r3
++    NUM_ROWS        .req r4
++
++    OUTPUT_BUF0     .req r5
++    OUTPUT_BUF1     .req r6
++    OUTPUT_BUF2     .req OUTPUT_BUF
++
++    RGB             .req r7
++    Y               .req r8
++    U               .req r9
++    V               .req r10
++    N               .req ip
++
++    /* Load constants to d0, d1, d2, d3 */
++    adr             ip, jsimd_\colorid\()_ycc_neon_consts
++    vld1.16         {d0, d1, d2, d3}, [ip, :128]
++
++    /* Save ARM registers and handle input arguments */
++    push            {r4, r5, r6, r7, r8, r9, r10, lr}
++    ldr             NUM_ROWS, [sp, #(4 * 8)]
++    ldr             OUTPUT_BUF0, [OUTPUT_BUF]
++    ldr             OUTPUT_BUF1, [OUTPUT_BUF, #4]
++    ldr             OUTPUT_BUF2, [OUTPUT_BUF, #8]
++    .unreq          OUTPUT_BUF
++
++    /* Save NEON registers */
++    vpush           {d8-d15}
++
++    /* Outer loop over scanlines */
++    cmp             NUM_ROWS, #1
++    blt             9f
++0:
++    ldr             Y, [OUTPUT_BUF0, OUTPUT_ROW, lsl #2]
++    ldr             U, [OUTPUT_BUF1, OUTPUT_ROW, lsl #2]
++    mov             N, OUTPUT_WIDTH
++    ldr             V, [OUTPUT_BUF2, OUTPUT_ROW, lsl #2]
++    add             OUTPUT_ROW, OUTPUT_ROW, #1
++    ldr             RGB, [INPUT_BUF], #4
++
++    /* Inner loop over pixels */
++    subs            N, N, #8
++    blt             3f
++    do_load         \bpp, 8
++    do_rgb_to_yuv_stage1
++    subs            N, N, #8
++    blt             2f
++1:
++    do_rgb_to_yuv_stage2_store_load_stage1
++    subs            N, N, #8
++    bge             1b
++2:
++    do_rgb_to_yuv_stage2
++    do_store        8
++    tst             N, #7
++    beq             8f
++3:
++    tst             N, #4
++    beq             3f
++    do_load         \bpp, 4
++3:
++    tst             N, #2
++    beq             4f
++    do_load         \bpp, 2
++4:
++    tst             N, #1
++    beq             5f
++    do_load         \bpp, 1
++5:
++    do_rgb_to_yuv
++    tst             N, #4
++    beq             6f
++    do_store        4
++6:
++    tst             N, #2
++    beq             7f
++    do_store        2
++7:
++    tst             N, #1
++    beq             8f
++    do_store        1
++8:
++    subs            NUM_ROWS, NUM_ROWS, #1
++    bgt             0b
++9:
++    /* Restore all registers and return */
++    vpop            {d8-d15}
++    pop             {r4, r5, r6, r7, r8, r9, r10, pc}
++
++    .unreq          OUTPUT_WIDTH
++    .unreq          OUTPUT_ROW
++    .unreq          INPUT_BUF
++    .unreq          NUM_ROWS
++    .unreq          OUTPUT_BUF0
++    .unreq          OUTPUT_BUF1
++    .unreq          OUTPUT_BUF2
++    .unreq          RGB
++    .unreq          Y
++    .unreq          U
++    .unreq          V
++    .unreq          N
++
++.purgem do_rgb_to_yuv
++.purgem do_rgb_to_yuv_stage1
++.purgem do_rgb_to_yuv_stage2
++.purgem do_rgb_to_yuv_stage2_store_load_stage1
++
++.endm
++
++/*--------------------------------- id ----- bpp R  G  B */
++generate_jsimd_rgb_ycc_convert_neon extrgb,  24, 0, 1, 2
++generate_jsimd_rgb_ycc_convert_neon extbgr,  24, 2, 1, 0
++generate_jsimd_rgb_ycc_convert_neon extrgbx, 32, 0, 1, 2
++generate_jsimd_rgb_ycc_convert_neon extbgrx, 32, 2, 1, 0
++generate_jsimd_rgb_ycc_convert_neon extxbgr, 32, 3, 2, 1
++generate_jsimd_rgb_ycc_convert_neon extxrgb, 32, 1, 2, 3
++
++.purgem do_load
++.purgem do_store
++
++
+ /*****************************************************************************/
+ 
+ /*
+diff --git a/simd/arm/arm64/jccolext-neon.c b/simd/arm/arm64/jccolext-neon.c
+deleted file mode 100644
+index 5c642fbc..00000000
+--- a/simd/arm/arm64/jccolext-neon.c
++++ /dev/null
+@@ -1,312 +0,0 @@
+-/*
+- * jccolext-neon.c - colorspace conversion (Arm NEON)
+- *
+- * Copyright 2020 The Chromium Authors. All Rights Reserved.
+- *
+- * This software is provided 'as-is', without any express or implied
+- * warranty.  In no event will the authors be held liable for any damages
+- * arising from the use of this software.
+- *
+- * Permission is granted to anyone to use this software for any purpose,
+- * including commercial applications, and to alter it and redistribute it
+- * freely, subject to the following restrictions:
+- *
+- * 1. The origin of this software must not be misrepresented; you must not
+- *    claim that you wrote the original software. If you use this software
+- *    in a product, an acknowledgment in the product documentation would be
+- *    appreciated but is not required.
+- * 2. Altered source versions must be plainly marked as such, and must not be
+- *    misrepresented as being the original software.
+- * 3. This notice may not be removed or altered from any source distribution.
+- */
+-
+-/* This file is included by jccolor-neon.c */
+-
+-/*
+- * RGB -> YCbCr conversion is defined by the following equations:
+- *    Y  =  0.29900 * R + 0.58700 * G + 0.11400 * B
+- *    Cb = -0.16874 * R - 0.33126 * G + 0.50000 * B  + 128
+- *    Cr =  0.50000 * R - 0.41869 * G - 0.08131 * B  + 128
+- *
+- * Avoid floating point arithmetic by using shifted integer constants:
+- *    0.29899597 = 19595 * 2^-16
+- *    0.58700561 = 38470 * 2^-16
+- *    0.11399841 =  7471 * 2^-16
+- *    0.16874695 = 11059 * 2^-16
+- *    0.33125305 = 21709 * 2^-16
+- *    0.50000000 = 32768 * 2^-16
+- *    0.41868592 = 27439 * 2^-16
+- *    0.08131409 =  5329 * 2^-16
+- * These constants are defined in jccolor-neon.c
+- *
+- * To ensure rounding gives correct values, we add 0.5 to Cb and Cr.
+- */
+-
+-void jsimd_rgb_ycc_convert_neon(JDIMENSION image_width,
+-                                JSAMPARRAY input_buf,
+-                                JSAMPIMAGE output_buf,
+-                                JDIMENSION output_row,
+-                                int num_rows)
+-{
+-  /* Pointer to RGB(X/A) input data. */
+-  JSAMPROW inptr;
+-  /* Pointers to Y, Cb and Cr output data. */
+-  JSAMPROW outptr0, outptr1, outptr2;
+-
+-  /* Setup conversion constants. */
+-  const uint16x8_t consts = vld1q_u16(jsimd_rgb_ycc_neon_consts);
+-  const uint32x4_t scaled_128_5 = vdupq_n_u32((128 << 16) + 32767);
+-
+-  while (--num_rows >= 0) {
+-    inptr = *input_buf++;
+-    outptr0 = output_buf[0][output_row];
+-    outptr1 = output_buf[1][output_row];
+-    outptr2 = output_buf[2][output_row];
+-    output_row++;
+-
+-    int cols_remaining = image_width;
+-    for (; cols_remaining >= 16; cols_remaining -= 16) {
+-
+-#if RGB_PIXELSIZE == 4
+-      uint8x16x4_t input_pixels = vld4q_u8(inptr);
+-#else
+-      uint8x16x3_t input_pixels = vld3q_u8(inptr);
+-#endif
+-      uint16x8_t r_l = vmovl_u8(vget_low_u8(input_pixels.val[RGB_RED]));
+-      uint16x8_t g_l = vmovl_u8(vget_low_u8(input_pixels.val[RGB_GREEN]));
+-      uint16x8_t b_l = vmovl_u8(vget_low_u8(input_pixels.val[RGB_BLUE]));
+-      uint16x8_t r_h = vmovl_u8(vget_high_u8(input_pixels.val[RGB_RED]));
+-      uint16x8_t g_h = vmovl_u8(vget_high_u8(input_pixels.val[RGB_GREEN]));
+-      uint16x8_t b_h = vmovl_u8(vget_high_u8(input_pixels.val[RGB_BLUE]));
+-
+-      /* Compute Y = 0.29900 * R + 0.58700 * G + 0.11400 * B */
+-      uint32x4_t y_ll = vmull_laneq_u16(vget_low_u16(r_l), consts, 0);
+-      y_ll = vmlal_laneq_u16(y_ll, vget_low_u16(g_l), consts, 1);
+-      y_ll = vmlal_laneq_u16(y_ll, vget_low_u16(b_l), consts, 2);
+-      uint32x4_t y_lh = vmull_high_laneq_u16(r_l, consts, 0);
+-      y_lh = vmlal_high_laneq_u16(y_lh, g_l, consts, 1);
+-      y_lh = vmlal_high_laneq_u16(y_lh, b_l, consts, 2);
+-      uint32x4_t y_hl = vmull_laneq_u16(vget_low_u16(r_h), consts, 0);
+-      y_hl = vmlal_laneq_u16(y_hl, vget_low_u16(g_h), consts, 1);
+-      y_hl = vmlal_laneq_u16(y_hl, vget_low_u16(b_h), consts, 2);
+-      uint32x4_t y_hh = vmull_high_laneq_u16(r_h, consts, 0);
+-      y_hh = vmlal_high_laneq_u16(y_hh, g_h, consts, 1);
+-      y_hh = vmlal_high_laneq_u16(y_hh, b_h, consts, 2);
+-
+-      /* Compute Cb = -0.16874 * R - 0.33126 * G + 0.50000 * B  + 128 */
+-      uint32x4_t cb_ll = scaled_128_5;
+-      cb_ll = vmlsl_laneq_u16(cb_ll, vget_low_u16(r_l), consts, 3);
+-      cb_ll = vmlsl_laneq_u16(cb_ll, vget_low_u16(g_l), consts, 4);
+-      cb_ll = vmlal_laneq_u16(cb_ll, vget_low_u16(b_l), consts, 5);
+-      uint32x4_t cb_lh = scaled_128_5;
+-      cb_lh = vmlsl_high_laneq_u16(cb_lh, r_l, consts, 3);
+-      cb_lh = vmlsl_high_laneq_u16(cb_lh, g_l, consts, 4);
+-      cb_lh = vmlal_high_laneq_u16(cb_lh, b_l, consts, 5);
+-      uint32x4_t cb_hl = scaled_128_5;
+-      cb_hl = vmlsl_laneq_u16(cb_hl, vget_low_u16(r_h), consts, 3);
+-      cb_hl = vmlsl_laneq_u16(cb_hl, vget_low_u16(g_h), consts, 4);
+-      cb_hl = vmlal_laneq_u16(cb_hl, vget_low_u16(b_h), consts, 5);
+-      uint32x4_t cb_hh = scaled_128_5;
+-      cb_hh = vmlsl_high_laneq_u16(cb_hh, r_h, consts, 3);
+-      cb_hh = vmlsl_high_laneq_u16(cb_hh, g_h, consts, 4);
+-      cb_hh = vmlal_high_laneq_u16(cb_hh, b_h, consts, 5);
+-
+-      /* Compute Cr = 0.50000 * R - 0.41869 * G - 0.08131 * B  + 128 */
+-      uint32x4_t cr_ll = scaled_128_5;
+-      cr_ll = vmlal_laneq_u16(cr_ll, vget_low_u16(r_l), consts, 5);
+-      cr_ll = vmlsl_laneq_u16(cr_ll, vget_low_u16(g_l), consts, 6);
+-      cr_ll = vmlsl_laneq_u16(cr_ll, vget_low_u16(b_l), consts, 7);
+-      uint32x4_t cr_lh = scaled_128_5;
+-      cr_lh = vmlal_high_laneq_u16(cr_lh, r_l, consts, 5);
+-      cr_lh = vmlsl_high_laneq_u16(cr_lh, g_l, consts, 6);
+-      cr_lh = vmlsl_high_laneq_u16(cr_lh, b_l, consts, 7);
+-      uint32x4_t cr_hl = scaled_128_5;
+-      cr_hl = vmlal_laneq_u16(cr_hl, vget_low_u16(r_h), consts, 5);
+-      cr_hl = vmlsl_laneq_u16(cr_hl, vget_low_u16(g_h), consts, 6);
+-      cr_hl = vmlsl_laneq_u16(cr_hl, vget_low_u16(b_h), consts, 7);
+-      uint32x4_t cr_hh = scaled_128_5;
+-      cr_hh = vmlal_high_laneq_u16(cr_hh, r_h, consts, 5);
+-      cr_hh = vmlsl_high_laneq_u16(cr_hh, g_h, consts, 6);
+-      cr_hh = vmlsl_high_laneq_u16(cr_hh, b_h, consts, 7);
+-
+-      /* Descale Y values (rounding right shift) and narrow to 16-bit. */
+-      uint16x8_t y_l = vcombine_u16(vrshrn_n_u32(y_ll, 16),
+-                                    vrshrn_n_u32(y_lh, 16));
+-      uint16x8_t y_h = vcombine_u16(vrshrn_n_u32(y_hl, 16),
+-                                    vrshrn_n_u32(y_hh, 16));
+-      /* Descale Cb values (right shift) and narrow to 16-bit. */
+-      uint16x8_t cb_l = vcombine_u16(vshrn_n_u32(cb_ll, 16),
+-                                     vshrn_n_u32(cb_lh, 16));
+-      uint16x8_t cb_h = vcombine_u16(vshrn_n_u32(cb_hl, 16),
+-                                     vshrn_n_u32(cb_hh, 16));
+-      /* Descale Cr values (right shift) and narrow to 16-bit. */
+-      uint16x8_t cr_l = vcombine_u16(vshrn_n_u32(cr_ll, 16),
+-                                     vshrn_n_u32(cr_lh, 16));
+-      uint16x8_t cr_h = vcombine_u16(vshrn_n_u32(cr_hl, 16),
+-                                     vshrn_n_u32(cr_hh, 16));
+-      /* Narrow Y, Cb and Cr values to 8-bit and store to memory. Buffer */
+-      /* overwrite is permitted up to the next multiple of ALIGN_SIZE bytes. */
+-      vst1q_u8(outptr0, vcombine_u8(vmovn_u16(y_l), vmovn_u16(y_h)));
+-      vst1q_u8(outptr1, vcombine_u8(vmovn_u16(cb_l), vmovn_u16(cb_h)));
+-      vst1q_u8(outptr2, vcombine_u8(vmovn_u16(cr_l), vmovn_u16(cr_h)));
+-
+-      /* Increment pointers. */
+-      inptr += (16 * RGB_PIXELSIZE);
+-      outptr0 += 16;
+-      outptr1 += 16;
+-      outptr2 += 16;
+-    }
+-
+-    if (cols_remaining > 8) {
+-      /* To prevent buffer overread by the vector load instructions, the */
+-      /* last (image_width % 16) columns of data are first memcopied to a */
+-      /* temporary buffer large enough to accommodate the vector load. */
+-      uint8_t __attribute__((aligned(16))) tmp_buf[16 * RGB_PIXELSIZE];
+-      memcpy(tmp_buf, inptr, cols_remaining * RGB_PIXELSIZE);
+-      inptr = tmp_buf;
+-
+-#if RGB_PIXELSIZE == 4
+-      uint8x16x4_t input_pixels = vld4q_u8(inptr);
+-#else
+-      uint8x16x3_t input_pixels = vld3q_u8(inptr);
+-#endif
+-      uint16x8_t r_l = vmovl_u8(vget_low_u8(input_pixels.val[RGB_RED]));
+-      uint16x8_t g_l = vmovl_u8(vget_low_u8(input_pixels.val[RGB_GREEN]));
+-      uint16x8_t b_l = vmovl_u8(vget_low_u8(input_pixels.val[RGB_BLUE]));
+-      uint16x8_t r_h = vmovl_u8(vget_high_u8(input_pixels.val[RGB_RED]));
+-      uint16x8_t g_h = vmovl_u8(vget_high_u8(input_pixels.val[RGB_GREEN]));
+-      uint16x8_t b_h = vmovl_u8(vget_high_u8(input_pixels.val[RGB_BLUE]));
+-
+-      /* Compute Y = 0.29900 * R + 0.58700 * G + 0.11400 * B */
+-      uint32x4_t y_ll = vmull_laneq_u16(vget_low_u16(r_l), consts, 0);
+-      y_ll = vmlal_laneq_u16(y_ll, vget_low_u16(g_l), consts, 1);
+-      y_ll = vmlal_laneq_u16(y_ll, vget_low_u16(b_l), consts, 2);
+-      uint32x4_t y_lh = vmull_high_laneq_u16(r_l, consts, 0);
+-      y_lh = vmlal_high_laneq_u16(y_lh, g_l, consts, 1);
+-      y_lh = vmlal_high_laneq_u16(y_lh, b_l, consts, 2);
+-      uint32x4_t y_hl = vmull_laneq_u16(vget_low_u16(r_h), consts, 0);
+-      y_hl = vmlal_laneq_u16(y_hl, vget_low_u16(g_h), consts, 1);
+-      y_hl = vmlal_laneq_u16(y_hl, vget_low_u16(b_h), consts, 2);
+-      uint32x4_t y_hh = vmull_high_laneq_u16(r_h, consts, 0);
+-      y_hh = vmlal_high_laneq_u16(y_hh, g_h, consts, 1);
+-      y_hh = vmlal_high_laneq_u16(y_hh, b_h, consts, 2);
+-
+-      /* Compute Cb = -0.16874 * R - 0.33126 * G + 0.50000 * B  + 128 */
+-      uint32x4_t cb_ll = scaled_128_5;
+-      cb_ll = vmlsl_laneq_u16(cb_ll, vget_low_u16(r_l), consts, 3);
+-      cb_ll = vmlsl_laneq_u16(cb_ll, vget_low_u16(g_l), consts, 4);
+-      cb_ll = vmlal_laneq_u16(cb_ll, vget_low_u16(b_l), consts, 5);
+-      uint32x4_t cb_lh = scaled_128_5;
+-      cb_lh = vmlsl_high_laneq_u16(cb_lh, r_l, consts, 3);
+-      cb_lh = vmlsl_high_laneq_u16(cb_lh, g_l, consts, 4);
+-      cb_lh = vmlal_high_laneq_u16(cb_lh, b_l, consts, 5);
+-      uint32x4_t cb_hl = scaled_128_5;
+-      cb_hl = vmlsl_laneq_u16(cb_hl, vget_low_u16(r_h), consts, 3);
+-      cb_hl = vmlsl_laneq_u16(cb_hl, vget_low_u16(g_h), consts, 4);
+-      cb_hl = vmlal_laneq_u16(cb_hl, vget_low_u16(b_h), consts, 5);
+-      uint32x4_t cb_hh = scaled_128_5;
+-      cb_hh = vmlsl_high_laneq_u16(cb_hh, r_h, consts, 3);
+-      cb_hh = vmlsl_high_laneq_u16(cb_hh, g_h, consts, 4);
+-      cb_hh = vmlal_high_laneq_u16(cb_hh, b_h, consts, 5);
+-
+-      /* Compute Cr = 0.50000 * R - 0.41869 * G - 0.08131 * B  + 128 */
+-      uint32x4_t cr_ll = scaled_128_5;
+-      cr_ll = vmlal_laneq_u16(cr_ll, vget_low_u16(r_l), consts, 5);
+-      cr_ll = vmlsl_laneq_u16(cr_ll, vget_low_u16(g_l), consts, 6);
+-      cr_ll = vmlsl_laneq_u16(cr_ll, vget_low_u16(b_l), consts, 7);
+-      uint32x4_t cr_lh = scaled_128_5;
+-      cr_lh = vmlal_high_laneq_u16(cr_lh, r_l, consts, 5);
+-      cr_lh = vmlsl_high_laneq_u16(cr_lh, g_l, consts, 6);
+-      cr_lh = vmlsl_high_laneq_u16(cr_lh, b_l, consts, 7);
+-      uint32x4_t cr_hl = scaled_128_5;
+-      cr_hl = vmlal_laneq_u16(cr_hl, vget_low_u16(r_h), consts, 5);
+-      cr_hl = vmlsl_laneq_u16(cr_hl, vget_low_u16(g_h), consts, 6);
+-      cr_hl = vmlsl_laneq_u16(cr_hl, vget_low_u16(b_h), consts, 7);
+-      uint32x4_t cr_hh = scaled_128_5;
+-      cr_hh = vmlal_high_laneq_u16(cr_hh, r_h, consts, 5);
+-      cr_hh = vmlsl_high_laneq_u16(cr_hh, g_h, consts, 6);
+-      cr_hh = vmlsl_high_laneq_u16(cr_hh, b_h, consts, 7);
+-
+-      /* Descale Y values (rounding right shift) and narrow to 16-bit. */
+-      uint16x8_t y_l = vcombine_u16(vrshrn_n_u32(y_ll, 16),
+-                                    vrshrn_n_u32(y_lh, 16));
+-      uint16x8_t y_h = vcombine_u16(vrshrn_n_u32(y_hl, 16),
+-                                    vrshrn_n_u32(y_hh, 16));
+-      /* Descale Cb values (right shift) and narrow to 16-bit. */
+-      uint16x8_t cb_l = vcombine_u16(vshrn_n_u32(cb_ll, 16),
+-                                     vshrn_n_u32(cb_lh, 16));
+-      uint16x8_t cb_h = vcombine_u16(vshrn_n_u32(cb_hl, 16),
+-                                     vshrn_n_u32(cb_hh, 16));
+-      /* Descale Cr values (right shift) and narrow to 16-bit. */
+-      uint16x8_t cr_l = vcombine_u16(vshrn_n_u32(cr_ll, 16),
+-                                     vshrn_n_u32(cr_lh, 16));
+-      uint16x8_t cr_h = vcombine_u16(vshrn_n_u32(cr_hl, 16),
+-                                     vshrn_n_u32(cr_hh, 16));
+-      /* Narrow Y, Cb and Cr values to 8-bit and store to memory. Buffer */
+-      /* overwrite is permitted up to the next multiple of ALIGN_SIZE bytes. */
+-      vst1q_u8(outptr0, vcombine_u8(vmovn_u16(y_l), vmovn_u16(y_h)));
+-      vst1q_u8(outptr1, vcombine_u8(vmovn_u16(cb_l), vmovn_u16(cb_h)));
+-      vst1q_u8(outptr2, vcombine_u8(vmovn_u16(cr_l), vmovn_u16(cr_h)));
+-
+-    } else if (cols_remaining > 0) {
+-      /* To prevent buffer overread by the vector load instructions, the */
+-      /* last (image_width % 8) columns of data are first memcopied to a */
+-      /* temporary buffer large enough to accommodate the vector load. */
+-      uint8_t __attribute__((aligned(8))) tmp_buf[8 * RGB_PIXELSIZE];
+-      memcpy(tmp_buf, inptr, cols_remaining * RGB_PIXELSIZE);
+-      inptr = tmp_buf;
+-
+-#if RGB_PIXELSIZE == 4
+-      uint8x8x4_t input_pixels = vld4_u8(inptr);
+-#else
+-      uint8x8x3_t input_pixels = vld3_u8(inptr);
+-#endif
+-      uint16x8_t r = vmovl_u8(input_pixels.val[RGB_RED]);
+-      uint16x8_t g = vmovl_u8(input_pixels.val[RGB_GREEN]);
+-      uint16x8_t b = vmovl_u8(input_pixels.val[RGB_BLUE]);
+-
+-      /* Compute Y = 0.29900 * R + 0.58700 * G + 0.11400 * B */
+-      uint32x4_t y_l = vmull_laneq_u16(vget_low_u16(r), consts, 0);
+-      y_l = vmlal_laneq_u16(y_l, vget_low_u16(g), consts, 1);
+-      y_l = vmlal_laneq_u16(y_l, vget_low_u16(b), consts, 2);
+-      uint32x4_t y_h = vmull_high_laneq_u16(r, consts, 0);
+-      y_h = vmlal_high_laneq_u16(y_h, g, consts, 1);
+-      y_h = vmlal_high_laneq_u16(y_h, b, consts, 2);
+-
+-      /* Compute Cb = -0.16874 * R - 0.33126 * G + 0.50000 * B  + 128 */
+-      uint32x4_t cb_l = scaled_128_5;
+-      cb_l = vmlsl_laneq_u16(cb_l, vget_low_u16(r), consts, 3);
+-      cb_l = vmlsl_laneq_u16(cb_l, vget_low_u16(g), consts, 4);
+-      cb_l = vmlal_laneq_u16(cb_l, vget_low_u16(b), consts, 5);
+-      uint32x4_t cb_h = scaled_128_5;
+-      cb_h = vmlsl_high_laneq_u16(cb_h, r, consts, 3);
+-      cb_h = vmlsl_high_laneq_u16(cb_h, g, consts, 4);
+-      cb_h = vmlal_high_laneq_u16(cb_h, b, consts, 5);
+-
+-      /* Compute Cr = 0.50000 * R - 0.41869 * G - 0.08131 * B  + 128 */
+-      uint32x4_t cr_l = scaled_128_5;
+-      cr_l = vmlal_laneq_u16(cr_l, vget_low_u16(r), consts, 5);
+-      cr_l = vmlsl_laneq_u16(cr_l, vget_low_u16(g), consts, 6);
+-      cr_l = vmlsl_laneq_u16(cr_l, vget_low_u16(b), consts, 7);
+-      uint32x4_t cr_h = scaled_128_5;
+-      cr_h = vmlal_high_laneq_u16(cr_h, r, consts, 5);
+-      cr_h = vmlsl_high_laneq_u16(cr_h, g, consts, 6);
+-      cr_h = vmlsl_high_laneq_u16(cr_h, b, consts, 7);
+-
+-      /* Descale Y values (rounding right shift) and narrow to 16-bit. */
+-      uint16x8_t y_u16 = vcombine_u16(vrshrn_n_u32(y_l, 16),
+-                                      vrshrn_n_u32(y_h, 16));
+-      /* Descale Cb values (right shift) and narrow to 16-bit. */
+-      uint16x8_t cb_u16 = vcombine_u16(vshrn_n_u32(cb_l, 16),
+-                                       vshrn_n_u32(cb_h, 16));
+-      /* Descale Cr values (right shift) and narrow to 16-bit. */
+-      uint16x8_t cr_u16 = vcombine_u16(vshrn_n_u32(cr_l, 16),
+-                                       vshrn_n_u32(cr_h, 16));
+-      /* Narrow Y, Cb and Cr values to 8-bit and store to memory. Buffer */
+-      /* overwrite is permitted up to the next multiple of ALIGN_SIZE bytes. */
+-      vst1_u8(outptr0, vmovn_u16(y_u16));
+-      vst1_u8(outptr1, vmovn_u16(cb_u16));
+-      vst1_u8(outptr2, vmovn_u16(cr_u16));
+-    }
+-  }
+-}
+diff --git a/simd/arm/arm64/jsimd.c b/simd/arm/arm64/jsimd.c
+index 8cc8f699..c9da49f3 100644
+--- a/simd/arm/arm64/jsimd.c
++++ b/simd/arm/arm64/jsimd.c
+@@ -27,11 +27,14 @@
+ #include <string.h>
+ #include <ctype.h>
+ 
++#define JSIMD_FASTLD3  1
++#define JSIMD_FASTST3  2
+ #define JSIMD_FASTTBL  4
+ 
+ static unsigned int simd_support = ~0;
+ static unsigned int simd_huffman = 1;
+-static unsigned int simd_features = JSIMD_FASTTBL;
++static unsigned int simd_features = JSIMD_FASTLD3 | JSIMD_FASTST3 |
++                                    JSIMD_FASTTBL;
+ 
+ #if defined(__linux__) || defined(ANDROID) || defined(__ANDROID__)
+ 
+@@ -151,6 +154,16 @@ init_simd(void)
+   env = getenv("JSIMD_NOHUFFENC");
+   if ((env != NULL) && (strcmp(env, "1") == 0))
+     simd_huffman = 0;
++  env = getenv("JSIMD_FASTLD3");
++  if ((env != NULL) && (strcmp(env, "1") == 0))
++    simd_features |= JSIMD_FASTLD3;
++  if ((env != NULL) && (strcmp(env, "0") == 0))
++    simd_features &= ~JSIMD_FASTLD3;
++  env = getenv("JSIMD_FASTST3");
++  if ((env != NULL) && (strcmp(env, "1") == 0))
++    simd_features |= JSIMD_FASTST3;
++  if ((env != NULL) && (strcmp(env, "0") == 0))
++    simd_features &= ~JSIMD_FASTST3;
+ #endif
+ }
+ 
+@@ -224,14 +237,20 @@ jsimd_rgb_ycc_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
+ 
+   switch (cinfo->in_color_space) {
+   case JCS_EXT_RGB:
+-    neonfct = jsimd_extrgb_ycc_convert_neon;
++    if (simd_features & JSIMD_FASTLD3)
++      neonfct = jsimd_extrgb_ycc_convert_neon;
++    else
++      neonfct = jsimd_extrgb_ycc_convert_neon_slowld3;
+     break;
+   case JCS_EXT_RGBX:
+   case JCS_EXT_RGBA:
+     neonfct = jsimd_extrgbx_ycc_convert_neon;
+     break;
+   case JCS_EXT_BGR:
+-    neonfct = jsimd_extbgr_ycc_convert_neon;
++    if (simd_features & JSIMD_FASTLD3)
++      neonfct = jsimd_extbgr_ycc_convert_neon;
++    else
++      neonfct = jsimd_extbgr_ycc_convert_neon_slowld3;
+     break;
+   case JCS_EXT_BGRX:
+   case JCS_EXT_BGRA:
+@@ -246,7 +265,10 @@ jsimd_rgb_ycc_convert(j_compress_ptr cinfo, JSAMPARRAY input_buf,
+     neonfct = jsimd_extxrgb_ycc_convert_neon;
+     break;
+   default:
+-    neonfct = jsimd_extrgb_ycc_convert_neon;
++    if (simd_features & JSIMD_FASTLD3)
++      neonfct = jsimd_extrgb_ycc_convert_neon;
++    else
++      neonfct = jsimd_extrgb_ycc_convert_neon_slowld3;
+     break;
+   }
+ 
+diff --git a/simd/arm/arm64/jsimd_neon.S b/simd/arm/arm64/jsimd_neon.S
+index 7c134457..16614d15 100644
+--- a/simd/arm/arm64/jsimd_neon.S
++++ b/simd/arm/arm64/jsimd_neon.S
+@@ -39,6 +39,15 @@
+ .section .rodata, "a", %progbits
+ #endif
+ 
++/* Constants for jsimd_*_ycc_neon() */
++
++.balign 16
++Ljsimd_rgb_ycc_neon_consts:
++  .short 19595, 38470, 7471, 11059
++  .short 21709, 32768, 27439, 5329
++  .short 32767, 128, 32767, 128
++  .short 32767, 128, 32767, 128
++
+ /* Constants for jsimd_fdct_islow_neon() */
+ 
+ #define F_0_298   2446  /* FIX(0.298631336) */
+@@ -193,6 +202,316 @@ _\fname:
+ 
+ #define CENTERJSAMPLE  128
+ 
++/*****************************************************************************/
++
++/*
++ * jsimd_extrgb_ycc_convert_neon
++ * jsimd_extbgr_ycc_convert_neon
++ * jsimd_extrgbx_ycc_convert_neon
++ * jsimd_extbgrx_ycc_convert_neon
++ * jsimd_extxbgr_ycc_convert_neon
++ * jsimd_extxrgb_ycc_convert_neon
++ *
++ * Colorspace conversion RGB -> YCbCr
++ */
++
++.macro do_store size
++  .if \size == 8
++    st1             {v20.8b}, [Y], #8
++    st1             {v21.8b}, [U], #8
++    st1             {v22.8b}, [V], #8
++  .elseif \size == 4
++    st1             {v20.b}[0], [Y], #1
++    st1             {v20.b}[1], [Y], #1
++    st1             {v20.b}[2], [Y], #1
++    st1             {v20.b}[3], [Y], #1
++    st1             {v21.b}[0], [U], #1
++    st1             {v21.b}[1], [U], #1
++    st1             {v21.b}[2], [U], #1
++    st1             {v21.b}[3], [U], #1
++    st1             {v22.b}[0], [V], #1
++    st1             {v22.b}[1], [V], #1
++    st1             {v22.b}[2], [V], #1
++    st1             {v22.b}[3], [V], #1
++  .elseif \size == 2
++    st1             {v20.b}[4], [Y], #1
++    st1             {v20.b}[5], [Y], #1
++    st1             {v21.b}[4], [U], #1
++    st1             {v21.b}[5], [U], #1
++    st1             {v22.b}[4], [V], #1
++    st1             {v22.b}[5], [V], #1
++  .elseif \size == 1
++    st1             {v20.b}[6], [Y], #1
++    st1             {v21.b}[6], [U], #1
++    st1             {v22.b}[6], [V], #1
++  .else
++    .error unsupported macroblock size
++  .endif
++.endm
++
++.macro do_load bpp, size, fast_ld3
++  .if \bpp == 24
++    .if \size == 8
++      .if \fast_ld3 == 1
++        ld3         {v10.8b, v11.8b, v12.8b}, [RGB], #24
++      .else
++        ld1         {v10.b}[0], [RGB], #1
++        ld1         {v11.b}[0], [RGB], #1
++        ld1         {v12.b}[0], [RGB], #1
++
++        ld1         {v10.b}[1], [RGB], #1
++        ld1         {v11.b}[1], [RGB], #1
++        ld1         {v12.b}[1], [RGB], #1
++
++        ld1         {v10.b}[2], [RGB], #1
++        ld1         {v11.b}[2], [RGB], #1
++        ld1         {v12.b}[2], [RGB], #1
++
++        ld1         {v10.b}[3], [RGB], #1
++        ld1         {v11.b}[3], [RGB], #1
++        ld1         {v12.b}[3], [RGB], #1
++
++        ld1         {v10.b}[4], [RGB], #1
++        ld1         {v11.b}[4], [RGB], #1
++        ld1         {v12.b}[4], [RGB], #1
++
++        ld1         {v10.b}[5], [RGB], #1
++        ld1         {v11.b}[5], [RGB], #1
++        ld1         {v12.b}[5], [RGB], #1
++
++        ld1         {v10.b}[6], [RGB], #1
++        ld1         {v11.b}[6], [RGB], #1
++        ld1         {v12.b}[6], [RGB], #1
++
++        ld1         {v10.b}[7], [RGB], #1
++        ld1         {v11.b}[7], [RGB], #1
++        ld1         {v12.b}[7], [RGB], #1
++      .endif
++      prfm          pldl1keep, [RGB, #128]
++    .elseif \size == 4
++      ld3           {v10.b, v11.b, v12.b}[0], [RGB], #3
++      ld3           {v10.b, v11.b, v12.b}[1], [RGB], #3
++      ld3           {v10.b, v11.b, v12.b}[2], [RGB], #3
++      ld3           {v10.b, v11.b, v12.b}[3], [RGB], #3
++    .elseif \size == 2
++      ld3           {v10.b, v11.b, v12.b}[4], [RGB], #3
++      ld3           {v10.b, v11.b, v12.b}[5], [RGB], #3
++    .elseif \size == 1
++      ld3           {v10.b, v11.b, v12.b}[6], [RGB], #3
++    .else
++      .error unsupported macroblock size
++    .endif
++  .elseif \bpp == 32
++    .if \size == 8
++      ld4           {v10.8b, v11.8b, v12.8b, v13.8b}, [RGB], #32
++      prfm          pldl1keep, [RGB, #128]
++    .elseif \size == 4
++      ld4           {v10.b, v11.b, v12.b, v13.b}[0], [RGB], #4
++      ld4           {v10.b, v11.b, v12.b, v13.b}[1], [RGB], #4
++      ld4           {v10.b, v11.b, v12.b, v13.b}[2], [RGB], #4
++      ld4           {v10.b, v11.b, v12.b, v13.b}[3], [RGB], #4
++    .elseif \size == 2
++      ld4           {v10.b, v11.b, v12.b, v13.b}[4], [RGB], #4
++      ld4           {v10.b, v11.b, v12.b, v13.b}[5], [RGB], #4
++    .elseif \size == 1
++      ld4           {v10.b, v11.b, v12.b, v13.b}[6], [RGB], #4
++    .else
++      .error unsupported macroblock size
++    .endif
++  .else
++    .error unsupported bpp
++  .endif
++.endm
++
++.macro generate_jsimd_rgb_ycc_convert_neon colorid, bpp, r_offs, g_offs, \
++                                           b_offs, fast_ld3
++
++/*
++ * 2-stage pipelined RGB->YCbCr conversion
++ */
++
++.macro do_rgb_to_yuv_stage1
++    ushll           v4.8h, v1\r_offs\().8b, #0  /* r = v4 */
++    ushll           v6.8h, v1\g_offs\().8b, #0  /* g = v6 */
++    ushll           v8.8h, v1\b_offs\().8b, #0  /* b = v8 */
++    rev64           v18.4s, v1.4s
++    rev64           v26.4s, v1.4s
++    rev64           v28.4s, v1.4s
++    rev64           v30.4s, v1.4s
++    umull           v14.4s, v4.4h, v0.h[0]
++    umull2          v16.4s, v4.8h, v0.h[0]
++    umlsl           v18.4s, v4.4h, v0.h[3]
++    umlsl2          v26.4s, v4.8h, v0.h[3]
++    umlal           v28.4s, v4.4h, v0.h[5]
++    umlal2          v30.4s, v4.8h, v0.h[5]
++    umlal           v14.4s, v6.4h, v0.h[1]
++    umlal2          v16.4s, v6.8h, v0.h[1]
++    umlsl           v18.4s, v6.4h, v0.h[4]
++    umlsl2          v26.4s, v6.8h, v0.h[4]
++    umlsl           v28.4s, v6.4h, v0.h[6]
++    umlsl2          v30.4s, v6.8h, v0.h[6]
++    umlal           v14.4s, v8.4h, v0.h[2]
++    umlal2          v16.4s, v8.8h, v0.h[2]
++    umlal           v18.4s, v8.4h, v0.h[5]
++    umlal2          v26.4s, v8.8h, v0.h[5]
++    umlsl           v28.4s, v8.4h, v0.h[7]
++    umlsl2          v30.4s, v8.8h, v0.h[7]
++.endm
++
++.macro do_rgb_to_yuv_stage2
++    rshrn           v20.4h, v14.4s, #16
++    shrn            v22.4h, v18.4s, #16
++    shrn            v24.4h, v28.4s, #16
++    rshrn2          v20.8h, v16.4s, #16
++    shrn2           v22.8h, v26.4s, #16
++    shrn2           v24.8h, v30.4s, #16
++    xtn             v20.8b, v20.8h       /* v20 = y */
++    xtn             v21.8b, v22.8h       /* v21 = u */
++    xtn             v22.8b, v24.8h       /* v22 = v */
++.endm
++
++.macro do_rgb_to_yuv
++    do_rgb_to_yuv_stage1
++    do_rgb_to_yuv_stage2
++.endm
++
++/* TODO: expand macros and interleave instructions if some in-order
++ *       ARM64 processor actually can dual-issue LOAD/STORE with ALU */
++.macro do_rgb_to_yuv_stage2_store_load_stage1 fast_ld3
++    do_rgb_to_yuv_stage2
++    do_load         \bpp, 8, \fast_ld3
++    st1             {v20.8b}, [Y], #8
++    st1             {v21.8b}, [U], #8
++    st1             {v22.8b}, [V], #8
++    do_rgb_to_yuv_stage1
++.endm
++
++.if \fast_ld3 == 1
++asm_function jsimd_\colorid\()_ycc_convert_neon
++.else
++asm_function jsimd_\colorid\()_ycc_convert_neon_slowld3
++.endif
++    OUTPUT_WIDTH    .req w0
++    INPUT_BUF       .req x1
++    OUTPUT_BUF      .req x2
++    OUTPUT_ROW      .req w3
++    NUM_ROWS        .req w4
++
++    OUTPUT_BUF0     .req x5
++    OUTPUT_BUF1     .req x6
++    OUTPUT_BUF2     .req x2  /* OUTPUT_BUF */
++
++    RGB             .req x7
++    Y               .req x9
++    U               .req x10
++    V               .req x11
++    N               .req w12
++
++    /* Load constants to d0, d1, d2, d3 */
++    get_symbol_loc  x13, Ljsimd_rgb_ycc_neon_consts
++    ld1             {v0.8h, v1.8h}, [x13]
++
++    ldr             OUTPUT_BUF0, [OUTPUT_BUF]
++    ldr             OUTPUT_BUF1, [OUTPUT_BUF, #8]
++    ldr             OUTPUT_BUF2, [OUTPUT_BUF, #16]
++    .unreq          OUTPUT_BUF
++
++    /* Save NEON registers */
++    sub             sp, sp, #64
++    mov             x9, sp
++    st1             {v8.8b, v9.8b, v10.8b, v11.8b}, [x9], 32
++    st1             {v12.8b, v13.8b, v14.8b, v15.8b}, [x9], 32
++
++    /* Outer loop over scanlines */
++    cmp             NUM_ROWS, #1
++    b.lt            9f
++0:
++    ldr             Y, [OUTPUT_BUF0, OUTPUT_ROW, uxtw #3]
++    ldr             U, [OUTPUT_BUF1, OUTPUT_ROW, uxtw #3]
++    mov             N, OUTPUT_WIDTH
++    ldr             V, [OUTPUT_BUF2, OUTPUT_ROW, uxtw #3]
++    add             OUTPUT_ROW, OUTPUT_ROW, #1
++    ldr             RGB, [INPUT_BUF], #8
++
++    /* Inner loop over pixels */
++    subs            N, N, #8
++    b.lt            3f
++    do_load         \bpp, 8, \fast_ld3
++    do_rgb_to_yuv_stage1
++    subs            N, N, #8
++    b.lt            2f
++1:
++    do_rgb_to_yuv_stage2_store_load_stage1 \fast_ld3
++    subs            N, N, #8
++    b.ge            1b
++2:
++    do_rgb_to_yuv_stage2
++    do_store        8
++    tst             N, #7
++    b.eq            8f
++3:
++    tbz             N, #2, 3f
++    do_load         \bpp, 4, \fast_ld3
++3:
++    tbz             N, #1, 4f
++    do_load         \bpp, 2, \fast_ld3
++4:
++    tbz             N, #0, 5f
++    do_load         \bpp, 1, \fast_ld3
++5:
++    do_rgb_to_yuv
++    tbz             N, #2, 6f
++    do_store        4
++6:
++    tbz             N, #1, 7f
++    do_store        2
++7:
++    tbz             N, #0, 8f
++    do_store        1
++8:
++    subs            NUM_ROWS, NUM_ROWS, #1
++    b.gt            0b
++9:
++    /* Restore all registers and return */
++    ld1             {v8.8b, v9.8b, v10.8b, v11.8b}, [sp], 32
++    ld1             {v12.8b, v13.8b, v14.8b, v15.8b}, [sp], 32
++    br              x30
++
++    .unreq          OUTPUT_WIDTH
++    .unreq          OUTPUT_ROW
++    .unreq          INPUT_BUF
++    .unreq          NUM_ROWS
++    .unreq          OUTPUT_BUF0
++    .unreq          OUTPUT_BUF1
++    .unreq          OUTPUT_BUF2
++    .unreq          RGB
++    .unreq          Y
++    .unreq          U
++    .unreq          V
++    .unreq          N
++
++.purgem do_rgb_to_yuv
++.purgem do_rgb_to_yuv_stage1
++.purgem do_rgb_to_yuv_stage2
++.purgem do_rgb_to_yuv_stage2_store_load_stage1
++
++.endm
++
++/*--------------------------------- id ----- bpp R  G  B  Fast LD3 */
++generate_jsimd_rgb_ycc_convert_neon extrgb,  24, 0, 1, 2, 1
++generate_jsimd_rgb_ycc_convert_neon extbgr,  24, 2, 1, 0, 1
++generate_jsimd_rgb_ycc_convert_neon extrgbx, 32, 0, 1, 2, 1
++generate_jsimd_rgb_ycc_convert_neon extbgrx, 32, 2, 1, 0, 1
++generate_jsimd_rgb_ycc_convert_neon extxbgr, 32, 3, 2, 1, 1
++generate_jsimd_rgb_ycc_convert_neon extxrgb, 32, 1, 2, 3, 1
++
++generate_jsimd_rgb_ycc_convert_neon extrgb,  24, 0, 1, 2, 0
++generate_jsimd_rgb_ycc_convert_neon extbgr,  24, 2, 1, 0, 0
++
++.purgem do_load
++.purgem do_store
++
++
+ /*****************************************************************************/
+ 
+ /*
+diff --git a/simd/arm/common/jccolor-neon.c b/simd/arm/common/jccolor-neon.c
+deleted file mode 100644
+index 2ec1636c..00000000
+--- a/simd/arm/common/jccolor-neon.c
++++ /dev/null
+@@ -1,156 +0,0 @@
+-/*
+- * jccolor-neon.c - colorspace conversion (Arm Neon)
+- *
+- * Copyright 2020 The Chromium Authors. All Rights Reserved.
+- *
+- * This software is provided 'as-is', without any express or implied
+- * warranty.  In no event will the authors be held liable for any damages
+- * arising from the use of this software.
+- *
+- * Permission is granted to anyone to use this software for any purpose,
+- * including commercial applications, and to alter it and redistribute it
+- * freely, subject to the following restrictions:
+- *
+- * 1. The origin of this software must not be misrepresented; you must not
+- *    claim that you wrote the original software. If you use this software
+- *    in a product, an acknowledgment in the product documentation would be
+- *    appreciated but is not required.
+- * 2. Altered source versions must be plainly marked as such, and must not be
+- *    misrepresented as being the original software.
+- * 3. This notice may not be removed or altered from any source distribution.
+- */
+-
+-#define JPEG_INTERNALS
+-#include "../../../jinclude.h"
+-#include "../../../jpeglib.h"
+-#include "../../../jsimd.h"
+-#include "../../../jdct.h"
+-#include "../../../jsimddct.h"
+-#include "../../jsimd.h"
+-
+-#include <arm_neon.h>
+-
+-/* RGB -> YCbCr conversion constants. */
+-
+-#define F_0_298  19595
+-#define F_0_587  38470
+-#define F_0_113  7471
+-#define F_0_168  11059
+-#define F_0_331  21709
+-#define F_0_500  32768
+-#define F_0_418  27439
+-#define F_0_081  5329
+-
+-const static uint16_t jsimd_rgb_ycc_neon_consts[] = { F_0_298, F_0_587,
+-                                                      F_0_113, F_0_168,
+-                                                      F_0_331, F_0_500,
+-                                                      F_0_418, F_0_081
+-                                                    };
+-
+-/* Include inline routines for colorspace extensions. */
+-
+-#if defined(__aarch64__)
+-#include "../arm64/jccolext-neon.c"
+-#else
+-#include "../arm/jccolext-neon.c"
+-#endif
+-#undef RGB_RED
+-#undef RGB_GREEN
+-#undef RGB_BLUE
+-#undef RGB_PIXELSIZE
+-
+-#define RGB_RED  EXT_RGB_RED
+-#define RGB_GREEN  EXT_RGB_GREEN
+-#define RGB_BLUE  EXT_RGB_BLUE
+-#define RGB_PIXELSIZE  EXT_RGB_PIXELSIZE
+-#define jsimd_rgb_ycc_convert_neon  jsimd_extrgb_ycc_convert_neon
+-#if defined(__aarch64__)
+-#include "../arm64/jccolext-neon.c"
+-#else
+-#include "../arm/jccolext-neon.c"
+-#endif
+-#undef RGB_RED
+-#undef RGB_GREEN
+-#undef RGB_BLUE
+-#undef RGB_PIXELSIZE
+-#undef jsimd_rgb_ycc_convert_neon
+-
+-#define RGB_RED  EXT_RGBX_RED
+-#define RGB_GREEN  EXT_RGBX_GREEN
+-#define RGB_BLUE  EXT_RGBX_BLUE
+-#define RGB_PIXELSIZE  EXT_RGBX_PIXELSIZE
+-#define jsimd_rgb_ycc_convert_neon  jsimd_extrgbx_ycc_convert_neon
+-#if defined(__aarch64__)
+-#include "../arm64/jccolext-neon.c"
+-#else
+-#include "../arm/jccolext-neon.c"
+-#endif
+-#undef RGB_RED
+-#undef RGB_GREEN
+-#undef RGB_BLUE
+-#undef RGB_PIXELSIZE
+-#undef jsimd_rgb_ycc_convert_neon
+-
+-#define RGB_RED  EXT_BGR_RED
+-#define RGB_GREEN  EXT_BGR_GREEN
+-#define RGB_BLUE  EXT_BGR_BLUE
+-#define RGB_PIXELSIZE  EXT_BGR_PIXELSIZE
+-#define jsimd_rgb_ycc_convert_neon  jsimd_extbgr_ycc_convert_neon
+-#if defined(__aarch64__)
+-#include "../arm64/jccolext-neon.c"
+-#else
+-#include "../arm/jccolext-neon.c"
+-#endif
+-#undef RGB_RED
+-#undef RGB_GREEN
+-#undef RGB_BLUE
+-#undef RGB_PIXELSIZE
+-#undef jsimd_rgb_ycc_convert_neon
+-
+-#define RGB_RED  EXT_BGRX_RED
+-#define RGB_GREEN  EXT_BGRX_GREEN
+-#define RGB_BLUE  EXT_BGRX_BLUE
+-#define RGB_PIXELSIZE  EXT_BGRX_PIXELSIZE
+-#define jsimd_rgb_ycc_convert_neon  jsimd_extbgrx_ycc_convert_neon
+-#if defined(__aarch64__)
+-#include "../arm64/jccolext-neon.c"
+-#else
+-#include "../arm/jccolext-neon.c"
+-#endif
+-#undef RGB_RED
+-#undef RGB_GREEN
+-#undef RGB_BLUE
+-#undef RGB_PIXELSIZE
+-#undef jsimd_rgb_ycc_convert_neon
+-
+-#define RGB_RED  EXT_XBGR_RED
+-#define RGB_GREEN  EXT_XBGR_GREEN
+-#define RGB_BLUE  EXT_XBGR_BLUE
+-#define RGB_PIXELSIZE  EXT_XBGR_PIXELSIZE
+-#define jsimd_rgb_ycc_convert_neon  jsimd_extxbgr_ycc_convert_neon
+-#if defined(__aarch64__)
+-#include "../arm64/jccolext-neon.c"
+-#else
+-#include "../arm/jccolext-neon.c"
+-#endif
+-#undef RGB_RED
+-#undef RGB_GREEN
+-#undef RGB_BLUE
+-#undef RGB_PIXELSIZE
+-#undef jsimd_rgb_ycc_convert_neon
+-
+-#define RGB_RED  EXT_XRGB_RED
+-#define RGB_GREEN  EXT_XRGB_GREEN
+-#define RGB_BLUE  EXT_XRGB_BLUE
+-#define RGB_PIXELSIZE  EXT_XRGB_PIXELSIZE
+-#define jsimd_rgb_ycc_convert_neon  jsimd_extxrgb_ycc_convert_neon
+-#if defined(__aarch64__)
+-#include "../arm64/jccolext-neon.c"
+-#else
+-#include "../arm/jccolext-neon.c"
+-#endif
+-#undef RGB_RED
+-#undef RGB_GREEN
+-#undef RGB_BLUE
+-#undef RGB_PIXELSIZE
+-#undef jsimd_rgb_ycc_convert_neon
+diff --git a/simd/jsimd.h b/simd/jsimd.h
+index 50a3c5d8..2bbd0642 100644
+--- a/simd/jsimd.h
++++ b/simd/jsimd.h
+@@ -121,6 +121,13 @@ EXTERN(void) jsimd_extxrgb_ycc_convert_neon
+   (JDIMENSION img_width, JSAMPARRAY input_buf, JSAMPIMAGE output_buf,
+    JDIMENSION output_row, int num_rows);
+ 
++EXTERN(void) jsimd_extrgb_ycc_convert_neon_slowld3
++  (JDIMENSION img_width, JSAMPARRAY input_buf, JSAMPIMAGE output_buf,
++   JDIMENSION output_row, int num_rows);
++EXTERN(void) jsimd_extbgr_ycc_convert_neon_slowld3
++  (JDIMENSION img_width, JSAMPARRAY input_buf, JSAMPIMAGE output_buf,
++   JDIMENSION output_row, int num_rows);
++
+ EXTERN(void) jsimd_rgb_ycc_convert_dspr2
+   (JDIMENSION img_width, JSAMPARRAY input_buf, JSAMPIMAGE output_buf,
+    JDIMENSION output_row, int num_rows);
+-- 
+2.17.1
+

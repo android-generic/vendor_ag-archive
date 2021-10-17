@@ -1,0 +1,25 @@
+From f0d480fde7c7ab2e8c2087e4d4170f6afc75b8d5 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 4 Aug 2016 01:38:50 +0800
+Subject: [PATCH 10/16] Run SurfaceFlinger with root privilege
+
+To control virtual consoles, SurfaceFlinger needs the root privilege.
+---
+ services/surfaceflinger/surfaceflinger.rc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/surfaceflinger/surfaceflinger.rc b/services/surfaceflinger/surfaceflinger.rc
+index aea602bba..c7f854d7a 100644
+--- a/services/surfaceflinger/surfaceflinger.rc
++++ b/services/surfaceflinger/surfaceflinger.rc
+@@ -1,6 +1,6 @@
+ service surfaceflinger /system/bin/surfaceflinger
+     class core animation
+-    user system
++#   user system
+     group graphics drmrpc readproc
+     onrestart restart zygote
+     writepid /dev/stune/foreground/tasks
+-- 
+2.21.0
+

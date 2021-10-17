@@ -1,0 +1,148 @@
+From df9c144d0f39386633918707f1bdd27cc36f4d4f Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sat, 25 Mar 2017 00:13:45 +0800
+Subject: [PATCH] Move kMajor* constants to a header file
+
+Currently each cpp defines its own kMajor* that can't be shared.
+Move the kMajor* to a header to avoid duplicate definitions.
+
+Change isVirtioBlkDevice() to be a public static method of Disk
+so that the logic could be shared as well.
+---
+ VolumeManager.cpp |  9 ++-------
+ model/Disk.cpp    | 29 +++--------------------------
+ model/Disk.h      | 27 +++++++++++++++++++++++++++
+ 3 files changed, 32 insertions(+), 33 deletions(-)
+ mode change 100644 => 100755 VolumeManager.cpp
+
+diff --git a/VolumeManager.cpp b/VolumeManager.cpp
+old mode 100644
+new mode 100755
+index 6a25799..27db2f1
+--- a/VolumeManager.cpp
++++ b/VolumeManager.cpp
+@@ -94,10 +94,6 @@ static const std::string kEmptyString("");
+ /* 512MiB is large enough for testing purposes */
+ static const unsigned int kSizeVirtualDisk = 536870912;
+ 
+-static const unsigned int kMajorBlockMmc = 179;
+-static const unsigned int kMajorBlockExperimentalMin = 240;
+-static const unsigned int kMajorBlockExperimentalMax = 254;
+-
+ VolumeManager* VolumeManager::sInstance = NULL;
+ 
+ VolumeManager* VolumeManager::Instance() {
+@@ -218,9 +214,8 @@ void VolumeManager::handleBlockEvent(NetlinkEvent* evt) {
+                     // emulator-specific; see Disk.cpp for details) devices are SD,
+                     // and that everything else is USB
+                     int flags = source->getFlags();
+-                    if (major == kMajorBlockMmc || (android::vold::IsRunningInEmulator() &&
+-                                                    major >= (int)kMajorBlockExperimentalMin &&
+-                                                    major <= (int)kMajorBlockExperimentalMax)) {
++                    if (major == android::vold::Disk::kMajorBlockMmc ||
++                            android::vold::Disk::isVirtioBlkDevice(major)) {
+                         flags |= android::vold::Disk::Flags::kSd;
+                     } else if (eventPath.find("ufs") != std::string::npos) {
+                         flags |= android::vold::Disk::Flags::kSd;
+diff --git a/model/Disk.cpp b/model/Disk.cpp
+index 7217aae..e86cff4 100644
+--- a/model/Disk.cpp
++++ b/model/Disk.cpp
+@@ -61,29 +61,6 @@ static const char* kSysfsLoopMaxMinors = "/sys/module/loop/parameters/max_part";
+ static const char* kSysfsMmcMaxMinorsDeprecated = "/sys/module/mmcblk/parameters/perdev_minors";
+ static const char* kSysfsMmcMaxMinors = "/sys/module/mmc_block/parameters/perdev_minors";
+ 
+-static const unsigned int kMajorBlockLoop = 7;
+-static const unsigned int kMajorBlockScsiA = 8;
+-static const unsigned int kMajorBlockScsiB = 65;
+-static const unsigned int kMajorBlockScsiC = 66;
+-static const unsigned int kMajorBlockScsiD = 67;
+-static const unsigned int kMajorBlockScsiE = 68;
+-static const unsigned int kMajorBlockScsiF = 69;
+-static const unsigned int kMajorBlockScsiG = 70;
+-static const unsigned int kMajorBlockScsiH = 71;
+-static const unsigned int kMajorBlockScsiI = 128;
+-static const unsigned int kMajorBlockScsiJ = 129;
+-static const unsigned int kMajorBlockScsiK = 130;
+-static const unsigned int kMajorBlockScsiL = 131;
+-static const unsigned int kMajorBlockScsiM = 132;
+-static const unsigned int kMajorBlockScsiN = 133;
+-static const unsigned int kMajorBlockScsiO = 134;
+-static const unsigned int kMajorBlockScsiP = 135;
+-static const unsigned int kMajorBlockMmc = 179;
+-static const unsigned int kMajorBlockExperimentalMin = 240;
+-static const unsigned int kMajorBlockExperimentalMax = 254;
+-static const unsigned int kMajorBlockDynamicMin = 234;
+-static const unsigned int kMajorBlockDynamicMax = 512;
+-
+ static const char* kGptBasicData = "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7";
+ static const char* kGptAndroidMeta = "19A710A2-B3CA-11E4-B026-10604B889DCF";
+ static const char* kGptAndroidExpand = "193D1EA4-B3CA-11E4-B075-10604B889DCF";
+@@ -94,7 +71,7 @@ enum class Table {
+     kGpt,
+ };
+ 
+-static bool isVirtioBlkDevice(unsigned int major) {
++bool Disk::isVirtioBlkDevice(unsigned int major) {
+     /*
+      * The new emulator's "ranchu" virtual board no longer includes a goldfish
+      * MMC-based SD card device; instead, it emulates SD cards with virtio-blk,
+@@ -122,8 +99,8 @@ static bool isVirtioBlkDevice(unsigned int major) {
+ }
+ 
+ static bool isNvmeBlkDevice(unsigned int major, const std::string& sysPath) {
+-    return sysPath.find("nvme") != std::string::npos && major >= kMajorBlockDynamicMin &&
+-           major <= kMajorBlockDynamicMax;
++    return sysPath.find("nvme") != std::string::npos && major >= Disk::kMajorBlockDynamicMin &&
++           major <= Disk::kMajorBlockDynamicMax;
+ }
+ 
+ Disk::Disk(const std::string& eventPath, dev_t device, const std::string& nickname, int flags)
+diff --git a/model/Disk.h b/model/Disk.h
+index a4ff256..15abaa5 100644
+--- a/model/Disk.h
++++ b/model/Disk.h
+@@ -40,6 +40,31 @@ class Disk {
+     Disk(const std::string& eventPath, dev_t device, const std::string& nickname, int flags);
+     virtual ~Disk();
+ 
++    enum {
++        kMajorBlockLoop = 7,
++        kMajorBlockScsiA = 8,
++        kMajorBlockScsiB = 65,
++        kMajorBlockScsiC = 66,
++        kMajorBlockScsiD = 67,
++        kMajorBlockScsiE = 68,
++        kMajorBlockScsiF = 69,
++        kMajorBlockScsiG = 70,
++        kMajorBlockScsiH = 71,
++        kMajorBlockScsiI = 128,
++        kMajorBlockScsiJ = 129,
++        kMajorBlockScsiK = 130,
++        kMajorBlockScsiL = 131,
++        kMajorBlockScsiM = 132,
++        kMajorBlockScsiN = 133,
++        kMajorBlockScsiO = 134,
++        kMajorBlockScsiP = 135,
++        kMajorBlockMmc = 179,
++        kMajorBlockExperimentalMin = 240,
++        kMajorBlockExperimentalMax = 254,
++        kMajorBlockDynamicMin = 234,
++        kMajorBlockDynamicMax = 512,
++    };
++
+     enum Flags {
+         /* Flag that disk is adoptable */
+         kAdoptable = 1 << 0,
+@@ -83,6 +108,8 @@ class Disk {
+     virtual status_t partitionPrivate();
+     virtual status_t partitionMixed(int8_t ratio);
+ 
++    static bool isVirtioBlkDevice(unsigned int major);
++
+   protected:
+     /* ID that uniquely references this disk */
+     std::string mId;
+-- 
+2.17.1
+

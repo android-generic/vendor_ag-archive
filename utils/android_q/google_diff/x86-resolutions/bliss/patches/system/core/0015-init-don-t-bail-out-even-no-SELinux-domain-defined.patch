@@ -1,0 +1,57 @@
+From 71b7a20360316ff5d8af39f53175d2128a62926b Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 12 Sep 2017 16:22:04 +0800
+Subject: [PATCH 01/11] init: don't bail out even no SELinux domain defined
+
+Change-Id: Ib74f6ffa3bb0fc86dce9ab790328816167f96de5
+
+Conflicts:
+	init/service.cpp
+---
+ init/service.cpp | 22 +++++++++++++---------
+ 1 file changed, 13 insertions(+), 9 deletions(-)
+
+diff --git a/init/service.cpp b/init/service.cpp
+index 664fc9bafe..8242b520c6 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -29,6 +29,9 @@
+ #include <sys/wait.h>
+ #include <termios.h>
+ #include <unistd.h>
++#if defined(__ANDROID__)
++#include <cutils/klog.h>
++#endif
+ 
+ #include <android-base/file.h>
+ #include <android-base/logging.h>
+@@ -94,16 +97,17 @@ static Result<std::string> ComputeContextFromExecutable(const std::string& servi
+         free(new_con);
+     }
+     if (rc == 0 && computed_context == mycon.get()) {
+-        std::string error = StringPrintf(
+-                "File %s (labeled \"%s\") has incorrect label or no domain transition from %s to "
+-                "another SELinux domain defined. Have you configured your "
+-                "service correctly? https://source.android.com/security/selinux/"
+-                "device-policy#label_new_services_and_address_denials",
++#if defined(__ANDROID__)
++        KLOG_WARNING("service", "File %s (labeled \"%s\") has incorrect label or no domain transition from %s to another SELinux domain defined.",
+                 service_path.c_str(), filecon.get(), mycon.get());
+-        if (selinux_status_getenforce() > 0) {
+-            return Error() << error;
+-        }
+-        LOG(ERROR) << error;
++        return "skip";
++#else
++        return Error() << "File " << service_path << "(labeled \"" << filecon.get()
++                       << "\") has incorrect label or no domain transition from " << mycon.get()
++                       << " to another SELinux domain defined. Have you configured your "
++                          "service correctly? https://source.android.com/security/selinux/"
++                          "device-policy#label_new_services_and_address_denials";
++#endif
+     }
+     if (rc < 0) {
+         return Error() << "Could not get process context";
+-- 
+2.17.1
+

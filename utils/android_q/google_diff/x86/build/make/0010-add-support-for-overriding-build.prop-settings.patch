@@ -1,0 +1,38 @@
+From de5bc4a9a5154ecda7a79e26aff05993046f9970 Mon Sep 17 00:00:00 2001
+From: Koushik Dutta <koushd@gmail.com>
+Date: Sat, 26 Jun 2010 22:53:55 -0700
+Subject: [PATCH 10/17] add support for overriding build.prop settings.
+
+Change-Id: Ie4224d608b7bcb0c2087bd77bc954f8f5f9b6495
+---
+ core/Makefile   | 1 +
+ core/product.mk | 1 +
+ 2 files changed, 2 insertions(+)
+
+diff --git a/core/Makefile b/core/Makefile
+index 94cc1f6585..be293e1e69 100644
+--- a/core/Makefile
++++ b/core/Makefile
+@@ -440,6 +440,7 @@ endif
+ 	        TARGET_CPU_ABI_LIST_64_BIT="$(TARGET_CPU_ABI_LIST_64_BIT)" \
+ 	        TARGET_CPU_ABI="$(TARGET_CPU_ABI)" \
+ 	        TARGET_CPU_ABI2="$(TARGET_CPU_ABI2)" \
++	        $(PRODUCT_BUILD_PROP_OVERRIDES) \
+ 	        bash $(BUILDINFO_SH) >> $@
+ 	$(hide) $(foreach file,$(system_prop_file), \
+ 	    if [ -f "$(file)" ]; then \
+diff --git a/core/product.mk b/core/product.mk
+index c212768bbf..b45d802d01 100644
+--- a/core/product.mk
++++ b/core/product.mk
+@@ -107,6 +107,7 @@ $(call get-product-makefiles,$(_find-android-products-files))
+ endef
+ 
+ _product_var_list :=
++_product_var_list += PRODUCT_BUILD_PROP_OVERRIDES
+ _product_var_list += PRODUCT_NAME
+ _product_var_list += PRODUCT_MODEL
+ 
+-- 
+2.17.1
+

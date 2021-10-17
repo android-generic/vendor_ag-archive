@@ -1,0 +1,31 @@
+From 85ae4cef5edda3e8de1d98571c01ed14bfef8823 Mon Sep 17 00:00:00 2001
+From: "Yue, VincentX" <vincentx.yue@intel.com>
+Date: Tue, 4 Jul 2017 13:27:22 +0800
+Subject: [PATCH 1/5] Fix "Edit Image" option is not working in Gallery
+
+Due to device type is notouch, gallery use base style is "android:Theme.Holo.NoActionBar.Fullscreen"
+lead to get actionbar is null.
+
+Change-Id: I1cee5184055c96b0c2a3e859f11b763fb82d5bd1
+Tracked-On: https://jira01.devtools.intel.com/browse/OAM-46964
+Signed-off-by: Yue, VincentX <vincentx.yue@intel.com>
+---
+ res/values/styles.xml | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/res/values/styles.xml b/res/values/styles.xml
+index 33dcbecb6..fb448db52 100644
+--- a/res/values/styles.xml
++++ b/res/values/styles.xml
+@@ -29,6 +29,9 @@
+         <item name="android:colorBackgroundCacheHint">@null</item>
+     </style>
+     <style name="Theme.FilterShow" parent="Theme.Gallery">
++        <item name="android:windowActionBar">true</item>
++        <item name="android:windowNoTitle">false</item>
++        <item name="android:windowFullscreen">true</item>
+         <item name="android:windowBackground">@null</item>
+     </style>
+     <style name="Theme.Crop" parent="Theme.GalleryBase">
+--
+2.21.0

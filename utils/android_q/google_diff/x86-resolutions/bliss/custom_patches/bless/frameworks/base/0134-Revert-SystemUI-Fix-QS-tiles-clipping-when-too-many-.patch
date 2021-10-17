@@ -1,0 +1,41 @@
+From ef8b92db230bf9275f88c47146a744272d40a3dc Mon Sep 17 00:00:00 2001
+From: Victor Bo <bvoid@yandex.ru>
+Date: Wed, 6 May 2020 11:17:00 +0300
+Subject: [PATCH 134/140] Revert "SystemUI: Fix QS tiles clipping when too many
+ icons in view"
+
+This reverts commit a2fafd60ea4fafce11738b710e18c94db6591cea.
+---
+ packages/SystemUI/res/layout/qs_panel.xml                       | 2 ++
+ .../SystemUI/res/layout/quick_status_bar_expanded_header.xml    | 2 ++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/packages/SystemUI/res/layout/qs_panel.xml b/packages/SystemUI/res/layout/qs_panel.xml
+index 8704d775b02..f3cbef70c9f 100644
+--- a/packages/SystemUI/res/layout/qs_panel.xml
++++ b/packages/SystemUI/res/layout/qs_panel.xml
+@@ -65,6 +65,8 @@
+         android:background="@android:color/transparent"
+         android:focusable="true"
+         android:accessibilityTraversalBefore="@android:id/edit"
++        android:paddingLeft="@dimen/qs_tile_layout_margin_side"
++        android:paddingRight="@dimen/qs_tile_layout_margin_side"
+     />
+ 
+     <include layout="@layout/quick_status_bar_expanded_header" />
+diff --git a/packages/SystemUI/res/layout/quick_status_bar_expanded_header.xml b/packages/SystemUI/res/layout/quick_status_bar_expanded_header.xml
+index 559110891f2..c5f0d26cf82 100644
+--- a/packages/SystemUI/res/layout/quick_status_bar_expanded_header.xml
++++ b/packages/SystemUI/res/layout/quick_status_bar_expanded_header.xml
+@@ -53,6 +53,8 @@
+         android:layout_width="match_parent"
+         android:layout_height="48dp"
+         android:layout_below="@id/quick_qs_brightness_bar"
++        android:layout_marginStart="@dimen/qs_header_tile_margin_horizontal"
++        android:layout_marginEnd="@dimen/qs_header_tile_margin_horizontal"
+         android:accessibilityTraversalAfter="@+id/date_time_group"
+         android:accessibilityTraversalBefore="@id/expand_indicator"
+         android:clipChildren="false"
+-- 
+2.25.1
+

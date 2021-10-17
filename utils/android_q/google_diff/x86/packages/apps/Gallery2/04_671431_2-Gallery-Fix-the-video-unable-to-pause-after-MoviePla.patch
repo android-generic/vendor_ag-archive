@@ -1,0 +1,65 @@
+From b2f956188ca50ebd81601d8db9e097b3c973ef1a Mon Sep 17 00:00:00 2001
+From: rleix <rayx.lei@intel.com>
+Date: Fri, 1 Jun 2018 11:07:16 +0800
+Subject: [PATCH 4/5] [Gallery] Fix the video unable to pause after MoviePlayer
+ resumed
+
+When video is playing, relaunch of MoviePlayer can be triggered by
+density change. In this case, it will resume from savedInstance.
+MoviePlayer wants to pretend that the video has started by calling
+mVideoView.start(). But it forgot to update the state of MovieController,
+thus the controller is still in LOADING state even the video has resumed
+playing. Due to the mismatch, the controller UI stop working.
+
+Change-Id: Ida34c08765d75f8f68a20c7ce39555a091a9bd57
+Tracked-On:
+Signed-off-by: Lei,RayX <rayx.lei@intel.com>
+---
+ src/com/android/gallery3d/app/MoviePlayer.java | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/src/com/android/gallery3d/app/MoviePlayer.java b/src/com/android/gallery3d/app/MoviePlayer.java
+index b4052f1fe..1b71a96f0 100644
+--- a/src/com/android/gallery3d/app/MoviePlayer.java
++++ b/src/com/android/gallery3d/app/MoviePlayer.java
+@@ -94,6 +94,7 @@ public class MoviePlayer implements
+
+     // If the time bar is visible.
+     private boolean mShowing;
++    private boolean mPrepared = false;
+
+     private Virtualizer mVirtualizer;
+
+@@ -154,6 +155,7 @@ public class MoviePlayer implements
+         mVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+             @Override
+             public void onPrepared(MediaPlayer player) {
++                mPrepared = true;
+                 if (!mVideoView.canSeekForward() || !mVideoView.canSeekBackward()) {
+                     mController.setSeekable(false);
+                 } else {
+@@ -189,7 +191,7 @@ public class MoviePlayer implements
+         if (savedInstance != null) { // this is a resumed activity
+             mVideoPosition = savedInstance.getInt(KEY_VIDEO_POSITION, 0);
+             mResumeableTime = savedInstance.getLong(KEY_RESUMEABLE_TIME, Long.MAX_VALUE);
+-            mVideoView.start();
++            startVideo();
+             mVideoView.suspend();
+             mHasPaused = true;
+         } else {
+@@ -277,9 +279,12 @@ public class MoviePlayer implements
+     public void onPause() {
+         mHasPaused = true;
+         mHandler.removeCallbacksAndMessages(null);
+-        mVideoPosition = mVideoView.getCurrentPosition();
++        if (mPrepared) {
++            mVideoPosition = mVideoView.getCurrentPosition();
++        }
+         mBookmarker.setBookmark(mUri, mVideoPosition, mVideoView.getDuration());
+         mVideoView.suspend();
++        mPrepared = false;
+         mResumeableTime = System.currentTimeMillis() + RESUMEABLE_TIMEOUT;
+     }
+
+--
+2.21.0

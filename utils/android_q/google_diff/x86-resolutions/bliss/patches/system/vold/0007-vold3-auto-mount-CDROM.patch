@@ -1,0 +1,103 @@
+From 03b081b740b3906a22cece2a4dee3ef05949b62c Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sun, 26 Mar 2017 00:45:41 +0800
+Subject: [PATCH 2/2] vold3: auto mount CDROM
+
+Luo Chunbo's ISO9660 support (commit 133632d5) is not complete. Still
+need to handle block devices with major number of CDROM.
+
+Change-Id: I8607361e2d1f54bc8b0c6c5d257b99e265a85e0b
+
+Conflicts:
+	VolumeManager.cpp
+	model/Disk.h
+---
+ VolumeManager.cpp      | 2 ++
+ model/Disk.cpp         | 8 +++++++-
+ model/Disk.h           | 3 +++
+ model/PublicVolume.cpp | 2 +-
+ 4 files changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/VolumeManager.cpp b/VolumeManager.cpp
+index c8fc46d..a904e5d 100755
+--- a/VolumeManager.cpp
++++ b/VolumeManager.cpp
+@@ -220,6 +220,8 @@ void VolumeManager::handleBlockEvent(NetlinkEvent* evt) {
+                     } else if (eventPath.find("ufs") != std::string::npos) {
+                         flags |= android::vold::Disk::Flags::kSd;
+                         flags |= android::vold::Disk::Flags::kUfsCard;
++                    } else if (major == android::vold::Disk::kMajorBlockCdrom) {
++                        flags |= android::vold::Disk::Flags::kCdrom;
+                     } else {
+                         flags |= android::vold::Disk::Flags::kUsb;
+                     }
+diff --git a/model/Disk.cpp b/model/Disk.cpp
+index cd36d21..dc9a2a8 100644
+--- a/model/Disk.cpp
++++ b/model/Disk.cpp
+@@ -260,6 +260,9 @@ status_t Disk::readMetadata() {
+             mLabel = "Virtual";
+             break;
+         }
++        case kMajorBlockCdrom:
++            LOG(DEBUG) << "Found a CDROM: " << mSysPath;
++            FALLTHROUGH_INTENDED;
+         // clang-format off
+         case kMajorBlockScsiA: case kMajorBlockScsiB: case kMajorBlockScsiC:
+         case kMajorBlockScsiD: case kMajorBlockScsiE: case kMajorBlockScsiF:
+@@ -354,7 +357,7 @@ status_t Disk::readPartitions() {
+     cmd.push_back(mDevPath);
+ 
+     std::vector<std::string> output;
+-    status_t res = ForkExecvp(cmd, &output);
++    status_t res = maxMinors ? ForkExecvp(cmd, &output) : ENODEV;
+     if (res != OK) {
+         LOG(WARNING) << "sgdisk failed to scan " << mDevPath;
+ 
+@@ -662,6 +665,9 @@ int Disk::getMaxMinors() {
+             // Per Documentation/devices.txt this is static
+             return 15;
+         }
++        case kMajorBlockCdrom: {
++            return 0;
++        }
+         case kMajorBlockMmc: {
+             // Per Documentation/devices.txt this is dynamic
+             std::string tmp;
+diff --git a/model/Disk.h b/model/Disk.h
+index 3db9eac..79269d8 100644
+--- a/model/Disk.h
++++ b/model/Disk.h
+@@ -43,6 +43,7 @@ class Disk {
+     enum {
+         kMajorBlockLoop = 7,
+         kMajorBlockScsiA = 8,
++        kMajorBlockCdrom = 11,
+         kMajorBlockScsiB = 65,
+         kMajorBlockScsiC = 66,
+         kMajorBlockScsiD = 67,
+@@ -81,6 +82,8 @@ class Disk {
+         kUfsCard = 1 << 5,
+         /* Flag that disk is non-removable */
+         kNonRemovable = 1 << 6,
++        /* Flag that disk is CDROM */
++        kCdrom = 1 << 7,
+     };
+ 
+     const std::string& getId() const { return mId; }
+diff --git a/model/PublicVolume.cpp b/model/PublicVolume.cpp
+index a380211..a041765 100644
+--- a/model/PublicVolume.cpp
++++ b/model/PublicVolume.cpp
+@@ -149,7 +149,7 @@ status_t PublicVolume::doMount() {
+         ret = ntfs::Check(mDevPath);
+     } else if (mFsType == "vfat") {
+         ret = vfat::Check(mDevPath);
+-    } else {
++    } else if (mFsType != "iso9660") {
+         LOG(WARNING) << getId() << " unsupported filesystem check, skipping";
+     }
+     if (ret) {
+-- 
+2.17.1
+

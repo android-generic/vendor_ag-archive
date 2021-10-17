@@ -1,0 +1,34 @@
+From b6229f8cf311df9c44b83dde15d246c19884428c Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 19 Oct 2019 19:37:13 -0400
+Subject: [PATCH] Revert "Assume all x86/x86_64 hosts support at least
+ sse4.x/popcount."
+
+This reverts commit f60525793a1fd784ce7de82f18e7ad9de242c431.
+---
+ build/Android.bp | 9 ---------
+ 1 file changed, 9 deletions(-)
+
+diff --git a/build/Android.bp b/build/Android.bp
+index 7b807d56b7..6e20e7b94b 100644
+--- a/build/Android.bp
++++ b/build/Android.bp
+@@ -140,15 +140,6 @@ art_global_defaults {
+                 // Bug: 15446488. We don't omit the frame pointer to work around
+                 // clang/libunwind bugs that cause SEGVs in run-test-004-ThreadStress.
+                 "-fno-omit-frame-pointer",
+-                // The build assumes that all our x86/x86_64 hosts (such as buildbots and developer
+-                // desktops) support at least sse4.2/popcount. This firstly implies that the ART
+-                // runtime binary itself may exploit these features. Secondly, this implies that
+-                // the ART runtime passes these feature flags to dex2oat and JIT by calling the
+-                // method InstructionSetFeatures::FromCppDefines(). Since invoking dex2oat directly
+-                // does not pick up these flags, cross-compiling from a x86/x86_64 host to a
+-                // x86/x86_64 target should not be affected.
+-                "-msse4.2",
+-                "-mpopcnt",
+             ],
+         },
+     },
+-- 
+2.17.1
+

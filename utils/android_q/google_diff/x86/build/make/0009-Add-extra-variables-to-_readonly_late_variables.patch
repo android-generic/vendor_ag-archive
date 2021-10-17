@@ -1,0 +1,32 @@
+From 837809d7e9eadde232494ff878c8a1f546bcaab4 Mon Sep 17 00:00:00 2001
+From: dianlujitao <dianlujitao@lineageos.org>
+Date: Thu, 5 Sep 2019 20:39:07 +0800
+Subject: [PATCH 09/17] Add extra variables to _readonly_late_variables
+
+These are modified by us at a later stage, so be sure
+to allow it.
+
+Change-Id: Ib26e83e10aeb6c107fd6e5757185c05cd6665760
+---
+ core/product.mk | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/product.mk b/core/product.mk
+index 4b5c805746..c212768bbf 100644
+--- a/core/product.mk
++++ b/core/product.mk
+@@ -490,9 +490,11 @@ _readonly_late_variables := \
+ 
+ # Modified internally in the build system
+ _readonly_late_variables += \
++  PRODUCT_CFI_INCLUDE_PATHS \
+   PRODUCT_COPY_FILES \
+   PRODUCT_DEX_PREOPT_NEVER_ALLOW_STRIPPING \
+   PRODUCT_DEX_PREOPT_BOOT_FLAGS \
++  PRODUCT_SOONG_NAMESPACES
+ 
+ _readonly_early_variables := $(filter-out $(_readonly_late_variables),$(_product_var_list))
+ 
+-- 
+2.17.1
+

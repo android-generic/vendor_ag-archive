@@ -1,0 +1,45 @@
+From 3c6cc74a12b22fca3692e4429d42cebaea55a81d Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sun, 23 Aug 2020 19:51:46 -0400
+Subject: [PATCH 04/10] Let's use the ROM's definition for key width/padding.
+
+Change-Id: I1646634ef1c8e31d1c3c7f0da11c0fb409b1609b
+---
+ packages/SystemUI/res/values/dimens.xml                      | 4 +---
+ .../systemui/statusbar/phone/NavigationBarInflaterView.java  | 5 -----
+ 2 files changed, 1 insertion(+), 8 deletions(-)
+
+diff --git a/packages/SystemUI/res/values/dimens.xml b/packages/SystemUI/res/values/dimens.xml
+index 7db4b6077c16..5f3c15da2f47 100644
+--- a/packages/SystemUI/res/values/dimens.xml
++++ b/packages/SystemUI/res/values/dimens.xml
+@@ -304,9 +304,7 @@
+     <dimen name="navigation_icon_size">32dp</dimen>
+ 
+     <dimen name="navigation_key_padding">0dp</dimen>
+-    <!-- region @boringdroid -->
+-    <dimen name="boring_navigation_key_width">30dp</dimen>
+-    <!-- endregion -->
++    
+     <!-- The width of the view containing the menu/ime navigation bar icons -->
+     <dimen name="navigation_extra_key_width">36dp</dimen>
+ 
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/phone/NavigationBarInflaterView.java b/packages/SystemUI/src/com/android/systemui/statusbar/phone/NavigationBarInflaterView.java
+index 44fabd8c604d..3260c1606955 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/phone/NavigationBarInflaterView.java
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/phone/NavigationBarInflaterView.java
+@@ -483,11 +483,6 @@ public class NavigationBarInflaterView extends FrameLayout
+         // region @boringdroid
+         if (BoringdroidConfig.IS_SYSTEMUI_PLUGIN_ENABLED && v instanceof KeyButtonView) {
+             ViewGroup.LayoutParams layoutParams = v.getLayoutParams();
+-            layoutParams.width =
+-                    (int) v.getContext()
+-                            .getResources()
+-                            .getDimension(R.dimen.boring_navigation_key_width);
+-            v.setLayoutParams(layoutParams);
+             v.setPadding(0, v.getPaddingTop(), 0, v.getPaddingBottom());
+         }
+         // endregion
+-- 
+2.17.1
+

@@ -1,0 +1,48 @@
+From 790eabde264a533d04b0eb82f54b7032f73b5d0d Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Mon, 10 Aug 2020 22:20:26 -0400
+Subject: [PATCH 4/4] Fix conflicts with ROM settings
+
+Change-Id: Ib4a0e2aff57cb0b7349892cf757597dcfad8aacd
+---
+ Android.mk | 12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index 02a98ae470..b7a35b12a6 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -20,7 +20,9 @@ LOCAL_REQUIRED_MODULES := privapp_whitelist_com.android.settings
+ LOCAL_MODULE_TAGS := optional
+ LOCAL_USE_AAPT2 := true
+ 
+-LOCAL_SRC_FILES := $(call all-java-files-under, src) \
++LOCAL_SRC_FILES += $(call all-java-files-under, src) 
++
++LOCAL_SRC_FILES +=  \
+     $(call all-java-files-under,../../../external/koush/Widgets/Widgets/src) \
+     $(call all-java-files-under,../../../external/koush/Superuser/Superuser/src)
+ 
+@@ -57,13 +59,17 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
+ 
+ LOCAL_PROGUARD_FLAG_FILES := proguard.flags
+ 
+-LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res \
++LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
++
++LOCAL_AAPT_FLAGS := --auto-add-overlay
++
++LOCAL_RESOURCE_DIR += \
+     external/koush/Widgets/Widgets/res \
+     external/koush/Superuser/Superuser/res
+ 
+ LOCAL_AAPT_INCLUDE_ALL_RESOURCES := true
+ 
+-LOCAL_AAPT_FLAGS := --auto-add-overlay \
++LOCAL_AAPT_FLAGS +=  \
+     --extra-packages com.koushikdutta.superuser:com.koushikdutta.widgets
+ 
+ ifneq ($(INCREMENTAL_BUILDS),)
+-- 
+2.17.1
+

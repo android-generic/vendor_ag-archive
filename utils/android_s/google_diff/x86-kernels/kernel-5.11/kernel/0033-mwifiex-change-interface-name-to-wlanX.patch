@@ -1,0 +1,26 @@
+From 4783574ddfdd3e132760dda5ddfa420c3fe2500e Mon Sep 17 00:00:00 2001
+From: youling257 <youling257@gmail.com>
+Date: Sat, 12 Aug 2017 14:04:12 +0800
+Subject: [PATCH 033/106] mwifiex: change interface name to wlanX
+
+Signed-off-by: youling257 <youling257@gmail.com>
+---
+ drivers/net/wireless/marvell/mwifiex/main.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/marvell/mwifiex/main.c b/drivers/net/wireless/marvell/mwifiex/main.c
+index ee52fb839ef7..b3e9cb13ffaa 100644
+--- a/drivers/net/wireless/marvell/mwifiex/main.c
++++ b/drivers/net/wireless/marvell/mwifiex/main.c
+@@ -599,7 +599,7 @@ static int _mwifiex_fw_dpc(const struct firmware *firmware, void *context)
+ 
+ 	rtnl_lock();
+ 	/* Create station interface by default */
+-	wdev = mwifiex_add_virtual_intf(adapter->wiphy, "mlan%d", NET_NAME_ENUM,
++	wdev = mwifiex_add_virtual_intf(adapter->wiphy, "wlan%d", NET_NAME_ENUM,
+ 					NL80211_IFTYPE_STATION, NULL);
+ 	if (IS_ERR(wdev)) {
+ 		mwifiex_dbg(adapter, ERROR,
+-- 
+2.17.1
+

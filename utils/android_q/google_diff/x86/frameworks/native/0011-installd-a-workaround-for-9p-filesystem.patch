@@ -1,0 +1,38 @@
+From b2d56941245da6dc16b3e5e8c428e8e0b4aaca7d Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 27 Jun 2017 14:21:26 +0800
+Subject: [PATCH 11/16] installd: a workaround for 9p filesystem
+
+SELinux and getxattr seem not work on 9p filesystem.
+Ignore the errors as a workaround.
+
+TEST: be able to boot to Home on QEMU with shared 'data' folder.
+---
+ cmds/installd/InstalldNativeService.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/cmds/installd/InstalldNativeService.cpp b/cmds/installd/InstalldNativeService.cpp
+index caac2e89a..282a53bd5 100644
+--- a/cmds/installd/InstalldNativeService.cpp
++++ b/cmds/installd/InstalldNativeService.cpp
+@@ -317,7 +317,7 @@ static int restorecon_app_data_lazy(const std::string& path, const std::string&
+     }
+     if (selinux_android_restorecon_pkgdir(path.c_str(), seInfo.c_str(), uid, 0) < 0) {
+         PLOG(ERROR) << "Failed top-level restorecon for " << path;
+-        goto fail;
++    //  goto fail;
+     }
+     if (lgetfilecon(path.c_str(), &after) < 0) {
+         PLOG(ERROR) << "Failed after getfilecon for " << path;
+@@ -512,7 +512,7 @@ binder::Status InstalldNativeService::migrateAppData(const std::unique_ptr<std::
+     auto target = (flags & FLAG_STORAGE_DE) ? de_path : ce_path;
+     auto source = (flags & FLAG_STORAGE_DE) ? ce_path : de_path;
+ 
+-    if (getxattr(target.c_str(), kXattrDefault, nullptr, 0) == -1) {
++    if (getxattr(target.c_str(), kXattrDefault, nullptr, 0) == -1 && errno != ENODATA) {
+         LOG(WARNING) << "Requested default storage " << target
+                 << " is not active; migrating from " << source;
+         if (delete_dir_contents_and_dir(target) != 0) {
+-- 
+2.21.0
+

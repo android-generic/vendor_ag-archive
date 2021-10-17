@@ -1,0 +1,55 @@
+From 9c60ce61ccd3b657fe8712e4c31a702651611f3e Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 10 Oct 2021 14:07:49 +0200
+Subject: [PATCH] remove Debug GRALLOC=gbm (r-x86)
+
+Being GRALLOC=gbm default "Debug GRALLOC=gbm" option is not necessay anymore
+---
+ boot/isolinux/isolinux.cfg         | 5 -----
+ install/grub2/efi/boot/android.cfg | 1 -
+ install/scripts/1-install          | 1 -
+ 3 files changed, 7 deletions(-)
+
+diff --git a/boot/isolinux/isolinux.cfg b/boot/isolinux/isolinux.cfg
+index 22e9e48..f654a27 100644
+--- a/boot/isolinux/isolinux.cfg
++++ b/boot/isolinux/isolinux.cfg
+@@ -21,11 +21,6 @@ label debug
+ 	kernel /kernel
+ 	append initrd=/initrd.img CMDLINE DEBUG=2 SRC= DATA=
+ 
+-label debug_gbm
+-	menu label Live CD - Debug mode gralloc.gbm
+-	kernel /kernel
+-	append initrd=/initrd.img CMDLINE DEBUG=2 SRC= DATA= GRALLOC=gbm
+-
+ label debug_drmfb-composer
+ 	menu label Live CD - Debug mode drmfb-composer gralloc.gbm
+ 	kernel /kernel
+diff --git a/install/grub2/efi/boot/android.cfg b/install/grub2/efi/boot/android.cfg
+index 927825e..a4f8ee1 100644
+--- a/install/grub2/efi/boot/android.cfg
++++ b/install/grub2/efi/boot/android.cfg
+@@ -85,7 +85,6 @@ export android bootefi grub kdir live src
+ # Create main menu
+ add_entry "$live" quiet
+ add_entry "$live - Debug" DEBUG=2
+-add_entry "$live - Debug gralloc.gbm" DEBUG=2 GRALLOC=gbm
+ add_entry "$live - Debug drmfb-composer" DEBUG=2 HWC=drmfb GRALLOC=gbm
+ add_entry "$live - Debug hwcomposer.drm" DEBUG=2 HWC=drm GRALLOC=gbm
+ add_entry "$live - Debug gralloc.minigbm" DEBUG=2 GRALLOC=minigbm
+diff --git a/install/scripts/1-install b/install/scripts/1-install
+index bfa2d86..c70e020 100644
+--- a/install/scripts/1-install
++++ b/install/scripts/1-install
+@@ -256,7 +256,6 @@ create_menulst()
+ 
+ 	create_entry "$OS_TITLE $VER" quiet $cmdline
+ 	create_entry "$OS_TITLE $VER (Debug mode)" $cmdline DEBUG=2
+-	create_entry "$OS_TITLE $VER (Debug mode) gralloc.gbm" $cmdline DEBUG=2 GRALLOC=gbm
+ 	create_entry "$OS_TITLE $VER (Debug mode) drmfb-composer gralloc.gbm" $cmdline DEBUG=2 HWC=drmfb GRALLOC=gbm
+ 	create_entry "$OS_TITLE $VER (Debug mode) hwcomposer.drm gralloc.gbm" $cmdline DEBUG=2 HWC=drm GRALLOC=gbm
+ 	create_entry "$OS_TITLE $VER (Debug mode) gralloc.minigbm" DEBUG=2 GRALLOC=minigbm
+-- 
+2.25.1
+

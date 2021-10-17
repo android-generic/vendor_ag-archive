@@ -1,0 +1,44 @@
+From 0ba4d7fb18b786c8eedce69ee677f52f93914668 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 12 Sep 2014 21:48:27 +0800
+Subject: [PATCH 049/106] HID: input: add asus vendor keys
+
+---
+ drivers/hid/hid-input.c | 14 +++++++++++++-
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/hid/hid-input.c b/drivers/hid/hid-input.c
+index f23027d2795b..0b82b3d8a4d5 100644
+--- a/drivers/hid/hid-input.c
++++ b/drivers/hid/hid-input.c
+@@ -574,7 +574,8 @@ static void hidinput_configure_usage(struct hid_input *hidinput, struct hid_fiel
+ 
+ 	field->hidinput = hidinput;
+ 
+-	if (field->flags & HID_MAIN_ITEM_CONSTANT)
++	if ((field->flags & HID_MAIN_ITEM_CONSTANT) &&
++			(usage->hid & HID_USAGE_PAGE) != HID_UP_ASUSVENDOR)
+ 		goto ignore;
+ 
+ 	/* Ignore if report count is out of bounds. */
+@@ -1122,6 +1123,17 @@ static void hidinput_configure_usage(struct hid_input *hidinput, struct hid_fiel
+ 		}
+ 		break;
+ 
++	case HID_UP_ASUSVENDOR:
++		switch (usage->hid & HID_USAGE) {
++		case 0x06C: map_key_clear(KEY_SLEEP);		break; /* Fn+F1: Sleep */
++		case 0x088: map_key_clear(KEY_WLAN);		break; /* Fn+F2: Wifi & BT */
++		case 0x010: map_key_clear(KEY_BRIGHTNESSDOWN);	break; /* Fn+F5: Brightness down */
++		case 0x020: map_key_clear(KEY_BRIGHTNESSUP);	break; /* Fn+F6: Brightness up */
++		case 0x06B: map_key_clear(KEY_F24);		break; /* Fn+F9: Touchpad */
++		default: goto ignore;
++		}
++		break;
++
+ 	default:
+ 	unknown:
+ 		if (field->report_size == 1) {
+-- 
+2.17.1
+

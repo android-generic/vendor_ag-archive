@@ -1,0 +1,31 @@
+From 7d7373303c68301c58d0af3428b9fbc65378042e Mon Sep 17 00:00:00 2001
+From: "Wang, ArvinX" <arvinx.wang@intel.com>
+Date: Mon, 20 May 2019 15:46:55 +0800
+Subject: [PATCH] Fix unable to show outgoing call Activity
+
+The latest rebase the API TelephonyManager.getPhoneCount,
+If the device doesn't support voice, sms and data,
+need to check if the defaultPhone is null.
+
+Change-Id: Ic3013582469870378550039c7345a12041ae5a83
+Tracked-On: https://jira.devtools.intel.com/browse/OAM-80545
+Signed-off-by: Wang, ArvinX <arvinx.wang@intel.com>
+---
+ src/com/android/phone/PhoneInterfaceManager.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/com/android/phone/PhoneInterfaceManager.java b/src/com/android/phone/PhoneInterfaceManager.java
+index d0ed9bd77..9ff9444fa 100755
+--- a/src/com/android/phone/PhoneInterfaceManager.java
++++ b/src/com/android/phone/PhoneInterfaceManager.java
+@@ -6726,7 +6726,7 @@ public class PhoneInterfaceManager extends ITelephony.Stub {
+         if (!exactMatch) {
+             TelephonyPermissions
+                     .enforeceCallingOrSelfReadPrivilegedPhoneStatePermissionOrCarrierPrivilege(
+-                            mApp, defaultPhone.getSubId(), "isEmergencyNumber(Potential)");
++                            mApp, (defaultPhone != null) ? defaultPhone.getSubId() : SubscriptionManager.DEFAULT_SUBSCRIPTION_ID, "isEmergencyNumber(Potential)");
+         }
+         final long identity = Binder.clearCallingIdentity();
+         try {
+--
+2.21.0

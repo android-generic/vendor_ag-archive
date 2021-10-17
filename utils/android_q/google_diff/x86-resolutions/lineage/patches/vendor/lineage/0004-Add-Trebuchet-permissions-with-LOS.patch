@@ -1,0 +1,28 @@
+From fc8baa7c737aa4345c9018611e7697632e256bf5 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 29 Aug 2020 13:09:49 -0400
+Subject: [PATCH 1/2] Add Trebuchet permissions with LOS
+
+Change-Id: Icb49168f9cef6d8716ebcdb466d7b8f0a9f2addb
+---
+ config/common.mk | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/config/common.mk b/config/common.mk
+index 7d971bba..0dd2e301 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -114,7 +114,9 @@ PRODUCT_PACKAGES += \
+     LineageParts \
+     LineageSettingsProvider \
+     LineageSetupWizard \
+-    Updater
++    Updater \
++    TrebuchetQuickStep \
++    privapp_whitelist_com.android.launcher3-ext.xml
+ 
+ # Themes
+ PRODUCT_PACKAGES += \
+-- 
+2.17.1
+

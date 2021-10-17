@@ -1,0 +1,70 @@
+From 438abf3ab2dfb8795eb15b646757846f4231da6c Mon Sep 17 00:00:00 2001
+From: bxu10x <bingx.xu@intel.com>
+Date: Fri, 14 Dec 2018 17:20:40 +0530
+Subject: [PATCH] Do not check the config_voice_capable when make a call
+
+In order to fix the CTS issue, set the configuration of
+"config_voice_capable" as false in patch:
+https://android.intel.com/#/c/648770.
+Currently skip to check the config_voice_capable in
+automotive device when make a bt call.
+
+Change-Id: Ifc8e98bb35520b775c30fc4921a3f22912b36464
+Tracked-On:
+Signed-off-by: Gaganpreet kaur <gaganpreetx.kaur@intel.com>
+---
+ .../android/server/telecom/TelecomServiceImpl.java  | 13 ++++++++-----
+ .../telecom/components/UserCallIntentProcessor.java |  7 +++++--
+ 2 files changed, 13 insertions(+), 7 deletions(-)
+
+diff --git a/src/com/android/server/telecom/TelecomServiceImpl.java b/src/com/android/server/telecom/TelecomServiceImpl.java
+index 8bf42a8c..25c1fa71 100644
+--- a/src/com/android/server/telecom/TelecomServiceImpl.java
++++ b/src/com/android/server/telecom/TelecomServiceImpl.java
+@@ -445,11 +445,14 @@ public class TelecomServiceImpl {
+             try {
+                 Log.startSession("TSI.rPA");
+                 synchronized (mLock) {
+-                    if (!mContext.getApplicationContext().getResources().getBoolean(
+-                            com.android.internal.R.bool.config_voice_capable)) {
+-                        Log.w(this,
+-                                "registerPhoneAccount not allowed on non-voice capable device.");
+-                        return;
++                    if (!mContext.getPackageManager()
++                        .hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
++                        if (!mContext.getApplicationContext().getResources().getBoolean(
++                                com.android.internal.R.bool.config_voice_capable)) {
++                            Log.w(this,
++                                    "registerPhoneAccount not allowed on non-voice capable device.");
++                            return;
++                        }
+                     }
+                     try {
+                         enforcePhoneAccountModificationForPackage(
+diff --git a/src/com/android/server/telecom/components/UserCallIntentProcessor.java b/src/com/android/server/telecom/components/UserCallIntentProcessor.java
+index ae4a7d80..244c8dcd 100644
+--- a/src/com/android/server/telecom/components/UserCallIntentProcessor.java
++++ b/src/com/android/server/telecom/components/UserCallIntentProcessor.java
+@@ -19,6 +19,7 @@ package com.android.server.telecom.components;
+ import android.app.admin.DevicePolicyManager;
+ import android.content.Context;
+ import android.content.Intent;
++import android.content.pm.PackageManager;
+ import android.net.Uri;
+ import android.os.UserHandle;
+ import android.os.UserManager;
+@@ -82,8 +83,10 @@ public class UserCallIntentProcessor {
+     public void processIntent(Intent intent, String callingPackageName,
+             boolean canCallNonEmergency, boolean isLocalInvocation) {
+         // Ensure call intents are not processed on devices that are not capable of calling.
+-        if (!isVoiceCapable()) {
+-            return;
++        if (!mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
++            if (!isVoiceCapable()) {
++                return;
++            }
+         }
+
+         String action = intent.getAction();
+--
+2.21.0

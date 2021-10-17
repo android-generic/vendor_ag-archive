@@ -1,0 +1,31 @@
+From 86905ba6a735e941654aeaee2a83f818edf92f56 Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@outlook.com>
+Date: Sat, 26 Sep 2020 16:52:02 +0800
+Subject: [PATCH 17/17] Notify task moved to front event when focused task
+ changed
+
+Signed-off-by: utzcoz <utzcoz@outlook.com>
+---
+ .../core/java/com/android/server/wm/ActivityRecord.java     | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/services/core/java/com/android/server/wm/ActivityRecord.java b/services/core/java/com/android/server/wm/ActivityRecord.java
+index 64913609a81c..a9fa121df070 100644
+--- a/services/core/java/com/android/server/wm/ActivityRecord.java
++++ b/services/core/java/com/android/server/wm/ActivityRecord.java
+@@ -1527,6 +1527,12 @@ final class ActivityRecord extends ConfigurationContainer {
+         }
+ 
+         stack.moveToFront(reason, task);
++        // region @boringdroid
++        // We should notify task moved to front event if we change focused task
++        if (task != null) {
++            mAtmService.getTaskChangeNotificationController().notifyTaskMovedToFront(task.getTaskInfo());
++        }
++        // endregion
+         // Report top activity change to tracking services and WM
+         if (mRootActivityContainer.getTopResumedActivity() == this) {
+             // TODO(b/111361570): Support multiple focused apps in WM
+-- 
+2.17.1
+

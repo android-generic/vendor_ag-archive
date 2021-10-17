@@ -1,0 +1,64 @@
+From 71b329016975aa12573b77b3787ec01a3afc890d Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sat, 13 Aug 2016 01:58:29 +0800
+Subject: [PATCH 1/5] vold3: support the old SDCARD=xxx function
+
+By specifying SDCARD=xxx in kernel cmdline, vold will try to mount
+that disk or partition as a sdcard. This is an old function we've
+added to vold 2.0. Now re-implement it in vold 3.0. Some people
+still like and use it.
+---
+ main.cpp | 31 +++++++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+
+diff --git a/main.cpp b/main.cpp
+index 4d61110..3e0e87d 100644
+--- a/main.cpp
++++ b/main.cpp
+@@ -24,6 +24,7 @@
+ #include "model/Disk.h"
+ #include "sehandle.h"
+ 
++#include <android-base/file.h>
+ #include <android-base/logging.h>
+ #include <android-base/properties.h>
+ #include <android-base/stringprintf.h>
+@@ -272,5 +273,35 @@ static int process_config(VolumeManager* vm, bool* has_adoptable, bool* has_quot
+                         fstype, mntopts)));
+         }
+     }
++
++    std::string cmdline;
++    if (android::base::ReadFileToString("/proc/cmdline", &cmdline)) {
++        size_t pos = cmdline.find("SDCARD=");
++        if (pos != std::string::npos) {
++            std::string sdcard = cmdline.substr(pos + 7);
++            sdcard = sdcard.substr(0, sdcard.find_first_of(" \n"));
++            if (!sdcard.empty()) {
++                int partnum = -1;
++                if (access(std::string("/sys/block/" + sdcard).c_str(), X_OK)) { // not a disk
++                    auto d = std::find_if_not(sdcard.rbegin(), sdcard.rend(), ::isdigit);
++                    pos = std::distance(d, sdcard.rend());
++                    if (pos != sdcard.length()) {
++                        partnum = std::stoi(sdcard.substr(pos));
++                        sdcard = sdcard.substr(0, pos);
++                        if (sdcard.find("mmcblk") != std::string::npos) {
++                            // exclude the last 'p'
++                            sdcard = sdcard.substr(0, pos - 1);
++                        }
++                    }
++                }
++                vm->addDiskSource(std::shared_ptr<VolumeManager::DiskSource>(
++                        new VolumeManager::DiskSource("/devices/*/" + sdcard, sdcard,
++                        partnum, android::vold::Disk::Flags::kAdoptable, "auto", "")));
++                *has_adoptable = true;
++                LOG(INFO) << "Add SDCARD=" << sdcard << " partnum=" << partnum;
++            }
++        }
++    }
++
+     return 0;
+ }
+-- 
+2.17.1
+

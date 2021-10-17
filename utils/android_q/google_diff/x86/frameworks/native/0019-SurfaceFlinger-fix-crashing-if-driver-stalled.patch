@@ -1,0 +1,38 @@
+From 1ad42384c6d5da66b215d30617d38e5cb2021bd8 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Wed, 15 Apr 2020 16:16:02 +0800
+Subject: [PATCH 3/3] SurfaceFlinger: fix crashing if driver stalled
+
+Due to some unknown reasons, the VSYNC may not be sent in time that
+causes SurfaceFlinger to fake VSYNC like:
+
+04-15 08:09:28.866  1235  1360 W SurfaceFlinger: Faking VSYNC due to driver stall
+
+Therefore mPendingPeriod in DispSync may not be set to mPeriod which is
+zero. It results in a dividing-by-zero error in SurfaceFlinger:
+
+04-15 08:09:29.329  1395  1395 F DEBUG   : pid: 1235, tid: 1235, name: surfaceflinger  >>> /system/bin/surfaceflinger <<<
+04-15 08:09:29.329  1395  1395 F DEBUG   : uid: 0
+04-15 08:09:29.329  1395  1395 F DEBUG   : signal 8 (SIGFPE), code 1 (FPE_INTDIV), fault addr 0x7619c5aff344
+
+To work around it, just use mPendingPeriod if mPeriod has not been set.
+---
+ services/surfaceflinger/Scheduler/DispSync.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/surfaceflinger/Scheduler/DispSync.cpp b/services/surfaceflinger/Scheduler/DispSync.cpp
+index 0c9405297..0ca66d643 100644
+--- a/services/surfaceflinger/Scheduler/DispSync.cpp
++++ b/services/surfaceflinger/Scheduler/DispSync.cpp
+@@ -658,7 +658,7 @@ void DispSync::setPeriod(nsecs_t period) {
+ nsecs_t DispSync::getPeriod() {
+     // lock mutex as mPeriod changes multiple times in updateModelLocked
+     Mutex::Autolock lock(mMutex);
+-    return mPeriod;
++    return mPeriod ? mPeriod : mPendingPeriod;
+ }
+ 
+ void DispSync::updateModelLocked() {
+-- 
+2.17.1
+
