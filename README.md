@@ -13,7 +13,7 @@ The menu system uses [easybashgui](https://sites.google.com/site/easybashgui/) f
 ### Development Chats:
 
 Telegram:
-[PC/x86/x86_64](https://t.me/androidgenericpc)
+[PC/x86/x86_64/waydroid](https://t.me/androidgenericpc)
 
 
 ### Resources:
@@ -46,8 +46,9 @@ We'd like to say thanks to all these great individuals first:
 @phhusson @cwhuang @maurossi @goffioul @me176c-dev @bosconovic @farmerbb @aclegg2011 @eternityson and many others
 
 And these great teams second:
-@Google @LineageOS @GZR @OmniROM @SlimROM @ParanoidAndroid @dahliaOS and many others, for you still lead the way for Open Innovation in the Android community. 
+@Google @LineageOS @GZR @OmniROM @SlimROM @ParanoidAndroid @dahliaOS @waydroid and many others, for you still lead the way for Open Innovation in the Android community. 
 
-
+Projects Used:
+@boringdroid @easybashgui @smart-dock @android-x86 @projectceladon 
 
 
