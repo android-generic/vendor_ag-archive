@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+	<!-- Magisk -->
+<!--
+    <project name="rusty-magisk" path="rusgik" remote="ax" revision="568ca9e1774846aa4592801054d24989f3f4fd9d" />
+-->
+    <!-- FOSS Apps -->
+<!--
+    <project name="vendor_foss" path="vendor/foss" remote="BR-x86" revision="foss-minimal" />
+-->
+</manifest>
