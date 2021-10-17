@@ -6,7 +6,7 @@
 	<project path="external/busybox" name="platform/external/busybox" remote="x86" revision="q-x86" groups="notdefault" />
 	<project path="external/chromium-libpac" name="platform/external/chromium-libpac" remote="aosp" revision="master" />
 	<project path="external/rust/crates/base64" name="platform/external/rust/crates/base64" remote="aosp" revision="master" />
-	<project path="external/rust/crates/command-fds" name="platform/external/rust/crates/command-fds" remote="aosp" revision="platform-tools-31.0.3" />
+	<project path="external/rust/crates/command-fds" name="platform/external/rust/crates/command-fds" remote="aosp" revision="refs/tags/platform-tools-31.0.3" />
 	<project path="external/rust/crates/kernlog" name="platform/external/rust/crates/kernlog" remote="aosp" revision="master" />
 	<project path="external/drm_framebuffer" name="platform/external/drm_framebuffer" remote="x86" revision="r-x86" />
 	<project path="external/drm_gralloc" name="platform/external/drm_gralloc" remote="x86" revision="r-x86" />

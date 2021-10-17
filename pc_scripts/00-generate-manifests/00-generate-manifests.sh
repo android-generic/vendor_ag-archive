@@ -17,8 +17,15 @@
 top_dir=`pwd`
 LOCALDIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 loc_man="${top_dir}/.repo/local_manifests"
+rompath="$PWD"
+vendor_path="ag"
+temp_path="$rompath/vendor/$vendor_path/tmp/"
 manifests_url="https://raw.githubusercontent.com/android-generic/vendor_ag/unified/configs/pc"
-manifests_path="${LOCALDIR}/configs/pc"
+manifests_path="$rompath/vendor/$vendor_path/configs/pc"
+config_type="$1"
+popt=0
+source $rompath/vendor/$vendor_path/ag-core/gui/easybashgui
+# include $rompath/vendor/$vendor_path/ag-core/gui/easybashgui
 
 #setup colors
 red=`tput setaf 1`
@@ -38,29 +45,36 @@ CL_CYN=`tput setaf 12`
 CL_RST=`tput sgr0`
 reset=`tput sgr0`
 
+echo -e "variables set"
+
 if [ ! -d "${top_dir}/.repo" ]; then
     echo -e ${reset}""${reset}
     echo -e ${ltred}"ERROR: Manifest generation requires repo to be initialized first."${reset}
     echo -e ${reset}""${reset}
     exit
 fi
-
+echo -e "Setting up local_manifests"
 mkdir -p ${loc_man}
 
+echo -e "determining proper paths for your Android version"
 if [ -f build/make/core/version_defaults.mk ]; then
     if grep -q "PLATFORM_SDK_VERSION := 28" build/make/core/version_defaults.mk; then
+		echo -e "Setting up PLATFORM_SDK_VERSION := 28 local_manifests"
         manifests_url="${manifests_url}-28"
         manifests_path="${manifests_path}-28"
     fi
     if grep -q "PLATFORM_SDK_VERSION := 29" build/make/core/version_defaults.mk; then
+		echo -e "Setting up PLATFORM_SDK_VERSION := 29 local_manifests"
         manifests_url="${manifests_url}-29"
         manifests_path="${manifests_path}-29"
     fi
     if grep -q "PLATFORM_SDK_VERSION := 30" build/make/core/version_defaults.mk; then
+		echo -e "Setting up PLATFORM_SDK_VERSION := 30 local_manifests"
         manifests_url="${manifests_url}-30"
         manifests_path="${manifests_path}-30"
     fi
     if grep -q "PLATFORM_SDK_VERSION := 31" build/make/core/version_defaults.mk; then
+		echo -e "Setting up PLATFORM_SDK_VERSION := 31 local_manifests"
         manifests_url="${manifests_url}-31"
         manifests_path="${manifests_path}-31"
     fi
@@ -104,3 +118,7 @@ while IFS= read -r rpitem; do
         fi
     fi
 done < "${loc_man}/01-removes.xml"
+
+echo -e ${reset}""${reset}
+echo -e ${green}"Manifest generation complete. Files have been copied to $rompath/.repo/local_manifests/"${reset}
+echo -e ${reset}""${reset}
