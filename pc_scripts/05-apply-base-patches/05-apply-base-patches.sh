@@ -16,22 +16,29 @@
 
 top_dir=`pwd`
 ag_vendor_path="ag"
+rompath="$PWD"
+temp_path="$rompath/vendor/$ag_vendor_path/tmp/"
+utils_path="$rompath/vendor/$ag_vendor_path/utils/"
 private_utils_dir="$top_dir/vendor/$ag_vendor_path/PRIVATE/utils"
 private_patch_dir="$private_utils_dir/android_r/google_diff/$TARGET_PRODUCT"
 LOCALDIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 if [ -f build/make/core/version_defaults.mk ]; then
+	if grep -q "PLATFORM_SDK_VERSION := 28" build/make/core/version_defaults.mk; then
+        patch_dir="$utils_path/android_p/google_diff/x86"
+        roms_patch_dir="$utils_path/android_p/google_diff/x86-resolutions"
+    fi
     if grep -q "PLATFORM_SDK_VERSION := 29" build/make/core/version_defaults.mk; then
-        patch_dir="$LOCALDIR/android_q/google_diff/x86"
-        roms_patch_dir="$LOCALDIR/android_q/google_diff/x86-resolutions"
+        patch_dir="$utils_path/android_q/google_diff/x86"
+        roms_patch_dir="$utils_path/android_q/google_diff/x86-resolutions"
     fi
     if grep -q "PLATFORM_SDK_VERSION := 30" build/make/core/version_defaults.mk; then
-        patch_dir="$LOCALDIR/android_r/google_diff/x86"
-        roms_patch_dir="$LOCALDIR/android_r/google_diff/x86-resolutions"
+        patch_dir="$utils_path/android_r/google_diff/x86"
+        roms_patch_dir="$utils_path/android_r/google_diff/x86-resolutions"
     fi
     if grep -q "PLATFORM_SDK_VERSION := 31" build/make/core/version_defaults.mk; then
-        patch_dir="$LOCALDIR/android_s/google_diff/x86"
-        roms_patch_dir="$LOCALDIR/android_s/google_diff/x86-resolutions"
+        patch_dir="$utils_path/android_s/google_diff/x86"
+        roms_patch_dir="$utils_path/android_s/google_diff/x86-resolutions"
     fi
 fi
 
