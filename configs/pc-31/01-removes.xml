@@ -21,6 +21,7 @@
 	<remove-project name="device/generic/x86" />
 	<remove-project name="device/generic/x86_64" />
 	<remove-project name="device/google/atv" />
+	<remove-project name="device/google/barbet" />
 	<remove-project name="device/google/bonito" />
 	<remove-project name="device/google/bonito-kernel" />
 	<remove-project name="device/google/bonito-sepolicy" />
@@ -154,6 +155,7 @@
 	<remove-project name="platform/packages/apps/Car/Settings" />
 	<remove-project name="platform/packages/apps/Car/SystemUpdater" />
 	<remove-project name="platform/packages/apps/Car/tests" />
+	<remove-project name="platform/packages/apps/Car/Provision" />	
 	<remove-project name="platform/packages/apps/Gallery" />
 	<remove-project name="platform/packages/apps/LegacyCamera" />
 	<remove-project name="platform/packages/apps/Music" />
