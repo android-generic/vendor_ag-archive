@@ -1,7 +1,7 @@
-From d973877bcda4063f80355ac8f18824f378f342bb Mon Sep 17 00:00:00 2001
+From 86ecc8ee8f8d410918eaca0864ba8f1944000301 Mon Sep 17 00:00:00 2001
 From: "Fan, Yugang" <yugang.fan@intel.com>
 Date: Tue, 20 Aug 2019 20:52:43 +0800
-Subject: [PATCH 15/16] Use BRGA as default format for only EFI FB rendering.
+Subject: [PATCH] Use BRGA as default format for only EFI FB rendering.
 
 As efifb only supports BGRA format, we need config up-level
 to support this when using software rendering.
@@ -10,11 +10,11 @@ Change-Id: I1fb2ba042522faac160440e5b660c01a24db2489
 Tracked-On: None
 Signed-off-by: Fan Yugang <yugang.fan@intel.com>
 ---
- .../CompositionEngine/src/RenderSurface.cpp      | 16 ++++++++++++++--
- 1 file changed, 14 insertions(+), 2 deletions(-)
+ .../CompositionEngine/src/RenderSurface.cpp    | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
 
 diff --git a/services/surfaceflinger/CompositionEngine/src/RenderSurface.cpp b/services/surfaceflinger/CompositionEngine/src/RenderSurface.cpp
-index 2773fd3a1..eae8e8956 100644
+index ef50870615..e296306182 100644
 --- a/services/surfaceflinger/CompositionEngine/src/RenderSurface.cpp
 +++ b/services/surfaceflinger/CompositionEngine/src/RenderSurface.cpp
 @@ -32,6 +32,7 @@
@@ -25,7 +25,7 @@ index 2773fd3a1..eae8e8956 100644
  
  // TODO(b/129481165): remove the #pragma below and fix conversion issues
  #pragma clang diagnostic push
-@@ -76,11 +77,22 @@ bool RenderSurface::isValid() const {
+@@ -79,11 +80,24 @@ bool RenderSurface::isValid() const {
  
  void RenderSurface::initialize() {
      ANativeWindow* const window = mNativeWindow.get();
@@ -36,7 +36,9 @@ index 2773fd3a1..eae8e8956 100644
      ALOGE_IF(status != NO_ERROR, "Unable to connect BQ producer: %d", status);
 -    status = native_window_set_buffers_format(window, HAL_PIXEL_FORMAT_RGBA_8888);
 -    ALOGE_IF(status != NO_ERROR, "Unable to set BQ format to RGBA888: %d", status);
-+
++    //~ status = native_window_set_buffers_format(window, HAL_PIXEL_FORMAT_RGBA_8888);
++    //~ ALOGE_IF(status != NO_ERROR, "Unable to set BQ format to RGBA888: %d", status);
++    
 +    if (property_get("ro.hardware.egl", value, NULL) > 0){
 +        ALOGI("Use BGRA_8888 as surface format when EGL is \"%s\"", value);
 +        if (!strcmp("swiftshader", value)) {
@@ -47,9 +49,9 @@ index 2773fd3a1..eae8e8956 100644
 +    status = native_window_set_buffers_format(window, format);
 +    ALOGE_IF(status != NO_ERROR, "Unable to set BQ format to %d: %d", format, status);
 +
-     status = native_window_set_usage(window, GRALLOC_USAGE_HW_RENDER);
+     status = native_window_set_usage(window, DEFAULT_USAGE);
      ALOGE_IF(status != NO_ERROR, "Unable to set BQ usage bits for GPU rendering: %d", status);
  }
 -- 
-2.30.2
+2.25.1
 

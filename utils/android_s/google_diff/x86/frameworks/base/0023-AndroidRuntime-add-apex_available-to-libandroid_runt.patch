@@ -1,4 +1,4 @@
-From 3416235d0fa2d415abd4217eda597419dec8f483 Mon Sep 17 00:00:00 2001
+From 57f24d88a394d5c937c05f1095da99065cc63662 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Fri, 13 Aug 2021 16:16:24 +0200
 Subject: [PATCH] AndroidRuntime: add apex_available to
@@ -16,23 +16,21 @@ https://android.googlesource.com/platform/frameworks/base/+/c8a33f1688323596cf29
 
 Change-Id: Ia541ed30f134ed58b40306b8003bd72300182b2a
 ---
- core/jni/Android.bp | 5 +++++
- 1 file changed, 5 insertions(+)
+ apex/media/framework/Android.bp | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/core/jni/Android.bp b/core/jni/Android.bp
-index 75d8354336ce..9eae743c026b 100644
---- a/core/jni/Android.bp
-+++ b/core/jni/Android.bp
-@@ -355,4 +355,9 @@ cc_library_headers {
-         "//frameworks/native/libs/binder",
-     ],
-     export_include_dirs: ["include_threads"],
-+    apex_available: [
-+        "//apex_available:platform",
-+        "com.android.media",
+diff --git a/apex/media/framework/Android.bp b/apex/media/framework/Android.bp
+index d963e68d80ec..f9ae942edc55 100644
+--- a/apex/media/framework/Android.bp
++++ b/apex/media/framework/Android.bp
+@@ -58,6 +58,7 @@ java_library {
+     hostdex: true, // for hiddenapi check
+     apex_available: [
+         "com.android.media",
 +        "com.android.media.swcodec",
-+    ],
- }
+         "test_com.android.media",
+     ],
+     min_sdk_version: "29",
 -- 
 2.25.1
 

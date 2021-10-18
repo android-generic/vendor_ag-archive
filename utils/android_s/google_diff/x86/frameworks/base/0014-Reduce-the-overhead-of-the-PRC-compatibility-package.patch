@@ -1,8 +1,8 @@
-From 44f468602527032c49714a3a617b643a1aedb504 Mon Sep 17 00:00:00 2001
+From 56dfcffa31d9242d6bfdac3465194f4622d61688 Mon Sep 17 00:00:00 2001
 From: xiajiang <xia1.jiang@intel.com>
 Date: Mon, 21 Mar 2016 12:26:06 -0400
-Subject: [PATCH 14/22] Reduce the overhead of the PRC compatibility package
- feature during system bootup
+Subject: [PATCH] Reduce the overhead of the PRC compatibility package feature
+ during system bootup
 
 The PRC compatibility package introduced too heavy overhead
 in system bootup. This commit aims to reduce the overhead
@@ -27,7 +27,7 @@ Reviewed-on: https://android.intel.com:443/484542
  4 files changed, 169 insertions(+), 72 deletions(-)
 
 diff --git a/core/java/com/android/internal/content/NativeLibraryHelper.java b/core/java/com/android/internal/content/NativeLibraryHelper.java
-index 5a616664e9d..789787cc2f7 100644
+index 3d4f5272f46d..5b9c97e65729 100644
 --- a/core/java/com/android/internal/content/NativeLibraryHelper.java
 +++ b/core/java/com/android/internal/content/NativeLibraryHelper.java
 @@ -85,6 +85,7 @@ public class NativeLibraryHelper {
@@ -37,11 +37,12 @@ index 5a616664e9d..789787cc2f7 100644
 +        final String apkDir;
  
          public static Handle create(File packageFile) throws IOException {
-             try {
-@@ -95,13 +96,25 @@ public class NativeLibraryHelper {
+             final ParseTypeImpl input = ParseTypeImpl.forDefaultParsing();
+@@ -96,14 +97,26 @@ public class NativeLibraryHelper {
              }
+             return create(ret.getResult());
          }
- 
++        
 +        public static String getApkDirFromCodePath(String codePath) {
 +            if (codePath == null ||
 +                codePath.startsWith("/system/") ||
@@ -53,11 +54,11 @@ index 5a616664e9d..789787cc2f7 100644
 +            }
 +            return codePath;
 +        }
-+
+ 
          public static Handle create(PackageLite lite) throws IOException {
-             return create(lite.getAllCodePaths(), lite.multiArch, lite.extractNativeLibs,
--                    lite.debuggable, lite.packageName);
-+                    lite.debuggable, lite.packageName, getApkDirFromCodePath(lite.codePath));
+             return create(lite.getAllApkPaths(), lite.isMultiArch(), lite.isExtractNativeLibs(),
+-                    lite.isDebuggable(), lite.packageName);
++                    lite.isDebuggable(), lite.packageName, getApkDirFromCodePath(lite.codePath));
          }
  
          public static Handle create(List<String> codePaths, boolean multiArch,
@@ -66,7 +67,7 @@ index 5a616664e9d..789787cc2f7 100644
              final int size = codePaths.size();
              final String[] apkPaths = new String[size];
              final long[] apkHandles = new long[size];
-@@ -118,7 +131,7 @@ public class NativeLibraryHelper {
+@@ -120,7 +133,7 @@ public class NativeLibraryHelper {
                  }
              }
  
@@ -75,12 +76,12 @@ index 5a616664e9d..789787cc2f7 100644
          }
  
          public static Handle createFd(PackageLite lite, FileDescriptor fd) throws IOException {
-@@ -130,17 +143,18 @@ public class NativeLibraryHelper {
+@@ -132,17 +145,18 @@ public class NativeLibraryHelper {
              }
  
-             return new Handle(new String[]{path}, apkHandles, lite.multiArch,
--                    lite.extractNativeLibs, lite.debuggable, lite.packageName);
-+                    lite.extractNativeLibs, lite.debuggable, lite.packageName, getApkDirFromCodePath(lite.codePath));
+             return new Handle(new String[]{path}, apkHandles, lite.isMultiArch(),
+-                    lite.isExtractNativeLibs(), lite.isDebuggable(), lite.packageName);
++                    lite.isExtractNativeLibs(), lite.isDebuggable(), lite.packageName, getApkDirFromCodePath(lite.codePath));
          }
  
          Handle(String[] apkPaths, long[] apkHandles, boolean multiArch,
@@ -96,7 +97,7 @@ index 5a616664e9d..789787cc2f7 100644
              mGuard.open("close");
          }
  
-@@ -215,12 +229,8 @@ public class NativeLibraryHelper {
+@@ -217,12 +231,8 @@ public class NativeLibraryHelper {
      public static int findSupportedAbi(Handle handle, String[] supportedAbis) {
          int finalRes = NO_NATIVE_LIBRARIES;
          for (long apkHandle : handle.apkHandles) {
@@ -111,7 +112,7 @@ index 5a616664e9d..789787cc2f7 100644
  
              if (res == NO_NATIVE_LIBRARIES) {
                  // No native code, keep looking through all APKs.
-@@ -243,11 +253,8 @@ public class NativeLibraryHelper {
+@@ -245,11 +255,8 @@ public class NativeLibraryHelper {
          return finalRes;
      }
  
@@ -125,7 +126,7 @@ index 5a616664e9d..789787cc2f7 100644
      // Convenience method to call removeNativeBinariesFromDirLI(File)
      public static void removeNativeBinariesLI(String nativeLibraryPath) {
 diff --git a/core/jni/abipicker/ABIPicker.cpp b/core/jni/abipicker/ABIPicker.cpp
-index 187ac566aa7..fcfb371ba02 100644
+index 187ac566aa79..fcfb371ba022 100644
 --- a/core/jni/abipicker/ABIPicker.cpp
 +++ b/core/jni/abipicker/ABIPicker.cpp
 @@ -40,11 +40,12 @@ static bool thirdload = false;
@@ -391,7 +392,7 @@ index 187ac566aa7..fcfb371ba02 100644
      ALOGI("selected abi %s(%d) for %s", retAbiName, ret, mpkgName);
      return ret;
 diff --git a/core/jni/com_android_internal_content_NativeLibraryHelper.cpp b/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
-index 627adbf7c4f..36eac3b46b1 100644
+index 627adbf7c4f9..36eac3b46b13 100644
 --- a/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
 +++ b/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
 @@ -513,13 +513,6 @@ com_android_internal_content_NativeLibraryHelper_sumNativeBinaries(JNIEnv *env,
@@ -510,7 +511,7 @@ index 627adbf7c4f..36eac3b46b1 100644
      {"hasRenderscriptBitcode", "(J)I",
              (void *)com_android_internal_content_NativeLibraryHelper_hasRenderscriptBitcode},
 diff --git a/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java b/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
-index 4ecac45eee5..a3fa5473bf2 100644
+index abfec23e6c36..a1eb914fb8b7 100644
 --- a/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
 +++ b/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
 @@ -139,7 +139,8 @@ public class AndroidPackageUtils {
@@ -524,5 +525,5 @@ index 4ecac45eee5..a3fa5473bf2 100644
      }
  
 -- 
-2.30.2
+2.25.1
 

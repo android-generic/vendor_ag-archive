@@ -1,7 +1,7 @@
-From 6743ad5ac7cac1228b19352af87b48166b558d33 Mon Sep 17 00:00:00 2001
+From 047d0967af46b331f166c5022551a22d4d50b887 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 28 Apr 2021 20:16:34 -0400
-Subject: [PATCH 15/15] libstagefright: Extract parts of FFMPEGSoftCodec for
+Subject: [PATCH 2/3] libstagefright: Extract parts of FFMPEGSoftCodec for
  easier re-use (s-x86)
 
 The code in Utils.cpp is also used in the MPEG2 extractor, which is now
@@ -24,7 +24,7 @@ Utils.cpp), which can then be used in the extractor.
  create mode 100644 media/libstagefright/include/media/stagefright/FFMPEGUtil.h
 
 diff --git a/media/libstagefright/Android.bp b/media/libstagefright/Android.bp
-index 5ba9074450..a81eb7aa72 100644
+index 0c5f8bc392..51aef90d61 100644
 --- a/media/libstagefright/Android.bp
 +++ b/media/libstagefright/Android.bp
 @@ -155,7 +155,7 @@ cc_library_static {
@@ -582,7 +582,7 @@ index 0000000000..76a7658520
 +
 +}
 diff --git a/media/libstagefright/Utils.cpp b/media/libstagefright/Utils.cpp
-index 88058ba8be..31104fe912 100644
+index bb1460b845..2ec4f14bc2 100644
 --- a/media/libstagefright/Utils.cpp
 +++ b/media/libstagefright/Utils.cpp
 @@ -47,7 +47,7 @@
@@ -594,7 +594,7 @@ index 88058ba8be..31104fe912 100644
  
  // TODO : Remove the defines once mainline media is built against NDK >= 31.
  // The mp4 extractor is part of mainline and builds against NDK 29 as of
-@@ -1495,7 +1495,7 @@ status_t convertMetaDataToMessage(
+@@ -1531,7 +1531,7 @@ status_t convertMetaDataToMessage(
          parseDolbyVisionProfileLevelFromDvcc(ptr, size, msg);
      }
  
@@ -603,7 +603,7 @@ index 88058ba8be..31104fe912 100644
      *format = msg;
  
  #if 0
-@@ -2020,7 +2020,7 @@ status_t convertMessageToMetaData(const sp<AMessage> &msg, sp<MetaData> &meta) {
+@@ -2080,7 +2080,7 @@ status_t convertMessageToMetaData(const sp<AMessage> &msg, sp<MetaData> &meta) {
      }
      // XXX TODO add whatever other keys there are
  
@@ -684,5 +684,5 @@ index 0000000000..cfa05ac5b6
 +
 +#endif
 -- 
-2.30.2
+2.25.1
 

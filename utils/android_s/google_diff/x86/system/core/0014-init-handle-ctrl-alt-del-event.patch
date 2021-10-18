@@ -1,7 +1,7 @@
-From 0fa9b2b912ebc5ab5db15544b455bc0547fe049d Mon Sep 17 00:00:00 2001
+From 3f4afffc9914c1f1cb4aff8b03c1df9b9f51c84f Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 20 Nov 2017 16:50:20 +0800
-Subject: [PATCH 14/21] init: handle ctrl-alt-del event
+Subject: [PATCH] init: handle ctrl-alt-del event
 
 By setting /proc/sys/kernel/ctrl-alt-del to 1, kernel will trap
 ctrl-alt-del event and send a SIGINT signal to init.
@@ -12,18 +12,18 @@ Start the ctrl-alt-del service on receiving the signal.
  1 file changed, 7 insertions(+)
 
 diff --git a/init/reboot_utils.cpp b/init/reboot_utils.cpp
-index 98f6857f5..01fab9380 100644
+index b3fa9fd3b..e33406789 100644
 --- a/init/reboot_utils.cpp
 +++ b/init/reboot_utils.cpp
-@@ -31,6 +31,7 @@
- 
+@@ -32,6 +32,7 @@
  #include "capabilities.h"
  #include "reboot_utils.h"
+ #include "util.h"
 +#include "init.h"
  
  namespace android {
  namespace init {
-@@ -185,6 +186,12 @@ void InstallRebootSignalHandlers() {
+@@ -206,6 +207,12 @@ void InstallRebootSignalHandlers() {
  #endif
      sigaction(SIGSYS, &action, nullptr);
      sigaction(SIGTRAP, &action, nullptr);
@@ -37,5 +37,5 @@ index 98f6857f5..01fab9380 100644
  
  }  // namespace init
 -- 
-2.30.2
+2.25.1
 

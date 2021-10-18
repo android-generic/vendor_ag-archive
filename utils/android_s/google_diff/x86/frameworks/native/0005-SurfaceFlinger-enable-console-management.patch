@@ -1,26 +1,26 @@
-From 67345a9fb6bbf385461e85a9a7880c2c9ebe8526 Mon Sep 17 00:00:00 2001
+From 5b9a26c5cd812d7953d718846e3e15b2a94d8388 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 26 Oct 2014 15:38:15 +0800
-Subject: [PATCH 05/16] SurfaceFlinger: enable console management
+Subject: [PATCH] SurfaceFlinger: enable console management
 
 The console management was removed since ICS. But it's useful for debugging.
 Re-implement it based on the original class ConsoleManagerThread of class
 DisplayHardwareBase.
 ---
  services/inputflinger/Android.bp           |   2 +
- services/inputflinger/reader/EventHub.cpp  |  16 ++
+ services/inputflinger/reader/EventHub.cpp  |  15 ++
  services/surfaceflinger/Android.bp         |   8 +
  services/surfaceflinger/DisplayDevice.cpp  | 263 +++++++++++++++++++++
  services/surfaceflinger/DisplayDevice.h    |   5 +
  services/surfaceflinger/SurfaceFlinger.cpp |  14 ++
  services/surfaceflinger/SurfaceFlinger.h   |   3 +
- 7 files changed, 311 insertions(+)
+ 7 files changed, 310 insertions(+)
 
 diff --git a/services/inputflinger/Android.bp b/services/inputflinger/Android.bp
-index 861073724..46eaeef52 100644
+index 6612a932a0..ca3c86e574 100644
 --- a/services/inputflinger/Android.bp
 +++ b/services/inputflinger/Android.bp
-@@ -71,6 +71,8 @@ cc_library_shared {
+@@ -86,6 +86,8 @@ cc_library_shared {
          "libinputflinger_defaults",
      ],
      cflags: [
@@ -30,19 +30,18 @@ index 861073724..46eaeef52 100644
          //-fvisibility=hidden
      ],
 diff --git a/services/inputflinger/reader/EventHub.cpp b/services/inputflinger/reader/EventHub.cpp
-index a8072f7b2..fb83e5f55 100644
+index 5793b1d122..f80eccf0b3 100644
 --- a/services/inputflinger/reader/EventHub.cpp
 +++ b/services/inputflinger/reader/EventHub.cpp
-@@ -49,6 +49,8 @@
+@@ -43,6 +43,7 @@
+ #include <input/KeyCharacterMap.h>
  #include <input/KeyLayoutMap.h>
  #include <input/VirtualKeyMap.h>
- 
 +#include <linux/vt.h>
-+
- /* this macro is used to tell if "bit" is set in "array"
-  * it selects a byte from the array, and does a boolean AND
-  * operation with a byte that only has the relevant bit set.
-@@ -916,6 +918,14 @@ size_t EventHub::getEvents(int timeoutMillis, RawEvent* buffer, size_t bufferSiz
+ #include <openssl/sha.h>
+ #include <statslog.h>
+ #include <utils/Errors.h>
+@@ -1545,6 +1546,14 @@ size_t EventHub::getEvents(int timeoutMillis, RawEvent* buffer, size_t bufferSiz
              }
          }
  
@@ -57,7 +56,7 @@ index a8072f7b2..fb83e5f55 100644
          // Grab the next input event.
          bool deviceChanged = false;
          while (mPendingEventIndex < mPendingEventCount) {
-@@ -990,6 +1000,12 @@ size_t EventHub::getEvents(int timeoutMillis, RawEvent* buffer, size_t bufferSiz
+@@ -1619,6 +1628,12 @@ size_t EventHub::getEvents(int timeoutMillis, RawEvent* buffer, size_t bufferSiz
                  } else if ((readSize % sizeof(struct input_event)) != 0) {
                      ALOGE("could not get event (wrong size: %d)", readSize);
                  } else {
@@ -71,10 +70,10 @@ index a8072f7b2..fb83e5f55 100644
  
                      size_t count = size_t(readSize) / sizeof(struct input_event);
 diff --git a/services/surfaceflinger/Android.bp b/services/surfaceflinger/Android.bp
-index aa59f850e..938c2479c 100644
+index e669e4532b..be6136e00e 100644
 --- a/services/surfaceflinger/Android.bp
 +++ b/services/surfaceflinger/Android.bp
-@@ -51,6 +51,7 @@ cc_defaults {
+@@ -54,6 +54,7 @@ cc_defaults {
          "libGLESv1_CM",
          "libGLESv2",
          "libgui",
@@ -82,7 +81,7 @@ index aa59f850e..938c2479c 100644
          "libhidlbase",
          "liblayers_proto",
          "liblog",
-@@ -197,7 +198,14 @@ cc_library_shared {
+@@ -242,6 +243,13 @@ cc_binary {
          // can be easily replaced.
          "SurfaceFlingerFactory.cpp",
      ],
@@ -90,18 +89,17 @@ index aa59f850e..938c2479c 100644
 +        "-DCONSOLE_MANAGER",
 +        "-DANDROID_VT=7",
 +    ],
-     logtags: ["EventLog/EventLogTags.logtags"],
 +    include_dirs: [
 +        "external/drm_gralloc",
 +    ],
- }
- 
- cc_defaults {
+     shared_libs: [
+         "libSurfaceFlingerProp",
+     ],
 diff --git a/services/surfaceflinger/DisplayDevice.cpp b/services/surfaceflinger/DisplayDevice.cpp
-index 730f29744..13699ccf7 100644
+index ca4b6abc03..5231235e60 100644
 --- a/services/surfaceflinger/DisplayDevice.cpp
 +++ b/services/surfaceflinger/DisplayDevice.cpp
-@@ -37,9 +37,15 @@
+@@ -38,9 +38,15 @@
  #include <system/window.h>
  #include <ui/GraphicTypes.h>
  
@@ -117,7 +115,7 @@ index 730f29744..13699ccf7 100644
  
  namespace android {
  
-@@ -47,6 +53,243 @@ namespace hal = hardware::graphics::composer::hal;
+@@ -48,6 +54,243 @@ namespace hal = hardware::graphics::composer::hal;
  
  using android::base::StringAppendF;
  
@@ -361,17 +359,17 @@ index 730f29744..13699ccf7 100644
  ui::Transform::RotationFlags DisplayDevice::sPrimaryDisplayRotationFlags = ui::Transform::ROT_0;
  
  DisplayDeviceCreationArgs::DisplayDeviceCreationArgs(
-@@ -61,6 +304,9 @@ DisplayDevice::DisplayDevice(DisplayDeviceCreationArgs& args)
+@@ -66,6 +309,9 @@ DisplayDevice::DisplayDevice(DisplayDeviceCreationArgs& args)
          mConnectionType(args.connectionType),
          mCompositionDisplay{args.compositionDisplay},
          mPhysicalOrientation(args.physicalOrientation),
 +#ifdef CONSOLE_MANAGER
 +        mConsoleManagerThread(0),
 +#endif
+         mSupportedModes(std::move(args.supportedModes)),
          mIsPrimary(args.isPrimary) {
      mCompositionDisplay->editState().isSecure = args.isSecure;
-     mCompositionDisplay->createRenderSurface(
-@@ -94,7 +340,16 @@ DisplayDevice::DisplayDevice(DisplayDeviceCreationArgs& args)
+@@ -103,7 +349,16 @@ DisplayDevice::DisplayDevice(DisplayDeviceCreationArgs& args)
      setProjection(ui::ROTATION_0, Rect::INVALID_RECT, Rect::INVALID_RECT);
  }
  
@@ -388,7 +386,7 @@ index 730f29744..13699ccf7 100644
  
  void DisplayDevice::disconnect() {
      mCompositionDisplay->disconnect();
-@@ -124,6 +379,11 @@ uint32_t DisplayDevice::getPageFlipCount() const {
+@@ -137,6 +392,11 @@ uint32_t DisplayDevice::getPageFlipCount() const {
  void DisplayDevice::setPowerMode(hal::PowerMode mode) {
      mPowerMode = mode;
      getCompositionDisplay()->setCompositionEnabled(mPowerMode != hal::PowerMode::OFF);
@@ -399,22 +397,22 @@ index 730f29744..13699ccf7 100644
 +#endif
  }
  
- hal::PowerMode DisplayDevice::getPowerMode() const {
-@@ -235,6 +495,9 @@ void DisplayDevice::setProjection(ui::Rotation orientation, Rect viewport, Rect
+ void DisplayDevice::enableLayerCaching(bool enable) {
+@@ -231,6 +491,9 @@ void DisplayDevice::setProjection(ui::Rotation orientation, Rect layerStackSpace
+ 
      if (isPrimary()) {
          sPrimaryDisplayRotationFlags = ui::Transform::toRotationFlags(orientation);
-         transformOrientation = ui::Transform::toRotationFlags(orientation + mPhysicalOrientation);
 +#ifdef CONSOLE_MANAGER
 +        mConsoleManagerThread = new ConsoleManagerThread(mFlinger, mDisplayToken);
 +#endif
-     } else {
-         transformOrientation = ui::Transform::toRotationFlags(orientation);
      }
+ 
+     if (!orientedDisplaySpaceRect.isValid()) {
 diff --git a/services/surfaceflinger/DisplayDevice.h b/services/surfaceflinger/DisplayDevice.h
-index ca7119e2c..05e8f363d 100644
+index 7e4d92308c..83419ce0a6 100644
 --- a/services/surfaceflinger/DisplayDevice.h
 +++ b/services/surfaceflinger/DisplayDevice.h
-@@ -50,6 +50,7 @@ class HWComposer;
+@@ -51,6 +51,7 @@ class HWComposer;
  class IGraphicBufferProducer;
  class Layer;
  class SurfaceFlinger;
@@ -422,9 +420,9 @@ index ca7119e2c..05e8f363d 100644
  
  struct CompositionInfo;
  struct DisplayDeviceCreationArgs;
-@@ -180,6 +181,10 @@ private:
-             hardware::graphics::composer::hal::PowerMode::OFF;
-     HwcConfigIndexType mActiveConfig;
+@@ -224,6 +225,10 @@ private:
+ 
+     std::atomic<nsecs_t> mLastHwVsync = 0;
  
 +#ifdef CONSOLE_MANAGER
 +    sp<ConsoleManagerThread> mConsoleManagerThread;
@@ -432,13 +430,13 @@ index ca7119e2c..05e8f363d 100644
 +
      // TODO(b/74619554): Remove special cases for primary display.
      const bool mIsPrimary;
- };
+ 
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index 4698ac619..64e75c277 100644
+index 8aefb707e6..32ff1e80e8 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -1515,6 +1515,20 @@ sp<IDisplayEventConnection> SurfaceFlinger::createDisplayEventConnection(
-     return mScheduler->createDisplayEventConnection(handle, configChanged);
+@@ -1711,6 +1711,20 @@ sp<IDisplayEventConnection> SurfaceFlinger::createDisplayEventConnection(
+     return mScheduler->createDisplayEventConnection(handle, eventRegistration);
  }
  
 +#ifdef CONSOLE_MANAGER
@@ -459,12 +457,12 @@ index 4698ac619..64e75c277 100644
      mScheduler->resetIdleTimer();
      mPowerAdvisor.notifyDisplayUpdateImminent();
 diff --git a/services/surfaceflinger/SurfaceFlinger.h b/services/surfaceflinger/SurfaceFlinger.h
-index 90ac85627..a594877c2 100644
+index 380f444221..04c4c8e162 100644
 --- a/services/surfaceflinger/SurfaceFlinger.h
 +++ b/services/surfaceflinger/SurfaceFlinger.h
-@@ -328,6 +328,9 @@ public:
-     // Inherit from ClientCache::ErasedRecipient
-     void bufferErased(const client_cache_t& clientCacheId) override;
+@@ -330,6 +330,9 @@ public:
+     wp<Layer> fromHandle(const sp<IBinder>& handle);
+     wp<Layer> fromHandleLocked(const sp<IBinder>& handle) const REQUIRES(mStateLock);
  
 +    void screenReleased(const sp<IBinder>& display);
 +    void screenAcquired(const sp<IBinder>& display);
@@ -473,5 +471,5 @@ index 90ac85627..a594877c2 100644
      // debug.sf.disable_client_composition_cache
      bool mDisableClientCompositionCache = false;
 -- 
-2.30.2
+2.25.1
 

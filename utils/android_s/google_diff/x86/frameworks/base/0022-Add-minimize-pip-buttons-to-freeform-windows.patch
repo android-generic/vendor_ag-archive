@@ -1,14 +1,13 @@
-From a14a93dc56adf53e132d396b73e2ae3d27847a80 Mon Sep 17 00:00:00 2001
+From 53d5e72f16bf4c5459da2b2cb9d8741bd2355b61 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Sun, 25 Apr 2021 16:08:32 -0400
-Subject: [PATCH 22/22] Add minimize & pip buttons to freeform windows
+Subject: [PATCH] Add minimize & pip buttons to freeform windows
 
 Thanks to @farmerbb for assistance and @rogerdott for the graphics
 
 Change-Id: I8ddad6eab27f52574ee1c10e8006612fb46a83c5
 ---
- config/hiddenapi-max-target-o.txt             |  4 ++
- core/java/android/app/Activity.java           | 17 ++++++---
+ core/java/android/app/Activity.java           |  5 +++
  core/java/android/view/Window.java            |  2 +
  .../android/internal/policy/DecorView.java    |  8 ++++
  .../internal/widget/DecorCaptionView.java     | 38 ++++++++++++++++++-
@@ -20,67 +19,33 @@ Change-Id: I8ddad6eab27f52574ee1c10e8006612fb46a83c5
  core/res/res/values/arrays.xml                |  4 ++
  core/res/res/values/strings.xml               |  4 ++
  core/res/res/values/symbols.xml               |  6 +++
- 13 files changed, 211 insertions(+), 8 deletions(-)
+ 12 files changed, 201 insertions(+), 2 deletions(-)
  create mode 100644 core/res/res/drawable/decor_minimize_button_dark.xml
  create mode 100644 core/res/res/drawable/decor_minimize_button_light.xml
  create mode 100644 core/res/res/drawable/decor_pip_button_dark.xml
  create mode 100644 core/res/res/drawable/decor_pip_button_light.xml
 
-diff --git a/config/hiddenapi-max-target-o.txt b/config/hiddenapi-max-target-o.txt
-index 023bf387622..66547dfa57c 100644
---- a/config/hiddenapi-max-target-o.txt
-+++ b/config/hiddenapi-max-target-o.txt
-@@ -91764,6 +91764,10 @@ Lcom/android/internal/R$drawable;->decor_close_button_dark:I
- Lcom/android/internal/R$drawable;->decor_close_button_light:I
- Lcom/android/internal/R$drawable;->decor_maximize_button_dark:I
- Lcom/android/internal/R$drawable;->decor_maximize_button_light:I
-+Lcom/android/internal/R$drawable;->decor_minimize_button_dark:I
-+Lcom/android/internal/R$drawable;->decor_minimize_button_light:I
-+Lcom/android/internal/R$drawable;->decor_pip_button_dark:I
-+Lcom/android/internal/R$drawable;->decor_pip_button_light:I
- Lcom/android/internal/R$drawable;->default_lock_wallpaper:I
- Lcom/android/internal/R$drawable;->default_wallpaper:I
- Lcom/android/internal/R$drawable;->dialog_frame:I
 diff --git a/core/java/android/app/Activity.java b/core/java/android/app/Activity.java
-index 4c16072cefd..1e0614d1726 100644
+index db5dcc5c264b..ea680978132f 100644
 --- a/core/java/android/app/Activity.java
 +++ b/core/java/android/app/Activity.java
-@@ -1006,6 +1006,16 @@ public class Activity extends ContextThemeWrapper
+@@ -1023,6 +1023,11 @@ public class Activity extends ContextThemeWrapper
              setTaskDescription(mTaskDescription);
          }
  
 +        @Override
 +        public boolean moveTaskToBack(boolean nonRoot) {
-+            try {
-+                return ActivityTaskManager.getService().moveActivityTaskToBack(mToken, nonRoot);
-+            } catch (RemoteException e) {
-+                // Empty
-+            }
-+            return false;
++            return mWindowControllerCallback.moveTaskToBack(nonRoot);
 +        }
 +
      };
  
      private static native String getDlWarning();
-@@ -6719,12 +6729,7 @@ public class Activity extends ContextThemeWrapper
-      *         back) true is returned, else false.
-      */
-     public boolean moveTaskToBack(boolean nonRoot) {
--        try {
--            return ActivityTaskManager.getService().moveActivityTaskToBack(mToken, nonRoot);
--        } catch (RemoteException e) {
--            // Empty
--        }
--        return false;
-+        return mWindowControllerCallback.moveTaskToBack(nonRoot);
-     }
- 
-     /**
 diff --git a/core/java/android/view/Window.java b/core/java/android/view/Window.java
-index fb2412bd51e..3ec863fa848 100644
+index aa9ea19b025e..faadac9988bb 100644
 --- a/core/java/android/view/Window.java
 +++ b/core/java/android/view/Window.java
-@@ -653,6 +653,8 @@ public abstract class Window {
+@@ -659,6 +659,8 @@ public abstract class Window {
           * Update the navigation bar color to a forced one.
           */
          void updateNavigationBarColor(int color);
@@ -90,10 +55,10 @@ index fb2412bd51e..3ec863fa848 100644
  
      /**
 diff --git a/core/java/com/android/internal/policy/DecorView.java b/core/java/com/android/internal/policy/DecorView.java
-index fbbf7916b31..5d1833a717e 100644
+index 424632fe82eb..caeee7146bad 100644
 --- a/core/java/com/android/internal/policy/DecorView.java
 +++ b/core/java/com/android/internal/policy/DecorView.java
-@@ -2209,6 +2209,10 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
+@@ -2306,6 +2306,10 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
      }
  
      private void setLightDecorCaptionShade(DecorCaptionView view) {
@@ -104,7 +69,7 @@ index fbbf7916b31..5d1833a717e 100644
          view.findViewById(R.id.maximize_window).setBackgroundResource(
                  R.drawable.decor_maximize_button_light);
          view.findViewById(R.id.close_window).setBackgroundResource(
-@@ -2216,6 +2220,10 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
+@@ -2313,6 +2317,10 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
      }
  
      private void setDarkDecorCaptionShade(DecorCaptionView view) {
@@ -116,10 +81,10 @@ index fbbf7916b31..5d1833a717e 100644
                  R.drawable.decor_maximize_button_dark);
          view.findViewById(R.id.close_window).setBackgroundResource(
 diff --git a/core/java/com/android/internal/widget/DecorCaptionView.java b/core/java/com/android/internal/widget/DecorCaptionView.java
-index 21021457377..7ec93ff6c98 100644
+index 362fd7b4e937..2352d1a529df 100644
 --- a/core/java/com/android/internal/widget/DecorCaptionView.java
 +++ b/core/java/com/android/internal/widget/DecorCaptionView.java
-@@ -83,6 +83,8 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+@@ -80,6 +80,8 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
  
      private View mCaption;
      private View mContent;
@@ -128,7 +93,7 @@ index 21021457377..7ec93ff6c98 100644
      private View mMaximize;
      private View mClose;
  
-@@ -99,6 +101,8 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+@@ -96,6 +98,8 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
      private GestureDetector mGestureDetector;
      private final Rect mCloseRect = new Rect();
      private final Rect mMaximizeRect = new Rect();
@@ -137,7 +102,7 @@ index 21021457377..7ec93ff6c98 100644
      private View mClickTarget;
      private int mRootScrollY;
  
-@@ -138,6 +142,8 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+@@ -135,6 +139,8 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
          // By changing the outline provider to BOUNDS, the window can remove its
          // background without removing the shadow.
          mOwner.getDecorView().setOutlineProvider(ViewOutlineProvider.BOUNDS);
@@ -146,7 +111,7 @@ index 21021457377..7ec93ff6c98 100644
          mMaximize = findViewById(R.id.maximize_window);
          mClose = findViewById(R.id.close_window);
      }
-@@ -150,6 +156,12 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+@@ -147,6 +153,12 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
              final int x = (int) ev.getX();
              final int y = (int) ev.getY();
              // Only offset y for containment tests because the actual views are already translated.
@@ -159,7 +124,7 @@ index 21021457377..7ec93ff6c98 100644
              if (mMaximizeRect.contains(x, y - mRootScrollY)) {
                  mClickTarget = mMaximize;
              }
-@@ -289,10 +301,14 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+@@ -286,10 +298,14 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
          if (mCaption.getVisibility() != View.GONE) {
              mCaption.layout(0, 0, mCaption.getMeasuredWidth(), mCaption.getMeasuredHeight());
              captionHeight = mCaption.getBottom() - mCaption.getTop();
@@ -174,7 +139,7 @@ index 21021457377..7ec93ff6c98 100644
              mMaximizeRect.setEmpty();
              mCloseRect.setEmpty();
          }
-@@ -309,7 +325,7 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+@@ -306,7 +322,7 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
          ((DecorView) mOwner.getDecorView()).notifyCaptionHeightChanged();
  
          // This assumes that the caption bar is at the top.
@@ -183,7 +148,7 @@ index 21021457377..7ec93ff6c98 100644
                  mClose.getRight(), mClose.getBottom());
      }
  
-@@ -335,6 +351,20 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+@@ -328,6 +344,20 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
          }
      }
  
@@ -204,7 +169,7 @@ index 21021457377..7ec93ff6c98 100644
      public boolean isCaptionShowing() {
          return mShow;
      }
-@@ -387,7 +417,11 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+@@ -380,7 +410,11 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
  
      @Override
      public boolean onSingleTapUp(MotionEvent e) {
@@ -219,7 +184,7 @@ index 21021457377..7ec93ff6c98 100644
              mOwner.dispatchOnWindowDismissed(
 diff --git a/core/res/res/drawable/decor_minimize_button_dark.xml b/core/res/res/drawable/decor_minimize_button_dark.xml
 new file mode 100644
-index 00000000000..7143d6cb6d2
+index 000000000000..7143d6cb6d2b
 --- /dev/null
 +++ b/core/res/res/drawable/decor_minimize_button_dark.xml
 @@ -0,0 +1,30 @@
@@ -255,7 +220,7 @@ index 00000000000..7143d6cb6d2
 +</vector>
 diff --git a/core/res/res/drawable/decor_minimize_button_light.xml b/core/res/res/drawable/decor_minimize_button_light.xml
 new file mode 100644
-index 00000000000..876641cfbd0
+index 000000000000..876641cfbd01
 --- /dev/null
 +++ b/core/res/res/drawable/decor_minimize_button_light.xml
 @@ -0,0 +1,30 @@
@@ -291,7 +256,7 @@ index 00000000000..876641cfbd0
 +</vector>
 diff --git a/core/res/res/drawable/decor_pip_button_dark.xml b/core/res/res/drawable/decor_pip_button_dark.xml
 new file mode 100644
-index 00000000000..8a1c43c26ae
+index 000000000000..8a1c43c26aec
 --- /dev/null
 +++ b/core/res/res/drawable/decor_pip_button_dark.xml
 @@ -0,0 +1,29 @@
@@ -326,7 +291,7 @@ index 00000000000..8a1c43c26ae
 +</vector>
 diff --git a/core/res/res/drawable/decor_pip_button_light.xml b/core/res/res/drawable/decor_pip_button_light.xml
 new file mode 100644
-index 00000000000..84433b5f1ea
+index 000000000000..84433b5f1ea0
 --- /dev/null
 +++ b/core/res/res/drawable/decor_pip_button_light.xml
 @@ -0,0 +1,29 @@
@@ -360,7 +325,7 @@ index 00000000000..84433b5f1ea
 +        android:strokeWidth="1"/>
 +</vector>
 diff --git a/core/res/res/layout/decor_caption.xml b/core/res/res/layout/decor_caption.xml
-index 02467369825..55edbfcfbb9 100644
+index 02467369825d..55edbfcfbb91 100644
 --- a/core/res/res/layout/decor_caption.xml
 +++ b/core/res/res/layout/decor_caption.xml
 @@ -30,6 +30,24 @@
@@ -389,7 +354,7 @@ index 02467369825..55edbfcfbb9 100644
                  android:id="@+id/maximize_window"
                  android:layout_width="32dp"
 diff --git a/core/res/res/values/arrays.xml b/core/res/res/values/arrays.xml
-index 8f2d6c3e02f..168ca7917c6 100644
+index 8f2d6c3e02f4..168ca7917c65 100644
 --- a/core/res/res/values/arrays.xml
 +++ b/core/res/res/values/arrays.xml
 @@ -139,6 +139,10 @@
@@ -404,10 +369,10 @@ index 8f2d6c3e02f..168ca7917c6 100644
  
      <!-- Used in LocalePicker -->
 diff --git a/core/res/res/values/strings.xml b/core/res/res/values/strings.xml
-index d208f9cfc9d..315dbe099f6 100644
+index 9fb2e7090a5e..07baa9ef0e77 100644
 --- a/core/res/res/values/strings.xml
 +++ b/core/res/res/values/strings.xml
-@@ -4993,6 +4993,10 @@
+@@ -5190,6 +5190,10 @@
      <string name="floating_toolbar_close_overflow_description">Close overflow</string>
  
      <!-- Free style window strings -->
@@ -419,10 +384,10 @@ index d208f9cfc9d..315dbe099f6 100644
      <string name="maximize_button_text">Maximize</string>
      <!-- Accessibility text for the close window button -->
 diff --git a/core/res/res/values/symbols.xml b/core/res/res/values/symbols.xml
-index 927b9db4113..23bbe91cb7d 100644
+index e629b43b2c22..babe83a4cfa1 100644
 --- a/core/res/res/values/symbols.xml
 +++ b/core/res/res/values/symbols.xml
-@@ -2268,14 +2268,20 @@
+@@ -2334,14 +2334,20 @@
  
    <!-- From Phone -->
    <java-symbol type="bool" name="config_built_in_sip_phone" />
@@ -444,5 +409,5 @@ index 927b9db4113..23bbe91cb7d 100644
    <java-symbol type="color" name="decor_button_light_color" />
    <java-symbol type="array" name="unloggable_phone_numbers" />
 -- 
-2.30.2
+2.25.1
 

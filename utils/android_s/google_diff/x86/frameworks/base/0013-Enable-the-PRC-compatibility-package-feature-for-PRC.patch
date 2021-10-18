@@ -1,8 +1,7 @@
-From c219887f5b5066f130493abfb8a743f6bdc69e82 Mon Sep 17 00:00:00 2001
+From 1a8658edddaaf438ddeafe186f4c700fac9c6451 Mon Sep 17 00:00:00 2001
 From: xiajiang <xia1.jiang@intel.com>
 Date: Wed, 17 Feb 2016 13:59:14 -0500
-Subject: [PATCH 13/22] Enable the PRC compatibility package feature for PRC
- market
+Subject: [PATCH] Enable the PRC compatibility package feature for PRC market
 
 In PRC market, some APKs are packed in non-standard way, that is,
 the x86(_64) libraries aren't workable although they're found in the APK.
@@ -55,7 +54,7 @@ Reviewed-on: https://android.intel.com:443/471490
  create mode 100644 core/jni/abipicker/ELFLite.h
 
 diff --git a/core/java/com/android/internal/content/NativeLibraryHelper.java b/core/java/com/android/internal/content/NativeLibraryHelper.java
-index 476198b5311..5a616664e9d 100644
+index 10750b695a39..3d4f5272f46d 100644
 --- a/core/java/com/android/internal/content/NativeLibraryHelper.java
 +++ b/core/java/com/android/internal/content/NativeLibraryHelper.java
 @@ -84,6 +84,7 @@ public class NativeLibraryHelper {
@@ -65,13 +64,13 @@ index 476198b5311..5a616664e9d 100644
 +        final String pkgName;
  
          public static Handle create(File packageFile) throws IOException {
-             try {
-@@ -96,11 +97,11 @@ public class NativeLibraryHelper {
+             final ParseTypeImpl input = ParseTypeImpl.forDefaultParsing();
+@@ -98,11 +99,11 @@ public class NativeLibraryHelper {
  
          public static Handle create(PackageLite lite) throws IOException {
-             return create(lite.getAllCodePaths(), lite.multiArch, lite.extractNativeLibs,
--                    lite.debuggable);
-+                    lite.debuggable, lite.packageName);
+             return create(lite.getAllApkPaths(), lite.isMultiArch(), lite.isExtractNativeLibs(),
+-                    lite.isDebuggable());
++                    lite.isDebuggable(), lite.packageName);
          }
  
          public static Handle create(List<String> codePaths, boolean multiArch,
@@ -80,7 +79,7 @@ index 476198b5311..5a616664e9d 100644
              final int size = codePaths.size();
              final String[] apkPaths = new String[size];
              final long[] apkHandles = new long[size];
-@@ -117,7 +118,7 @@ public class NativeLibraryHelper {
+@@ -119,7 +120,7 @@ public class NativeLibraryHelper {
                  }
              }
  
@@ -89,12 +88,12 @@ index 476198b5311..5a616664e9d 100644
          }
  
          public static Handle createFd(PackageLite lite, FileDescriptor fd) throws IOException {
-@@ -129,16 +130,17 @@ public class NativeLibraryHelper {
+@@ -131,16 +132,17 @@ public class NativeLibraryHelper {
              }
  
-             return new Handle(new String[]{path}, apkHandles, lite.multiArch,
--                    lite.extractNativeLibs, lite.debuggable);
-+                    lite.extractNativeLibs, lite.debuggable, lite.packageName);
+             return new Handle(new String[]{path}, apkHandles, lite.isMultiArch(),
+-                    lite.isExtractNativeLibs(), lite.isDebuggable());
++                    lite.isExtractNativeLibs(), lite.isDebuggable(), lite.packageName);
          }
  
          Handle(String[] apkPaths, long[] apkHandles, boolean multiArch,
@@ -109,7 +108,7 @@ index 476198b5311..5a616664e9d 100644
              mGuard.open("close");
          }
  
-@@ -213,7 +215,13 @@ public class NativeLibraryHelper {
+@@ -215,7 +217,13 @@ public class NativeLibraryHelper {
      public static int findSupportedAbi(Handle handle, String[] supportedAbis) {
          int finalRes = NO_NATIVE_LIBRARIES;
          for (long apkHandle : handle.apkHandles) {
@@ -124,7 +123,7 @@ index 476198b5311..5a616664e9d 100644
              if (res == NO_NATIVE_LIBRARIES) {
                  // No native code, keep looking through all APKs.
              } else if (res == INSTALL_FAILED_NO_MATCHING_ABIS) {
-@@ -238,6 +246,9 @@ public class NativeLibraryHelper {
+@@ -240,6 +248,9 @@ public class NativeLibraryHelper {
      private native static int nativeFindSupportedAbi(long handle, String[] supportedAbis,
              boolean debuggable);
  
@@ -135,10 +134,10 @@ index 476198b5311..5a616664e9d 100644
      public static void removeNativeBinariesLI(String nativeLibraryPath) {
          if (nativeLibraryPath == null) return;
 diff --git a/core/jni/Android.bp b/core/jni/Android.bp
-index 7f9544cfe16..622d01f4334 100644
+index 6b9d3754c247..4ae44b30dc0f 100644
 --- a/core/jni/Android.bp
 +++ b/core/jni/Android.bp
-@@ -29,6 +29,7 @@ cc_library_shared {
+@@ -28,6 +28,7 @@ cc_library_shared {
          "-DEGL_EGLEXT_PROTOTYPES",
  
          "-DU_USING_ICU_NAMESPACE=0",
@@ -146,7 +145,7 @@ index 7f9544cfe16..622d01f4334 100644
  
          "-Wall",
          "-Werror",
-@@ -84,6 +85,7 @@ cc_library_shared {
+@@ -88,6 +89,7 @@ cc_library_shared {
                  "com_android_internal_content_NativeLibraryHelper.cpp",
                  "com_google_android_gles_jni_EGLImpl.cpp",
                  "com_google_android_gles_jni_GLImpl.cpp", // TODO: .arm
@@ -156,7 +155,7 @@ index 7f9544cfe16..622d01f4334 100644
                  "android_app_NativeActivity.cpp",
 diff --git a/core/jni/abipicker/ABIPicker.cpp b/core/jni/abipicker/ABIPicker.cpp
 new file mode 100644
-index 00000000000..187ac566aa7
+index 000000000000..187ac566aa79
 --- /dev/null
 +++ b/core/jni/abipicker/ABIPicker.cpp
 @@ -0,0 +1,694 @@
@@ -856,7 +855,7 @@ index 00000000000..187ac566aa7
 +}  // namespace android
 diff --git a/core/jni/abipicker/ABIPicker.h b/core/jni/abipicker/ABIPicker.h
 new file mode 100644
-index 00000000000..eb873df2b01
+index 000000000000..eb873df2b016
 --- /dev/null
 +++ b/core/jni/abipicker/ABIPicker.h
 @@ -0,0 +1,55 @@
@@ -917,7 +916,7 @@ index 00000000000..eb873df2b01
 +#endif  // _ABIPICKER_H_
 diff --git a/core/jni/abipicker/ELFLite.h b/core/jni/abipicker/ELFLite.h
 new file mode 100644
-index 00000000000..e609e8ac459
+index 000000000000..e609e8ac4595
 --- /dev/null
 +++ b/core/jni/abipicker/ELFLite.h
 @@ -0,0 +1,58 @@
@@ -980,7 +979,7 @@ index 00000000000..e609e8ac459
 +}  // namespace android
 +#endif  // _ELFLITE_H__
 diff --git a/core/jni/com_android_internal_content_NativeLibraryHelper.cpp b/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
-index be82879c841..627adbf7c4f 100644
+index be82879c8411..627adbf7c4f9 100644
 --- a/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
 +++ b/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
 @@ -39,6 +39,10 @@
@@ -1075,7 +1074,7 @@ index be82879c841..627adbf7c4f 100644
              (void *)com_android_internal_content_NativeLibraryHelper_hasRenderscriptBitcode},
  };
 diff --git a/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java b/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
-index 24d49a3cfef..4ecac45eee5 100644
+index 5ee612b6d55f..abfec23e6c36 100644
 --- a/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
 +++ b/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
 @@ -138,7 +138,8 @@ public class AndroidPackageUtils {
@@ -1089,5 +1088,5 @@ index 24d49a3cfef..4ecac45eee5 100644
      }
  
 -- 
-2.30.2
+2.25.1
 

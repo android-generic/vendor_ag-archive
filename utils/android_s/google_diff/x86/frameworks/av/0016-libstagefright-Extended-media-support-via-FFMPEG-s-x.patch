@@ -1,7 +1,8 @@
-From f36457f1a85857e5372c84c93592a56ed4580ffc Mon Sep 17 00:00:00 2001
+From 38ac8101c481972b42374e2ed29d860712eae011 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sat, 10 Jul 2021 21:12:38 +0200
-Subject: [PATCH] libstagefright: Extended media support via FFMPEG (s-x86 v2)
+Subject: [PATCH 3/3] libstagefright: Extended media support via FFMPEG (s-x86
+ v2)
 
 Fixes the following building error:
 
@@ -19,10 +20,10 @@ Change-Id: I43a677683ff51d2138883346dd80bd0d19d765c9
  1 file changed, 4 insertions(+)
 
 diff --git a/media/libstagefright/foundation/include/media/stagefright/foundation/MediaDefs.h b/media/libstagefright/foundation/include/media/stagefright/foundation/MediaDefs.h
-index 33e67693e4..4cc2616618 100644
+index 3b40067379..fec1498e94 100644
 --- a/media/libstagefright/foundation/include/media/stagefright/foundation/MediaDefs.h
 +++ b/media/libstagefright/foundation/include/media/stagefright/foundation/MediaDefs.h
-@@ -160,6 +160,10 @@ static inline int32_t audioEncodingToBits(AudioEncoding encoding) {
+@@ -161,6 +161,10 @@ static inline int32_t audioEncodingToBits(AudioEncoding encoding) {
              return 8;
          case kAudioEncodingPcm16bit:
              return 16;
