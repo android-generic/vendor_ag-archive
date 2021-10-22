@@ -1,4 +1,4 @@
-From 9ca7278d4b37594bdb40aed8a03bf70e5b2e39fa Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Hans de Goede <hdegoede@redhat.com>
 Date: Sun, 5 Nov 2017 16:51:23 +0100
 Subject: [PATCH 32/54] i915: pm: Be less agressive with clockfreq changes on
@@ -71,7 +71,7 @@ index c1c9cc0ad3b9..2d4be37fa0e8 100644
  	GT_TRACE(gt,
  		 "changing power mode [%d], up %d%% @ %dus, down %d%% @ %dus\n",
 diff --git a/drivers/gpu/drm/i915/i915_reg.h b/drivers/gpu/drm/i915/i915_reg.h
-index 5cd83eac940c..17b97da72970 100644
+index ce8c91c5fdd3..9c2e6cf9390d 100644
 --- a/drivers/gpu/drm/i915/i915_reg.h
 +++ b/drivers/gpu/drm/i915/i915_reg.h
 @@ -1331,6 +1331,9 @@ static inline bool i915_mmio_reg_valid(i915_reg_t reg)
@@ -84,6 +84,3 @@ index 5cd83eac940c..17b97da72970 100644
  /* vlv2 north clock has */
  #define CCK_FUSE_REG				0x8
  #define  CCK_FUSE_HPLL_FREQ_MASK		0x3
--- 
-2.30.2
-

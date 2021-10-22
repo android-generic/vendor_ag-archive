@@ -1,4 +1,4 @@
-From 633a39340eb984549168e8c643a50a5970c84298 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 3 Oct 2019 13:33:14 +0800
 Subject: [PATCH 51/54] scripts/setlocalversion: make -dirty check more robust
@@ -22,6 +22,3 @@ index 3f8a8ee14b10..9ede11dade9b 100755
  		} | grep -qvE '^(.. )?scripts/package'; then
  			printf '%s' -dirty
  		fi
--- 
-2.30.2
-

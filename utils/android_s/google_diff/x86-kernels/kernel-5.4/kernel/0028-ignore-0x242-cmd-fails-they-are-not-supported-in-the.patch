@@ -1,4 +1,4 @@
-From 35f902cea2f49767384e07db6a64fa0fbc5d7133 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jake Day <jake@ninebysix.com>
 Date: Wed, 18 Oct 2017 14:35:45 -0400
 Subject: [PATCH 28/54] ignore 0x242 cmd fails, they are not supported in the
@@ -23,6 +23,3 @@ index 985dda12501e..fc482e0a88e4 100644
  	}
  
  	/* get tx rate */
--- 
-2.30.2
-

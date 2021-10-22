@@ -1,4 +1,4 @@
-From 72deb3c9fb1ecff603fa791da1d749862ab5ef05 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sun, 16 Dec 2018 09:53:09 +0100
 Subject: [PATCH 36/54] drm/vmwgfx: print formats in kms surface error log
@@ -20,6 +20,3 @@ index 312ed0881a99..18b4add02cbc 100644
  		return -EINVAL;
  	}
  
--- 
-2.30.2
-

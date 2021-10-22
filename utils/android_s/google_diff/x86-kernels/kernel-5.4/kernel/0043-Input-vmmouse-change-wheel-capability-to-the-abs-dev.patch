@@ -1,4 +1,4 @@
-From 2d185298d1c0198e3e1650adb284f5294bca8101 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sat, 12 Jan 2019 01:11:08 +0800
 Subject: [PATCH 43/54] Input: vmmouse: change wheel capability to the abs
@@ -41,6 +41,3 @@ index 148245c69be7..effbfcf92532 100644
  	psmouse->protocol_handler = vmmouse_process_byte;
  	psmouse->disconnect = vmmouse_disconnect;
  	psmouse->reconnect = vmmouse_reconnect;
--- 
-2.30.2
-

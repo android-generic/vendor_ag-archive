@@ -1,4 +1,4 @@
-From b1b65149212114f06fe0464796d1449e6ca30bdd Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jake Day <jake@ninebysix.com>
 Date: Tue, 3 Oct 2017 18:52:03 -0400
 Subject: [PATCH 27/54] fixes for marvell mwifiex driver
@@ -41,10 +41,10 @@ index a6b9dc6700b1..f1343f7f14b6 100644
  }
  
 diff --git a/drivers/net/wireless/marvell/mwifiex/pcie.c b/drivers/net/wireless/marvell/mwifiex/pcie.c
-index 33cf952cc01d..8b403cf5afa6 100644
+index b2de8d03c5fa..6eb8ec42d10f 100644
 --- a/drivers/net/wireless/marvell/mwifiex/pcie.c
 +++ b/drivers/net/wireless/marvell/mwifiex/pcie.c
-@@ -1901,6 +1901,16 @@ static int mwifiex_pcie_process_cmd_complete(struct mwifiex_adapter *adapter)
+@@ -1899,6 +1899,16 @@ static int mwifiex_pcie_process_cmd_complete(struct mwifiex_adapter *adapter)
  	}
  
  	rx_len = get_unaligned_le16(skb->data);
@@ -83,6 +83,3 @@ index d3a968ef21ef..985dda12501e 100644
  	    priv->bss_type != MWIFIEX_BSS_TYPE_UAP) {
  		/* Enable auto deep sleep */
  		auto_ds.auto_ds = DEEP_SLEEP_ON;
--- 
-2.30.2
-

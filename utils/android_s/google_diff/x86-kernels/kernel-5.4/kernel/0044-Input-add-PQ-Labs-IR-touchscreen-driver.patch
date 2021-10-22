@@ -1,4 +1,4 @@
-From f5e556f4b6d5e00f1e5278a9073ba53dcc20bc00 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Supratim <sup270792@gmail.com>
 Date: Tue, 12 Feb 2019 14:40:31 +0800
 Subject: [PATCH 44/54] Input: add PQ Labs IR touchscreen driver
@@ -1133,6 +1133,3 @@ index 000000000000..f7a5bed86df6
 +module_exit(usb_pqlabs_exit);
 +
 +MODULE_LICENSE("GPL");
--- 
-2.30.2
-

@@ -1,4 +1,4 @@
-From 3ea7babb20c096119164309e7c9855d919cade16 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 3 May 2011 15:44:58 +0800
 Subject: [PATCH 02/54] x86: add driver for Lenovo ideapad S10-3T rotate button
@@ -12,7 +12,7 @@ Provided by Javier S. Pedro.
  create mode 100644 drivers/platform/x86/lsrot.c
 
 diff --git a/drivers/platform/x86/Kconfig b/drivers/platform/x86/Kconfig
-index 0d91d136bc3b..0100a3055032 100644
+index a1858689d6e1..bc7d0dda4193 100644
 --- a/drivers/platform/x86/Kconfig
 +++ b/drivers/platform/x86/Kconfig
 @@ -1170,6 +1170,16 @@ config SYSTEM76_ACPI
@@ -290,6 +290,3 @@ index 000000000000..4d4ef75f6554
 +
 +MODULE_ALIAS("wmi:" WMI_ACPI_EVENT_GUID);
 +MODULE_ALIAS("wmi:" WMI_ACPI_BLOCK_GUID);
--- 
-2.30.2
-

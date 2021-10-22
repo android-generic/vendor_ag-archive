@@ -1,4 +1,4 @@
-From d005477ed33cf548ea7df7bced70724800b40b51 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Mon, 15 Dec 2014 11:53:56 -0800
 Subject: [PATCH 11/54] iio: ak8975: Added autodetect feature for ACPI
@@ -69,6 +69,3 @@ index d988b6ac3659..78075b2460a5 100644
  };
  module_i2c_driver(ak8975_driver);
  
--- 
-2.30.2
-

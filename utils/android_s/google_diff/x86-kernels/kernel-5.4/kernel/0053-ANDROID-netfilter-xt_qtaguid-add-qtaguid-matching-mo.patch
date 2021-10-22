@@ -1,4 +1,4 @@
-From 1167329dea85b0b12155e496bd571ef7de1fb75f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: JP Abgrall <jpa@google.com>
 Date: Mon, 20 Jun 2011 12:41:46 -0700
 Subject: [PATCH 53/54] ANDROID: netfilter: xt_qtaguid: add qtaguid matching
@@ -441,7 +441,7 @@ index 000000000000..1c671552ec37
 +int qtaguid_untag(struct socket *sock, bool kernel);
 +#endif /* _XT_QTAGUID_MATCH_H */
 diff --git a/net/ipv4/af_inet.c b/net/ipv4/af_inet.c
-index b2ee0be107e7..f293793e5df5 100644
+index e4dbf5ad9218..90c5f47c7712 100644
 --- a/net/ipv4/af_inet.c
 +++ b/net/ipv4/af_inet.c
 @@ -85,6 +85,7 @@
@@ -4596,6 +4596,3 @@ index 000000000000..b63871a0be5a
 +/*------------------------------------------*/
 +const char *netdev_evt_str(int netdev_event);
 +#endif  /* ifndef __XT_QTAGUID_PRINT_H__ */
--- 
-2.30.2
-

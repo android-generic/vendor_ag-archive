@@ -1,4 +1,4 @@
-From 01650314fb953123818f56d492b6ef3ff75965b6 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Mario Holzinger <sandman01xda@gmail.com>
 Date: Wed, 27 Jan 2016 21:51:01 +0100
 Subject: [PATCH 15/54] staging: add GSLx680 I2C touch controller
@@ -837,6 +837,3 @@ index 000000000000..858d447cd4f5
 +MODULE_PARM_DESC(fw_name, "firmware file name (default: " GSL_FW_NAME_DEFAULT ")");
 +MODULE_VERSION(DRIVER_VERSION);
 +MODULE_LICENSE("GPL");
--- 
-2.30.2
-

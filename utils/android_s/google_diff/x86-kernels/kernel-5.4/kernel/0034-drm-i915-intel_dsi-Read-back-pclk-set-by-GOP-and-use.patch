@@ -1,4 +1,4 @@
-From 83f98d328f56028560b631b337ecb625e744964b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Hans de Goede <hdegoede@redhat.com>
 Date: Tue, 10 Jul 2018 08:59:27 +0200
 Subject: [PATCH 34/54] drm/i915/intel_dsi: Read back pclk set by GOP and use
@@ -58,6 +58,3 @@ index eed037ec0b29..7401b0b381a2 100644
  	intel_dsi->burst_mode_ratio = burst_mode_ratio;
  
  	/* delays in VBT are in unit of 100us, so need to convert
--- 
-2.30.2
-

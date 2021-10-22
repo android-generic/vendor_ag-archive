@@ -1,4 +1,4 @@
-From b57f30dd721ba192b8341a1518e9897ee5661b33 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Arvind Sankar <nivedita@alum.mit.edu>
 Date: Fri, 10 Jan 2020 16:50:05 -0500
 Subject: [PATCH 52/54] x86/tools/relocs: Add _etext and
@@ -43,6 +43,3 @@ index 50e48633a8e3..0b1b89e85d22 100644
  	"_end)$"
  };
  
--- 
-2.30.2
-

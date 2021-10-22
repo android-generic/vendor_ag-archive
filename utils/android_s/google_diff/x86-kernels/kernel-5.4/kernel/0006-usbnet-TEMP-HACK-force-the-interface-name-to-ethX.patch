@@ -1,4 +1,4 @@
-From d41f1d2b39b222154e4b150ec5eb3b60c7109e20 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 23 Jan 2014 10:47:22 +0800
 Subject: [PATCH 06/54] usbnet: [TEMP HACK] force the interface name to ethX
@@ -22,6 +22,3 @@ index 6062dc27870e..bcf26b0f71ad 100644
  	memcpy (net->dev_addr, node_id, sizeof node_id);
  
  	/* rx and tx sides can use different message sizes;
--- 
-2.30.2
-

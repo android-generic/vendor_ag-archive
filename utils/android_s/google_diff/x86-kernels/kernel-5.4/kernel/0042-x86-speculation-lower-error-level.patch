@@ -1,4 +1,4 @@
-From b2e3b9377206f9f3dacb34afeecade0ba21a69e3 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 14 Dec 2018 22:43:05 +0800
 Subject: [PATCH 42/54] x86/speculation: lower error level
@@ -20,6 +20,3 @@ index d41b70fe4918..e43713413b82 100644
  	return;
  
  retpoline_auto:
--- 
-2.30.2
-

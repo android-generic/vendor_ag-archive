@@ -1,4 +1,4 @@
-From d9dcd8605d51c3611653e0825a39712658d330d7 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sat, 28 Sep 2019 18:13:54 +0200
 Subject: [PATCH 12/54] x86/intel: force tsc to be reliable on Baytrail (v2)
@@ -25,6 +25,3 @@ index 816fdbec795a..7d07e8d1e2b5 100644
  		case INTEL_FAM6_ATOM_SALTWELL_MID:
  		case INTEL_FAM6_ATOM_SALTWELL_TABLET:
  		case INTEL_FAM6_ATOM_SILVERMONT_MID:
--- 
-2.30.2
-

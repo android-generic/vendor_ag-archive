@@ -1,4 +1,4 @@
-From cfccbf7d4a4736a06366651aed001610562776fe Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 9 Mar 2018 12:39:24 +0800
 Subject: [PATCH 38/54] brcmfmac: fix setp2p error
@@ -10,7 +10,7 @@ From https://drive.google.com/open?id=0B4DiU2o72Fbub0U2ZzJaUzl5OEE
  2 files changed, 14 insertions(+), 5 deletions(-)
 
 diff --git a/drivers/net/wireless/broadcom/brcm80211/brcmfmac/cfg80211.c b/drivers/net/wireless/broadcom/brcm80211/brcmfmac/cfg80211.c
-index e60f48925630..973351ff1d25 100644
+index 200c9adc292e..865896a76b32 100644
 --- a/drivers/net/wireless/broadcom/brcm80211/brcmfmac/cfg80211.c
 +++ b/drivers/net/wireless/broadcom/brcm80211/brcmfmac/cfg80211.c
 @@ -739,11 +739,17 @@ static struct wireless_dev *brcmf_cfg80211_add_iface(struct wiphy *wiphy,
@@ -51,6 +51,3 @@ index ec6fc7a150a6..23a3f59efe40 100644
  		brcmf_fweh_p2pdev_setup(pri_ifp, false);
  		brcmf_cfg80211_arm_vif_event(p2p->cfg, NULL);
  		goto fail;
--- 
-2.30.2
-

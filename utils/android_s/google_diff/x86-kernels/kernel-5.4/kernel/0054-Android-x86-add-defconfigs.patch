@@ -1,4 +1,4 @@
-From 81db90afb01902f700c06126d8299f0b2fe3e836 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 12 May 2020 11:44:15 +0800
 Subject: [PATCH 54/54] Android-x86: add defconfigs
@@ -17189,6 +17189,3 @@ index 000000000000..658981b0d48f
 +CONFIG_UNWINDER_FRAME_POINTER=y
 +# CONFIG_UNWINDER_GUESS is not set
 +# end of Kernel hacking
--- 
-2.30.2
-

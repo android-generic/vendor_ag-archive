@@ -1,4 +1,4 @@
-From 5bc5e8ac7013b346b22fd5d239b2e4d87d372d46 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Hans de Goede <hdegoede@redhat.com>
 Date: Thu, 9 Nov 2017 14:21:24 +0100
 Subject: [PATCH 33/54] intel_idle: Disable C6N and C6S on Bay Trail
@@ -50,6 +50,3 @@ index d79335506ecd..ae012fa4efe4 100644
  		.exit_latency = 500,
  		.target_residency = 560,
  		.enter = &intel_idle,
--- 
-2.30.2
-

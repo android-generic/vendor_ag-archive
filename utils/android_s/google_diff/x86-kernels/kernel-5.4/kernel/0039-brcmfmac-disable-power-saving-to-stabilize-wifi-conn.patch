@@ -1,4 +1,4 @@
-From 2a01b80bb427e3a77a5cdb6ba69f14bfebea4a63 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 9 Mar 2018 12:48:08 +0800
 Subject: [PATCH 39/54] brcmfmac: disable power saving to stabilize wifi
@@ -10,10 +10,10 @@ From https://drive.google.com/open?id=0B4DiU2o72Fbub0U2ZzJaUzl5OEE
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/net/wireless/broadcom/brcm80211/brcmfmac/cfg80211.c b/drivers/net/wireless/broadcom/brcm80211/brcmfmac/cfg80211.c
-index 973351ff1d25..02720eaeeb87 100644
+index 865896a76b32..cc76482590dd 100644
 --- a/drivers/net/wireless/broadcom/brcm80211/brcmfmac/cfg80211.c
 +++ b/drivers/net/wireless/broadcom/brcm80211/brcmfmac/cfg80211.c
-@@ -2923,6 +2923,8 @@ brcmf_cfg80211_set_power_mgmt(struct wiphy *wiphy, struct net_device *ndev,
+@@ -2926,6 +2926,8 @@ brcmf_cfg80211_set_power_mgmt(struct wiphy *wiphy, struct net_device *ndev,
  
  	brcmf_dbg(TRACE, "Enter\n");
  
@@ -22,6 +22,3 @@ index 973351ff1d25..02720eaeeb87 100644
  	/*
  	 * Powersave enable/disable request is coming from the
  	 * cfg80211 even before the interface is up. In that
--- 
-2.30.2
-
