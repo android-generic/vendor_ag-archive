@@ -1,4 +1,4 @@
-From a14f480bda681156b516b3a66903560e7ef438dd Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Robert Crabtree <robertx.l.crabtree@intel.com>
 Date: Wed, 25 Jul 2012 17:53:12 -0700
 Subject: [PATCH 01/15] SW encode: Fix output buffer size
@@ -51,6 +51,3 @@ index d75acdabf8..11e563cdc2 100644
          default:
              return SimpleSoftOMXComponent::internalGetParameter(index, param);
      }
--- 
-2.30.2
-

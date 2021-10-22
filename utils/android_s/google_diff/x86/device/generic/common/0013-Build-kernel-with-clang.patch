@@ -1,17 +1,17 @@
-From 7ff49f98f575af9997e17b07634ac3014cfe227d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 28 Apr 2021 16:55:08 -0400
-Subject: [PATCH 13/17] Build kernel with clang
+Subject: [PATCH 13/18] Build kernel with clang
 
 ---
- build/tasks/kernel.mk | 54 ++++++++++++++++++++-----------------------
- 1 file changed, 25 insertions(+), 29 deletions(-)
+ build/tasks/kernel.mk | 55 ++++++++++++++++++++-----------------------
+ 1 file changed, 26 insertions(+), 29 deletions(-)
 
 diff --git a/build/tasks/kernel.mk b/build/tasks/kernel.mk
-index 0bd2dc8..70cacb7 100644
+index 0bd2dc8..f4ac869 100644
 --- a/build/tasks/kernel.mk
 +++ b/build/tasks/kernel.mk
-@@ -10,35 +10,34 @@
+@@ -10,35 +10,35 @@
  
  ifneq ($(TARGET_NO_KERNEL),true)
  ifeq ($(TARGET_PREBUILT_KERNEL),)
@@ -54,6 +54,7 @@ index 0bd2dc8..70cacb7 100644
 +        HOSTCC=$(abspath $(LLVM_PREBUILTS_PATH)/clang) \
 +        HOSTCXX=$(abspath $(LLVM_PREBUILTS_PATH)/clang++) \
 +        HOSTLD=$(abspath $(LLVM_PREBUILTS_PATH)/ld.lld) \
++        HOSTLDFLAGS=-fuse-ld=lld \
 +        HOSTAR=$(abspath $(LLVM_PREBUILTS_PATH)/llvm-ar)
  else
 -CROSS_COMPILE ?= $(abspath prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6/bin)/x86_64-linux-
@@ -65,7 +66,7 @@ index 0bd2dc8..70cacb7 100644
  endif
  
  KBUILD_OUTPUT := $(TARGET_OUT_INTERMEDIATES)/kernel
-@@ -49,9 +48,9 @@ KBUILD_JOBS := $(shell echo $$((1-(`cat /sys/devices/system/cpu/present`))))
+@@ -49,9 +49,9 @@ KBUILD_JOBS := $(shell echo $$((1-(`cat /sys/devices/system/cpu/present`))))
  endif
  
  mk_kernel := + $(hide) prebuilts/build-tools/$(HOST_PREBUILT_TAG)/bin/make -j$(KBUILD_JOBS) -l$$(($(KBUILD_JOBS)+2)) \
@@ -78,7 +79,7 @@ index 0bd2dc8..70cacb7 100644
  
  KERNEL_CONFIG_FILE := $(if $(wildcard $(TARGET_KERNEL_CONFIG)),$(TARGET_KERNEL_CONFIG),$(KERNEL_DIR)/$(KERNEL_CONFIG_DIR)/$(TARGET_KERNEL_CONFIG))
  
-@@ -69,16 +68,11 @@ $(KERNEL_ARCH_CHANGED):
+@@ -69,16 +69,11 @@ $(KERNEL_ARCH_CHANGED):
  endif
  $(KERNEL_DOTCONFIG_FILE): $(KERNEL_CONFIG_FILE) $(wildcard $(TARGET_KERNEL_DIFFCONFIG)) $(KERNEL_ARCH_CHANGED)
  	$(hide) mkdir -p $(@D) && cat $(wildcard $^) > $@
@@ -96,7 +97,7 @@ index 0bd2dc8..70cacb7 100644
  	$(mk_kernel) olddefconfig
  	$(mk_kernel) $(KERNEL_TARGET) $(if $(MOD_ENABLED),modules)
  	$(if $(FIRMWARE_ENABLED),$(mk_kernel) INSTALL_MOD_PATH=$(abspath $(TARGET_OUT)) firmware_install)
-@@ -112,6 +106,7 @@ TARGET_PREBUILT_KERNEL := $(BUILT_KERNEL_TARGET)
+@@ -112,6 +107,7 @@ TARGET_PREBUILT_KERNEL := $(BUILT_KERNEL_TARGET)
  .PHONY: kernel
  kernel: $(INSTALLED_KERNEL_TARGET) $(KERNEL_MODULES_DEP)
  
@@ -104,13 +105,10 @@ index 0bd2dc8..70cacb7 100644
  endif # TARGET_PREBUILT_KERNEL
  
  ifndef LINEAGE_BUILD
-@@ -122,4 +117,5 @@ ifdef TARGET_PREBUILT_MODULES
+@@ -122,4 +118,5 @@ ifdef TARGET_PREBUILT_MODULES
  	$(hide) cp -r $(TARGET_PREBUILT_MODULES) $(TARGET_OUT)/lib
  endif
  endif # LINEAGE_BUILD
 -endif # KBUILD_OUTPUT
 +
 +endif # TARGET_NO_KERNEL
--- 
-2.30.2
-

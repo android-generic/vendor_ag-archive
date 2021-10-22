@@ -1,7 +1,7 @@
-From ab24636028c7964ee3cef9257b0c6aee521e9543 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Tue, 13 Apr 2021 20:36:10 -0400
-Subject: [PATCH 11/17] Set ro.lmk.kill_timeout_ms
+Subject: [PATCH 11/18] Set ro.lmk.kill_timeout_ms
 
 This prevents lmkd to be over-zealous and rapidly kill many processes,
 because the process of recovering memory may need some time.
@@ -25,6 +25,3 @@ index 665f17e..9ad7f0d 100644
  
  PRODUCT_DEFAULT_PROPERTY_OVERRIDES := \
      ro.arch=x86 \
--- 
-2.30.2
-

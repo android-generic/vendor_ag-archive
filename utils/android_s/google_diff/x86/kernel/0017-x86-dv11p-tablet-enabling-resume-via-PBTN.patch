@@ -1,4 +1,4 @@
-From 9e332ceb376fa82d30fa2f19b5992d41d07b219f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 22 May 2016 21:59:32 +0800
 Subject: [PATCH 17/54] x86: dv11p-tablet: enabling resume via PBTN
@@ -26,7 +26,7 @@ index 738873e876ca..25148a711ccc 100644
  /*******************************************************************************
   *
 diff --git a/drivers/platform/x86/Kconfig b/drivers/platform/x86/Kconfig
-index 0100a3055032..a21fb60cc6d0 100644
+index bc7d0dda4193..e3e06e22b58c 100644
 --- a/drivers/platform/x86/Kconfig
 +++ b/drivers/platform/x86/Kconfig
 @@ -1372,6 +1372,12 @@ config INTEL_PMC_CORE
@@ -309,6 +309,3 @@ index 000000000000..f6461cee85c0
 +};
 +
 +module_acpi_driver(dv11p_tablet_driver);
--- 
-2.30.2
-

@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Mon, 18 Jul 2016 22:32:13 +0800
+Subject: [PATCH 15/20] ABIPicker: match package name by patterns
+
+PRC apps from different markets usually have different package names.
+This change tries to match them by patterns.
+
+To test it, install the Implosion apps from Wandoujia and CoolMarket
+and run them OK.
+---
+ core/jni/abipicker/ABIPicker.cpp | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/core/jni/abipicker/ABIPicker.cpp b/core/jni/abipicker/ABIPicker.cpp
+index 3fc6bad19eca..b20f4cd2f92b 100644
+--- a/core/jni/abipicker/ABIPicker.cpp
++++ b/core/jni/abipicker/ABIPicker.cpp
+@@ -5,6 +5,7 @@
+ 
+ #include <androidfw/ZipFileRO.h>
+ #include <androidfw/ZipUtils.h>
++#include <fnmatch.h>
+ 
+ namespace android {
+ #define ARR_SIZE(x)     (sizeof(x)/sizeof(x[0]))
+@@ -103,8 +104,8 @@ bool isInOEMWhiteList(const char* pkgName) {
+     Vector<char*>::iterator it = cfgWhite.begin();
+     for (; it != cfgWhite.end(); it++) {
+        P_LOG("whitelist : %s", *it);
+-       if (0 == strcmp(pkgName, *it)) {
+-          ALOGI("found %s in whitelist", pkgName);
++       if (0 == fnmatch(*it, pkgName, 0)) {
++          ALOGI("whitelist %s by %s", pkgName, *it);
+           result = true;
+           break;
+        }
+@@ -125,8 +126,8 @@ bool isInOEMBlackList(const char* pkgName) {
+ 
+     Vector<char*>::iterator it = cfgBlack.begin();
+     for (; it != cfgBlack.end(); it++) {
+-       if (0 == strcmp(pkgName, *it)) {
+-          ALOGI("found %s in blacklist", pkgName);
++       if (0 == fnmatch(*it, pkgName, 0)) {
++          ALOGI("blacklist %s by %s", pkgName, *it);
+           result = true;
+           break;
+        }

@@ -1,4 +1,4 @@
-From 457c32a9980c90255ae78690626c925238cd7485 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Fri, 4 Oct 2019 20:11:48 -0400
 Subject: [PATCH 12/15] Disable CFI
@@ -42,10 +42,10 @@ index 160e250235..87d49a3a92 100644
              cfi_assembly_support: true,
          },
 diff --git a/media/codec2/sfplugin/utils/Android.bp b/media/codec2/sfplugin/utils/Android.bp
-index 74e7ef1de0..edacaeb9d3 100644
+index 2f4d6b1cb5..7b9455a25c 100644
 --- a/media/codec2/sfplugin/utils/Android.bp
 +++ b/media/codec2/sfplugin/utils/Android.bp
-@@ -42,7 +42,6 @@ cc_library {
+@@ -44,7 +44,6 @@ cc_library {
      ],
  
      sanitize: {
@@ -54,7 +54,7 @@ index 74e7ef1de0..edacaeb9d3 100644
              "unsigned-integer-overflow",
              "signed-integer-overflow",
 diff --git a/media/libstagefright/bqhelper/Android.bp b/media/libstagefright/bqhelper/Android.bp
-index e4fc128770..81bafbcb88 100644
+index 0e2b47227d..018d9a48b0 100644
 --- a/media/libstagefright/bqhelper/Android.bp
 +++ b/media/libstagefright/bqhelper/Android.bp
 @@ -61,7 +61,6 @@ cc_defaults {
@@ -66,7 +66,7 @@ index e4fc128770..81bafbcb88 100644
  }
  
 diff --git a/media/libstagefright/flac/dec/Android.bp b/media/libstagefright/flac/dec/Android.bp
-index 225c930dd1..4b48cc552d 100644
+index 665aae136f..cffeb80cc1 100644
 --- a/media/libstagefright/flac/dec/Android.bp
 +++ b/media/libstagefright/flac/dec/Android.bp
 @@ -36,7 +36,6 @@ cc_library {
@@ -78,10 +78,10 @@ index 225c930dd1..4b48cc552d 100644
  
      shared_libs: [
 diff --git a/media/libstagefright/foundation/Android.bp b/media/libstagefright/foundation/Android.bp
-index 407f609c29..27cb234265 100644
+index dd2c66f60f..af71ab0a16 100644
 --- a/media/libstagefright/foundation/Android.bp
 +++ b/media/libstagefright/foundation/Android.bp
-@@ -117,7 +117,6 @@ cc_defaults {
+@@ -127,7 +127,6 @@ cc_defaults {
              "unsigned-integer-overflow",
              "signed-integer-overflow",
          ],
@@ -89,6 +89,3 @@ index 407f609c29..27cb234265 100644
      },
  }
  
--- 
-2.30.2
-

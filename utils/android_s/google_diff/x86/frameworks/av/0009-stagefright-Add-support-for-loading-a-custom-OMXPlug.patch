@@ -1,4 +1,4 @@
-From 9a9b693d4f6222ae8828ed2c933aee6d23155772 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Steve Kondik <steve@cyngn.com>
 Date: Wed, 8 Jul 2015 09:56:01 -0700
 Subject: [PATCH 09/15] stagefright: Add support for loading a custom OMXPlugin
@@ -96,6 +96,3 @@ index 5d6c3ed29d..aaaefdaaad 100644
      void addPlugin(const char *libname);
      void addPlugin(OMXPluginBase *plugin);
      void clearPlugins();
--- 
-2.30.2
-

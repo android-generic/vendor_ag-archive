@@ -1,7 +1,7 @@
-From 92af05ef4f45ab33b3e68bf735d6e8d119615e54 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 1 Apr 2020 17:51:01 -0400
-Subject: [PATCH 01/17] Port to Android 11
+Subject: [PATCH 01/18] Port to Android 11
 
 ---
  BoardConfig.mk          |  4 +++-
@@ -15,7 +15,7 @@ Subject: [PATCH 01/17] Port to Android 11
  8 files changed, 61 insertions(+), 8 deletions(-)
 
 diff --git a/BoardConfig.mk b/BoardConfig.mk
-index f0b0a57..8580206 100644
+index c748433..dc502e1 100644
 --- a/BoardConfig.mk
 +++ b/BoardConfig.mk
 @@ -60,7 +60,6 @@ USE_OPENGL_RENDERER := true
@@ -26,15 +26,13 @@ index f0b0a57..8580206 100644
  
  USE_CAMERA_STUB ?= false
  
-@@ -95,5 +94,8 @@ BOARD_SYSTEMIMAGE_PARTITION_RESERVED_SIZE := 33554432
- BOARD_USES_OEMIMAGE := true
- BUILD_BROKEN_USES_NETWORK := true
- USE_XML_AUDIO_POLICY_CONF := 1
- 
+@@ -102,3 +101,6 @@ BOARD_USES_GRALLOC1 := true
+ BOARD_USES_IA_HWCOMPOSER := true
+ TARGET_USES_HWC2 ?= true
+ #BOARD_USES_VULKAN := true
++
 +BUILD_BROKEN_USES_BUILD_HOST_EXECUTABLE := true
 +BUILD_BROKEN_USES_BUILD_HOST_STATIC_LIBRARY := true
-+
- BOARD_USES_MINIGBM := true
 diff --git a/build/tasks/system.mk b/build/tasks/system.mk
 index c81b995..794bf0c 100644
 --- a/build/tasks/system.mk
@@ -58,10 +56,10 @@ index 7a26cf8..7f69fc5 100644
  
  PRODUCT_AAPT_CONFIG := normal large xlarge mdpi hdpi
 diff --git a/init.sh b/init.sh
-index 8ecd243..c46b159 100644
+index 2b0ab95..0962c22 100644
 --- a/init.sh
 +++ b/init.sh
-@@ -174,7 +174,7 @@ function init_uvesafb()
+@@ -177,7 +177,7 @@ function init_uvesafb()
  			;;
  	esac
  
@@ -189,10 +187,10 @@ index 0e4922d..5516935 100644
  LOCAL_POST_INSTALL_CMD := $(hide) \
      rm -rf $(TARGET_OUT)/{bin,lib}/{arm*,*houdini*} {$(TARGET_OUT),$(PRODUCT_OUT)}/vendor/{bin,lib}/{arm*,*houdini*}; \
 diff --git a/treble.mk b/treble.mk
-index 920ff8d..9e85df1 100644
+index 4a719e6..27251a1 100644
 --- a/treble.mk
 +++ b/treble.mk
-@@ -41,7 +41,8 @@ PRODUCT_PACKAGES += \
+@@ -42,7 +42,8 @@ PRODUCT_PACKAGES += \
  
  # Health HAL
  PRODUCT_PACKAGES += \
@@ -202,7 +200,7 @@ index 920ff8d..9e85df1 100644
  
  # Keymaster HAL
  PRODUCT_PACKAGES += \
-@@ -90,3 +91,7 @@ PRODUCT_PACKAGES += \
+@@ -91,3 +92,7 @@ PRODUCT_PACKAGES += \
  PRODUCT_PACKAGES += \
      android.hardware.gnss@1.0-impl \
      android.hardware.gnss@1.0-service
@@ -210,6 +208,3 @@ index 920ff8d..9e85df1 100644
 +# ConfigStore HAL
 +PRODUCT_PACKAGES += \
 +    android.hardware.configstore@1.1-service
--- 
-2.30.2
-

@@ -1,4 +1,4 @@
-From c60dcede4647502bc8ecd843abb80bcd60af40f9 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 30 Mar 2018 11:52:00 +0800
 Subject: [PATCH 40/54] ALSA: x86: modify modalias to match more devices
@@ -28,6 +28,3 @@ index 9f9fcd2749f2..03278e0116cd 100644
  
  MODULE_AUTHOR("Sailaja Bandarupalli <sailaja.bandarupalli@intel.com>");
  MODULE_AUTHOR("Ramesh Babu K V <ramesh.babu@intel.com>");
--- 
-2.30.2
-

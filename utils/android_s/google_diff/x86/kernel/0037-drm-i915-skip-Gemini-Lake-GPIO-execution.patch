@@ -1,4 +1,4 @@
-From fc2b5c09f099aa6f3afc9dac061a5163b36f6d5b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Thu, 25 Apr 2019 16:22:02 +0200
 Subject: [PATCH 37/54] drm/i915: skip Gemini Lake GPIO execution
@@ -21,6 +21,3 @@ index 7401b0b381a2..c258ffb3319e 100644
  		bxt_exec_gpio(dev_priv, gpio_source, gpio_index, value);
  
  	return data;
--- 
-2.30.2
-

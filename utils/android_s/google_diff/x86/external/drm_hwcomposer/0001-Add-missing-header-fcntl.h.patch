@@ -1,4 +1,4 @@
-From c61f87822a25385a89425105567003ee9f0baf70 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 28 Apr 2021 16:14:19 -0400
 Subject: [PATCH] Add missing header <fcntl.h>
@@ -20,6 +20,3 @@ index fc24aea..9bdd744 100644
  #include <cutils/properties.h>
  #include <log/log.h>
  #include <sys/stat.h>
--- 
-2.30.2
-

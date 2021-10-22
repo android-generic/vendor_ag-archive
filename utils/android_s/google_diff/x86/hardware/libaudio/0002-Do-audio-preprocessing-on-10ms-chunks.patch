@@ -1,4 +1,4 @@
-From 323b549cf5b1b609ed101ac9de14511c9f7cc8c5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 28 Apr 2021 16:49:24 -0400
 Subject: [PATCH 2/2] Do audio preprocessing on 10ms chunks
@@ -121,6 +121,3 @@ index 7bdfd6f..0dcffdb 100644
              frames_wr = frames;
          }
      }
--- 
-2.30.2
-

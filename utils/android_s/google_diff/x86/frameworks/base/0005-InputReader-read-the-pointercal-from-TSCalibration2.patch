@@ -1,7 +1,7 @@
-From da34b92502928339112f734e066351f918b39bfe Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 18 May 2014 02:20:32 +0800
-Subject: [PATCH 05/22] InputReader: read the pointercal from TSCalibration2
+Subject: [PATCH 05/20] InputReader: read the pointercal from TSCalibration2
 
 Watch the pointercal and reload it on changed.
 ---
@@ -9,18 +9,18 @@ Watch the pointercal and reload it on changed.
  1 file changed, 15 insertions(+)
 
 diff --git a/services/core/java/com/android/server/input/InputManagerService.java b/services/core/java/com/android/server/input/InputManagerService.java
-index 115899a2a51..d8978d83956 100644
+index 6fb9e58a49d1..9d2edff7cc02 100644
 --- a/services/core/java/com/android/server/input/InputManagerService.java
 +++ b/services/core/java/com/android/server/input/InputManagerService.java
-@@ -51,6 +51,7 @@ import android.media.AudioManager;
- import android.os.Binder;
+@@ -62,6 +62,7 @@ import android.os.Binder;
  import android.os.Bundle;
+ import android.os.CombinedVibration;
  import android.os.Environment;
 +import android.os.FileObserver;
  import android.os.Handler;
  import android.os.IBinder;
- import android.os.LocaleList;
-@@ -322,6 +323,19 @@ public class InputManagerService extends IInputManager.Stub
+ import android.os.IVibratorStateListener;
+@@ -421,6 +422,19 @@ public class InputManagerService extends IInputManager.Stub
      /** Whether to use the dev/input/event or uevent subsystem for the audio jack. */
      final boolean mUseDevInputEventForAudioJack;
  
@@ -40,7 +40,7 @@ index 115899a2a51..d8978d83956 100644
      public InputManagerService(Context context) {
          this.mContext = context;
          this.mHandler = new InputManagerHandler(DisplayThread.get().getLooper());
-@@ -339,6 +353,7 @@ public class InputManagerService extends IInputManager.Stub
+@@ -438,6 +452,7 @@ public class InputManagerService extends IInputManager.Stub
              new File(doubleTouchGestureEnablePath);
  
          LocalServices.addService(InputManagerInternal.class, new LocalService());
@@ -48,6 +48,3 @@ index 115899a2a51..d8978d83956 100644
      }
  
      public void setWindowManagerCallbacks(WindowManagerCallbacks callbacks) {
--- 
-2.30.2
-

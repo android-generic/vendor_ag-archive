@@ -1,7 +1,7 @@
-From 872e732989065f2e25a58c4c78a20b9e33a954c9 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 11 Nov 2020 16:27:57 -0500
-Subject: [PATCH 09/17] Update audio and keymaster HAL
+Subject: [PATCH 09/18] Update audio and keymaster HAL
 
 - audio HAL 6 (sounetrigger 2.3)
 - keymaster HAL 4.1 (binderized service)
@@ -63,10 +63,10 @@ index 8dd2bb2..5ed527b 100644
      <hal format="hidl">
          <name>android.hardware.drm</name>
 diff --git a/treble.mk b/treble.mk
-index 885c24a..c94126d 100644
+index 4681aba..a070956 100644
 --- a/treble.mk
 +++ b/treble.mk
-@@ -9,11 +9,10 @@ PRODUCT_PACKAGES += \
+@@ -10,11 +10,10 @@ PRODUCT_PACKAGES += \
  
  # Audio HAL
  PRODUCT_PACKAGES += \
@@ -82,7 +82,7 @@ index 885c24a..c94126d 100644
  
  # Bluetooth HAL
  PRODUCT_PACKAGES += \
-@@ -46,7 +45,7 @@ PRODUCT_PACKAGES += \
+@@ -47,7 +46,7 @@ PRODUCT_PACKAGES += \
  
  # Keymaster HAL
  PRODUCT_PACKAGES += \
@@ -91,6 +91,3 @@ index 885c24a..c94126d 100644
  
  # Light HAL
  PRODUCT_PACKAGES += \
--- 
-2.30.2
-

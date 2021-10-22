@@ -1,7 +1,7 @@
-From 5ec8fff79ba0e0895adeafea79ff3d851cd443eb Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Sun, 18 Apr 2021 15:17:37 -0400
-Subject: [PATCH 4/4] Fix resampling of MP3 files
+Subject: [PATCH 4/5] Fix resampling of MP3 files
 
 MP3 parameters (sample rate and channels) are not necessarily set by
 stagefright before decoding start (unlike other codecs). This means that
@@ -201,6 +201,3 @@ index c3ee5c6..86704ce 100644
      return *sAudioClock;
  }
  
--- 
-2.30.2
-

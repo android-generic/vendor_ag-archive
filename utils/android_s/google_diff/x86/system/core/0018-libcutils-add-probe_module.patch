@@ -1,7 +1,7 @@
-From 56c62a4dc59b2df8245e68b600e93cbc17c12240 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Wed, 11 Dec 2019 16:58:24 +0800
-Subject: [PATCH 18/21] libcutils: add probe_module
+Subject: [PATCH 18/22] libcutils: add probe_module
 
 The functions are used by several modules of Android-x86.
 ---
@@ -13,10 +13,10 @@ The functions are used by several modules of Android-x86.
  create mode 100644 libcutils/probe_module.c
 
 diff --git a/libcutils/Android.bp b/libcutils/Android.bp
-index c75e538d9..01ac9c82e 100644
+index 68b21c6a0..cbaeb4119 100644
 --- a/libcutils/Android.bp
 +++ b/libcutils/Android.bp
-@@ -26,6 +26,7 @@ libcutils_nonwindows_sources = [
+@@ -144,6 +144,7 @@ libcutils_nonwindows_sources = [
      "fs.cpp",
      "hashmap.cpp",
      "multiuser.cpp",
@@ -528,6 +528,3 @@ index 000000000..c4596d57a
 +}
 +
 +/* end of file */
--- 
-2.30.2
-

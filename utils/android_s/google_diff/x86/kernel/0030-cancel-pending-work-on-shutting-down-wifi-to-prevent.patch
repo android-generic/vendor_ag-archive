@@ -1,4 +1,4 @@
-From b9b7610d8ef87a882a4b93a19cd9fa2209624e6c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Jake Day <jake@ninebysix.com>
 Date: Sun, 24 Dec 2017 14:04:35 -0500
 Subject: [PATCH 30/54] cancel pending work on shutting down wifi to prevent
@@ -10,7 +10,7 @@ Subject: [PATCH 30/54] cancel pending work on shutting down wifi to prevent
  2 files changed, 4 insertions(+)
 
 diff --git a/drivers/net/wireless/marvell/mwifiex/pcie.c b/drivers/net/wireless/marvell/mwifiex/pcie.c
-index 8b403cf5afa6..cbd0fe05eec1 100644
+index 6eb8ec42d10f..b05f542abef4 100644
 --- a/drivers/net/wireless/marvell/mwifiex/pcie.c
 +++ b/drivers/net/wireless/marvell/mwifiex/pcie.c
 @@ -455,6 +455,8 @@ static void mwifiex_pcie_remove(struct pci_dev *pdev)
@@ -35,6 +35,3 @@ index bde9e4bbfffe..9561bd4484a8 100644
  	mwifiex_remove_card(adapter);
  }
  
--- 
-2.30.2
-

@@ -1,4 +1,4 @@
-From c1efa63337b9b1af8ee3e45a45db7c2243542e34 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Thu, 13 Apr 2017 16:30:36 +0800
 Subject: [PATCH 24/54] vmwgfx: change the default resolution to 1280x720
@@ -22,6 +22,3 @@ index 31e3e5c9f362..a840e9f63590 100644
  
  #ifndef VMWGFX_GIT_VERSION
  #define VMWGFX_GIT_VERSION "Unknown"
--- 
-2.30.2
-

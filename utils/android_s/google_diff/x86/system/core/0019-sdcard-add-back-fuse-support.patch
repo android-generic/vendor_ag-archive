@@ -1,7 +1,7 @@
-From 951089818f37cbcc4d796a493a23a2407b61bc3f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 3 Jan 2020 20:02:25 +0800
-Subject: [PATCH 19/21] sdcard: add back fuse support
+Subject: [PATCH 19/22] sdcard: add back fuse support
 
 We need fuse on tmpfs.
 ---
@@ -14,17 +14,19 @@ We need fuse on tmpfs.
  create mode 100644 sdcard/fuse.h
 
 diff --git a/sdcard/Android.bp b/sdcard/Android.bp
-index c096587ba..a8ced3d22 100644
+index 10a7d16c3..070415463 100644
 --- a/sdcard/Android.bp
 +++ b/sdcard/Android.bp
-@@ -1,5 +1,5 @@
+@@ -3,7 +3,7 @@ package {
+ }
+ 
  cc_binary {
 -    srcs: ["sdcard.cpp"],
 +    srcs: ["sdcard.cpp", "fuse.cpp"],
      name: "sdcard",
      cflags: [
          "-Wall",
-@@ -10,6 +10,7 @@ cc_binary {
+@@ -14,6 +14,7 @@ cc_binary {
          "libbase",
          "libcutils",
          "libminijail",
@@ -2089,6 +2091,3 @@ index 622de5b7a..c63fbca8e 100644
 +    }
      return 1;
  }
--- 
-2.30.2
-

@@ -1,4 +1,4 @@
-From 429109a994120a3f39e21e79d2739ec4adc3ab0c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Gaganpreet kaur <gaganpreetx.kaur@intel.com>
 Date: Wed, 24 Apr 2019 16:39:07 +0530
 Subject: [PATCH 4/6] Fix for multiple com.android.bluetooth crash issues.
@@ -42,10 +42,10 @@ Signed-off-by: Gaganpreet kaur <gaganpreetx.kaur@intel.com>
  3 files changed, 16 insertions(+), 13 deletions(-)
 
 diff --git a/bta/av/bta_av_act.cc b/bta/av/bta_av_act.cc
-index fafc21d00..8ed5bf1da 100644
+index dcbb18a7b..cc2f489c3 100644
 --- a/bta/av/bta_av_act.cc
 +++ b/bta/av/bta_av_act.cc
-@@ -1253,7 +1253,7 @@ void bta_av_conn_chg(tBTA_AV_DATA* p_data) {
+@@ -1249,7 +1249,7 @@ void bta_av_conn_chg(tBTA_AV_DATA* p_data) {
      /* if the AVRCP is no longer listening, create the listening channel */
      if (bta_av_cb.rc_acp_handle == BTA_AV_RC_HANDLE_NONE &&
          bta_av_cb.features & BTA_AV_FEAT_RCTG)
@@ -63,7 +63,7 @@ index fafc21d00..8ed5bf1da 100644
        }
        /* this entry is not used yet. */
        p_cb->conn_lcb |= mask; /* mark it as used */
-@@ -2105,7 +2105,7 @@ void bta_av_rc_closed(tBTA_AV_DATA* p_data) {
+@@ -2118,7 +2118,7 @@ void bta_av_rc_closed(tBTA_AV_DATA* p_data) {
    (*p_cb->p_cback)(BTA_AV_RC_CLOSE_EVT, &bta_av_data);
    if (bta_av_cb.rc_acp_handle == BTA_AV_RC_HANDLE_NONE
                    && bta_av_cb.features & BTA_AV_FEAT_RCTG)
@@ -73,10 +73,10 @@ index fafc21d00..8ed5bf1da 100644
  
  /*******************************************************************************
 diff --git a/bta/av/bta_av_main.cc b/bta/av/bta_av_main.cc
-index 008d6136e..e1d9ee595 100644
+index 887171853..8ec098848 100644
 --- a/bta/av/bta_av_main.cc
 +++ b/bta/av/bta_av_main.cc
-@@ -620,7 +620,7 @@ static void bta_av_api_register(tBTA_AV_DATA* p_data) {
+@@ -608,7 +608,7 @@ static void bta_av_api_register(tBTA_AV_DATA* p_data) {
        }
        /* start listening when A2DP is registered */
        if (bta_av_cb.features & BTA_AV_FEAT_RCTG)
@@ -85,7 +85,7 @@ index 008d6136e..e1d9ee595 100644
  
        /* if the AV and AVK are both supported, it cannot support the CT role
         */
-@@ -628,7 +628,7 @@ static void bta_av_api_register(tBTA_AV_DATA* p_data) {
+@@ -616,7 +616,7 @@ static void bta_av_api_register(tBTA_AV_DATA* p_data) {
          /* if TG is not supported, we need to register to AVCT now */
          if ((bta_av_cb.features & (BTA_AV_FEAT_RCTG)) == 0) {
            bta_ar_reg_avct();
@@ -95,10 +95,10 @@ index 008d6136e..e1d9ee595 100644
          /* create an SDP record as AVRC CT. We create 1.3 for SOURCE
           * because we rely on feature bits being scanned by external
 diff --git a/stack/btm/btm_ble_gap.cc b/stack/btm/btm_ble_gap.cc
-index a838a6d27..4b6b57794 100644
+index 9f8f7b0b7..de241bdc1 100644
 --- a/stack/btm/btm_ble_gap.cc
 +++ b/stack/btm/btm_ble_gap.cc
-@@ -536,14 +536,17 @@ static void btm_ble_vendor_capability_vsc_cmpl_cback(
+@@ -538,14 +538,17 @@ static void btm_ble_vendor_capability_vsc_cmpl_cback(
      BTM_TRACE_DEBUG("%s: Status = 0x%02x (0 is success)", __func__, status);
      return;
    }
@@ -124,6 +124,3 @@ index a838a6d27..4b6b57794 100644
  
    if (p_vcs_cplt_params->param_len >
        BTM_VSC_CHIP_CAPABILITY_RSP_LEN_L_RELEASE) {
--- 
-2.30.2
-

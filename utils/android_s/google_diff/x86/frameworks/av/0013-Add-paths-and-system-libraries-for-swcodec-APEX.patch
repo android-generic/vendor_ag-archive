@@ -1,4 +1,4 @@
-From 1c4697ad9440df2bf0cd50930beb2c03895af693 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Fri, 4 Oct 2019 20:12:57 -0400
 Subject: [PATCH 13/15] Add paths and system libraries for swcodec APEX
@@ -44,6 +44,3 @@ index 713f0b7fc9..e429046fa5 100644
  
  # Add a link for libz.so which is llndk on devices where VNDK is not enforced.
  namespace.sphal.link.platform.shared_libs += libz.so
--- 
-2.30.2
-

@@ -1,4 +1,4 @@
-From c5a884c0a7e8de03ed828cc8be925e172bed64fd Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 26 Mar 2017 00:46:42 +0800
 Subject: [PATCH 7/8] vold3: support UDF (Universal Disk Format)
@@ -109,6 +109,3 @@ index 1fd6286..e788d71 100644
      } else if (mFsType == "ntfs") {
          ret = ntfs::Mount(mDevPath, mRawPath, AID_ROOT,
                            (isVisible ? AID_MEDIA_RW : AID_EXTERNAL_STORAGE), 0007);
--- 
-2.30.2
-

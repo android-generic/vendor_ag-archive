@@ -1,7 +1,7 @@
-From 699e677be742ab7e4baa2f601ffdd4e8a1eadc3f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: DanielK <daniel.kenzelmann@googlemail.com>
 Date: Tue, 20 Mar 2012 14:28:43 +0800
-Subject: [PATCH] Support old single-touch touchscreens with BTN_LEFT
+Subject: [PATCH 01/15] Support old single-touch touchscreens with BTN_LEFT
 
 ---
  services/inputflinger/reader/EventHub.cpp                    | 2 +-
@@ -9,7 +9,7 @@ Subject: [PATCH] Support old single-touch touchscreens with BTN_LEFT
  2 files changed, 4 insertions(+), 3 deletions(-)
 
 diff --git a/services/inputflinger/reader/EventHub.cpp b/services/inputflinger/reader/EventHub.cpp
-index b19b4195d1..5793b1d122 100644
+index b19b4195d1..7e96babac3 100644
 --- a/services/inputflinger/reader/EventHub.cpp
 +++ b/services/inputflinger/reader/EventHub.cpp
 @@ -2013,7 +2013,7 @@ void EventHub::openDeviceLocked(const std::string& devicePath) {
@@ -17,7 +17,7 @@ index b19b4195d1..5793b1d122 100644
          }
          // Is this an old style single-touch driver?
 -    } else if (device->keyBitmask.test(BTN_TOUCH) && device->absBitmask.test(ABS_X) &&
-+    } else if (device->keyBitmask.test(BTN_TOUCH) || test_bit(BTN_LEFT, device->keyBitmask)) && device->absBitmask.test(ABS_X) &&
++    } else if ((device->keyBitmask.test(BTN_TOUCH) || device->keyBitmask.test(BTN_LEFT)) && device->absBitmask.test(ABS_X) &&
                 device->absBitmask.test(ABS_Y)) {
          device->classes |= InputDeviceClass::TOUCH;
          // Is this a BT stylus?
@@ -51,6 +51,3 @@ index 86153d3f5e..a5e0150e92 100644
                  mBtnTouch = rawEvent->value;
                  break;
              case BTN_STYLUS:
--- 
-2.25.1
-

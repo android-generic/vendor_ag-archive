@@ -1,7 +1,7 @@
-From 302d5f8bd6e93ef86da4eb189824ab5e14959847 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Wed, 29 Oct 2014 23:25:57 +0800
-Subject: [PATCH 03/21] init.rc: run the console shell as root
+Subject: [PATCH 03/22] init.rc: run the console shell as root
 
 To make debugging easier.
 ---
@@ -9,10 +9,10 @@ To make debugging easier.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/rootdir/init.rc b/rootdir/init.rc
-index 863cf6caf..1c084f215 100644
+index 376a678a8..822681316 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
-@@ -1161,7 +1161,7 @@ service console /system/bin/sh
+@@ -1197,7 +1197,7 @@ service console /system/bin/sh
      class core
      console
      disabled
@@ -21,6 +21,3 @@ index 863cf6caf..1c084f215 100644
      group shell log readproc
      seclabel u:r:shell:s0
      setenv HOSTNAME console
--- 
-2.30.2
-

@@ -1,4 +1,4 @@
-From dc0b680bfa365278c49bd46c0301967a3d750ef7 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 1 Apr 2020 17:54:21 -0400
 Subject: [PATCH] Add dependency on libbinder_headers
@@ -21,6 +21,3 @@ index b58d7f5..cefd080 100644
  LOCAL_MODULE := camera.x86
  LOCAL_MODULE_TAGS := optional
  LOCAL_MODULE_RELATIVE_PATH := hw
--- 
-2.30.2
-

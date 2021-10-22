@@ -1,7 +1,7 @@
-From 4e38b6e5d00c783205403588e4e63cde47454fbb Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 28 Apr 2021 17:02:27 -0400
-Subject: [PATCH 15/17] Deprecate PRODUCT_DEFAULT_PROPERTY_OVERRIDES
+Subject: [PATCH 15/18] Deprecate PRODUCT_DEFAULT_PROPERTY_OVERRIDES
 
 Merge into PRODUCT_PROPERTY_OVERRIDES instead.
 ---
@@ -26,6 +26,3 @@ index 9ad7f0d..633cf07 100644
  
  PRODUCT_COPY_FILES := \
      $(if $(wildcard $(PRODUCT_DIR)init.rc),$(PRODUCT_DIR)init.rc:root/init.rc) \
--- 
-2.30.2
-

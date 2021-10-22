@@ -1,4 +1,4 @@
-From ae4366492bb17b95740bf332feb8c56c0ca39a83 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 24 May 2019 15:01:27 +0800
 Subject: [PATCH 5/6] Add back libbt-vendor
@@ -471,6 +471,3 @@ index 000000000..5270eab96
 +    sizeof(bt_vendor_interface_t), bt_vendor_init, bt_vendor_op,
 +    bt_vendor_cleanup,
 +};
--- 
-2.30.2
-

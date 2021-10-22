@@ -1,4 +1,4 @@
-From c2956d97da1c08eed780451fee78b07c020ae409 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tom Marshall <tdm@cyngn.com>
 Date: Wed, 4 Nov 2015 15:44:44 -0800
 Subject: [PATCH 2/8] vold: Support internal storage partitions
@@ -39,10 +39,10 @@ Change-Id: Id7ec3ea409b5c96e691730604e4b1e9cc3aa9d33
  create mode 100644 model/DiskPartition.h
 
 diff --git a/Android.bp b/Android.bp
-index 70c4f34..09a951d 100644
+index 6d37131..6d518b0 100644
 --- a/Android.bp
 +++ b/Android.bp
-@@ -145,6 +145,7 @@ cc_library_static {
+@@ -143,6 +143,7 @@ cc_library_static {
          "fs/Ntfs.cpp",
          "fs/Vfat.cpp",
          "model/Disk.cpp",
@@ -51,7 +51,7 @@ index 70c4f34..09a951d 100644
          "model/ObbVolume.cpp",
          "model/PrivateVolume.cpp",
 diff --git a/VolumeManager.cpp b/VolumeManager.cpp
-index f97397d..ad915e2 100644
+index 2697f67..24f1d2c 100644
 --- a/VolumeManager.cpp
 +++ b/VolumeManager.cpp
 @@ -230,8 +230,11 @@ void VolumeManager::handleBlockEvent(NetlinkEvent* evt) {
@@ -332,6 +332,3 @@ index 0000000..274d6be
 +
 +#endif
 +
--- 
-2.30.2
-

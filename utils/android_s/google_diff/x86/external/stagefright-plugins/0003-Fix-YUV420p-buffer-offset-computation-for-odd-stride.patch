@@ -1,7 +1,7 @@
-From afcc49ca2e8215c2d069aa4cf3bfdbc7a1c8dc99 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Sat, 17 Apr 2021 15:45:41 -0400
-Subject: [PATCH 3/4] Fix YUV420p buffer offset computation for odd stride
+Subject: [PATCH 3/5] Fix YUV420p buffer offset computation for odd stride
  value
 
 Computation of YUV offset within buffer has been changed in AOSP's
@@ -31,6 +31,3 @@ index e9daf61..49e4606 100644
      linesize[0] = bufferWidth;
      linesize[1] = bufferWidth / 2;
      linesize[2] = bufferWidth / 2;
--- 
-2.30.2
-

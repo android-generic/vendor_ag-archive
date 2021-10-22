@@ -1,4 +1,4 @@
-From 810030fc8330adf363294bb1e2f1cb69f61511aa Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 12 Jun 2018 14:32:03 +0800
 Subject: [PATCH 3/6] Avoid annoying crashing on VMware
@@ -8,7 +8,7 @@ Subject: [PATCH 3/6] Avoid annoying crashing on VMware
  1 file changed, 28 deletions(-)
 
 diff --git a/device/src/controller.cc b/device/src/controller.cc
-index 0cc86676d..a72afc6fb 100644
+index d312e36ad..d9e612005 100644
 --- a/device/src/controller.cc
 +++ b/device/src/controller.cc
 @@ -354,7 +354,6 @@ static uint8_t* get_local_supported_codecs(uint8_t* number_of_codecs) {
@@ -128,7 +128,7 @@ index 0cc86676d..a72afc6fb 100644
    return acl_data_size_ble;
  }
  
-@@ -655,31 +637,26 @@ static uint16_t get_iso_packet_size(void) {
+@@ -655,13 +637,11 @@ static uint16_t get_iso_packet_size(void) {
  
  static uint16_t get_ble_suggested_default_data_length(void) {
    CHECK(readable);
@@ -141,6 +141,8 @@ index 0cc86676d..a72afc6fb 100644
 -  CHECK(ble_supported);
    return ble_supported_max_tx_octets;
  }
+ 
+@@ -673,19 +653,16 @@ static uint16_t get_ble_maximum_tx_time(void) {
  
  static uint16_t get_ble_maxium_advertising_data_length(void) {
    CHECK(readable);
@@ -160,7 +162,7 @@ index 0cc86676d..a72afc6fb 100644
    return ble_periodic_advertiser_list_size;
  }
  
-@@ -690,25 +667,21 @@ static uint16_t get_acl_buffer_count_classic(void) {
+@@ -696,25 +673,21 @@ static uint16_t get_acl_buffer_count_classic(void) {
  
  static uint8_t get_acl_buffer_count_ble(void) {
    CHECK(readable);
@@ -186,7 +188,7 @@ index 0cc86676d..a72afc6fb 100644
    return ble_resolving_list_max_size;
  }
  
-@@ -718,7 +691,6 @@ static void set_ble_resolving_list_max_size(int resolving_list_max_size) {
+@@ -724,7 +697,6 @@ static void set_ble_resolving_list_max_size(int resolving_list_max_size) {
    if (resolving_list_max_size != 0) {
      CHECK(readable);
    }
@@ -194,6 +196,3 @@ index 0cc86676d..a72afc6fb 100644
    ble_resolving_list_max_size = resolving_list_max_size;
  }
  
--- 
-2.30.2
-

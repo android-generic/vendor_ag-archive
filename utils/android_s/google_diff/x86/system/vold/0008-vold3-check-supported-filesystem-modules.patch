@@ -1,4 +1,4 @@
-From a1d5ce99aed50552045f35c0bcd6a823288f0ad5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 26 Mar 2017 00:47:42 +0800
 Subject: [PATCH 8/8] vold3: check supported filesystem modules
@@ -13,7 +13,7 @@ on mounting by modprobe.
  1 file changed, 10 insertions(+), 1 deletion(-)
 
 diff --git a/Utils.cpp b/Utils.cpp
-index d9c039c..fcde519 100644
+index fd72cf2..a438929 100644
 --- a/Utils.cpp
 +++ b/Utils.cpp
 @@ -27,6 +27,7 @@
@@ -24,7 +24,7 @@ index d9c039c..fcde519 100644
  #include <logwrap/logwrap.h>
  #include <private/android_filesystem_config.h>
  #include <private/android_projectid_config.h>
-@@ -1001,7 +1002,15 @@ bool IsFilesystemSupported(const std::string& fsType) {
+@@ -1007,7 +1008,15 @@ bool IsFilesystemSupported(const std::string& fsType) {
      /* fuse filesystems */
      supported.append("fuse\tntfs\n");
  
@@ -41,6 +41,3 @@ index d9c039c..fcde519 100644
  }
  
  bool IsSdcardfsUsed() {
--- 
-2.30.2
-

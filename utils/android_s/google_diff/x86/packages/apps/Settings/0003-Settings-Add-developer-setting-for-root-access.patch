@@ -1,4 +1,4 @@
-From e658bb88247d64c042c55422d3e9aad4d30a243f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Steve Kondik <steve@cyngn.com>
 Date: Sun, 18 Oct 2015 23:46:41 -0700
 Subject: [PATCH 3/4] Settings: Add developer setting for root access
@@ -112,10 +112,10 @@ index 0000000000..8e51beec66
 +    </string-array>
 +</resources>
 diff --git a/res/xml/development_settings.xml b/res/xml/development_settings.xml
-index 6f9405e7e1..2bc7c88d8f 100644
+index 621351681c..2239c07f15 100644
 --- a/res/xml/development_settings.xml
 +++ b/res/xml/development_settings.xml
-@@ -128,6 +128,11 @@
+@@ -127,6 +127,11 @@
              android:key="quick_settings_tiles"
              android:title="@string/quick_settings_developer_tiles"
              android:fragment="com.android.settings.development.qstile.DevelopmentTileConfigFragment" />
@@ -128,11 +128,11 @@ index 6f9405e7e1..2bc7c88d8f 100644
  
      <PreferenceCategory
 diff --git a/src/com/android/settings/development/DevelopmentSettingsDashboardFragment.java b/src/com/android/settings/development/DevelopmentSettingsDashboardFragment.java
-index 8eb5c4f6c1..40a185ae1f 100644
+index fbab1fd124..72caf895cf 100644
 --- a/src/com/android/settings/development/DevelopmentSettingsDashboardFragment.java
 +++ b/src/com/android/settings/development/DevelopmentSettingsDashboardFragment.java
-@@ -78,7 +78,8 @@ public class DevelopmentSettingsDashboardFragment extends RestrictedDashboardFra
-         implements SwitchBar.OnSwitchChangeListener, OemUnlockDialogHost, AdbDialogHost,
+@@ -80,7 +80,8 @@ public class DevelopmentSettingsDashboardFragment extends RestrictedDashboardFra
+         implements OnMainSwitchChangeListener, OemUnlockDialogHost, AdbDialogHost,
          AdbClearKeysDialogHost, LogPersistDialogHost,
          BluetoothA2dpHwOffloadRebootDialog.OnA2dpHwDialogConfirmedListener,
 -        AbstractBluetoothPreferenceController.Callback {
@@ -141,7 +141,7 @@ index 8eb5c4f6c1..40a185ae1f 100644
  
      private static final String TAG = "DevSettingsDashboard";
  
-@@ -354,6 +355,20 @@ public class DevelopmentSettingsDashboardFragment extends RestrictedDashboardFra
+@@ -358,6 +359,20 @@ public class DevelopmentSettingsDashboardFragment extends RestrictedDashboardFra
          controller.onA2dpHwDialogConfirmed();
      }
  
@@ -162,8 +162,8 @@ index 8eb5c4f6c1..40a185ae1f 100644
      @Override
      public void onActivityResult(int requestCode, int resultCode, Intent data) {
          boolean handledResult = false;
-@@ -552,6 +567,7 @@ public class DevelopmentSettingsDashboardFragment extends RestrictedDashboardFra
-         controllers.add(new SizeCompatFreeformPreferenceController(context));
+@@ -551,6 +566,7 @@ public class DevelopmentSettingsDashboardFragment extends RestrictedDashboardFra
+         controllers.add(new NonResizableMultiWindowPreferenceController(context));
          controllers.add(new ShortcutManagerThrottlingPreferenceController(context));
          controllers.add(new EnableGnssRawMeasFullTrackingPreferenceController(context));
 +        controllers.add(new RootAccessPreferenceController(context, fragment));
@@ -438,6 +438,3 @@ index 0000000000..d501695b1d
 +        }
 +    }
 +}
--- 
-2.30.2
-

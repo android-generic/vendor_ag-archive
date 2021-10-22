@@ -1,4 +1,4 @@
-From 9e19445e2137cc7dc78d597bfcf9e455144396ba Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Paulo Sergio Travaglia <pstglia@gmail.com>
 Date: Sun, 17 Jan 2016 15:23:06 -0200
 Subject: [PATCH 06/15] Allow screenrecord usage on Android-x86
@@ -13,7 +13,7 @@ in order to make screenrecord work on Android-x86.
  2 files changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/cmds/screenrecord/screenrecord.cpp b/cmds/screenrecord/screenrecord.cpp
-index f4fb6266d2..f0df1585ce 100644
+index e6e347321d..ecdbf81338 100644
 --- a/cmds/screenrecord/screenrecord.cpp
 +++ b/cmds/screenrecord/screenrecord.cpp
 @@ -193,7 +193,7 @@ static status_t prepareEncoder(float displayFps, sp<MediaCodec>* pCodec,
@@ -40,6 +40,3 @@ index 11e563cdc2..67833d5263 100644
              def->nBufferSize = mWidth * mHeight * 3 / 2;
  
              return OMX_ErrorNone;
--- 
-2.30.2
-

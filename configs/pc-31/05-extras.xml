@@ -8,4 +8,6 @@
 <!--
     <project name="vendor_foss" path="vendor/foss" remote="BR-x86" revision="foss-minimal" />
 -->
+	<project path="vendor/google/chromeos-x86" name="android_vendor_google_chromeos-x86.git" remote="blissroms-x86" revision="13816.82.0_hatch" />
+
 </manifest>

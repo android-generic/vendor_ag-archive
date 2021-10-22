@@ -1,7 +1,7 @@
-From dd1927813558a6a72e5f692483486aec792e4bc4 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 3 Nov 2014 23:06:02 +0800
-Subject: [PATCH 04/21] Allow all to execute su
+Subject: [PATCH 04/22] Allow all to execute su
 
 Let the Superuser app control how su is used.
 ---
@@ -9,7 +9,7 @@ Let the Superuser app control how su is used.
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/libcutils/fs_config.cpp b/libcutils/fs_config.cpp
-index 79c3abca2..e472bf8b9 100644
+index e9497a806..cf7df0ac6 100644
 --- a/libcutils/fs_config.cpp
 +++ b/libcutils/fs_config.cpp
 @@ -190,7 +190,7 @@ static const struct fs_path_config android_files[] = {
@@ -21,6 +21,3 @@ index 79c3abca2..e472bf8b9 100644
  
      // the following files have enhanced capabilities and ARE included
      // in user builds.
--- 
-2.30.2
-

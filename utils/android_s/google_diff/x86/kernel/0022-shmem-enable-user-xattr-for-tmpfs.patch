@@ -1,4 +1,4 @@
-From e15aa1f484ee0eb226f1ee0352e5a6e2945b7e7e Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 30 Oct 2016 16:39:13 +0800
 Subject: [PATCH 22/54] shmem: enable user xattr for tmpfs
@@ -13,10 +13,10 @@ This is necessary for android-x86 live mode.
  1 file changed, 7 insertions(+)
 
 diff --git a/mm/shmem.c b/mm/shmem.c
-index d80be19d9688..bae65cefd76d 100644
+index dc551017eed6..1dc579f19c6e 100644
 --- a/mm/shmem.c
 +++ b/mm/shmem.c
-@@ -3286,6 +3286,12 @@ static int shmem_xattr_handler_set(const struct xattr_handler *handler,
+@@ -3251,6 +3251,12 @@ static int shmem_xattr_handler_set(const struct xattr_handler *handler,
  	return simple_xattr_set(&info->xattrs, name, value, size, flags, NULL);
  }
  
@@ -29,7 +29,7 @@ index d80be19d9688..bae65cefd76d 100644
  static const struct xattr_handler shmem_security_xattr_handler = {
  	.prefix = XATTR_SECURITY_PREFIX,
  	.get = shmem_xattr_handler_get,
-@@ -3303,6 +3309,7 @@ static const struct xattr_handler *shmem_xattr_handlers[] = {
+@@ -3268,6 +3274,7 @@ static const struct xattr_handler *shmem_xattr_handlers[] = {
  	&posix_acl_access_xattr_handler,
  	&posix_acl_default_xattr_handler,
  #endif
@@ -37,6 +37,3 @@ index d80be19d9688..bae65cefd76d 100644
  	&shmem_security_xattr_handler,
  	&shmem_trusted_xattr_handler,
  	NULL
--- 
-2.30.2
-

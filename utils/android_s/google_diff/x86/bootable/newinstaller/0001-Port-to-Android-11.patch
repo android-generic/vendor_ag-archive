@@ -1,4 +1,4 @@
-From dd4d5887ff25d3847adc3bb8cd71d31b6946c5f1 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 1 Apr 2020 17:49:33 -0400
 Subject: [PATCH] Port to Android 11
@@ -47,6 +47,3 @@ index 16aaed2..0c286a0 100755
  export ANDROID_ROOT=/system
  
  exec ${SWITCH:-switch_root} /android /init
--- 
-2.30.2
-

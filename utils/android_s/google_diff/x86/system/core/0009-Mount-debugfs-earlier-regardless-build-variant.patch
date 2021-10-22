@@ -1,7 +1,7 @@
-From 9fb9d4019b2b55c8a7687678c2b3ba4ece6d5bb9 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ching Tzung Lin <ctlin@google.com>
 Date: Mon, 11 Jan 2016 13:00:22 -0800
-Subject: [PATCH 09/21] Mount debugfs earlier regardless build variant
+Subject: [PATCH 09/22] Mount debugfs earlier regardless build variant
 
 ag/835596 can be reverted after this CL is merged.
 
@@ -12,7 +12,7 @@ Change-Id: I453b0f1d08d822f8cd2d4d33f1c1b21f0d7f543a
  1 file changed, 2 insertions(+)
 
 diff --git a/rootdir/init.rc b/rootdir/init.rc
-index 1c084f215..0da09acd1 100644
+index 822681316..0cc151e3c 100644
 --- a/rootdir/init.rc
 +++ b/rootdir/init.rc
 @@ -64,6 +64,8 @@ on early-init
@@ -24,6 +24,3 @@ index 1c084f215..0da09acd1 100644
      start ueventd
  
      # Run apexd-bootstrap so that APEXes that provide critical libraries
--- 
-2.30.2
-

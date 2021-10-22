@@ -1,4 +1,4 @@
-From e1ea41aa2ae6db44872365116e49d8e969120a42 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Wed, 1 Nov 2017 18:08:34 +0100
 Subject: [PATCH 35/54] drm/nouveau: expose atomic ioctl by default (kernel
@@ -25,6 +25,3 @@ index 42fc5c813a9b..ebf20a9acebc 100644
  module_param_named(atomic, nouveau_atomic, int, 0400);
  
  MODULE_PARM_DESC(runpm, "disable (0), force enable (1), optimus only default (-1)");
--- 
-2.30.2
-

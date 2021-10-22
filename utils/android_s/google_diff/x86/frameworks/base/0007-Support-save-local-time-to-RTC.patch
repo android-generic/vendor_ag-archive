@@ -1,7 +1,7 @@
-From 718ca874d1353d09f7e14113a1f7e1da6324a3d2 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ma Jian <majian@jidemail.com>
 Date: Sun, 12 Jun 2016 15:13:55 +0800
-Subject: [PATCH 07/22] Support save local time to RTC
+Subject: [PATCH 07/20] Support save local time to RTC
 
 Make it work for dual boot with Windows, we could set property
 persist.rtc_local_time to 1, so that RemixOS and Windows both
@@ -16,13 +16,26 @@ Tested:
 
 Change-Id: Id2c0ce150fb9320b132ad8bdd83b38dcae1070db
 ---
- .../com_android_server_AlarmManagerService.cpp | 18 +++++++++++++++---
- 1 file changed, 15 insertions(+), 3 deletions(-)
+ apex/jobscheduler/service/jni/Android.bp       |  1 +
+ ...ndroid_server_alarm_AlarmManagerService.cpp | 18 +++++++++++++++---
+ 2 files changed, 16 insertions(+), 3 deletions(-)
 
-diff --git a/services/core/jni/com_android_server_AlarmManagerService.cpp b/services/core/jni/com_android_server_AlarmManagerService.cpp
-index 335040a4b92..27cbe0d3ca5 100644
---- a/services/core/jni/com_android_server_AlarmManagerService.cpp
-+++ b/services/core/jni/com_android_server_AlarmManagerService.cpp
+diff --git a/apex/jobscheduler/service/jni/Android.bp b/apex/jobscheduler/service/jni/Android.bp
+index 34a1fa2ebc13..28acb56dd853 100644
+--- a/apex/jobscheduler/service/jni/Android.bp
++++ b/apex/jobscheduler/service/jni/Android.bp
+@@ -26,6 +26,7 @@ cc_library_shared {
+     shared_libs: [
+         "libnativehelper",
+         "liblog",
++        "libcutils",
+         "libbase",
+     ],
+ }
+diff --git a/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp b/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp
+index 8f9e187a7a93..baa1317ec8ff 100644
+--- a/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp
++++ b/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp
 @@ -39,6 +39,7 @@
  #include <unistd.h>
  #include <linux/ioctl.h>
@@ -55,6 +68,3 @@ index 335040a4b92..27cbe0d3ca5 100644
      }
  
      struct rtc_time rtc = {};
--- 
-2.30.2
-

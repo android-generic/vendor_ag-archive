@@ -1,7 +1,7 @@
-From 53432f0f49b91a5b3441fefad2c5ae0ccda0118c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Tue, 23 Feb 2021 11:52:58 -0500
-Subject: [PATCH 10/17] Provide M4 and DEPMOD during kernel compilation
+Subject: [PATCH 10/18] Provide M4 and DEPMOD during kernel compilation
 
 M4 needs to be provided through environment variable. This is required
 by flex, which runs m4 internally.
@@ -27,6 +27,3 @@ index 6c25b2c..0bd2dc8 100644
  	$(KERNEL_CLANG_CLAGS)
  
  KERNEL_CONFIG_FILE := $(if $(wildcard $(TARGET_KERNEL_CONFIG)),$(TARGET_KERNEL_CONFIG),$(KERNEL_DIR)/$(KERNEL_CONFIG_DIR)/$(TARGET_KERNEL_CONFIG))
--- 
-2.30.2
-

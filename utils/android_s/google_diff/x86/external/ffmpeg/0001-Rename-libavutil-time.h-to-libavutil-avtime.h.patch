@@ -1,4 +1,4 @@
-From e1b7ad796915ac6fe9fb5097372738c761ee6f1f Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Mon, 26 Apr 2021 09:01:08 -0400
 Subject: [PATCH 1/2] Rename libavutil/time.h to libavutil/avtime.h
@@ -886,6 +886,3 @@ index 6516ad3a22..f0ebba68e8 100644
  #include "libavformat/avformat.h"
  
  #define FILENAME_BUF_SIZE 4096
--- 
-2.30.2
-

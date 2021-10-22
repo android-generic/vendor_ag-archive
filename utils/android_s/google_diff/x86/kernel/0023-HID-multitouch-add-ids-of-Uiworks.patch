@@ -1,4 +1,4 @@
-From 8f1340cdba23c26484326a6bebf162dad402d9fd Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Povilas Staniulis <wdmonster@gmail.com>
 Date: Thu, 23 Mar 2017 21:33:24 +0800
 Subject: [PATCH 23/54] HID: multitouch: add ids of Uiworks
@@ -8,7 +8,7 @@ Subject: [PATCH 23/54] HID: multitouch: add ids of Uiworks
  1 file changed, 14 insertions(+)
 
 diff --git a/drivers/hid/hid-multitouch.c b/drivers/hid/hid-multitouch.c
-index 563d8a432391..d6c53521f6f1 100644
+index 205c4526705d..0320d22e128c 100644
 --- a/drivers/hid/hid-multitouch.c
 +++ b/drivers/hid/hid-multitouch.c
 @@ -198,6 +198,7 @@ static void mt_post_parse(struct mt_device *td, struct mt_application *app);
@@ -29,7 +29,7 @@ index 563d8a432391..d6c53521f6f1 100644
  	{ .name = MT_CLS_TOPSEED,
  		.quirks = MT_QUIRK_ALWAYS_VALID,
  		.is_indirect = true,
-@@ -2072,6 +2076,16 @@ static const struct hid_device_id mt_devices[] = {
+@@ -2076,6 +2080,16 @@ static const struct hid_device_id mt_devices[] = {
  		MT_USB_DEVICE(USB_VENDOR_ID_TOUCH_INTL,
  			USB_DEVICE_ID_TOUCH_INTL_MULTI_TOUCH) },
  
@@ -46,6 +46,3 @@ index 563d8a432391..d6c53521f6f1 100644
  	/* Unitec panels */
  	{ .driver_data = MT_CLS_NSMU,
  		MT_USB_DEVICE(USB_VENDOR_ID_UNITEC,
--- 
-2.30.2
-

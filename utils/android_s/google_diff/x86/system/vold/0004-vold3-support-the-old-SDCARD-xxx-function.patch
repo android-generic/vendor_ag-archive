@@ -1,4 +1,4 @@
-From c346f28f1497adc0e0c0165e138dbdf688ceeb15 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sat, 13 Aug 2016 01:58:29 +0800
 Subject: [PATCH 4/8] vold3: support the old SDCARD=xxx function
@@ -59,6 +59,3 @@ index c136bd3..158b99a 100644
 +
      return 0;
  }
--- 
-2.30.2
-

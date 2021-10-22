@@ -1,4 +1,4 @@
-From 9f6cc91959f11c6ad10fd76baecd063f5d836f8b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Tue, 4 May 2021 15:11:56 -0400
 Subject: [PATCH 2/2] Remove TARGET_PREFER_32_BIT_APPS
@@ -31,6 +31,3 @@ index d5c69e0476..7c550e88ef 100644
     endif
  endif
  
--- 
-2.30.2
-

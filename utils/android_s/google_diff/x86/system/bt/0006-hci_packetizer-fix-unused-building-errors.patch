@@ -1,4 +1,4 @@
-From 6cd577354a2d083522bc8686a860e8970226a7d9 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Thu, 26 Dec 2019 21:52:57 +0100
 Subject: [PATCH 6/6] hci_packetizer: fix unused building errors
@@ -40,6 +40,3 @@ index 6016cad6c..f77c7f083 100644
  namespace android {
  namespace hardware {
  namespace bluetooth {
--- 
-2.30.2
-

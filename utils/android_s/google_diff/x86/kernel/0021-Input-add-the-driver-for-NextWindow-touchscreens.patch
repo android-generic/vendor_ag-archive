@@ -1,4 +1,4 @@
-From 6b5145c70a7e3abd88f0a3fd0efaaa084e4fcb06 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 27 Sep 2016 14:49:04 +0800
 Subject: [PATCH 21/54] Input: add the driver for NextWindow touchscreens
@@ -850,6 +850,3 @@ index 000000000000..74360fe65941
 +};
 +
 +#endif
--- 
-2.30.2
-

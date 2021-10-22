@@ -1,4 +1,4 @@
-From fc0491f0f9647b33ca262dfa24d61d0db93ef194 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 1 Nov 2013 18:52:32 +0800
 Subject: [PATCH 05/54] ACPICA: Add Android-IA string for _OSI method
@@ -21,6 +21,3 @@ index 0a01c08dad8a..703612a134e9 100644
  
  	/* Feature Group Strings */
  
--- 
-2.30.2
-

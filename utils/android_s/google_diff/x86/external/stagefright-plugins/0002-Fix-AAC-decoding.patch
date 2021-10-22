@@ -1,7 +1,7 @@
-From 3cc577507e633547a9443551c1dad9c1dceee98e Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Fri, 16 Apr 2021 17:32:40 -0400
-Subject: [PATCH 2/4] Fix AAC decoding
+Subject: [PATCH 2/5] Fix AAC decoding
 
 AAC codec must now implement getting
 OMX_IndexParamAudioAndroidAacDrcPresentation.
@@ -46,6 +46,3 @@ index ef4975d..c3ee5c6 100644
          case OMX_IndexParamAudioMp3:
          {
              OMX_AUDIO_PARAM_MP3TYPE *profile =
--- 
-2.30.2
-

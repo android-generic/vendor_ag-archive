@@ -1,4 +1,4 @@
-From a13873f9b4665b5eda2c02c4853b2490adfe7104 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 5 Jun 2016 15:34:04 +0800
 Subject: [PATCH 19/54] drivers/base: cacheinfo: remove noisy error message
@@ -22,6 +22,3 @@ index bfc095956dd1..c20b39651f3a 100644
  		return -ENOENT;
  	}
  
--- 
-2.30.2
-

@@ -1,7 +1,7 @@
-From 8cb14e61d0f89d62ac9b933d892f41a0934c31be Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Paul Drews <paul.drews@intel.com>
 Date: Mon, 20 Jun 2011 10:01:24 -0700
-Subject: [PATCH 06/21] Use progressive offset in buffer for successive writes
+Subject: [PATCH 06/22] Use progressive offset in buffer for successive writes
 
 The code for copying from one raw file to another looped
 back and tried again with a suitably smaller number of bytes
@@ -51,6 +51,3 @@ index fe1b4c180..3b73d5e0e 100644
          }
      }
  
--- 
-2.30.2
-

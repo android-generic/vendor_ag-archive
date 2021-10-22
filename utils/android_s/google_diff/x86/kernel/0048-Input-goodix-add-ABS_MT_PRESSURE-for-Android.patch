@@ -1,4 +1,4 @@
-From df7ee7aef31fd73ad5bbe9eb877af59b267cc34b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 16 Sep 2019 12:41:19 +0800
 Subject: [PATCH 48/54] Input: goodix - add ABS_MT_PRESSURE for Android
@@ -11,10 +11,10 @@ Reported-and-tested-by: Miroslaw Kocur <mirek190@gmail.com>
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/input/touchscreen/goodix.c b/drivers/input/touchscreen/goodix.c
-index 715783cfd484..0430aa592239 100644
+index db5862f5564f..493b255fa886 100644
 --- a/drivers/input/touchscreen/goodix.c
 +++ b/drivers/input/touchscreen/goodix.c
-@@ -407,13 +407,15 @@ static void goodix_ts_report_touch_8b(struct goodix_ts_data *ts, u8 *coor_data)
+@@ -363,13 +363,15 @@ static void goodix_ts_report_touch_8b(struct goodix_ts_data *ts, u8 *coor_data)
  	int input_x = get_unaligned_le16(&coor_data[1]);
  	int input_y = get_unaligned_le16(&coor_data[3]);
  	int input_w = get_unaligned_le16(&coor_data[5]);
@@ -31,7 +31,7 @@ index 715783cfd484..0430aa592239 100644
  }
  
  static void goodix_ts_report_touch_9b(struct goodix_ts_data *ts, u8 *coor_data)
-@@ -1113,7 +1115,7 @@ static int goodix_configure_dev(struct goodix_ts_data *ts)
+@@ -1069,7 +1071,7 @@ static int goodix_configure_dev(struct goodix_ts_data *ts)
  	input_set_capability(ts->input_dev, EV_ABS, ABS_MT_POSITION_X);
  	input_set_capability(ts->input_dev, EV_ABS, ABS_MT_POSITION_Y);
  	input_set_abs_params(ts->input_dev, ABS_MT_WIDTH_MAJOR, 0, 255, 0, 0);
@@ -40,6 +40,3 @@ index 715783cfd484..0430aa592239 100644
  
  	/* Read configuration and apply touchscreen parameters */
  	goodix_read_config(ts);
--- 
-2.30.2
-

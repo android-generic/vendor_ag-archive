@@ -1,4 +1,4 @@
-From 61ae9933d7a115d9229bed44d45071068780a868 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 27 Sep 2019 22:08:12 +0800
 Subject: [PATCH 49/54] lib: use $(PERL_PATH) instead of perl
@@ -21,6 +21,3 @@ index 5550543bfa80..e64a18003232 100644
  
  clean-files	+= oid_registry_data.c
  
--- 
-2.30.2
-

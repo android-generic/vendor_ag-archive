@@ -1,14 +1,14 @@
-From e76175a4c41217d124c80811013c2471c1dabbd4 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 1 Feb 2011 15:47:03 +0800
-Subject: [PATCH 01/21] init: change firmware_dirs for Android-x86
+Subject: [PATCH 01/22] init: change firmware_dirs for Android-x86
 
 ---
  rootdir/ueventd.rc | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/rootdir/ueventd.rc b/rootdir/ueventd.rc
-index 65e29c1a0..0ad4aaf03 100644
+index 56e774bdc..7d2fd943d 100644
 --- a/rootdir/ueventd.rc
 +++ b/rootdir/ueventd.rc
 @@ -1,7 +1,7 @@
@@ -20,6 +20,3 @@ index 65e29c1a0..0ad4aaf03 100644
  uevent_socket_rcvbuf_size 16M
  
  subsystem graphics
--- 
-2.30.2
-

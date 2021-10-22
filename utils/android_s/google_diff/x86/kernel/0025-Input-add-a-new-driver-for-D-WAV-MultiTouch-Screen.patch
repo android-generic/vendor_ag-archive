@@ -1,4 +1,4 @@
-From 5d29bddd078266d841d4758f4252974c7fbe9e1d Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 4 Aug 2017 14:36:02 +0800
 Subject: [PATCH 25/54] Input: add a new driver for D-WAV MultiTouch Screen
@@ -619,6 +619,3 @@ index 000000000000..fbba7f54fb43
 +
 +MODULE_ALIAS("dwav_usb_mt");
 +/*-------------------------------------------------------------------------*/
--- 
-2.30.2
-

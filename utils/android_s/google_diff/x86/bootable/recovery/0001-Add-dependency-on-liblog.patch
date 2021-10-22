@@ -1,4 +1,4 @@
-From 2a30167b5b68882cf22930ffed595f0cafdf6f1e Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 28 Apr 2021 16:39:09 -0400
 Subject: [PATCH] Add dependency on liblog
@@ -21,6 +21,3 @@ index f64b0d1c..d5dad2c2 100644
          "libpng",
          "libz",
      ],
--- 
-2.30.2
-

@@ -1,7 +1,7 @@
-From fdc7c122ddd45ff12fe01817375fe3006ce25bcd Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Tue, 15 Sep 2020 12:10:29 -0400
-Subject: [PATCH 04/17] Disable sdcardfs
+Subject: [PATCH 04/18] Disable sdcardfs
 
 The use of FUSE-enabled sdcard, e.g. in live mode, creates a lock-up in
 vold, which is waiting for sdcard to exit, but never happens as it's
@@ -28,6 +28,3 @@ index efdc980..665f17e 100644
  # Get Android 8.0 HIDL HALs
  $(call inherit-product,$(LOCAL_PATH)/treble.mk)
  
--- 
-2.30.2
-

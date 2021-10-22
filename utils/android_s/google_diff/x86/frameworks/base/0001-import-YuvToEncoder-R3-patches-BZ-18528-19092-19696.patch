@@ -1,7 +1,7 @@
-From a0451bc48cbf838f1305a2a54b79466a57a3102b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Zhao Liang <leo.zhao@intel.com>
 Date: Fri, 20 Jul 2012 11:56:51 +0800
-Subject: [PATCH 01/22] import YuvToEncoder R3 patches, BZ 18528, 19092, 19696
+Subject: [PATCH 01/20] import YuvToEncoder R3 patches, BZ 18528, 19092, 19696
 
 BZ: 47824
 
@@ -29,7 +29,7 @@ Signed-off-by: Zhao Liang <leo.zhao@intel.com>
  1 file changed, 25 insertions(+), 10 deletions(-)
 
 diff --git a/libs/hwui/jni/YuvToJpegEncoder.cpp b/libs/hwui/jni/YuvToJpegEncoder.cpp
-index 689cf0bea74..55410df10b9 100644
+index 689cf0bea741..55410df10b92 100644
 --- a/libs/hwui/jni/YuvToJpegEncoder.cpp
 +++ b/libs/hwui/jni/YuvToJpegEncoder.cpp
 @@ -56,6 +56,7 @@ bool YuvToJpegEncoder::encode(SkWStream* stream, void* inYuv, int width,
@@ -104,6 +104,3 @@ index 689cf0bea74..55410df10b9 100644
          int offset = ((rowIndex >> 1) + row) * fStrides[1];
          uint8_t* vu = vuPlanar + offset;
          for (int i = 0; i < (width >> 1); ++i) {
--- 
-2.30.2
-

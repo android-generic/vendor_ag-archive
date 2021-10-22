@@ -1,7 +1,7 @@
-From 9449300f02671ae9b9d2c5db5f97f3811b546b3b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Tue, 15 Sep 2020 06:53:56 -0400
-Subject: [PATCH 03/17] Use manifest fragments for USB, WiFi and supplicant HAL
+Subject: [PATCH 03/18] Use manifest fragments for USB, WiFi and supplicant HAL
 
 These HAL are now defined in their own manifest fragment, and must be
 removed from the main manifest to avoid conflict (as they use the same
@@ -48,6 +48,3 @@ index eab267b..8dd2bb2 100644
      <hal format="hidl">
          <name>android.hardware.drm</name>
          <transport>hwbinder</transport>
--- 
-2.30.2
-

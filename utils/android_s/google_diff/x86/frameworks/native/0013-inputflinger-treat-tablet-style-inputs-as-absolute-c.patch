@@ -1,0 +1,315 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jon Doe <tuksgig@gmail.com>
+Date: Sun, 23 Dec 2018 22:50:00 +0800
+Subject: [PATCH 13/15] inputflinger: treat tablet-style inputs as absolute
+ coordinate mouse pointer
+
+Qemu and VirtualBox use tablet-style inputs. However, it's difficult to
+work with the current "invisible finger" or "drag pointer" interface
+provided to the virtual absolute coordinate pointing devices.
+Instead, this patch classifies them as a regular mouse pointer
+(INPUT_DEVICE_CLASS_CURSOR), which is more intuitive to work with.
+
+Change-Id: I15c8fd7bb8e08e9623d093372809b9a01708a85f
+---
+ services/inputflinger/reader/EventHub.cpp     |   8 +-
+ .../reader/mapper/CursorInputMapper.cpp       | 131 +++++++++++++-----
+ .../reader/mapper/CursorInputMapper.h         |  10 ++
+ 3 files changed, 112 insertions(+), 37 deletions(-)
+
+diff --git a/services/inputflinger/reader/EventHub.cpp b/services/inputflinger/reader/EventHub.cpp
+index a31c745a63..0b03479a1e 100644
+--- a/services/inputflinger/reader/EventHub.cpp
++++ b/services/inputflinger/reader/EventHub.cpp
+@@ -2008,6 +2008,12 @@ void EventHub::openDeviceLocked(const std::string& devicePath) {
+     if (device->keyBitmask.test(BTN_MOUSE) && device->relBitmask.test(REL_X) &&
+         device->relBitmask.test(REL_Y)) {
+         device->classes |= InputDeviceClass::CURSOR;
++    // Is this an absolute x-y axis with relative wheel mouse device?
++    } else if (device->keyBitmask.test(BTN_MOUSE)
++               && device->absBitmask.test(ABS_X)
++               && device->absBitmask.test(ABS_Y)
++               && device->relBitmask.test(REL_WHEEL)) {
++        device->classes |= InputDeviceClass::CURSOR;
+     }
+ 
+     // See if this is a rotary encoder type device.
+@@ -2030,7 +2036,7 @@ void EventHub::openDeviceLocked(const std::string& devicePath) {
+         }
+         // Is this an old style single-touch driver?
+     } else if ((device->keyBitmask.test(BTN_TOUCH) || device->keyBitmask.test(BTN_LEFT)) && device->absBitmask.test(ABS_X) &&
+-               device->absBitmask.test(ABS_Y)) {
++               device->absBitmask.test(ABS_Y) && !device->relBitmask.test(REL_WHEEL)) {
+         device->classes |= InputDeviceClass::TOUCH;
+         // Is this a BT stylus?
+     } else if ((device->absBitmask.test(ABS_PRESSURE) || device->keyBitmask.test(BTN_TOUCH)) &&
+diff --git a/services/inputflinger/reader/mapper/CursorInputMapper.cpp b/services/inputflinger/reader/mapper/CursorInputMapper.cpp
+index 437902a79b..c324d66225 100644
+--- a/services/inputflinger/reader/mapper/CursorInputMapper.cpp
++++ b/services/inputflinger/reader/mapper/CursorInputMapper.cpp
+@@ -47,15 +47,29 @@ void CursorMotionAccumulator::process(const RawEvent* rawEvent) {
+         switch (rawEvent->code) {
+             case REL_X:
+                 mRelX = rawEvent->value;
++                mMoved = true;
+                 break;
+             case REL_Y:
+                 mRelY = rawEvent->value;
++                mMoved = true;
++                break;
++        }
++    } else if (rawEvent->type == EV_ABS) {
++        switch (rawEvent->code) {
++            case ABS_X:
++                mAbsX = rawEvent->value;
++                mMoved = true;
++                break;
++            case ABS_Y:
++                mAbsY = rawEvent->value;
++                mMoved = true;
+                 break;
+         }
+     }
+ }
+ 
+ void CursorMotionAccumulator::finishSync() {
++    mMoved = false;
+     clearRelativeAxes();
+ }
+ 
+@@ -135,6 +149,10 @@ void CursorInputMapper::configure(nsecs_t when, const InputReaderConfiguration*
+                 [[fallthrough]];
+             case Parameters::MODE_POINTER:
+                 mSource = AINPUT_SOURCE_MOUSE;
++                if (mParameters.hasAbsAxis) {
++                    getAbsoluteAxisInfo(ABS_X, &mRawAbsXInfo);
++                    getAbsoluteAxisInfo(ABS_Y, &mRawAbsYInfo);
++                }
+                 mXPrecision = 1.0f;
+                 mYPrecision = 1.0f;
+                 mXScale = 1.0f;
+@@ -209,12 +227,18 @@ void CursorInputMapper::configure(nsecs_t when, const InputReaderConfiguration*
+                 }
+             }
+         } else {
+-            if (isOrientedDevice) {
+-                std::optional<DisplayViewport> internalViewport =
+-                        config->getDisplayViewportByType(ViewportType::INTERNAL);
+-                if (internalViewport) {
++            std::optional<DisplayViewport> internalViewport =
++                    config->getDisplayViewportByType(ViewportType::INTERNAL);
++            if (internalViewport) {
++                if (isOrientedDevice) {
+                     mOrientation = internalViewport->orientation;
+                 }
++                if (mParameters.hasAbsAxis) {
++                    mXScale = float(internalViewport->logicalRight - internalViewport->logicalLeft)/(mRawAbsXInfo.maxValue - mRawAbsXInfo.minValue + 1);
++                    mYScale = float(internalViewport->logicalBottom - internalViewport->logicalTop)/(mRawAbsYInfo.maxValue - mRawAbsYInfo.minValue + 1);
++                    mXPrecision = 1.0f / mXScale;
++                    mYPrecision = 1.0f / mYScale;
++                }
+             }
+         }
+ 
+@@ -242,6 +266,11 @@ void CursorInputMapper::configureParameters() {
+     if (mParameters.mode == Parameters::MODE_POINTER || mParameters.orientationAware) {
+         mParameters.hasAssociatedDisplay = true;
+     }
++
++    mParameters.hasAbsAxis = false;
++    if (mParameters.mode == Parameters::MODE_POINTER) {
++        mParameters.hasAbsAxis = getDeviceContext().hasAbsoluteAxis(ABS_X) && getDeviceContext().hasAbsoluteAxis(ABS_Y) ? true : false;
++    }
+ }
+ 
+ void CursorInputMapper::dumpParameters(std::string& dump) {
+@@ -264,6 +293,7 @@ void CursorInputMapper::dumpParameters(std::string& dump) {
+     }
+ 
+     dump += StringPrintf(INDENT4 "OrientationAware: %s\n", toString(mParameters.orientationAware));
++    dump += StringPrintf(INDENT4 "Absolute Axis: %s\n", toString(mParameters.hasAbsAxis));
+ }
+ 
+ void CursorInputMapper::reset(nsecs_t when) {
+@@ -291,6 +321,28 @@ void CursorInputMapper::process(const RawEvent* rawEvent) {
+     }
+ }
+ 
++void CursorInputMapper::rotateAbsolute(float* absX, float* absY) {
++    float temp;
++    switch (mOrientation) {
++    case DISPLAY_ORIENTATION_90:
++        temp = *absX;
++        *absX = *absY;
++        *absY = ((mRawAbsXInfo.maxValue - mRawAbsXInfo.minValue) + 1) - temp;
++        break;
++
++    case DISPLAY_ORIENTATION_180:
++        *absX = ((mRawAbsXInfo.maxValue - mRawAbsXInfo.minValue) + 1) - *absX;
++        *absY = ((mRawAbsYInfo.maxValue - mRawAbsYInfo.minValue) + 1) - *absY;
++        break;
++
++    case DISPLAY_ORIENTATION_270:
++        temp = *absX;
++        *absX = ((mRawAbsYInfo.maxValue - mRawAbsYInfo.minValue) + 1) - *absY;
++        *absY = temp;
++        break;
++    }
++}
++
+ void CursorInputMapper::sync(nsecs_t when, nsecs_t readTime) {
+     int32_t lastButtonState = mButtonState;
+     int32_t currentButtonState = mCursorButtonAccumulator.getButtonState();
+@@ -312,14 +364,7 @@ void CursorInputMapper::sync(nsecs_t when, nsecs_t readTime) {
+     int32_t buttonsPressed = currentButtonState & ~lastButtonState;
+     int32_t buttonsReleased = lastButtonState & ~currentButtonState;
+ 
+-    float deltaX = mCursorMotionAccumulator.getRelativeX() * mXScale;
+-    float deltaY = mCursorMotionAccumulator.getRelativeY() * mYScale;
+-    bool moved = deltaX != 0 || deltaY != 0;
+-
+-    // Rotate delta according to orientation.
+-    rotateDelta(mOrientation, &deltaX, &deltaY);
+-
+-    // Move the pointer.
++    bool moved = false;
+     PointerProperties pointerProperties;
+     pointerProperties.clear();
+     pointerProperties.id = 0;
+@@ -328,6 +373,44 @@ void CursorInputMapper::sync(nsecs_t when, nsecs_t readTime) {
+     PointerCoords pointerCoords;
+     pointerCoords.clear();
+ 
++    if (!mParameters.hasAbsAxis) {
++        float deltaX = mCursorMotionAccumulator.getRelativeX() * mXScale;
++        float deltaY = mCursorMotionAccumulator.getRelativeY() * mYScale;
++        moved = deltaX != 0 || deltaY != 0;
++
++        // Rotate delta according to orientation if needed.
++        rotateDelta(mOrientation, &deltaX, &deltaY);
++        mPointerVelocityControl.move(when, &deltaX, &deltaY);
++        if (mPointerController != NULL) {
++            if (moved) {
++                mPointerController->move(deltaX, deltaY);
++            }
++            float x, y;
++            mPointerController->getPosition(&x, &y);
++            pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_X, x);
++            pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_Y, y);
++            pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_X, deltaX);
++            pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_Y, deltaY);
++        } else {
++            pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_X, deltaX);
++            pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_Y, deltaY);
++        }
++    } else {
++        float absX = mCursorMotionAccumulator.getAbsoluteX() - mRawAbsXInfo.minValue;
++        float absY = mCursorMotionAccumulator.getAbsoluteY() - mRawAbsYInfo.minValue;
++        if (mParameters.orientationAware) {
++            rotateAbsolute(&absX, &absY);
++        }
++        absX = absX * mXScale;
++        absY = absY * mYScale;
++        moved = mCursorMotionAccumulator.hasMoved();
++        if (moved) {
++            mPointerController->setPosition(absX, absY);
++        }
++        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_X, absX);
++        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_Y, absY);
++    }
++
+     float vscroll = mCursorScrollAccumulator.getRelativeVWheel();
+     float hscroll = mCursorScrollAccumulator.getRelativeHWheel();
+     bool scrolled = vscroll != 0 || hscroll != 0;
+@@ -335,8 +418,6 @@ void CursorInputMapper::sync(nsecs_t when, nsecs_t readTime) {
+     mWheelYVelocityControl.move(when, nullptr, &vscroll);
+     mWheelXVelocityControl.move(when, &hscroll, nullptr);
+ 
+-    mPointerVelocityControl.move(when, &deltaX, &deltaY);
+-
+     int32_t displayId = ADISPLAY_ID_NONE;
+     float xCursorPosition = AMOTION_EVENT_INVALID_CURSOR_POSITION;
+     float yCursorPosition = AMOTION_EVENT_INVALID_CURSOR_POSITION;
+@@ -344,18 +425,6 @@ void CursorInputMapper::sync(nsecs_t when, nsecs_t readTime) {
+         if (moved || scrolled || buttonsChanged) {
+             mPointerController->setPresentation(PointerControllerInterface::Presentation::POINTER);
+ 
+-            if (moved) {
+-                float dx = deltaX;
+-                float dy = deltaY;
+-                if (isPerWindowInputRotationEnabled()) {
+-                    // Rotate the delta from InputReader's un-rotated coordinate space to
+-                    // PointerController's rotated coordinate space that is oriented with the
+-                    // viewport.
+-                    rotateDelta(getInverseRotation(mOrientation), &dx, &dy);
+-                }
+-                mPointerController->move(dx, dy);
+-            }
+-
+             if (buttonsChanged) {
+                 mPointerController->setButtonState(currentButtonState);
+             }
+@@ -370,17 +439,7 @@ void CursorInputMapper::sync(nsecs_t when, nsecs_t readTime) {
+             rotatePoint(mOrientation, xCursorPosition /*byRef*/, yCursorPosition /*byRef*/,
+                         mDisplayWidth, mDisplayHeight);
+         }
+-        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_X, xCursorPosition);
+-        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_Y, yCursorPosition);
+-        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_X, deltaX);
+-        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_Y, deltaY);
+         displayId = mPointerController->getDisplayId();
+-    } else {
+-        // Pointer capture and navigation modes
+-        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_X, deltaX);
+-        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_Y, deltaY);
+-        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_X, deltaX);
+-        pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_RELATIVE_Y, deltaY);
+     }
+ 
+     pointerCoords.setAxisValue(AMOTION_EVENT_AXIS_PRESSURE, down ? 1.0f : 0.0f);
+diff --git a/services/inputflinger/reader/mapper/CursorInputMapper.h b/services/inputflinger/reader/mapper/CursorInputMapper.h
+index 88e947f7d5..7a71950a97 100644
+--- a/services/inputflinger/reader/mapper/CursorInputMapper.h
++++ b/services/inputflinger/reader/mapper/CursorInputMapper.h
+@@ -43,10 +43,16 @@ public:
+ 
+     inline int32_t getRelativeX() const { return mRelX; }
+     inline int32_t getRelativeY() const { return mRelY; }
++    inline int32_t getAbsoluteX() const { return mAbsX; }
++    inline int32_t getAbsoluteY() const { return mAbsY; }
++    inline bool hasMoved() const { return mMoved; }
+ 
+ private:
+     int32_t mRelX;
+     int32_t mRelY;
++    int32_t mAbsX;
++    int32_t mAbsY;
++    bool mMoved;
+ 
+     void clearRelativeAxes();
+ };
+@@ -83,6 +89,7 @@ private:
+         Mode mode;
+         bool hasAssociatedDisplay;
+         bool orientationAware;
++        bool hasAbsAxis;
+     } mParameters;
+ 
+     CursorButtonAccumulator mCursorButtonAccumulator;
+@@ -90,6 +97,8 @@ private:
+     CursorScrollAccumulator mCursorScrollAccumulator;
+ 
+     int32_t mSource;
++    RawAbsoluteAxisInfo mRawAbsXInfo;
++    RawAbsoluteAxisInfo mRawAbsYInfo;
+     float mXScale;
+     float mYScale;
+     float mXPrecision;
+@@ -116,6 +125,7 @@ private:
+     void configureParameters();
+     void dumpParameters(std::string& dump);
+ 
++    void rotateAbsolute(float* absX, float* absY);
+     void sync(nsecs_t when, nsecs_t readTime);
+ };
+ 

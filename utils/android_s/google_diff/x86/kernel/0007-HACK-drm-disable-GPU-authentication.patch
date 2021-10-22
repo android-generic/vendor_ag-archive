@@ -1,4 +1,4 @@
-From 9e6abcb939679beaa33b3ab9f9bba25e4b54efa9 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 5 Sep 2014 21:07:38 +0800
 Subject: [PATCH 07/54] HACK: drm: disable GPU authentication
@@ -28,10 +28,10 @@ index ca868271f4c4..375ea2c1e2b3 100644
  	tristate
  	depends on DRM
 diff --git a/drivers/gpu/drm/drm_ioctl.c b/drivers/gpu/drm/drm_ioctl.c
-index 9a2c76524c02..cbb50ea1dafb 100644
+index 9aa3909fb6cd..b88c0cb8b88d 100644
 --- a/drivers/gpu/drm/drm_ioctl.c
 +++ b/drivers/gpu/drm/drm_ioctl.c
-@@ -536,6 +536,7 @@ int drm_version(struct drm_device *dev, void *data,
+@@ -537,6 +537,7 @@ int drm_version(struct drm_device *dev, void *data,
   */
  int drm_ioctl_permit(u32 flags, struct drm_file *file_priv)
  {
@@ -39,7 +39,7 @@ index 9a2c76524c02..cbb50ea1dafb 100644
  	/* ROOT_ONLY is only for CAP_SYS_ADMIN */
  	if (unlikely((flags & DRM_ROOT_ONLY) && !capable(CAP_SYS_ADMIN)))
  		return -EACCES;
-@@ -554,6 +555,7 @@ int drm_ioctl_permit(u32 flags, struct drm_file *file_priv)
+@@ -555,6 +556,7 @@ int drm_ioctl_permit(u32 flags, struct drm_file *file_priv)
  	if (unlikely(!(flags & DRM_RENDER_ALLOW) &&
  		     drm_is_render_client(file_priv)))
  		return -EACCES;
@@ -47,6 +47,3 @@ index 9a2c76524c02..cbb50ea1dafb 100644
  
  	return 0;
  }
--- 
-2.30.2
-

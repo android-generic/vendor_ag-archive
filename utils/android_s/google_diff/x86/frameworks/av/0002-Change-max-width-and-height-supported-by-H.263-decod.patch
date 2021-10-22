@@ -1,4 +1,4 @@
-From 755f9d720e9ef63b88b3637f97a2494811ec7662 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Daniel Charles <daniel.charles@intel.com>
 Date: Wed, 9 May 2012 11:28:37 -0700
 Subject: [PATCH 02/15] Change max width and height supported by H.263 decoder.
@@ -35,6 +35,3 @@ index a4b3e2f434..ce298043cf 100644
      initPorts(
              kNumInputBuffers,
              352 * 288 * 3 / 2 /* minInputBufferSize */,
--- 
-2.30.2
-

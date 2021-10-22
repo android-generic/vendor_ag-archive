@@ -1,4 +1,4 @@
-From 083ed19e0751c696bd94e9e4e3b947713b1ef025 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Tom Marshall <tdm@cyngn.com>
 Date: Thu, 5 Nov 2015 11:20:54 -0800
 Subject: [PATCH 3/8] vold: Honor mount options for ext4/f2fs partitions
@@ -32,7 +32,7 @@ Change-Id: Ie5dd27f26a4a7129dd9efe6a7ad0a589928282a0
  14 files changed, 52 insertions(+), 22 deletions(-)
 
 diff --git a/VolumeManager.cpp b/VolumeManager.cpp
-index ad915e2..4031f3d 100644
+index 24f1d2c..0709bae 100644
 --- a/VolumeManager.cpp
 +++ b/VolumeManager.cpp
 @@ -234,7 +234,8 @@ void VolumeManager::handleBlockEvent(NetlinkEvent* evt) {
@@ -123,10 +123,10 @@ index 329f302..ec32ed3 100644
  status_t Resize(const std::string& source, unsigned long numSectors);
  
 diff --git a/fs/F2fs.cpp b/fs/F2fs.cpp
-index d6f3dab..859f588 100644
+index f4a81ee..b3047b4 100644
 --- a/fs/F2fs.cpp
 +++ b/fs/F2fs.cpp
-@@ -51,12 +51,13 @@ status_t Check(const std::string& source) {
+@@ -52,12 +52,13 @@ status_t Check(const std::string& source) {
      return ForkExecvp(cmd, nullptr, sFsckContext);
  }
  
@@ -318,6 +318,3 @@ index 3156b53..655a2a3 100644
  
      DISALLOW_COPY_AND_ASSIGN(PublicVolume);
  };
--- 
-2.30.2
-

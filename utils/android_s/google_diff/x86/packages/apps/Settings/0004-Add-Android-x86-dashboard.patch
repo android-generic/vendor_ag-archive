@@ -1,12 +1,14 @@
-From 8a133ba08aed87425a48466dc6b4b3220c2a5d31 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 30 Mar 2018 17:40:06 +0800
-Subject: [PATCH] Add Android-x86 dashboard
+Subject: [PATCH 4/4] Add Android-x86 dashboard
 
 Add an option to enable or disable native bridge.
 More options will be added in the future.
+
+Change-Id: Ib4b1e44b6c8a3b0ee337d9233725e80589c69827
 ---
- AndroidManifest.xml                           | 20 +++++++
+ AndroidManifest.xml                           | 22 ++++++++
  res/values-zh-rCN/strings.xml                 |  4 ++
  res/values-zh-rHK/strings.xml                 |  4 ++
  res/values-zh-rTW/strings.xml                 |  4 ++
@@ -15,21 +17,23 @@ More options will be added in the future.
  src/com/android/settings/Settings.java        |  1 +
  .../core/gateway/SettingsGateway.java         |  3 +
  .../system/AndroidX86DashboardFragment.java   | 55 +++++++++++++++++++
- 9 files changed, 123 insertions(+)
+ 9 files changed, 125 insertions(+)
  create mode 100644 res/xml/android_x86_options.xml
  create mode 100644 src/com/android/settings/system/AndroidX86DashboardFragment.java
 
 diff --git a/AndroidManifest.xml b/AndroidManifest.xml
-index 9b2cf2412a..d2b2b02c71 100644
+index 9b2cf2412a..168993eb3a 100644
 --- a/AndroidManifest.xml
 +++ b/AndroidManifest.xml
-@@ -3331,6 +3331,26 @@
+@@ -3331,6 +3331,28 @@
                         android:value="com.android.settings.applications.AppDashboardFragment"/>
          </activity>
  
-+        <activity android:name=".Settings$AndroidX86DashboardActivity"
-+                android:label="@string/android_x86_options_title"
-+		android:icon="@drawable/ic_settings_applications">
++        <activity
++            android:name=".Settings$AndroidX86DashboardActivity"
++            android:label="@string/android_x86_options_title"
++            android:exported="true"
++            android:icon="@drawable/ic_settings_applications">
 +            <intent-filter>
 +                <action android:name="android.intent.action.MAIN" />
 +                <category android:name="android.intent.category.DEFAULT" />
@@ -245,6 +249,3 @@ index 0000000000..ff3fbf7919
 +        return MetricsEvent.APPLICATION;
 +    }
 +}
--- 
-2.25.1
-

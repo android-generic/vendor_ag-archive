@@ -1,4 +1,4 @@
-From a81fb8809221176616a4f9023a6f2a11e8e6e9dd Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sat, 28 Sep 2019 18:30:26 +0200
 Subject: [PATCH 18/54] x86/intel: force tsc to be reliable on Cherrytrail (v2)
@@ -24,6 +24,3 @@ index 7d07e8d1e2b5..11417331f99f 100644
  		case INTEL_FAM6_ATOM_SILVERMONT:
  			set_cpu_cap(c, X86_FEATURE_TSC_RELIABLE);
  		case INTEL_FAM6_ATOM_SALTWELL_MID:
--- 
-2.30.2
-

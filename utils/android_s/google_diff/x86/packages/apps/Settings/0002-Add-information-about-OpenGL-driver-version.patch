@@ -1,4 +1,4 @@
-From 0693d46f71b7e770a4cf04ce16c03c2087b99fd9 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Wed, 13 Dec 2017 01:23:34 +0800
 Subject: [PATCH 2/4] Add information about OpenGL driver version
@@ -15,10 +15,10 @@ Without it, GLES20.glGetString returns NULL.
  create mode 100644 src/com/android/settings/deviceinfo/firmwareversion/OpenGLVersionPreferenceController.java
 
 diff --git a/res/values-zh-rCN/strings.xml b/res/values-zh-rCN/strings.xml
-index 10265d54b1..72c2524b0a 100644
+index 185fe9038e..73ee6251a4 100644
 --- a/res/values-zh-rCN/strings.xml
 +++ b/res/values-zh-rCN/strings.xml
-@@ -1336,6 +1336,7 @@
+@@ -1485,6 +1485,7 @@
      <string name="fcc_equipment_id" msgid="6596668314025646129">"设备 ID"</string>
      <string name="baseband_version" msgid="2600182227599835857">"基带版本"</string>
      <string name="kernel_version" msgid="3513538109381366881">"内核版本"</string>
@@ -27,10 +27,10 @@ index 10265d54b1..72c2524b0a 100644
      <string name="module_version" msgid="1787518340082046658">"Google Play 系统更新"</string>
      <string name="device_info_not_available" msgid="4804474466616712326">"无法获取"</string>
 diff --git a/res/values-zh-rTW/strings.xml b/res/values-zh-rTW/strings.xml
-index bc72471e16..c1d923c11f 100644
+index b50c808476..934fec72e6 100644
 --- a/res/values-zh-rTW/strings.xml
 +++ b/res/values-zh-rTW/strings.xml
-@@ -1336,6 +1336,7 @@
+@@ -1487,6 +1487,7 @@
      <string name="fcc_equipment_id" msgid="6596668314025646129">"設備 ID"</string>
      <string name="baseband_version" msgid="2600182227599835857">"基頻版本"</string>
      <string name="kernel_version" msgid="3513538109381366881">"核心版本"</string>
@@ -39,10 +39,10 @@ index bc72471e16..c1d923c11f 100644
      <string name="module_version" msgid="1787518340082046658">"Google Play 系統更新"</string>
      <string name="device_info_not_available" msgid="4804474466616712326">"無法取得"</string>
 diff --git a/res/values/strings.xml b/res/values/strings.xml
-index e57334089c..5042c006f2 100644
+index 8dd1f49d17..f8c4fc2c4c 100644
 --- a/res/values/strings.xml
 +++ b/res/values/strings.xml
-@@ -3069,6 +3069,8 @@
+@@ -3366,6 +3366,8 @@
      <!-- About phone screen,  setting option name  [CHAR LIMIT=40] -->
      <string name="kernel_version">Kernel version</string>
      <!-- About phone screen,  setting option name  [CHAR LIMIT=40] -->
@@ -186,6 +186,3 @@ index 0000000000..bb950cdb15
 +        }
 +    }
 +}
--- 
-2.30.2
-

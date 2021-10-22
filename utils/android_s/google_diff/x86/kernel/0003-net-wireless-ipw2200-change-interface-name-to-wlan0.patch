@@ -1,4 +1,4 @@
-From 814343fe7ba74d85a8dc129ff989673efa695f08 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Michael Cunningham <commandff@gmail.com>
 Date: Wed, 21 Aug 2013 19:21:28 +0800
 Subject: [PATCH 03/54] net/wireless: ipw2200: change interface name to wlan0
@@ -19,6 +19,3 @@ index ada6ce32c1f1..f63d2400fd3e 100644
  	priv = libipw_priv(net_dev);
  	priv->ieee = netdev_priv(net_dev);
  
--- 
-2.30.2
-

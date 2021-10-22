@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Thu, 3 Jun 2021 22:10:59 -0400
+Subject: [PATCH 12/18] Use binderized composer HAL 2.3
+
+---
+ manifest.xml | 4 ++--
+ treble.mk    | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/manifest.xml b/manifest.xml
+index 5ed527b..6c3e998 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -64,8 +64,8 @@
+     </hal>
+     <hal format="hidl">
+         <name>android.hardware.graphics.composer</name>
+-        <transport arch="32+64">passthrough</transport>
+-        <version>2.1</version>
++        <transport>hwbinder</transport>
++        <version>2.3</version>
+         <interface>
+             <name>IComposer</name>
+             <instance>default</instance>
+diff --git a/treble.mk b/treble.mk
+index a070956..ab8c80f 100644
+--- a/treble.mk
++++ b/treble.mk
+@@ -5,7 +5,7 @@ PRODUCT_PACKAGES += \
+ 
+ # HWComposer HAL
+ PRODUCT_PACKAGES += \
+-    android.hardware.graphics.composer@2.1-impl \
++    android.hardware.graphics.composer@2.3-service \
+     android.hardware.graphics.composer@2.1-service.drmfb
+ 
+ # Audio HAL

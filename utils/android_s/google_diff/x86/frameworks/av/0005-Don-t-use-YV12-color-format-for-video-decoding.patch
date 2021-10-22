@@ -1,4 +1,4 @@
-From 7fec09af8d8133def5471c23e91d688a26096b01 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 23 Nov 2015 00:46:22 +0800
 Subject: [PATCH 05/15] Don't use YV12 color format for video decoding
@@ -29,6 +29,3 @@ index 4711315615..4d889865f1 100644
              case OMX_COLOR_Format24bitRGB888:
              {
                  halFormat = HAL_PIXEL_FORMAT_RGB_888;
--- 
-2.30.2
-

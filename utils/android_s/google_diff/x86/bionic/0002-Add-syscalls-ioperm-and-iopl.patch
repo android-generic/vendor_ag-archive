@@ -1,4 +1,4 @@
-From 1236007af67e3c660c9319f80569e16c9aebf6a5 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Wed, 24 Aug 2016 22:58:24 +0800
 Subject: [PATCH 2/3] Add syscalls ioperm and iopl
@@ -17,7 +17,7 @@ Subject: [PATCH 2/3] Add syscalls ioperm and iopl
  create mode 100644 libc/arch-x86_64/syscalls/iopl.S
 
 diff --git a/libc/SYSCALLS.TXT b/libc/SYSCALLS.TXT
-index 33a8a616a..9bed18105 100644
+index 391e7af16..fe1c4ba74 100644
 --- a/libc/SYSCALLS.TXT
 +++ b/libc/SYSCALLS.TXT
 @@ -350,6 +350,8 @@ int     cacheflush:__ARM_NR_cacheflush(long start, long end, long flags)  arm
@@ -152,7 +152,7 @@ index 000000000..85f82de89
 +    ret
 +END(iopl)
 diff --git a/libc/libc.map.txt b/libc/libc.map.txt
-index f4f35ac03..c0b3e25da 100644
+index c31e30681..9dd4f5018 100644
 --- a/libc/libc.map.txt
 +++ b/libc/libc.map.txt
 @@ -522,6 +522,8 @@ LIBC {
@@ -164,6 +164,3 @@ index f4f35ac03..c0b3e25da 100644
      isalnum;
      isalnum_l; # introduced=21
      isalpha;
--- 
-2.30.2
-

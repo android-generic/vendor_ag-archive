@@ -1,4 +1,4 @@
-From 2d5c33dc6a385b3b5aeab80c609fce185e585854 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Dan Pasanen <dan.pasanen@gmail.com>
 Date: Tue, 27 Oct 2015 22:52:37 -0500
 Subject: [PATCH 1/8] vold: add support for more filesystems for public storage
@@ -41,10 +41,10 @@ Change-Id: I0a83761cefd97791e3ec84a18e199dfd27a5ed0b
  create mode 100644 fs/Ntfs.h
 
 diff --git a/Android.bp b/Android.bp
-index fa8f249..70c4f34 100644
+index 84809a3..6d37131 100644
 --- a/Android.bp
 +++ b/Android.bp
-@@ -142,6 +142,7 @@ cc_library_static {
+@@ -140,6 +140,7 @@ cc_library_static {
          "fs/Exfat.cpp",
          "fs/Ext4.cpp",
          "fs/F2fs.cpp",
@@ -53,10 +53,10 @@ index fa8f249..70c4f34 100644
          "model/Disk.cpp",
          "model/EmulatedVolume.cpp",
 diff --git a/Utils.cpp b/Utils.cpp
-index d5648f7..d9c039c 100644
+index 4635975..fd72cf2 100644
 --- a/Utils.cpp
 +++ b/Utils.cpp
-@@ -997,6 +997,10 @@ bool IsFilesystemSupported(const std::string& fsType) {
+@@ -1003,6 +1003,10 @@ bool IsFilesystemSupported(const std::string& fsType) {
          PLOG(ERROR) << "Failed to read supported filesystems";
          return false;
      }
@@ -373,6 +373,3 @@ index 12e31ff..6f7c6dc 100644
      }
  
      if (res != OK) {
--- 
-2.30.2
-

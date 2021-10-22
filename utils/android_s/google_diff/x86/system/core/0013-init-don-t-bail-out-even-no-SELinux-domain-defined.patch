@@ -1,14 +1,14 @@
-From a51f0d6aaff84e09ae18338d2316a58082456f0c Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 12 Sep 2017 16:22:04 +0800
-Subject: [PATCH 13/21] init: don't bail out even no SELinux domain defined
+Subject: [PATCH 13/22] init: don't bail out even no SELinux domain defined
 
 ---
  init/service.cpp | 7 +++++++
  1 file changed, 7 insertions(+)
 
 diff --git a/init/service.cpp b/init/service.cpp
-index f6ce094ef..cf017d927 100644
+index c3069f5b2..8b9ea527e 100644
 --- a/init/service.cpp
 +++ b/init/service.cpp
 @@ -88,6 +88,12 @@ static Result<std::string> ComputeContextFromExecutable(const std::string& servi
@@ -32,6 +32,3 @@ index f6ce094ef..cf017d927 100644
      }
      if (rc < 0) {
          return Error() << "Could not get process context";
--- 
-2.30.2
-

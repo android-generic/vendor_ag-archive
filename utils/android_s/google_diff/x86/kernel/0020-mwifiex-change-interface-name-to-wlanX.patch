@@ -1,4 +1,4 @@
-From 107ddb34301dfc49ed5fe77097c46b57e1c1063b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Fri, 10 Jun 2016 10:50:15 +0800
 Subject: [PATCH 20/54] mwifiex: change interface name to wlanX
@@ -21,6 +21,3 @@ index 6283df5aaaf8..3191b0038f6a 100644
  					NL80211_IFTYPE_STATION, NULL);
  	if (IS_ERR(wdev)) {
  		mwifiex_dbg(adapter, ERROR,
--- 
-2.30.2
-

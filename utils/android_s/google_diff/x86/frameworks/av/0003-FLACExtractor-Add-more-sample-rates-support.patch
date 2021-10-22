@@ -1,4 +1,4 @@
-From 64b1314b5e2e0cf8bd69aef316f400f2904b7198 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Billy <xiaobing.feng@windriver.com>
 Date: Thu, 20 Dec 2012 11:02:55 +0800
 Subject: [PATCH 03/15] FLACExtractor: Add more sample rates support
@@ -17,7 +17,7 @@ Signed-off-by: Matt Gumbel <matthew.k.gumbel@intel.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/media/extractors/flac/FLACExtractor.cpp b/media/extractors/flac/FLACExtractor.cpp
-index 0617e88b84..1c3699fc10 100644
+index ec7cb24b93..3a98625bc6 100644
 --- a/media/extractors/flac/FLACExtractor.cpp
 +++ b/media/extractors/flac/FLACExtractor.cpp
 @@ -535,7 +535,7 @@ status_t FLACParser::init()
@@ -29,6 +29,3 @@ index 0617e88b84..1c3699fc10 100644
              ALOGE("unsupported sample rate %u", getSampleRate());
              return NO_INIT;
          }
--- 
-2.30.2
-

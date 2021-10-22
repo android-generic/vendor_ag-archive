@@ -1,4 +1,4 @@
-From 58ea8161665161df1ec2dd65d20b0615c021f909 Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 10 Jun 2018 17:46:25 +0800
 Subject: [PATCH 2/6] Remove the unused function
@@ -27,6 +27,3 @@ index 0c0a979e7..6016cad6c 100644
  
  }  // namespace hci
  }  // namespace bluetooth
--- 
-2.30.2
-
