@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+	
+	<project path="external/drm_framebuffer" name="platform/external/drm_framebuffer" remote="x86" revision="r-x86" />
+	<!-- <project path="external/drm_gralloc" name="platform/external/drm_gralloc" remote="x86" revision="r-x86" /> -->
+	<!-- <project path="external/drm_hwcomposer" name="drm_hwcomposer.git" remote="maurossi" revision="blueprint_pie-x86_y21_w04" /> -->
+	<!-- <project path="external/gbm_gralloc" name="platform/external/gbm_gralloc" remote="x86" revision="r-x86" /> -->
+	<remove-project name="platform/external/minigbm" />
+	<remove-project name="platform/external/mesa3d" />
+	<remove-project name="platform/external/drm_hwcomposer" />
+	<project path="external/minigbm"         remote="glodroid" name="glodroid_forks.git" revision="refs/tags/minigbm-v0.7.0" />
+	<project path="external/drm_hwcomposer"  remote="glodroid" name="glodroid_forks.git" revision="refs/tags/drm_hwcomposer-v0.7.0" />
+	<project path="external/mesa3d"          remote="glodroid" name="glodroid_forks.git" revision="refs/tags/mesa3d-v0.7.0" />
+
+</manifest>

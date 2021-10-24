@@ -155,7 +155,9 @@
 	<remove-project name="platform/packages/apps/LegacyCamera" />
 	<remove-project name="platform/packages/apps/Music" />
 	<remove-project name="platform/packages/apps/MusicFX" />
+<!--
 	<remove-project name="platform/packages/apps/Nfc" />
+-->
 	<remove-project name="platform/packages/apps/SecureElement" />
 	<remove-project name="platform/packages/apps/Tag" />
 	<remove-project name="platform/packages/apps/Test/connectivity" />
@@ -182,6 +184,8 @@
 	<remove-project name="platform/tools/studio/cloud" />
 	<remove-project name="platform/tools/swt" />
 	<remove-project name="toolchain/benchmark" />
+<!--
 	<remove-project name="toolchain/llvm-project" />
+-->
 	<remove-project name="toolchain/pgo-profiles" />
 </manifest>

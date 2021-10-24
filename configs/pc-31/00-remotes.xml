@@ -22,5 +22,6 @@
   <remote name="ghub" fetch="https://github.com/" />
   <remote name="intel" fetch="https://github.com/intel/" />
   <remote name="celadon" fetch="https://github.com/projectceladon/" />
+  <remote  name="glodroid" fetch="https://github.com/glodroid/" />
 
 </manifest>
