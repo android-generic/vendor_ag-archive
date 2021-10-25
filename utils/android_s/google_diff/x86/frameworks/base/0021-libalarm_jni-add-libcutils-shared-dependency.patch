@@ -1,0 +1,30 @@
+From 3ae9cc8fdf295267e7d98db221566294c5864867 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 23 Oct 2021 20:17:26 +0200
+Subject: [PATCH] libalarm_jni: add libcutils shared dependency
+
+Fixes the following building error:
+
+ld.lld: error: undefined symbol: property_get_bool
+>>> referenced by com_android_server_alarm_AlarmManagerService.cpp:152
+(frameworks/base/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp:152)
+
+Change-Id: I206a50d291a4b3e063a5c9c39afcdfe25029f9d6
+---
+ apex/jobscheduler/service/jni/Android.bp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/apex/jobscheduler/service/jni/Android.bp b/apex/jobscheduler/service/jni/Android.bp
+index 34a1fa2ebc13..23a4d9160d63 100644
+--- a/apex/jobscheduler/service/jni/Android.bp
++++ b/apex/jobscheduler/service/jni/Android.bp
+@@ -27,5 +27,6 @@ cc_library_shared {
+         "libnativehelper",
+         "liblog",
+         "libbase",
++        "libcutils",
+     ],
+ }
+-- 
+2.25.1
+

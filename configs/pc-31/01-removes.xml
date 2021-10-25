@@ -77,6 +77,8 @@
 	<remove-project name="platform/external/arm-neon-tests" />
 	<remove-project name="platform/external/arm-trusted-firmware" />
 	<remove-project name="platform/external/drm_hwcomposer" />
+	<remove-project name="platform/external/libdrm" />
+	<remove-project name="platform/external/mesa3d" />
 	<remove-project name="platform/external/swiftshader" />
 	<remove-project name="platform/frameworks/opt/car/setupwizard" />
 	<remove-project name="platform/hardware/broadcom/libbt" />
@@ -155,9 +157,6 @@
 	<remove-project name="platform/packages/apps/LegacyCamera" />
 	<remove-project name="platform/packages/apps/Music" />
 	<remove-project name="platform/packages/apps/MusicFX" />
-<!--
-	<remove-project name="platform/packages/apps/Nfc" />
--->
 	<remove-project name="platform/packages/apps/SecureElement" />
 	<remove-project name="platform/packages/apps/Tag" />
 	<remove-project name="platform/packages/apps/Test/connectivity" />
@@ -184,8 +183,6 @@
 	<remove-project name="platform/tools/studio/cloud" />
 	<remove-project name="platform/tools/swt" />
 	<remove-project name="toolchain/benchmark" />
-<!--
 	<remove-project name="toolchain/llvm-project" />
--->
 	<remove-project name="toolchain/pgo-profiles" />
 </manifest>

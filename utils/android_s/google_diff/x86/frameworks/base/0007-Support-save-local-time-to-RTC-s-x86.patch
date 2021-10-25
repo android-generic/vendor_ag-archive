@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Ma Jian <majian@jidemail.com>
 Date: Sun, 12 Jun 2016 15:13:55 +0800
-Subject: [PATCH 07/20] Support save local time to RTC
+Subject: [PATCH 07/20] Support save local time to RTC (s-x86)
 
 Make it work for dual boot with Windows, we could set property
 persist.rtc_local_time to 1, so that RemixOS and Windows both
@@ -20,18 +20,6 @@ Change-Id: Id2c0ce150fb9320b132ad8bdd83b38dcae1070db
  ...ndroid_server_alarm_AlarmManagerService.cpp | 18 +++++++++++++++---
  2 files changed, 16 insertions(+), 3 deletions(-)
 
-diff --git a/apex/jobscheduler/service/jni/Android.bp b/apex/jobscheduler/service/jni/Android.bp
-index 34a1fa2ebc13..28acb56dd853 100644
---- a/apex/jobscheduler/service/jni/Android.bp
-+++ b/apex/jobscheduler/service/jni/Android.bp
-@@ -26,6 +26,7 @@ cc_library_shared {
-     shared_libs: [
-         "libnativehelper",
-         "liblog",
-+        "libcutils",
-         "libbase",
-     ],
- }
 diff --git a/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp b/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp
 index 8f9e187a7a93..baa1317ec8ff 100644
 --- a/apex/jobscheduler/service/jni/com_android_server_alarm_AlarmManagerService.cpp
