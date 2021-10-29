@@ -1,0 +1,27 @@
+From 11bf9f4d38b4c87531ee33f9273ea7281a5c5fbe Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 29 Oct 2021 14:23:17 -0400
+Subject: [PATCH 1/2] Add new android_x86_64 product
+
+Change-Id: Ia8bb1d131b88df20b7711c4c55eabd5d14995455
+---
+ target/product/product_android_x86_64.mk | 7 +++++++
+ 1 file changed, 7 insertions(+)
+ create mode 100644 target/product/product_android_x86_64.mk
+
+diff --git a/target/product/product_android_x86_64.mk b/target/product/product_android_x86_64.mk
+new file mode 100644
+index 0000000000..d34cd1ee52
+--- /dev/null
++++ b/target/product/product_android_x86_64.mk
+@@ -0,0 +1,7 @@
++#PRODUCT_SHIPPING_API_LEVEL indicates the first api level, device has been commercially launched on.
++PRODUCT_SHIPPING_API_LEVEL := 24
++
++# Disable <uses-library> checks for Android-x86 product. It lacks some libraries (e.g.
++# RadioConfigLib), which makes it impossible to translate their module names to
++# library name, so the check fails.
++PRODUCT_BROKEN_VERIFY_USES_LIBRARIES := true
+-- 
+2.25.1
+

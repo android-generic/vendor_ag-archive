@@ -1,7 +1,7 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From ffb51c47c4fa0eede8ddf45de2ca26215e9e4e53 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 28 Apr 2021 16:55:52 -0400
-Subject: [PATCH 14/18] Fix build errors on Android S
+Subject: [PATCH 14/28] Fix build errors on Android S
 
 - custom sepolicy are violating some AOSP rules
 - don't check ELF binaries (required for firmware blobs)
@@ -33,3 +33,6 @@ index dc502e1..c27d1f0 100644
  BUILD_BROKEN_USES_BUILD_HOST_EXECUTABLE := true
  BUILD_BROKEN_USES_BUILD_HOST_STATIC_LIBRARY := true
 +BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+-- 
+2.25.1
+

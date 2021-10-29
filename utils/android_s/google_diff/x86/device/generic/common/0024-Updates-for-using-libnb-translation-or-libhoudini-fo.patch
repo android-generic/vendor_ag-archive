@@ -1,0 +1,190 @@
+From 0d09f9350f5cf4d9fcd37f92e8317507d58458cb Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 27 Oct 2021 21:20:20 -0400
+Subject: [PATCH 24/28] Updates for using libnb-translation or libhoudini for
+ native-bridge
+
+---
+ BoardConfig.mk                       | 10 ++++++++++
+ device.mk                            | 24 ++++++++++++++++++++++++
+ manifest.xml                         |  6 ++++--
+ nativebridge/Android.mk              |  7 +------
+ nativebridge/bin/enable_nativebridge |  5 +++--
+ nativebridge/nativebridge.mk         | 15 +++++----------
+ nativebridge/nativebridge64.mk       | 19 +++++++++++++++++++
+ 7 files changed, 66 insertions(+), 20 deletions(-)
+ create mode 100644 nativebridge/nativebridge64.mk
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 81c5788..1052deb 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -111,3 +111,13 @@ BOARD_MESA3D_CLASSIC_DRIVERS :=
+ BOARD_MESA3D_GALLIUM_DRIVERS := i915 crocus iris nouveau r300 r600 radeonsi svga virgl
+ BOARD_MESA3D_VULKAN_DRIVERS := amd intel
+ #BOARD_MESA3D_BUILD_LIBGBM := true
++
++TARGET_NATIVE_BRIDGE_ARCH := arm64
++TARGET_NATIVE_BRIDGE_ARCH_VARIANT := armv8-a
++TARGET_NATIVE_BRIDGE_CPU_VARIANT := generic
++TARGET_NATIVE_BRIDGE_ABI := arm64-v8a
++
++BUILD_BROKEN_DUP_RULES := true
++RELAX_USES_LIBRARY_CHECK := true
++
++-include vendor/google/emu-x86/board/native_bridge_arm_on_x86.mk
+diff --git a/device.mk b/device.mk
+index ec84ba5..11a2832 100644
+--- a/device.mk
++++ b/device.mk
+@@ -129,10 +129,34 @@ GAPPS_VARIANT ?= pico
+ $(call inherit-product-if-exists,$(if $(wildcard vendor/google/products/gms.mk),vendor/google/products/gms.mk,vendor/opengapps/build/opengapps-packages.mk))
+ 
+ # Get native bridge settings
++ifeq ($(patsubst %x86,,$(lastword $(TARGET_PRODUCT))),)
+ $(call inherit-product-if-exists,$(LOCAL_PATH)/nativebridge/nativebridge.mk)
++endif
++
++ifeq ($(patsubst %x86_64,,$(lastword $(TARGET_PRODUCT))),)
++$(call inherit-product-if-exists,$(LOCAL_PATH)/nativebridge/nativebridge.mk)
++$(call inherit-product-if-exists,$(LOCAL_PATH)/nativebridge/nativebridge64.mk)
++endif
+ 
+ $(call inherit-product,$(if $(wildcard $(PRODUCT_DIR)packages.mk),$(PRODUCT_DIR),$(LOCAL_PATH)/)packages.mk)
+ 
+ # Add agp-apps
+ $(call inherit-product-if-exists, vendor/prebuilts/agp-apps/agp-apps.mk)
+ 
++# Get native bridge settings
++$(call inherit-product,build/make/target/product/product_android_x86_64.mk)
++ifeq ($(USE_LIBNDK_TRANSLATION_NB),true)
++$(call inherit-product-if-exists, vendor/google/emu-x86/target/libndk_translation.mk)
++$(call inherit-product-if-exists, vendor/google/emu-x86/target/widevine.mk)
++$(call inherit-product-if-exists, vendor/google/emu-x86/target/native_bridge_arm_on_x86.mk)
++NDK_TRANSLATION_PREINSTALL := google
++PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.nativebridge=1
++endif
++
++ifeq ($(USE_CROS_HOUDINI_NB),true)
++#~ $(call inherit-product-if-exists, vendor/google/chromeos-x86/target/houdini_system.mk)
++$(call inherit-product-if-exists, vendor/google/chromeos-x86/target/houdini_vendor.mk)
++$(call inherit-product-if-exists, vendor/google/chromeos-x86/target/widevine.mk)
++$(call inherit-product-if-exists, vendor/google/chromeos-x86/target/native_bridge_arm_on_x86.mk)
++PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.nativebridge=1
++endif
+diff --git a/manifest.xml b/manifest.xml
+index 23b002a..86ba564 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -159,8 +159,10 @@
+             <name>IDrmFactory</name>
+             <instance>default</instance>
+         </interface>
+-        <fqname>@1.2::ICryptoFactory/clearkey</fqname>
+-        <fqname>@1.2::IDrmFactory/clearkey</fqname>
++        <fqname>@1.3::ICryptoFactory/clearkey</fqname>
++        <fqname>@1.3::IDrmFactory/clearkey</fqname>        
++        <fqname>@1.3::ICryptoFactory/widevine</fqname>
++        <fqname>@1.3::IDrmFactory/widevine</fqname>
+     </hal>
+     <hal format="hidl">
+         <name>android.hardware.gnss</name>
+diff --git a/nativebridge/Android.mk b/nativebridge/Android.mk
+index 90570b8..8ecfd16 100644
+--- a/nativebridge/Android.mk
++++ b/nativebridge/Android.mk
+@@ -17,11 +17,6 @@ LOCAL_SRC_FILES := src/libnb.cpp
+ LOCAL_CFLAGS := -Werror -Wall
+ LOCAL_CPPFLAGS := -std=c++11
+ LOCAL_SHARED_LIBRARIES := libcutils libdl liblog
+-LOCAL_HEADER_LIBRARIES := jni_headers libnativebridge-headers
++LOCAL_C_INCLUDES := art/libnativebridge/include
+ LOCAL_MULTILIB := both
+-LOCAL_POST_INSTALL_CMD := $(hide) \
+-    rm -rf $(TARGET_OUT)/{bin,lib}/{arm*,*houdini*} {$(TARGET_OUT),$(PRODUCT_OUT)}/vendor/{bin,lib}/{arm*,*houdini*}; \
+-    mkdir -p $(TARGET_OUT)/{lib/arm,$(if $(filter true,$(TARGET_IS_64_BIT)),lib64/arm64)}; \
+-    touch $(TARGET_OUT)/lib/libhoudini.so $(if $(filter true,$(TARGET_IS_64_BIT)),$(TARGET_OUT)/lib64/libhoudini.so)
+-
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/nativebridge/bin/enable_nativebridge b/nativebridge/bin/enable_nativebridge
+index 00da6f1..1cc329b 100644
+--- a/nativebridge/bin/enable_nativebridge
++++ b/nativebridge/bin/enable_nativebridge
+@@ -15,8 +15,7 @@ urls[5]=http://tinyurl.com/y6g6cx27
+ 
+ mount_sfs()
+ {
+-	lodevice=`losetup -r -f -s $1`
+-	[ -n "$lodevice" ] && mount -o 'ro,context="u:object_r:system_file:s0"' $lodevice $2
++	mount -o 'ro,context="u:object_r:system_file:s0"' $1 $2
+ }
+ 
+ if [ -z "$1" ]; then
+@@ -83,4 +82,6 @@ else
+ 	log -pi -thoudini "houdini$1 enabled"
+ fi
+ 
++[ "$(getprop ro.zygote)" = "zygote64_32" -a -z "$1" ] && exec $0 64
++
+ exit 0
+diff --git a/nativebridge/nativebridge.mk b/nativebridge/nativebridge.mk
+index 69b14f0..d1e8122 100644
+--- a/nativebridge/nativebridge.mk
++++ b/nativebridge/nativebridge.mk
+@@ -13,6 +13,7 @@ WITH_NATIVE_BRIDGE := true
+ 
+ # Native Bridge ABI List
+ NATIVE_BRIDGE_ABI_LIST_32_BIT := armeabi-v7a armeabi
++NATIVE_BRIDGE_ABI_LIST := x86 armeabi-v7a armeabi
+ 
+ LOCAL_SRC_FILES := bin/enable_nativebridge
+ 
+@@ -25,16 +26,10 @@ PRODUCT_PROPERTY_OVERRIDES := \
+     ro.dalvik.vm.isa.arm=x86 \
+     ro.enable.native.bridge.exec=1 \
+ 
+-ifeq ($(TARGET_SUPPORTS_64_BIT_APPS),true)
+-PRODUCT_PROPERTY_OVERRIDES += \
+-    ro.dalvik.vm.isa.arm64=x86_64 \
+-    ro.enable.native.bridge.exec64=1
+-endif
+-
+-ifneq ($(HOUDINI_PREINSTALL),intel)
+-PRODUCT_PRODUCT_PROPERTIES := ro.dalvik.vm.native.bridge=libnb.so
++ifeq ($(USE_LIBNDK_TRANSLATION_NB),true)
++PRODUCT_PROPERTY_OVERRIDES := ro.dalvik.vm.native.bridge=libndk_translation.so
++else ifeq ($(USE_CROS_HOUDINI_NB),true)
++PRODUCT_PROPERTY_OVERRIDES := ro.dalvik.vm.native.bridge=libhoudini.so
+ 
+-PRODUCT_PACKAGES := libnb
+ endif
+ 
+-$(call inherit-product-if-exists,vendor/intel/houdini/houdini.mk)
+diff --git a/nativebridge/nativebridge64.mk b/nativebridge/nativebridge64.mk
+new file mode 100644
+index 0000000..3f16413
+--- /dev/null
++++ b/nativebridge/nativebridge64.mk
+@@ -0,0 +1,19 @@
++#
++# Copyright (C) 2021 The Android-x86 Open Source Project
++#
++# Licensed under the GNU General Public License Version 2 or later.
++# You may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#      http://www.gnu.org/licenses/gpl.html
++#
++
++NATIVE_BRIDGE_ABI_LIST_64_BIT := arm64-v8a
++NATIVE_BRIDGE_ABI_LIST := x86_64 x86 arm64-v8a armeabi-v7a armeabi
++TARGET_CPU_ABI_LIST := x86_64 x86 arm64-v8a armeabi-v7a armeabi
++
++PRODUCT_PROPERTY_OVERRIDES += \
++    ro.dalvik.vm.isa.arm64=x86_64 \
++    ro.enable.native.bridge.exec64=1
++
++
+-- 
+2.25.1
+

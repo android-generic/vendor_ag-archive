@@ -1,7 +1,7 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 499a03fcc351651c7bd1dc72fb181653cd0878fa Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Sun, 18 Oct 2020 21:47:16 -0400
-Subject: [PATCH 08/18] Remove wifi HAL
+Subject: [PATCH 08/28] Remove wifi HAL
 
 There is no wifi HAL and declaring one prevents the wifi service to work
 properly (as it's checking the device manifest for a wifi HAL and fails
@@ -25,3 +25,6 @@ index 5d5f44c..4681aba 100644
  # Drm HAL
  PRODUCT_PACKAGES += \
      android.hardware.drm@1.0-impl \
+-- 
+2.25.1
+

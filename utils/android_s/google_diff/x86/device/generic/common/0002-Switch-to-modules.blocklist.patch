@@ -1,7 +1,7 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 4c25a5b6674086611697907d26b63e3d460075e1 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Sun, 13 Sep 2020 20:38:17 -0400
-Subject: [PATCH 02/18] Switch to modules.blocklist
+Subject: [PATCH 02/28] Switch to modules.blocklist
 
 ---
  device.mk         | 2 +-
@@ -44,3 +44,6 @@ index 0000000..6781481
 +blocklist nouveau
 +deferred amdgpu
 +deferred radeon
+-- 
+2.25.1
+

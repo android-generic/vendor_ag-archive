@@ -1,7 +1,7 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From eef13a3e784ba47688db523726bccdea3d526be7 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 28 Apr 2021 17:03:29 -0400
-Subject: [PATCH 16/18] Install ueventd.x86.rc into /vendor/etc/ueventd.rc
+Subject: [PATCH 16/28] Install ueventd.x86.rc into /vendor/etc/ueventd.rc
 
 The root-level ueventd config files have been deprecated (and not loaded
 anymore).
@@ -22,3 +22,6 @@ index 633cf07..94243fb 100644
  
  PRODUCT_COPY_FILES += \
      $(LOCAL_PATH)/ppp/ip-up:system/etc/ppp/ip-up \
+-- 
+2.25.1
+

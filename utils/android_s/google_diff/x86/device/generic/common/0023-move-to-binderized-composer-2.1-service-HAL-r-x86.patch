@@ -1,7 +1,7 @@
 From 0818a6bc4705412abc0b7237babb434767ce0aa7 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sun, 28 Mar 2021 23:14:06 +0200
-Subject: [PATCH 2/2] move to binderized composer@2.1-service HAL (r-x86)
+Subject: [PATCH 23/28] move to binderized composer@2.1-service HAL (r-x86)
 
 Use hwbinder transport for composer 2.1 HAL in manifext.xml
 Enable android.hardware.graphics.composer@2.1-service in treble.mk

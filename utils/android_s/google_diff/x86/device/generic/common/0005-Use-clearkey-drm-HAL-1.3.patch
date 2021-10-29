@@ -1,7 +1,7 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 8169a82e708709e469bd08eabb7f58f802e92570 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Tue, 15 Sep 2020 12:13:03 -0400
-Subject: [PATCH 05/18] Use clearkey drm HAL 1.3
+Subject: [PATCH 05/28] Use clearkey drm HAL 1.3
 
 ---
  treble.mk | 2 +-
@@ -20,3 +20,6 @@ index 27251a1..6d2da71 100644
  
  # GPS HAL
  PRODUCT_PACKAGES += \
+-- 
+2.25.1
+

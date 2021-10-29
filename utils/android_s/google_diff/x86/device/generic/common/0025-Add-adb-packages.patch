@@ -1,0 +1,43 @@
+From f9dba21dd8e287ecd0bbebbe61782819b3521ab7 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 27 Oct 2021 21:20:42 -0400
+Subject: [PATCH 25/28] Add adb packages
+
+---
+ packages.mk | 23 +++++++++++++++++++++++
+ 1 file changed, 23 insertions(+)
+
+diff --git a/packages.mk b/packages.mk
+index 915a885..07bb434 100644
+--- a/packages.mk
++++ b/packages.mk
+@@ -117,3 +117,26 @@ PRODUCT_PACKAGES_DEBUG := \
+ 
+ PRODUCT_HOST_PACKAGES := \
+     qemu-android \
++
++# Add ADB & Shell packages
++
++PRODUCT_PACKAGES += \
++    adbd_system_api \
++    com.android.adbd \
++    com.android.conscrypt \
++    debuggerd \
++    logcat \
++    logd \
++    odsign \
++    run-as \
++    shell_and_utilities_system \
++
++PRODUCT_HOST_PACKAGES += \
++    adb \
++
++PRODUCT_SYSTEM_PROPERTIES += debug.atrace.tags.enableflags=0
++
++PRODUCT_PACKAGES_DEBUG := \
++    strace \
++    su \
++
+-- 
+2.25.1
+

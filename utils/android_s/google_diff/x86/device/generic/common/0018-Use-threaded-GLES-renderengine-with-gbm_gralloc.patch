@@ -1,7 +1,7 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 8b3922ecd909f5e0ae4c062ecc96a1d5ec28b88c Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Thu, 21 Oct 2021 21:19:02 +0200
-Subject: [PATCH 18/18] Use threaded GLES renderengine with gbm_gralloc
+Subject: [PATCH 18/28] Use threaded GLES renderengine with gbm_gralloc
 
 gbm_gralloc does not work with Skia renderengine, which is default in
 Android S. This engine attempts to use HAL_PIXEL_FORMAT_RGBA_FP16
@@ -24,3 +24,6 @@ index 0962c22..78481b1 100644
  	[ -n "$DEBUG" ] && set_property debug.egl.trace error
  }
  
+-- 
+2.25.1
+

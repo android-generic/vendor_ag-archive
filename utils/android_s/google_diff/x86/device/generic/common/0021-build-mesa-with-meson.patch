@@ -1,0 +1,134 @@
+From 6aeec461eeb1bd1dc591c90596e5706afaa32b1d Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sun, 24 Oct 2021 19:49:49 -0400
+Subject: [PATCH 21/28] build mesa with meson
+
+---
+ BoardConfig.mk        | 10 ++++++++--
+ build/tasks/kernel.mk |  7 ++++---
+ gpu/gpu_mesa.mk       | 14 ++++++++++----
+ init.sh               |  9 +++++++--
+ 4 files changed, 29 insertions(+), 11 deletions(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index c27d1f0..81c5788 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -70,12 +70,12 @@ SUPERUSER_PACKAGE_PREFIX := com.android.settings.cyanogenmod.superuser
+ BOARD_WPA_SUPPLICANT_DRIVER ?= NL80211
+ WPA_SUPPLICANT_VERSION ?= VER_2_1_DEVEL
+ 
+-BOARD_GPU_DRIVERS ?= i915 i965 iris nouveau r300g r600g radeonsi virgl vmwgfx
++BOARD_GPU_DRIVERS ?= i915 i965 iris freedreno panfrost nouveau r300g r600g radeonsi virgl vmwgfx
+ ifneq ($(strip $(BOARD_GPU_DRIVERS)),)
+ TARGET_HARDWARE_3D := true
+ endif
+ 
+-BOARD_KERNEL_CMDLINE := root=/dev/ram0$(if $(filter x86_64,$(TARGET_ARCH) $(TARGET_KERNEL_ARCH)),, vmalloc=192M)
++BOARD_KERNEL_CMDLINE := root=/dev/ram0$(if $(filter x86_64,$(TARGET_ARCH) $(TARGET_KERNEL_ARCH)),, vmalloc=192M) androidboot.hardware=android_x86_64
+ TARGET_KERNEL_DIFFCONFIG := device/generic/common/selinux_diffconfig
+ 
+ COMPATIBILITY_ENHANCEMENT_PACKAGE := true
+@@ -105,3 +105,9 @@ TARGET_USES_HWC2 ?= true
+ BUILD_BROKEN_USES_BUILD_HOST_EXECUTABLE := true
+ BUILD_BROKEN_USES_BUILD_HOST_STATIC_LIBRARY := true
+ BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
++
++BOARD_MESA3D_USES_MESON_BUILD := true
++BOARD_MESA3D_CLASSIC_DRIVERS :=
++BOARD_MESA3D_GALLIUM_DRIVERS := i915 crocus iris nouveau r300 r600 radeonsi svga virgl
++BOARD_MESA3D_VULKAN_DRIVERS := amd intel
++#BOARD_MESA3D_BUILD_LIBGBM := true
+diff --git a/build/tasks/kernel.mk b/build/tasks/kernel.mk
+index f4ac869..11bc62f 100644
+--- a/build/tasks/kernel.mk
++++ b/build/tasks/kernel.mk
+@@ -20,7 +20,8 @@ TARGET_KERNEL_CONFIG ?= android-$(TARGET_KERNEL_ARCH)_defconfig
+ KERNEL_CONFIG_DIR := arch/x86/configs
+ 
+ ifeq ($(TARGET_KERNEL_ARCH),x86_64)
+-CROSS_COMPILE := $(abspath $(TARGET_TOOLS_PREFIX))
++CROSS_COMPILE := x86_64-linux-androidkernel-
++KERNEL_CLANG_TRIPLE ?= CLANG_TRIPLE=x86_64-linux-gnu-
+ KERNEL_CLANG_FLAGS := \
+         LLVM=1 \
+         CC=$(abspath $(LLVM_PREBUILTS_PATH)/clang) \
+@@ -49,8 +50,8 @@ KBUILD_JOBS := $(shell echo $$((1-(`cat /sys/devices/system/cpu/present`))))
+ endif
+ 
+ mk_kernel := + $(hide) prebuilts/build-tools/$(HOST_PREBUILT_TAG)/bin/make -j$(KBUILD_JOBS) -l$$(($(KBUILD_JOBS)+2)) \
+-	-C $(KERNEL_DIR) O=$(abspath $(KBUILD_OUTPUT)) ARCH=$(TARGET_ARCH) CROSS_COMPILE=$(CROSS_COMPILE) \
+-	YACC=$(abspath $(BISON)) LEX=$(abspath $(LEX)) M4=$(abspath $(M4)) DEPMOD=/sbin/depmod PERL=/usr/bin/perl \
++	-C $(KERNEL_DIR) O=$(abspath $(KBUILD_OUTPUT)) ARCH=$(TARGET_ARCH) CROSS_COMPILE=$(CROSS_COMPILE) $(KERNEL_CLANG_TRIPLE) \
++	YACC=/usr/bin/bison LEX=/usr/bin/flex M4=$(abspath $(M4)) DEPMOD=/sbin/depmod PERL=/usr/bin/perl \
+ 	$(KERNEL_CLANG_FLAGS)
+ 
+ KERNEL_CONFIG_FILE := $(if $(wildcard $(TARGET_KERNEL_CONFIG)),$(TARGET_KERNEL_CONFIG),$(KERNEL_DIR)/$(KERNEL_CONFIG_DIR)/$(TARGET_KERNEL_CONFIG))
+diff --git a/gpu/gpu_mesa.mk b/gpu/gpu_mesa.mk
+index 596696f..9970a10 100644
+--- a/gpu/gpu_mesa.mk
++++ b/gpu/gpu_mesa.mk
+@@ -12,16 +12,22 @@ PRODUCT_PACKAGES := \
+     amdgpu.ids \
+     hwcomposer.drm hwcomposer.drm_minigbm hwcomposer.intel \
+     gralloc.drm     \
+-    gralloc.gbm gralloc.minigbm gralloc.intel \
++    gralloc.gbm gralloc.minigbm gralloc.intel gralloc.minigbm_dmabuf gralloc.minigbm_gbm_mesa \
+     libGLES_mesa    \
+     libtxc_dxtn     \
+-
++    modetest
+ PRODUCT_PACKAGES += \
+     libEGL_swiftshader \
+     libGLESv1_CM_swiftshader \
+     libGLESv2_swiftshader \
+-    vulkan.android-x86 \
+-    vulkan.radv
++    vulkan.radeon \
++    vulkan.intel
++PRODUCT_PACKAGES += \
++    libEGL_mesa \
++    libGLESv1_CM_mesa \
++    libGLESv2_mesa \
++    libgallium_dri \
++    libglapi
+ 
+ PRODUCT_PROPERTY_OVERRIDES := \
+     ro.opengles.version = 196608 \
+diff --git a/init.sh b/init.sh
+index 1f2842d..698acce 100644
+--- a/init.sh
++++ b/init.sh
+@@ -189,11 +189,13 @@ function init_hal_gralloc()
+ 			HWC=${HWC:-drm}
+ 			GRALLOC=${GRALLOC:-gbm}
+ 			video=${video:-1280x768}
++			[ -f /vendor/lib/egl/libEGL_mesa.so ] && set_property ro.hardware.egl mesa
+ 			;&
+ 		*i915|*radeon|*nouveau|*vmwgfx|*amdgpu)
+ 			if [ "$HWACCEL" != "0" ]; then
+ 				${HWC:+set_property ro.hardware.hwcomposer $HWC}
+ 				set_property ro.hardware.gralloc ${GRALLOC:-gbm}
++				[ -f /vendor/lib/egl/libEGL_mesa.so ] && set_property ro.hardware.egl mesa
+ 				set_drm_mode
+ 			fi
+ 			;;
+@@ -221,10 +223,13 @@ function init_hal_vulkan()
+ {
+ 	case "$(readlink /sys/class/graphics/fb0/device/driver)" in
+ 		*i915)
+-			set_property ro.hardware.vulkan android-x86
++			set_property ro.hardware.vulkan intel
+ 			;;
+ 		*amdgpu)
+-			set_property ro.hardware.vulkan radv
++			set_property ro.hardware.vulkan radeon
++			;;
++		*virtio_gpu)
++			set_property ro.hardware.vulkan virtio
+ 			;;
+ 		*)
+ 			;;
+-- 
+2.25.1
+

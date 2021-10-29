@@ -1,0 +1,25 @@
+From d93cc848ca9f7fca241d00f7ff2c86c14fcb5c64 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 28 Oct 2021 14:01:58 -0400
+Subject: [PATCH] Fix rpmbuild temp file errors in Android 12
+
+---
+ Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.mk b/Android.mk
+index 51b9037..d31960f 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -103,7 +103,7 @@ rpm: $(wildcard $(LOCAL_PATH)/rpm/*) $(BUILT_IMG)
+ 	PATH="/sbin:/usr/sbin:/bin:/usr/bin"; \
+ 	rpmbuild -bb --target=$(if $(filter x86,$(TARGET_ARCH)),i686,x86_64) -D"cmdline $(BOARD_KERNEL_CMDLINE)" \
+ 		-D"_topdir $$OUT/rpm" -D"_sourcedir $$OUT" -D"systemimg $(notdir $(systemimg))" -D"ver $(VER)" -D"epoch $$EPOCH" \
+-		$(if $(BUILD_NAME_VARIANT),-D"name $(BUILD_NAME_VARIANT)") \
++		-D"_tmppath $$OUT/rpm/tmp" $(if $(BUILD_NAME_VARIANT),-D"name $(BUILD_NAME_VARIANT)") \
+ 		-D"install_prefix $(if $(INSTALL_PREFIX),$(INSTALL_PREFIX),android-$(VER))" $(filter %.spec,$^); \
+ 	mv $$OUT/rpm/RPMS/*/*.rpm $$OUT
+ 
+-- 
+2.25.1
+

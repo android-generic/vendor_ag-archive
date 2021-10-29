@@ -1,7 +1,7 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 5d8f1d602ad2006fe173ed974fdcaa73c41f959e Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 1 Apr 2020 17:51:01 -0400
-Subject: [PATCH 01/18] Port to Android 11
+Subject: [PATCH 01/28] Port to Android 11
 
 ---
  BoardConfig.mk          |  4 +++-
@@ -208,3 +208,6 @@ index 4a719e6..27251a1 100644
 +# ConfigStore HAL
 +PRODUCT_PACKAGES += \
 +    android.hardware.configstore@1.1-service
+-- 
+2.25.1
+

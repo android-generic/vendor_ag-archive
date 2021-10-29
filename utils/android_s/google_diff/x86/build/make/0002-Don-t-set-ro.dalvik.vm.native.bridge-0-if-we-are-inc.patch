@@ -1,0 +1,34 @@
+From d28933891d43860532f9a223f9e8debb3fd9ed03 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 29 Oct 2021 14:24:05 -0400
+Subject: [PATCH 2/2] Don't set ro.dalvik.vm.native.bridge=0 if we are
+ including native-bridge in the build
+
+Change-Id: I9c33ae6e002e5ae847b93fae8715fdf994f210ad
+---
+ target/product/runtime_libart.mk | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/target/product/runtime_libart.mk b/target/product/runtime_libart.mk
+index b511aa6b94..b954412af1 100644
+--- a/target/product/runtime_libart.mk
++++ b/target/product/runtime_libart.mk
+@@ -92,8 +92,13 @@ PRODUCT_SYSTEM_PROPERTIES += \
+     dalvik.vm.dexopt.thermal-cutoff=2 \
+     dalvik.vm.appimageformat=lz4
+ 
+-PRODUCT_SYSTEM_PROPERTIES += \
+-    ro.dalvik.vm.native.bridge=0
++ifeq ($(USE_LIBNDK_TRANSLATION_NB),true)
++PRODUCT_SYSTEM_PROPERTIES += ro.dalvik.vm.native.bridge.ag=libndk_translation.so
++else ifeq ($(USE_CROS_HOUDINI_NB),true)
++PRODUCT_SYSTEM_PROPERTIES += ro.dalvik.vm.native.bridge.ag=libhoudini.so
++else
++PRODUCT_SYSTEM_PROPERTIES += ro.dalvik.vm.native.bridge=0
++endif
+ 
+ # Different dexopt types for different package update/install times.
+ # On eng builds, make "boot" reasons only extract for faster turnaround.
+-- 
+2.25.1
+

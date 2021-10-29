@@ -1,7 +1,7 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 8ea051a48185da418e5983237178f790f5e79fbe Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Wed, 11 Nov 2020 16:27:57 -0500
-Subject: [PATCH 09/18] Update audio and keymaster HAL
+Subject: [PATCH 09/28] Update audio and keymaster HAL
 
 - audio HAL 6 (sounetrigger 2.3)
 - keymaster HAL 4.1 (binderized service)
@@ -91,3 +91,6 @@ index 4681aba..a070956 100644
  
  # Light HAL
  PRODUCT_PACKAGES += \
+-- 
+2.25.1
+

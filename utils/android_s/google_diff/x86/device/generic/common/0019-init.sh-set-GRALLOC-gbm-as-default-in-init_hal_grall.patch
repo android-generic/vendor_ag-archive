@@ -1,7 +1,7 @@
-From 54a2ec56a574b1b2e3ed20a7c8d03369098c347d Mon Sep 17 00:00:00 2001
+From ded4e5ed5c62ca990df25829bf1f8fdd72ffd060 Mon Sep 17 00:00:00 2001
 From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sun, 10 Oct 2021 14:12:00 +0200
-Subject: [PATCH] init.sh: set GRALLOC gbm as default in init_hal_gralloc
+Subject: [PATCH 19/28] init.sh: set GRALLOC gbm as default in init_hal_gralloc
  (r-x86)
 
 drm_gralloc is not supported in r-x86 and later
@@ -12,7 +12,7 @@ Change-Id: Ib79161479dbd64ce7d9d6b46ba7ea01b02824a64
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/init.sh b/init.sh
-index 0962c22..b46eadc 100644
+index 78481b1..1f2842d 100644
 --- a/init.sh
 +++ b/init.sh
 @@ -193,7 +193,7 @@ function init_hal_gralloc()

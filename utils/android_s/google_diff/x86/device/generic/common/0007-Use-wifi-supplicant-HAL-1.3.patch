@@ -1,7 +1,7 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From e3ef29339a8d76e1a3223efdb7a5af3c58a48d4f Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Sun, 18 Oct 2020 21:46:58 -0400
-Subject: [PATCH 07/18] Use wifi supplicant HAL 1.3
+Subject: [PATCH 07/28] Use wifi supplicant HAL 1.3
 
 ---
  init.x86.rc | 2 ++
@@ -20,3 +20,6 @@ index c589a46..58b3800 100644
      class main
      socket wpa_wlan0 dgram 660 wifi wifi
      disabled
+-- 
+2.25.1
+

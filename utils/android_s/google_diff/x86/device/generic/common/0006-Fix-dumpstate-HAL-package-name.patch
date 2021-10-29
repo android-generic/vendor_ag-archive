@@ -1,7 +1,7 @@
-From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From 75686e88012bc93980a1c2c5cd3507f560f85568 Mon Sep 17 00:00:00 2001
 From: Michael Goffioul <michael.goffioul@lincor.com>
 Date: Fri, 18 Sep 2020 14:54:08 -0400
-Subject: [PATCH 06/18] Fix dumpstate HAL package name
+Subject: [PATCH 06/28] Fix dumpstate HAL package name
 
 Suffix ".example" has been added to the package name. Having dumpstate
 HAL is required to load the developer settings in Android Settings.
@@ -22,3 +22,6 @@ index 6d2da71..5d5f44c 100644
  
  # Gatekeeper HAL
  #PRODUCT_PACKAGES += \
+-- 
+2.25.1
+
