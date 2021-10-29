@@ -28,9 +28,9 @@ index a61af6a..aaab7ea 100644
  #include <android-base/file.h>
  #include <android-base/logging.h>
 +#include <android-base/properties.h>
+ #include <android-base/stringprintf.h>
  #include <android-base/strings.h>
  #include <fcntl.h>
- #include <hidl/Status.h>
 @@ -29,6 +30,7 @@
  #include <thread>
  

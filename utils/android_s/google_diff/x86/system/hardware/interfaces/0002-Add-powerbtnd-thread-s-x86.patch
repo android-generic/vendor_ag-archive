@@ -20,11 +20,11 @@ diff --git a/suspend/1.0/default/SystemSuspend.cpp b/suspend/1.0/default/SystemS
 index aaab7ea..4226ccd 100644
 --- a/suspend/1.0/default/SystemSuspend.cpp
 +++ b/suspend/1.0/default/SystemSuspend.cpp
-@@ -19,10 +19,15 @@
+@@ -19,11 +19,15 @@
  #include <android-base/file.h>
  #include <android-base/logging.h>
  #include <android-base/properties.h>
-+#include <android-base/stringprintf.h>
+ #include <android-base/stringprintf.h>
  #include <android-base/strings.h>
  #include <fcntl.h>
  #include <hidl/Status.h>
