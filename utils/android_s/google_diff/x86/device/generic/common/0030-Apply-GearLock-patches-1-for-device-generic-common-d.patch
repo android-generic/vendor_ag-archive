@@ -1,0 +1,26 @@
+From f9defe858266bcec74b200f5819b8c3c35d36026 Mon Sep 17 00:00:00 2001
+From: AXON <axonasif@gmail.com>
+Date: Fri, 12 Nov 2021 19:52:21 -0500
+Subject: [PATCH 3/4] Apply GearLock patches #1 for
+ device/generic/common/device.mk
+
+Change-Id: Icdda4f349e58f7b01d8fd91dd7790f70c6082ff1
+---
+ device.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/device.mk b/device.mk
+index c34bd4b..ee5eba8 100644
+--- a/device.mk
++++ b/device.mk
+@@ -32,6 +32,7 @@ PRODUCT_PROPERTY_OVERRIDES := \
+     persist.rtc_local_time=1
+ 
+ PRODUCT_COPY_FILES := \
++    vendor/gearlock/out/gri/gearlock:gearlock \
+     $(if $(wildcard $(PRODUCT_DIR)init.rc),$(PRODUCT_DIR)init.rc:root/init.rc) \
+     $(if $(wildcard $(PRODUCT_DIR)init.sh),$(PRODUCT_DIR),$(LOCAL_PATH)/)init.sh:system/etc/init.sh \
+     $(if $(wildcard $(PRODUCT_DIR)modules.blocklist),$(PRODUCT_DIR),$(LOCAL_PATH)/)modules.blocklist:system/etc/modules.blocklist \
+-- 
+2.25.1
+

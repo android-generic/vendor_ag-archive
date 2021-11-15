@@ -1,0 +1,45 @@
+From fdaddfcbed1b82c8b18d34d7f5b7c5421039a064 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 29 Oct 2021 14:09:30 -0400
+Subject: [PATCH 1/4] Add freeform config
+
+Change-Id: Ie1f93e7e60f1174ea2e6feb6028beccc2c903392
+---
+ device.mk                     | 4 ++++
+ display_settings_freeform.xml | 8 ++++++++
+ 2 files changed, 12 insertions(+)
+ create mode 100644 display_settings_freeform.xml
+
+diff --git a/device.mk b/device.mk
+index f9d4373..771af6a 100644
+--- a/device.mk
++++ b/device.mk
+@@ -148,6 +148,10 @@ $(call inherit-product,$(if $(wildcard $(PRODUCT_DIR)packages.mk),$(PRODUCT_DIR)
+ # Add agp-apps
+ $(call inherit-product-if-exists, vendor/prebuilts/agp-apps/agp-apps.mk)
+ 
++# Use altered freeform config from device/generic/goldfish
++PRODUCT_COPY_FILES += \
++    $(LOCAL_PATH)/display_settings_freeform.xml:$(TARGET_COPY_OUT_VENDOR)/etc/display_settings_freeform.xml \
++
+ # Get native bridge settings
+ $(call inherit-product,build/make/target/product/product_android_x86_64.mk)
+ ifeq ($(USE_LIBNDK_TRANSLATION_NB),true)
+diff --git a/display_settings_freeform.xml b/display_settings_freeform.xml
+new file mode 100644
+index 0000000..75b5fae
+--- /dev/null
++++ b/display_settings_freeform.xml
+@@ -0,0 +1,8 @@
++<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
++<display-settings>
++<!-- Use physical port number instead of local id -->
++<config identifier="1" />
++<!-- Set windowing mode to WINDOWING_MODE_FREEFORM -->
++<display name="port:0"
++    windowingMode="5" />
++</display-settings>
+\ No newline at end of file
+-- 
+2.25.1
+

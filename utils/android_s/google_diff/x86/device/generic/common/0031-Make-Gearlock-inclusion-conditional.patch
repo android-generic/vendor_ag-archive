@@ -1,0 +1,26 @@
+From ec606daab9c395aac10166187e2f2faecdd7c19d Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 13 Nov 2021 15:04:13 -0500
+Subject: [PATCH 4/4] Make Gearlock inclusion conditional
+
+Change-Id: Ifcf5eca205cd9d7418f8b9ffc3cdfc57e1efdfbc
+---
+ device.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/device.mk b/device.mk
+index ee5eba8..53c3482 100644
+--- a/device.mk
++++ b/device.mk
+@@ -32,7 +32,7 @@ PRODUCT_PROPERTY_OVERRIDES := \
+     persist.rtc_local_time=1
+ 
+ PRODUCT_COPY_FILES := \
+-    vendor/gearlock/out/gri/gearlock:gearlock \
++    $(if $(wildcard vendor/gearlock/out/gri/gearlock),vendor/gearlock/out/gri/gearlock:gearlock) \
+     $(if $(wildcard $(PRODUCT_DIR)init.rc),$(PRODUCT_DIR)init.rc:root/init.rc) \
+     $(if $(wildcard $(PRODUCT_DIR)init.sh),$(PRODUCT_DIR),$(LOCAL_PATH)/)init.sh:system/etc/init.sh \
+     $(if $(wildcard $(PRODUCT_DIR)modules.blocklist),$(PRODUCT_DIR),$(LOCAL_PATH)/)modules.blocklist:system/etc/modules.blocklist \
+-- 
+2.25.1
+

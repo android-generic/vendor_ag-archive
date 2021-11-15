@@ -1,0 +1,71 @@
+From 2ee43d164cb289e15a7f0cb8224dfdcb0bbc64e3 Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@outlook.com>
+Date: Sun, 5 Apr 2020 22:24:00 +0800
+Subject: [PATCH] Use F11 to change window state between freeform and
+ fullscreen
+
+Maybe we should add some rules to avoid to some windows to enter
+fullscreen mode and some windows to enter freeform window.
+
+Signed-off-by: utzcoz <utzcoz@outlook.com>
+Change-Id: Id6709e0755a03081d4f77550317596b67137df7e
+
+Conflicts:
+	core/java/com/android/internal/policy/DecorView.java
+---
+ .../android/internal/policy/DecorView.java    | 25 +++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/core/java/com/android/internal/policy/DecorView.java b/core/java/com/android/internal/policy/DecorView.java
+index 088a59da81a9..26941d51e460 100644
+--- a/core/java/com/android/internal/policy/DecorView.java
++++ b/core/java/com/android/internal/policy/DecorView.java
+@@ -47,6 +47,7 @@ import android.animation.ObjectAnimator;
+ import android.annotation.Nullable;
+ import android.annotation.TestApi;
+ import android.annotation.UnsupportedAppUsage;
++import android.app.Activity;
+ import android.app.WindowConfiguration;
+ import android.content.Context;
+ import android.content.res.Configuration;
+@@ -66,6 +67,7 @@ import android.graphics.drawable.ColorDrawable;
+ import android.graphics.drawable.Drawable;
+ import android.graphics.drawable.InsetDrawable;
+ import android.graphics.drawable.LayerDrawable;
++import android.os.RemoteException;
+ import android.util.DisplayMetrics;
+ import android.util.Log;
+ import android.util.Pair;
+@@ -375,6 +377,29 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
+         }
+ 
+         if (!mWindow.isDestroyed()) {
++            // region @waydroid
++            if (keyCode == KeyEvent.KEYCODE_F11 && isDown) {
++                Window.WindowControllerCallback callback = mWindow.getWindowControllerCallback();
++                Activity activity = null;
++                if (callback instanceof Activity) {
++                    activity = (Activity) callback;
++                }
++                final int windowingMode =
++                        getResources().getConfiguration().windowConfiguration.getWindowingMode();
++                try {
++                    if (windowingMode == WINDOWING_MODE_FREEFORM && activity != null) {
++                        activity.toggleFreeformWindowingMode();
++                        updateDecorCaptionShade();
++                    } else if (windowingMode != WINDOWING_MODE_FREEFORM && activity != null) {
++                        activity.toggleFreeformWindowingMode();
++                        updateDecorCaptionShade();
++                    }
++                    return true;
++                } catch (RemoteException ex) {
++                    Log.e(TAG, "Catch exception when process F11", ex);
++                }
++            }
++            // endregion
+             final Window.Callback cb = mWindow.getCallback();
+             final boolean handled = cb != null && mFeatureId < 0 ? cb.dispatchKeyEvent(event)
+                     : super.dispatchKeyEvent(event);
+-- 
+2.25.1
+

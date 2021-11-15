@@ -1,0 +1,26 @@
+From 890c357e7c37d3489bcb206ef6b2c9706f74cc55 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sun, 7 Nov 2021 13:02:26 -0500
+Subject: [PATCH] Use device_kernel_headers for PC builds
+
+Change-Id: Ia0253944f694a40867a6c5689d552798864d9cc0
+---
+ Android.bp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.bp b/Android.bp
+index b9775b5..98fbd16 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -43,7 +43,7 @@ cc_library_shared {
+         "libutils",
+     ],
+     header_libs: [
+-        "generated_kernel_headers",
++        "device_kernel_headers",
+     ],
+ }
+ 
+-- 
+2.25.1
+

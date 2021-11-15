@@ -1,0 +1,28 @@
+From 56803845559dfdb31da739f05952d16a3b22183e Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sun, 24 Oct 2021 20:12:58 -0400
+Subject: [PATCH] Allow x86_64-linux-androidkernel configurations
+
+Change-Id: I4c89e526279e09bebc3d49603677b6807bb40939
+---
+ ui/build/paths/config.go | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/ui/build/paths/config.go b/ui/build/paths/config.go
+index f2590a823..0db7fbb84 100644
+--- a/ui/build/paths/config.go
++++ b/ui/build/paths/config.go
+@@ -100,6 +100,10 @@ var Configuration = map[string]PathConfig{
+ 	"tr":      Allowed,
+ 	"unzip":   Allowed,
+ 	"zip":     Allowed,
++	
++	"x86_64-linux-androidkernel-as": Allowed,
++	"x86_64-linux-androidkernel-ld": Allowed,
++	"x86_64-linux-androidkernel-objcopy": Allowed,
+ 	"arm-linux-androidkernel-as": Allowed,
+ 	"arm-linux-androidkernel-ld": Allowed,
+ 	// Host toolchain is removed. In-tree toolchain should be used instead.
+-- 
+2.25.1
+

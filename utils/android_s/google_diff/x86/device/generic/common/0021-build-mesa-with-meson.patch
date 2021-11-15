@@ -1,5 +1,5 @@
 From 6aeec461eeb1bd1dc591c90596e5706afaa32b1d Mon Sep 17 00:00:00 2001
-From: Jon West <electrikjesus@gmail.com>
+From: Mauro Rossi <issor.oruam@gmail.com>
 Date: Sun, 24 Oct 2021 19:49:49 -0400
 Subject: [PATCH 21/28] build mesa with meson
 

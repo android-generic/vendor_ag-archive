@@ -1,0 +1,25 @@
+From 254c88fb947e9f810dbab19518f304aa57f9b755 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 12 Nov 2021 18:24:08 -0500
+Subject: [PATCH 2/4] Add generic ROM product inherit
+
+Change-Id: I22f14a80c50bfe468cbe00546845eaccd4949a5b
+---
+ device.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/device.mk b/device.mk
+index 771af6a..c34bd4b 100644
+--- a/device.mk
++++ b/device.mk
+@@ -169,3 +169,7 @@ $(call inherit-product-if-exists, vendor/google/chromeos-x86/target/widevine.mk)
+ $(call inherit-product-if-exists, vendor/google/chromeos-x86/target/native_bridge_arm_on_x86.mk)
+ PRODUCT_SYSTEM_DEFAULT_PROPERTIES += persist.sys.nativebridge=1
+ endif
++
++# Call common ROM configs
++$(call inherit-product-if-exists, $(shell find vendor/ -type f -name common.mk))
++$(call inherit-product-if-exists, $(shell find vendor/ -type f -name common_full_tablet_wifionly.mk))
+-- 
+2.25.1
+

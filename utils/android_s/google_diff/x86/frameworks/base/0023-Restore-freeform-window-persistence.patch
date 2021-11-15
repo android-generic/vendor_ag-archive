@@ -1,0 +1,43 @@
+From f0363da3514b66ee15d5eb9db1f559243c7e1ad7 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 13 Nov 2021 10:39:02 -0500
+Subject: [PATCH] Restore freeform window persistence
+
+This essentially reverts the changes from "Stop keeping freeform activities visible." 598c530b94cd0b8aa538c2ac323a0062fcec9e6e and restores freeform window persistence on all screens.
+
+Change-Id: I22c9a3f2e5221b2a6199d49f81bbb40fb4545e25
+---
+ .../server/wm/EnsureActivitiesVisibleHelper.java       | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/wm/EnsureActivitiesVisibleHelper.java b/services/core/java/com/android/server/wm/EnsureActivitiesVisibleHelper.java
+index 316c20ba5c47..fd70208b454c 100644
+--- a/services/core/java/com/android/server/wm/EnsureActivitiesVisibleHelper.java
++++ b/services/core/java/com/android/server/wm/EnsureActivitiesVisibleHelper.java
+@@ -16,6 +16,8 @@
+ 
+ package com.android.server.wm;
+ 
++import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
++
+ import static com.android.server.wm.ActivityTaskManagerDebugConfig.DEBUG_VISIBILITY;
+ import static com.android.server.wm.Task.TAG_VISIBILITY;
+ 
+@@ -179,7 +181,13 @@ class EnsureActivitiesVisibleHelper {
+             r.makeInvisible();
+         }
+ 
+-        if (!mBehindFullscreenActivity && mTask.isActivityTypeHome() && r.isRootOfTask()) {
++        final int windowingMode = mTask.getWindowingMode();
++        if (windowingMode == WINDOWING_MODE_FREEFORM) {
++            // The visibility of tasks and the activities they contain in freeform stack are
++            // determined individually unlike other stacks where the visibility or fullscreen
++            // status of an activity in a previous task affects other.
++            mBehindFullscreenActivity = mContainerShouldBeVisible;
++        } else if (!mBehindFullscreenActivity && mTask.isActivityTypeHome() && r.isRootOfTask()) {
+             if (DEBUG_VISIBILITY) {
+                 Slog.v(TAG_VISIBILITY, "Home task: at " + mTask
+                         + " containerShouldBeVisible=" + mContainerShouldBeVisible
+-- 
+2.25.1
+

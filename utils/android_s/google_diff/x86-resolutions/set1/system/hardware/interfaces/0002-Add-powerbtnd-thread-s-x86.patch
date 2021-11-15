@@ -1,16 +1,15 @@
-From 7986f38bf58ee53a71268b339c1e42da8eea353e Mon Sep 17 00:00:00 2001
+From d4f4897abaa82c25f4e5bac2147e51ccce139935 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
-Date: Sun, 14 Nov 2021 22:56:05 -0500
-Subject: [PATCH] Add powerbtnd thread (s-x86)
+Date: Mon, 20 Apr 2020 23:04:02 +0800
+Subject: [PATCH 2/2] Add powerbtnd thread (s-x86)
 
 Also send wakeup key on resume to ensure the system wakes up
 normally.
 
 Changelog:
 (r-x86) Resolve conflicts in suspend/1.0/default/SystemSuspend.cpp
-Change-Id: I7e717fec631c05fa01d18b6a844ef7b0ad747878
 
-Change-Id: Icd2d6a7eee295cdc546f497e6f42a5bdc6800c80
+Change-Id: I4c294fbeecb2bdceb6ce6783189216da74597746
 ---
  suspend/1.0/default/SystemSuspend.cpp         | 150 ++++++++++++++++++
  suspend/1.0/default/SystemSuspend.h           |   2 +
@@ -18,7 +17,7 @@ Change-Id: Icd2d6a7eee295cdc546f497e6f42a5bdc6800c80
  3 files changed, 153 insertions(+), 1 deletion(-)
 
 diff --git a/suspend/1.0/default/SystemSuspend.cpp b/suspend/1.0/default/SystemSuspend.cpp
-index 5b22a28..3f96466 100644
+index aaab7ea..4226ccd 100644
 --- a/suspend/1.0/default/SystemSuspend.cpp
 +++ b/suspend/1.0/default/SystemSuspend.cpp
 @@ -19,10 +19,15 @@
@@ -234,7 +233,7 @@ index 37e9358..6ec3d0e 100644
      unique_fd mSuspendStatsFd;
      unique_fd mSuspendTimeFd;
 diff --git a/suspend/1.0/default/android.system.suspend@1.0-service.rc b/suspend/1.0/default/android.system.suspend@1.0-service.rc
-index 965ca16..c0c2f5c 100644
+index c5d3869..f353302 100644
 --- a/suspend/1.0/default/android.system.suspend@1.0-service.rc
 +++ b/suspend/1.0/default/android.system.suspend@1.0-service.rc
 @@ -1,5 +1,5 @@
@@ -245,5 +244,5 @@ index 965ca16..c0c2f5c 100644
 +    group system wakelock uhid input
      capabilities BLOCK_SUSPEND
 -- 
-2.25.1
+2.30.2
 

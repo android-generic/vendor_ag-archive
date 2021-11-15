@@ -1,0 +1,81 @@
+From 73a10e361a01817d6afcfa6736b1973016f1ae5f Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@outlook.com>
+Date: Sat, 31 Oct 2020 13:52:32 +0800
+Subject: [PATCH] Only show pip button if activity supports it
+
+Signed-off-by: utzcoz <utzcoz@outlook.com>
+Change-Id: I1512f35a90592c247c230461bee8b882c5df98dd
+
+Conflicts:
+	core/java/android/app/Activity.java
+	core/java/com/android/internal/widget/DecorCaptionView.java
+---
+ core/java/android/app/Activity.java               | 10 ++++++++++
+ .../android/internal/widget/DecorCaptionView.java | 15 +++++++++++++++
+ 2 files changed, 25 insertions(+)
+
+diff --git a/core/java/android/app/Activity.java b/core/java/android/app/Activity.java
+index 81657ea24883..98cab8dadf30 100644
+--- a/core/java/android/app/Activity.java
++++ b/core/java/android/app/Activity.java
+@@ -3935,6 +3935,16 @@ public class Activity extends ContextThemeWrapper
+         ActionBar actionBar = getActionBar();
+         return (actionBar != null && actionBar.onKeyShortcut(keyCode, event));
+     }
++    // region @bliss
++    /**
++     * Check whether the activity supports pip.
++     * @see android.R.attr#supportsPictureInPicture
++     * @hide
++     */
++    public boolean supportPictureInPictureMode() {
++        return mActivityInfo != null && mActivityInfo.supportsPictureInPicture();
++    }
++    // endregion
+ 
+     /**
+      * Called when a touch screen event was not handled by any of the views
+diff --git a/core/java/com/android/internal/widget/DecorCaptionView.java b/core/java/com/android/internal/widget/DecorCaptionView.java
+index 107408f2e850..915d0bff8522 100644
+--- a/core/java/com/android/internal/widget/DecorCaptionView.java
++++ b/core/java/com/android/internal/widget/DecorCaptionView.java
+@@ -147,7 +147,12 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+         // region @boringdroid
+         mBack = findViewById(R.id.back_window);
+         // endregion
++        // region @bliss
+         mPip = findViewById(R.id.pip_window);
++        if (mPip != null && !supportPip()) {
++            mPip.setVisibility(View.GONE);
++        }
++        // endregion
+         mMinimize = findViewById(R.id.minimize_window);
+         mMaximize = findViewById(R.id.maximize_window);
+         mClose = findViewById(R.id.close_window);
+@@ -366,6 +371,15 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+             callback.toggleFreeformWindowingMode();
+         }
+     }
++    // region @bliss
++    private boolean supportPip() {
++        Window.WindowControllerCallback callback = mOwner.getWindowControllerCallback();
++        if (callback instanceof Activity) {
++            Activity activity = (Activity) callback;
++            return activity.supportPictureInPictureMode();
++        }
++        return false;
++    }
+ 
+     private void minimizeWindow() {
+         Window.WindowControllerCallback callback = mOwner.getWindowControllerCallback();
+@@ -380,6 +394,7 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+ 			callback.enterPictureInPictureModeIfPossible(); /* Send the task to PIP mode if the task supports it. */
+ 		}
+     }
++    // endregion
+ 
+     public boolean isCaptionShowing() {
+         return mShow;
+-- 
+2.25.1
+
