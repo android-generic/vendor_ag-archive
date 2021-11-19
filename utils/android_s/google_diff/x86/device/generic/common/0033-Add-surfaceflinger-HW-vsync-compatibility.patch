@@ -1,0 +1,25 @@
+From a45db4cdc7e60a7112d5bd2a6385561b888cfee3 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 17 Nov 2021 21:26:01 -0500
+Subject: [PATCH 06/14] Add surfaceflinger HW vsync compatibility
+
+Change-Id: I6f3b08bb936a6b0f5fcc0b91d00b641972075719
+---
+ device.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/device.mk b/device.mk
+index 420b0eb..d9412e6 100644
+--- a/device.mk
++++ b/device.mk
+@@ -176,3 +176,7 @@ endif
+ # Call common ROM configs
+ $(call inherit-product-if-exists, $(shell find vendor/ -type f -name common.mk))
+ $(call inherit-product-if-exists, $(shell find vendor/ -type f -name common_full_tablet_wifionly.mk))
++
++# Need this so that the application's loop on reading input can be synchronized with HW VSYNC
++PRODUCT_VENDOR_PROPERTIES += \
++    ro.surface_flinger.running_without_sync_framework=true
+-- 
+2.25.1
+

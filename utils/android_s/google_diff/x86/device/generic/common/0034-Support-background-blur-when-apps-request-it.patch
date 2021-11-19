@@ -1,0 +1,25 @@
+From 84e7e50e179181d7a23d6ab4ab40a1af94c30a28 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 17 Nov 2021 21:26:22 -0500
+Subject: [PATCH 07/14] Support background blur when apps request it
+
+Change-Id: I204cce3b8c4bb72612f375a68f7a9ad5a61a7b95
+---
+ device.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/device.mk b/device.mk
+index d9412e6..1c72691 100644
+--- a/device.mk
++++ b/device.mk
+@@ -180,3 +180,7 @@ $(call inherit-product-if-exists, $(shell find vendor/ -type f -name common_full
+ # Need this so that the application's loop on reading input can be synchronized with HW VSYNC
+ PRODUCT_VENDOR_PROPERTIES += \
+     ro.surface_flinger.running_without_sync_framework=true
++
++# Enable GPU-intensive background blur support on Cuttlefish when requested by apps
++PRODUCT_VENDOR_PROPERTIES += \
++    ro.surface_flinger.supports_background_blur 1
+-- 
+2.25.1
+

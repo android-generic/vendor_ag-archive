@@ -1,0 +1,48 @@
+From c1f982522ee81a61120b3b169a995a731b3333e1 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 10 Nov 2021 19:58:24 -0500
+Subject: [PATCH 1/9] Add debug info for mounting process
+
+---
+ initrd/init | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/initrd/init b/initrd/init
+index cd7422d..dfd087e 100755
+--- a/initrd/init
++++ b/initrd/init
+@@ -91,12 +91,20 @@ check_root()
+ 	else
+ 		dev=$1
+ 	fi
++	if [ -n "$DEBUG" ]; then
++		echo -e "Trying device:"
++		echo -e "$dev"
++	fi
+ 	try_mount ro $dev /mnt || return 1
+ 	if [ -n "$iso" -a -e /mnt/$iso ]; then
+ 		mount --move /mnt /iso
+ 		mkdir /mnt/iso
+ 		mount -o loop /iso/$iso /mnt/iso
+ 	fi
++	if [ -n "$DEBUG" ]; then
++		echo -e "Looking for system:"
++		echo -e "/mnt/$SRC"
++	fi
+ 	if [ -e /mnt/$SRC/system.sfs ]; then
+ 		mount -o loop,noatime /mnt/$SRC/system.sfs android
+ 		if [ -e android/system.img ]; then
+@@ -112,6 +120,10 @@ check_root()
+ 	elif [ -z "$SRC" -a -s /mnt/default.prop ]; then
+ 		mount --bind /mnt android
+ 	else
++		if [ -n "$DEBUG" ]; then
++			echo -e "System not found."
++			echo -e "/mnt/$SRC"
++		fi
+ 		return 1
+ 	fi
+ 	echo " found at $1"
+-- 
+2.25.1
+

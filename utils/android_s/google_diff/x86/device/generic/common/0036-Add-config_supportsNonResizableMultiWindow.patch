@@ -1,0 +1,32 @@
+From e7dd9d2a0c51bbaf946eb7dc40764b06ee3c438a Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 17 Nov 2021 21:27:25 -0500
+Subject: [PATCH 09/14] Add config_supportsNonResizableMultiWindow
+
+Change-Id: I1b5e279fa9ff84e54a090bc600888f7912230f82
+---
+ overlay/frameworks/base/core/res/res/values/config.xml | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/overlay/frameworks/base/core/res/res/values/config.xml b/overlay/frameworks/base/core/res/res/values/config.xml
+index 6c168b7..e1fab98 100644
+--- a/overlay/frameworks/base/core/res/res/values/config.xml
++++ b/overlay/frameworks/base/core/res/res/values/config.xml
+@@ -120,6 +120,14 @@
+          E.g. freeform, split-screen, picture-in-picture. -->
+     <bool name="config_supportsMultiWindow">true</bool>
+     
++    <!-- Whether the device supports non-resizable activity in multi windowing modes.
++         -1: The device doesn't support non-resizable in multi windowing modes.
++          0: The device supports non-resizable in multi windowing modes only if this is a large
++             screen (smallest width >= {@link config_largeScreenSmallestScreenWidthDp}).
++          1: The device always supports non-resizable in multi windowing modes.
++    -->
++    <integer name="config_supportsNonResizableMultiWindow">1</integer>
++
+     <!-- Controls the opacity of the navigation bar depending on the visibility of the
+          various workspace stacks.
+          0 - Nav bar is always opaque when either the freeform stack or docked stack is visible.
+-- 
+2.25.1
+

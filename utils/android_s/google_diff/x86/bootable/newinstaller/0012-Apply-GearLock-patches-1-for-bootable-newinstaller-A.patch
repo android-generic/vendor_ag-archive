@@ -1,0 +1,26 @@
+From 30dc6ad7592469123b50594c0783b3ed8c36f817 Mon Sep 17 00:00:00 2001
+From: AXON <axonasif@gmail.com>
+Date: Fri, 12 Nov 2021 19:52:21 -0500
+Subject: [PATCH 6/9] Apply GearLock patches #1 for
+ bootable/newinstaller/Android.mk
+
+---
+ Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.mk b/Android.mk
+index f9faff6..3f5b07a 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -79,7 +79,7 @@ $(boot_dir): $(shell find $(LOCAL_PATH)/boot -type f | sort -r) $(isolinux_files
+ 	mkdosfs -n EFI $$img; mmd -i $$img ::boot; \
+ 	mcopy -si $$img $@/efi ::; mdel -i $$img ::efi/boot/*.cfg
+ 
+-BUILT_IMG := $(addprefix $(PRODUCT_OUT)/,initrd.img install.img) $(systemimg)
++BUILT_IMG := $(addprefix $(PRODUCT_OUT)/,initrd.img gearlock install.img) $(systemimg)
+ BUILT_IMG += $(if $(TARGET_PREBUILT_KERNEL),$(TARGET_PREBUILT_KERNEL),$(PRODUCT_OUT)/kernel)
+ 
+ ISO_IMAGE := $(PRODUCT_OUT)/$(TARGET_PRODUCT).iso
+-- 
+2.25.1
+

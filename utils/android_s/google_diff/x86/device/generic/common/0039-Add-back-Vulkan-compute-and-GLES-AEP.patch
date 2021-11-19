@@ -1,0 +1,48 @@
+From 454a428902bb9d45181a1ef092dcffb41476939c Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 17 Nov 2021 21:34:06 -0500
+Subject: [PATCH 12/14] Add back Vulkan compute and GLES AEP
+
+Change-Id: Ib45150ae7274fc18691433a6a02df7640bbc2b89
+---
+ gpu/gpu_mesa.mk | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/gpu/gpu_mesa.mk b/gpu/gpu_mesa.mk
+index 9970a10..7f08acd 100644
+--- a/gpu/gpu_mesa.mk
++++ b/gpu/gpu_mesa.mk
+@@ -16,12 +16,15 @@ PRODUCT_PACKAGES := \
+     libGLES_mesa    \
+     libtxc_dxtn     \
+     modetest
++
+ PRODUCT_PACKAGES += \
+     libEGL_swiftshader \
+     libGLESv1_CM_swiftshader \
+     libGLESv2_swiftshader \
+     vulkan.radeon \
+-    vulkan.intel
++    vulkan.intel \
++    libvulkan_enc
++
+ PRODUCT_PACKAGES += \
+     libEGL_mesa \
+     libGLESv1_CM_mesa \
+@@ -32,8 +35,12 @@ PRODUCT_PACKAGES += \
+ PRODUCT_PROPERTY_OVERRIDES := \
+     ro.opengles.version = 196608 \
+     ro.hardware.vulkan.level = 1 \
+-    ro.hardware.vulkan.version = 4194307
++    ro.hardware.vulkan.version = 4194307 \
++    ro.hardware.egl = mesa \
++    debug.renderengine.backend = gles
+ 
+ PRODUCT_COPY_FILES += \
++    frameworks/native/data/etc/android.hardware.opengles.aep.xml:system/etc/permissions/android.hardware.opengles.aep.xml \
++    frameworks/native/data/etc/android.hardware.vulkan.compute-0.xml:system/etc/permissions/android.hardware.vulkan.compute.xml \
+     frameworks/native/data/etc/android.hardware.vulkan.level-1.xml:system/etc/permissions/android.hardware.vulkan.level.xml \
+     frameworks/native/data/etc/android.hardware.vulkan.version-1_1.xml:system/etc/permissions/android.hardware.vulkan.version.xml
+-- 
+2.25.1
+

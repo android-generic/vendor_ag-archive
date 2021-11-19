@@ -1,0 +1,31 @@
+From d727ae96bad138e15f394694e922c9669e91f710 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 17 Nov 2021 21:34:43 -0500
+Subject: [PATCH 13/14] Add Angle packages to GPU
+
+Change-Id: I676ada5d171562501056366a6698f0a4edc8f5c2
+---
+ gpu/gpu_mesa.mk | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/gpu/gpu_mesa.mk b/gpu/gpu_mesa.mk
+index 7f08acd..5638c50 100644
+--- a/gpu/gpu_mesa.mk
++++ b/gpu/gpu_mesa.mk
+@@ -39,6 +39,13 @@ PRODUCT_PROPERTY_OVERRIDES := \
+     ro.hardware.egl = mesa \
+     debug.renderengine.backend = gles
+ 
++# ANGLE provides an OpenGL implementation built on top of Vulkan.
++PRODUCT_PACKAGES += \
++    libEGL_angle \
++    libGLESv1_CM_angle \
++    libGLESv2_angle \
++    libfeature_support_angle.so
++
+ PRODUCT_COPY_FILES += \
+     frameworks/native/data/etc/android.hardware.opengles.aep.xml:system/etc/permissions/android.hardware.opengles.aep.xml \
+     frameworks/native/data/etc/android.hardware.vulkan.compute-0.xml:system/etc/permissions/android.hardware.vulkan.compute.xml \
+-- 
+2.25.1
+

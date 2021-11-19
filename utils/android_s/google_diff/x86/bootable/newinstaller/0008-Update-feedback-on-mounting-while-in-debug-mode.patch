@@ -1,0 +1,51 @@
+From 58caf86d1557ff24ea197e9e84cd1e5e8ca80858 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 17 Nov 2021 14:24:00 -0500
+Subject: [PATCH 4/9] Update feedback on mounting while in debug mode
+
+---
+ initrd/init | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/initrd/init b/initrd/init
+index 895815d..cccf436 100755
+--- a/initrd/init
++++ b/initrd/init
+@@ -106,18 +106,34 @@ check_root()
+ 		echo -e "/mnt/$SRC"
+ 	fi
+ 	if [ -e /mnt/$SRC/system.sfs ]; then
++		if [ -n "$DEBUG" ]; then
++			echo -e "Found system in:"
++			echo -e "/mnt/$SRC"
++		fi
+ 		mount -o loop,noatime /mnt/$SRC/system.sfs android
+ 		if [ -e android/system.img ]; then
+ 			mount --move android /sfs
+ 			mount -o loop,noatime /sfs/system.img android
+ 		fi
+ 	elif [ -e /mnt/$SRC/system.img ]; then
++		if [ -n "$DEBUG" ]; then
++			echo -e "Found system in:"
++			echo -e "/mnt/$SRC"
++		fi
+ 		remount_rw
+ 		mount -o loop,noatime /mnt/$SRC/system.img android
+ 	elif [ -s /mnt/$SRC/system/default.prop ]; then
++		if [ -n "$DEBUG" ]; then
++			echo -e "Found system in:"
++			echo -e "/mnt/$SRC/system/default.prop"
++		fi
+ 		remount_rw
+ 		mount --bind /mnt/$SRC/system android
+ 	elif [ -z "$SRC" -a -s /mnt/default.prop ]; then
++		if [ -n "$DEBUG" ]; then
++			echo -e "Found system in:"
++			echo -e "/mnt/default.prop"
++		fi
+ 		mount --bind /mnt android
+ 	else
+ 		if [ -n "$DEBUG" ]; then
+-- 
+2.25.1
+

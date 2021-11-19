@@ -1,0 +1,26 @@
+From ca1b4fc0cf40f4a12839444a5cf699c4e40af70a Mon Sep 17 00:00:00 2001
+From: AXON <axonasif@gmail.com>
+Date: Fri, 12 Nov 2021 19:52:21 -0500
+Subject: [PATCH 8/9] Apply GearLock patches #1 for
+ bootable/newinstaller/install/scripts/1-install
+
+---
+ install/scripts/1-install | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/install/scripts/1-install b/install/scripts/1-install
+index 7ddec2b..2644402 100644
+--- a/install/scripts/1-install
++++ b/install/scripts/1-install
+@@ -517,7 +517,7 @@ install_to()
+ 	else
+ 		sysimg="mnt/$SRC/system.*"
+ 	fi
+-	files="mnt/$SRC/kernel mnt/$SRC/initrd.img $sysimg"
++	files="mnt/$SRC/kernel mnt/$SRC/initrd.img /mnt/$SRC/gearlock $sysimg"
+ 	size=0
+ 	for s in `du -sk $files | awk '{print $1}'`; do
+ 		size=$(($size+$s))
+-- 
+2.25.1
+

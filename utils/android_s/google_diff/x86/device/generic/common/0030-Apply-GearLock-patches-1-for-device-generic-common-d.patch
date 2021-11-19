@@ -1,7 +1,7 @@
 From f9defe858266bcec74b200f5819b8c3c35d36026 Mon Sep 17 00:00:00 2001
 From: AXON <axonasif@gmail.com>
 Date: Fri, 12 Nov 2021 19:52:21 -0500
-Subject: [PATCH 3/4] Apply GearLock patches #1 for
+Subject: [PATCH 03/14] Apply GearLock patches #1 for
  device/generic/common/device.mk
 
 Change-Id: Icdda4f349e58f7b01d8fd91dd7790f70c6082ff1

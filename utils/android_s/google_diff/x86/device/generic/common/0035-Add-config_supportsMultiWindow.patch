@@ -1,0 +1,30 @@
+From e5d8848f0effac99e2662b90cc486df61474bb80 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 17 Nov 2021 21:26:56 -0500
+Subject: [PATCH 08/14] Add config_supportsMultiWindow
+
+Change-Id: Id1c2c93a79eb777238fb399097f6958316a2c166
+---
+ overlay/frameworks/base/core/res/res/values/config.xml | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/overlay/frameworks/base/core/res/res/values/config.xml b/overlay/frameworks/base/core/res/res/values/config.xml
+index 3e0fe2b..6c168b7 100644
+--- a/overlay/frameworks/base/core/res/res/values/config.xml
++++ b/overlay/frameworks/base/core/res/res/values/config.xml
+@@ -115,7 +115,11 @@
+          The duplication is necessary, because this information is used before the features are
+          available to the system.-->
+     <bool name="config_freeformWindowManagement">true</bool>
+-
++    
++    <!-- True if the device supports at least one form of multi-window.
++         E.g. freeform, split-screen, picture-in-picture. -->
++    <bool name="config_supportsMultiWindow">true</bool>
++    
+     <!-- Controls the opacity of the navigation bar depending on the visibility of the
+          various workspace stacks.
+          0 - Nav bar is always opaque when either the freeform stack or docked stack is visible.
+-- 
+2.25.1
+

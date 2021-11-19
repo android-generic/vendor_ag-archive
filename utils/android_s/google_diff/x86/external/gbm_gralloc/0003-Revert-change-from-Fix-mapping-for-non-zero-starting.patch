@@ -1,0 +1,29 @@
+From fe6d9bbd90cf7b4055e57ecd2c2b04be545ed63b Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 17 Nov 2021 21:43:29 -0500
+Subject: [PATCH] Revert change from "Fix mapping for non-zero starting
+ coordinates"
+
+This reverts commit 640b8f16644d56ca53d1130e026c9c2098574bfe.
+---
+ gralloc_gbm.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/gralloc_gbm.cpp b/gralloc_gbm.cpp
+index d8ef7f3..a9894ec 100644
+--- a/gralloc_gbm.cpp
++++ b/gralloc_gbm.cpp
+@@ -285,8 +285,8 @@ static int gbm_map(buffer_handle_t handle, int x, int y, int w, int h,
+ 	if (enable_write)
+ 		flags |= GBM_BO_TRANSFER_WRITE;
+ 
+-	*addr = gbm_bo_map(bo, 0, 0, x + w, y + h, flags, &stride, &bo_data->map_data);
+-	ALOGV("mapped bo %p (%d, %d)-(%d, %d) at %p", bo, x, y, w, h, *addr);
++	*addr = gbm_bo_map(bo, x, y, w, h, flags, &stride, &bo_data->map_data);
++	ALOGV("mapped bo %p at %p", bo, *addr);
+ 	if (*addr == NULL)
+ 		return -ENOMEM;
+ 
+-- 
+2.25.1
+

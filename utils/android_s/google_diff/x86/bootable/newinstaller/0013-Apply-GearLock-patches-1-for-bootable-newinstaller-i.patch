@@ -1,0 +1,26 @@
+From fc0a86b15be5ea4335d30764d6a91b3d7f8e589e Mon Sep 17 00:00:00 2001
+From: AXON <axonasif@gmail.com>
+Date: Fri, 12 Nov 2021 19:52:21 -0500
+Subject: [PATCH 7/9] Apply GearLock patches #1 for
+ bootable/newinstaller/initrd/init
+
+---
+ initrd/init | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/initrd/init b/initrd/init
+index cccf436..da26d7c 100755
+--- a/initrd/init
++++ b/initrd/init
+@@ -239,7 +239,7 @@ fi
+ 
+ load_modules
+ mount_data
+-mount_sdcard
++mount_sdcard; hook_gearinit
+ setup_tslib
+ setup_dpi
+ post_detect
+-- 
+2.25.1
+

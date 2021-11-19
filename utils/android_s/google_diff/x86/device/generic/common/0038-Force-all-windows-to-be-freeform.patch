@@ -1,0 +1,36 @@
+From 87cee3e1d207a2f940ba1a787e8dc1add79d16a2 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 17 Nov 2021 21:30:48 -0500
+Subject: [PATCH 11/14] Force all windows to be freeform
+
+Setting to -1 allows the device to ignore the large screen activity min width/height when determining if it can be shown in multi windowing modes.
+Change-Id: I6de0ab2c51af4be278004a21e4541c2e1ea75af4
+---
+ .../frameworks/base/core/res/res/values/config.xml  | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/overlay/frameworks/base/core/res/res/values/config.xml b/overlay/frameworks/base/core/res/res/values/config.xml
+index 42c860f..9af0291 100644
+--- a/overlay/frameworks/base/core/res/res/values/config.xml
++++ b/overlay/frameworks/base/core/res/res/values/config.xml
+@@ -141,4 +141,17 @@
+     -->
+     <integer name="config_largeScreenSmallestScreenWidthDp">300</integer>
+     
++    <!-- Whether the device checks the activity min width/height to determine if it can be shown in
++         multi windowing modes.
++         -1: The device ignores the activity min width/height when determining if it can be shown in
++             multi windowing modes.
++          0: If this is a small screen (smallest width <
++             {@link config_largeScreenSmallestScreenWidthDp}), the device compares the activity min
++             width/height with the min multi windowing modes dimensions the device supports to
++             determine if the activity can be shown in multi windowing modes
++          1: The device always compare the activity min width/height with the min multi windowing
++             modes dimensions {@link config_minPercentageMultiWindowSupportWidth} the device
++             supports to determine if the activity can be shown in multi windowing modes.
++    -->
++    <integer name="config_respectsActivityMinWidthHeightMultiWindow">-1</integer>
+ </resources>
+-- 
+2.25.1
+

@@ -1,0 +1,48 @@
+From 0d06a8fad9e7a7da2b7eaac1022c02d7ed2ac9fd Mon Sep 17 00:00:00 2001
+From: Doug <maildoug@gmail.com>
+Date: Fri, 29 Oct 2021 01:37:02 +0800
+Subject: [PATCH 2/9] init: support Xen hypervisor device
+
+---
+ initrd/init               | 2 +-
+ install/scripts/1-install | 4 ++--
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/initrd/init b/initrd/init
+index dfd087e..fd86e60 100755
+--- a/initrd/init
++++ b/initrd/init
+@@ -167,7 +167,7 @@ done
+ 
+ cd /
+ while :; do
+-	for device in ${ROOT:-/dev/[hmnsv][dmrv][0-9a-z]*}; do
++	for device in ${ROOT:-/dev/[hmnsvx][dmrv][0-9a-z]*}; do
+ 		check_root $device && break 2
+ 		mountpoint -q /mnt && umount /mnt
+ 	done
+diff --git a/install/scripts/1-install b/install/scripts/1-install
+index c70e020..7ddec2b 100644
+--- a/install/scripts/1-install
++++ b/install/scripts/1-install
+@@ -61,7 +61,7 @@ find_partition()
+ 
+ list_disks()
+ {
+-	for b in /sys/block/[shv]d[a-z] /sys/block/mmcblk? /sys/block/nvme*; do
++	for b in /sys/block/[shv]d[a-z] /sys/block/xvd[a-z] /sys/block/mmcblk? /sys/block/nvme*; do
+ 		[ -d $b ] && echo $b
+ 	done
+ }
+@@ -372,7 +372,7 @@ get_part_info()
+ 	d=0
+ 	while [ 1 ]; do
+ 		h=`echo $d | awk '{ printf("%c", $1+97) }'`
+-		for part in /sys/block/[shv]d$h/$1 /sys/block/mmcblk$d/$1 /sys/block/nvme0n$(($d+1))/$1; do
++		for part in /sys/block/[shv]d$h/$1 /sys/block/xvd$h/$1 /sys/block/mmcblk$d/$1 /sys/block/nvme0n$(($d+1))/$1; do
+ 			[ -d $part ] && break 2
+ 		done
+ 		d=$(($d+1))
+-- 
+2.25.1
+

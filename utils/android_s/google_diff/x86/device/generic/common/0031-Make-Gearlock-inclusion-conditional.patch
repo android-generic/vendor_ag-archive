@@ -1,7 +1,7 @@
 From ec606daab9c395aac10166187e2f2faecdd7c19d Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Sat, 13 Nov 2021 15:04:13 -0500
-Subject: [PATCH 4/4] Make Gearlock inclusion conditional
+Subject: [PATCH 04/14] Make Gearlock inclusion conditional
 
 Change-Id: Ifcf5eca205cd9d7418f8b9ffc3cdfc57e1efdfbc
 ---

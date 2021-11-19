@@ -1,0 +1,32 @@
+From e557552a3145bd3d75810281d43d4a9d06325b19 Mon Sep 17 00:00:00 2001
+From: AXON <axonasif@gmail.com>
+Date: Fri, 12 Nov 2021 19:52:21 -0500
+Subject: [PATCH 5/9] Apply GearLock 7.3.8 initrd hook
+
+---
+ initrd/scripts/0-hook | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+ create mode 100755 initrd/scripts/0-hook
+
+diff --git a/initrd/scripts/0-hook b/initrd/scripts/0-hook
+new file mode 100755
+index 0000000..0740b6c
+--- /dev/null
++++ b/initrd/scripts/0-hook
+@@ -0,0 +1,13 @@
++hook_gearinit() 
++{ 
++	GIMG="/mnt/$SRC/gearlock";
++	if test -e "$GIMG"; then
++		export RECOVERY="yes" PATH="$PATH:/gearlock/bin" SRC origPWD="$PWD";
++		cd /;
++		mount -o rw,remount /;
++		mount -o rw,remount /android > /dev/null 2>&1;
++		mkdir -p /gearlock && mount -t tmpfs tmpfs /gearlock && chmod 755 /gearlock \
++			&& cpio -iudF "$GIMG" > /dev/null 2>&1 && /gearlock/bin/gearinit 2>&1;
++		cd "$origPWD";
++	fi
++}
+-- 
+2.25.1
+

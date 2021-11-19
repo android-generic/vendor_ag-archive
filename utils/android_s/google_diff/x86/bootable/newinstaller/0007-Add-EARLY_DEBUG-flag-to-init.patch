@@ -1,0 +1,51 @@
+From 2de0303cf1f309975ec875f2168ce8d7926f6311 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 17 Nov 2021 14:13:21 -0500
+Subject: [PATCH 3/9] Add EARLY_DEBUG flag to init
+
+---
+ Android.mk  | 1 +
+ initrd/init | 8 +++++++-
+ 2 files changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/Android.mk b/Android.mk
+index d31960f..f9faff6 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -48,6 +48,7 @@ $(INITRD_RAMDISK): $(initrd_bin) $(systemimg) $(TARGET_INITRD_SCRIPTS) | $(ACP)
+ 	mkdir -p $(addprefix $(TARGET_INITRD_OUT)/,android apex hd iso lib mnt proc scripts sfs sys tmp)
+ 	$(if $(TARGET_INITRD_SCRIPTS),$(ACP) -p $(TARGET_INITRD_SCRIPTS) $(TARGET_INITRD_OUT)/scripts)
+ 	ln -s /bin/ld-linux.so.2 $(TARGET_INITRD_OUT)/lib
++	cp -rp "$(TARGET_OUT_INTERMEDIATES)/kernel/drivers/input/keyboard/atkbd.ko" "$(TARGET_INITRD_OUT)"
+ 	echo "VER=$(VER)" > $(TARGET_INITRD_OUT)/scripts/00-ver
+ 	$(if $(RELEASE_OS_TITLE),echo "OS_TITLE=$(RELEASE_OS_TITLE)" >> $(TARGET_INITRD_OUT)/scripts/00-ver)
+ 	$(if $(INSTALL_PREFIX),echo "INSTALL_PREFIX=$(INSTALL_PREFIX)" >> $(TARGET_INITRD_OUT)/scripts/00-ver)
+diff --git a/initrd/init b/initrd/init
+index fd86e60..895815d 100755
+--- a/initrd/init
++++ b/initrd/init
+@@ -150,6 +150,12 @@ debug_shell()
+ 	fi
+ }
+ 
++## Start early debug shell
++if test -n "$EARLY_DEBUG"; then
++	modprobe /atkbd.ko
++	debug_shell
++fi
++
+ echo -n Detecting Android-x86...
+ 
+ [ -z "$SRC" -a -n "$BOOT_IMAGE" ] && SRC=`dirname $BOOT_IMAGE`
+@@ -203,7 +209,7 @@ if [ -n "$INSTALL" -o -n "$DEBUG" ]; then
+ 	auto_detect &
+ fi
+ 
+-if [ 0$DEBUG -gt 0 ]; then
++if [ 0$DEBUG -gt 0 ] && [ -z "$EARLY_DEBUG" ]; then
+ 	echo -e "\nType 'exit' to continue booting...\n"
+ 	debug_shell debug-found
+ fi
+-- 
+2.25.1
+

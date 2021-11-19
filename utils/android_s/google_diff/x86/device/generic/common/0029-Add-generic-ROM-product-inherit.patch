@@ -1,7 +1,7 @@
 From 254c88fb947e9f810dbab19518f304aa57f9b755 Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Fri, 12 Nov 2021 18:24:08 -0500
-Subject: [PATCH 2/4] Add generic ROM product inherit
+Subject: [PATCH 02/14] Add generic ROM product inherit
 
 Change-Id: I22f14a80c50bfe468cbe00546845eaccd4949a5b
 ---

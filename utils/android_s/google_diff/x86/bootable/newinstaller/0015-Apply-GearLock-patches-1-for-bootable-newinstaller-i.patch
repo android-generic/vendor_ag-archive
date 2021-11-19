@@ -1,0 +1,68 @@
+From e3504ef38e9fb7c25d6d1be74b6a6320410aa022 Mon Sep 17 00:00:00 2001
+From: AXON <axonasif@gmail.com>
+Date: Fri, 12 Nov 2021 19:52:21 -0500
+Subject: [PATCH 9/9] Apply GearLock patches #1 for
+ bootable/newinstaller/install/grub2/efi/boot/android.cfg
+
+---
+ install/grub2/efi/boot/android.cfg | 33 ++++++++++++++++--------------
+ 1 file changed, 18 insertions(+), 15 deletions(-)
+
+diff --git a/install/grub2/efi/boot/android.cfg b/install/grub2/efi/boot/android.cfg
+index a4f8ee1..423ead0 100644
+--- a/install/grub2/efi/boot/android.cfg
++++ b/install/grub2/efi/boot/android.cfg
+@@ -17,7 +17,7 @@ function add_boot_entry {
+ 
+ # $1 Title
+ # $2... Kernel cmdline
+-function add_entry {
++function add_entry { NORECOVERY=1
+ 	set title="OS_TITLE VER $1"
+ 	shift 1
+ 	add_boot_entry "$kdir" "$title" "$@"
+@@ -83,24 +83,27 @@ search --no-floppy --set android -f $kdir/kernel
+ export android bootefi grub kdir live src
+ 
+ # Create main menu
+-add_entry "$live" quiet
+-add_entry "$live - Debug" DEBUG=2
+-add_entry "$live - Debug drmfb-composer" DEBUG=2 HWC=drmfb GRALLOC=gbm
+-add_entry "$live - Debug hwcomposer.drm" DEBUG=2 HWC=drm GRALLOC=gbm
+-add_entry "$live - Debug gralloc.minigbm" DEBUG=2 GRALLOC=minigbm
+-add_entry "$live - Debug hwcomposer.drm_minigbm" DEBUG=2 HWC=drm_minigbm GRALLOC=minigbm
+-add_entry "$live - Debug hwcomposer.intel" DEBUG=2 HWC=intel GRALLOC=intel
++add_entry "$live" quiet NORECOVERY=1
++add_entry "$live - Debug" DEBUG=2 NORECOVERY=1
++add_entry "$live - Debug drmfb-composer" DEBUG=2 HWC=drmfb GRALLOC=gbm NORECOVERY=1
++add_entry "$live - Debug hwcomposer.drm" DEBUG=2 HWC=drm GRALLOC=gbm NORECOVERY=1
++add_entry "$live - Debug gralloc.minigbm" DEBUG=2 GRALLOC=minigbm NORECOVERY=1
++add_entry "$live - Debug hwcomposer.drm_minigbm" DEBUG=2 HWC=drm_minigbm GRALLOC=minigbm NORECOVERY=1
++add_entry "$live - Debug hwcomposer.intel" DEBUG=2 HWC=intel GRALLOC=intel NORECOVERY=1
+ if [ -s ($android)$kdir/install.img ]; then
+-	add_entry "Installation" INSTALL=1
++	add_entry "Installation" INSTALL=1 NORECOVERY=1
+ fi
+ 
+-submenu "Advanced options -> " --class forward {
+-	add_entry "$live - Vulkan support (experimental)" quiet VULKAN=1
+-	add_entry "$live - No Setup Wizard" quiet SETUPWIZARD=0
+-	add_entry "$live - No Hardware Acceleration" quiet nomodeset HWACCEL=0
++submenu "Advanced options -> " --class forward { 
++	add_entry "$live - Boot into GearLock recovery mode" ALWAYSRECOVERY=1
++	add_entry "$live - Boot into GearLock recovery mode with NOGFX=1 flag" ALWAYSRECOVERY=1 NOGFX=1
++	add_entry "$live - Boot with Auto-ExtFs-Repair flag" quiet FIXFS=1
++	add_entry "$live - Vulkan support (experimental)" quiet VULKAN=1 NORECOVERY=1
++	add_entry "$live - No Setup Wizard" quiet SETUPWIZARD=0 NORECOVERY=1
++	add_entry "$live - No Hardware Acceleration" quiet nomodeset HWACCEL=0 NORECOVERY=1
+ 	if [ -s ($android)$kdir/install.img ]; then
+-		add_entry "Auto Install to specified harddisk" AUTO_INSTALL=0
+-		add_entry "Auto Update" AUTO_INSTALL=update
++		add_entry "Auto Install to specified harddisk" AUTO_INSTALL=0 NORECOVERY=1
++		add_entry "Auto Update" AUTO_INSTALL=update NORECOVERY=1
+ 	fi
+ 	add_os_if_exists /EFI/BOOT/$bootefi "UEFI OS" os
+ 	add_os_if_exists /EFI/BOOT/fallback.efi "UEFI Fallback" os
+-- 
+2.25.1
+

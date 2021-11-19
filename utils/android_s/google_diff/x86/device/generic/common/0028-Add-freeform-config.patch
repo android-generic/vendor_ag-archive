@@ -1,7 +1,7 @@
 From fdaddfcbed1b82c8b18d34d7f5b7c5421039a064 Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Fri, 29 Oct 2021 14:09:30 -0400
-Subject: [PATCH 1/4] Add freeform config
+Subject: [PATCH 01/14] Add freeform config
 
 Change-Id: Ie1f93e7e60f1174ea2e6feb6028beccc2c903392
 ---
