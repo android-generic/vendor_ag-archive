@@ -1,0 +1,53 @@
+From e3ccd7f50e01a0c5a7dc55b80367dacd3aa9342f Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 12 Nov 2021 15:42:40 -0500
+Subject: [PATCH 4/8] Update configs for NVME/PCIE
+
+Change-Id: I6509c7f1d1d69e79f95296a9da710ee425a8e104
+---
+ arch/x86/configs/android-x86_64_defconfig | 22 ++++++++++++++++++++--
+ 1 file changed, 20 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/configs/android-x86_64_defconfig b/arch/x86/configs/android-x86_64_defconfig
+index 7209427cee98..6f6f97780816 100644
+--- a/arch/x86/configs/android-x86_64_defconfig
++++ b/arch/x86/configs/android-x86_64_defconfig
+@@ -7576,15 +7576,33 @@ CONFIG_THUNDERBOLT=m
+ #
+ CONFIG_ANDROID=y
+ CONFIG_ANDROID_BINDER_IPC=y
+-# CONFIG_ANDROID_BINDERFS is not set
++CONFIG_ANDROID_BINDERFS=m
+ CONFIG_ANDROID_BINDER_DEVICES="binder,hwbinder,vndbinder"
+ # CONFIG_ANDROID_BINDER_IPC_SELFTEST is not set
+ # end of Android
+ 
+-# CONFIG_LIBNVDIMM is not set
++CONFIG_LIBNVDIMM=y
++CONFIG_BLK_DEV_PMEM=m
++CONFIG_ND_BLK=m
++CONFIG_ND_CLAIM=y
++CONFIG_ND_BTT=m
++CONFIG_BTT=y
++CONFIG_ND_PFN=m
++CONFIG_NVDIMM_PFN=y
++CONFIG_NVDIMM_DAX=y
++CONFIG_NVDIMM_KEYS=y
++CONFIG_DAX_DRIVER=y
+ CONFIG_DAX=y
++CONFIG_DEV_DAX=m
++CONFIG_DEV_DAX_PMEM=m
++CONFIG_DEV_DAX_HMEM=m
++CONFIG_DEV_DAX_HMEM_DEVICES=y
++CONFIG_DEV_DAX_KMEM=m
++CONFIG_DEV_DAX_PMEM_COMPAT=m
+ CONFIG_NVMEM=y
+ CONFIG_NVMEM_SYSFS=y
++CONFIG_NVMEM_SPMI_SDAM=m
++CONFIG_RAVE_SP_EEPROM=m
+ 
+ #
+ # HW tracing support
+-- 
+2.25.1
+

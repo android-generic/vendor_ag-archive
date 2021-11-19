@@ -1,0 +1,26 @@
+From 85c0d5478577ebb230a27c8a6dbbcb226101034e Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Thu, 11 Nov 2021 11:44:21 -0500
+Subject: [PATCH 3/8] Enable Intel Volume Management Device Driver
+
+Change-Id: I4927e7d8a9ca2dfef2545b5a70f0eadc25e5e10d
+---
+ arch/x86/configs/android-x86_64_defconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/x86/configs/android-x86_64_defconfig b/arch/x86/configs/android-x86_64_defconfig
+index 879880ce61bf..7209427cee98 100644
+--- a/arch/x86/configs/android-x86_64_defconfig
++++ b/arch/x86/configs/android-x86_64_defconfig
+@@ -1531,7 +1531,7 @@ CONFIG_HOTPLUG_PCI_SHPC=y
+ # CONFIG_PCI_FTPCI100 is not set
+ # CONFIG_PCI_HOST_GENERIC is not set
+ # CONFIG_PCIE_XILINX is not set
+-# CONFIG_VMD is not set
++CONFIG_VMD=m
+ CONFIG_PCI_HYPERV_INTERFACE=m
+ 
+ #
+-- 
+2.25.1
+

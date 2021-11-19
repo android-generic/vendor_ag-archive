@@ -1,0 +1,24 @@
+From 8a4b605b12e4fcff11a80756a86f5243884ae55a Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 10 Nov 2021 18:43:31 -0500
+Subject: [PATCH 1/8] Update .gitignore
+
+Change-Id: I159d304ad32d5c995512308c516684a9feea1462
+---
+ .gitignore | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/.gitignore b/.gitignore
+index ce66f868618c..a327e5edd310 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -158,3 +158,6 @@ x509.genkey
+ sphinx_*/
+ 
+ configs
++/prebuilts/*
++/configs/*
++
+-- 
+2.25.1
+
