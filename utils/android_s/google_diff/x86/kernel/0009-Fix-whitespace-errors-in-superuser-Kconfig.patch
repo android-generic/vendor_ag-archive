@@ -1,0 +1,30 @@
+From 25e80a2f3911bdb69aa145695aec0163ead89a4b Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 13 Nov 2021 18:16:56 -0500
+Subject: [PATCH] Fix whitespace errors in superuser Kconfig
+
+Change-Id: Ia9aa28fef5563e6031b1beb22a27ccd3e509a0f3
+---
+ drivers/base/superuser/Kconfig | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/base/superuser/Kconfig b/drivers/base/superuser/Kconfig
+index 3481f5d932e0..a357a40b44c7 100644
+--- a/drivers/base/superuser/Kconfig
++++ b/drivers/base/superuser/Kconfig
+@@ -14,9 +14,9 @@ config HIDE_ASSISTED_SUPERUSER
+     depends on ASSISTED_SUPERUSER
+ 	help
+ 	  When this option is on, only processes with uid/gid=0/2000
+-      will has the permission to access /system/xbin/su. Other
+-      processes will never have permission to access/stat/exec
+-      su binary.
++	  will has the permission to access /system/xbin/su. Other
++	  processes will never have permission to access/stat/exec
++	  su binary.
+ 
+ 	  Say N here unless you have a vendetta against kittens.
+ endmenu
+-- 
+2.25.1
+

@@ -1,0 +1,27 @@
+From 581fa4f7023718ba98b492f05c5f6a8ba0631748 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 12 Nov 2021 15:43:36 -0500
+Subject: [PATCH 7/8] Add KernelSU configs
+
+Change-Id: I42fcd8b894163f10345dd72098279b8c5094acae
+---
+ arch/x86/configs/android-x86_64_defconfig | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/arch/x86/configs/android-x86_64_defconfig b/arch/x86/configs/android-x86_64_defconfig
+index 456298f73510..6b8634350353 100644
+--- a/arch/x86/configs/android-x86_64_defconfig
++++ b/arch/x86/configs/android-x86_64_defconfig
+@@ -8623,3 +8623,9 @@ CONFIG_X86_DEBUG_FPU=y
+ CONFIG_UNWINDER_FRAME_POINTER=y
+ # CONFIG_UNWINDER_GUESS is not set
+ # end of Kernel hacking
++
++#
++# Kernel assisted superuser
++#
++CONFIG_ASSISTED_SUPERUSER=y
++# CONFIG_HIDE_ASSISTED_SUPERUSER is not set
+-- 
+2.25.1
+
