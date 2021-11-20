@@ -1,7 +1,7 @@
 From 4af978e4eff159a8ee17d01599397dc980e9f202 Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Sat, 13 Nov 2021 16:58:23 -0500
-Subject: [PATCH 8/8] Add missing references for kernel su
+Subject: [PATCH 08/10] Add missing references for kernel su
 
 Change-Id: I7c99c1ea23494a783a503294285b654260d07ebe
 ---

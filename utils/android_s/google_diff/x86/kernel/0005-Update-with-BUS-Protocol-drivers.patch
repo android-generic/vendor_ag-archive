@@ -1,7 +1,7 @@
 From 3e34fec1408b54bdaf29a960c17f93373baca375 Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Fri, 12 Nov 2021 15:43:36 -0500
-Subject: [PATCH 5/8] Update with BUS & Protocol drivers
+Subject: [PATCH 05/10] Update with BUS & Protocol drivers
 
 Change-Id: I42fcd8b894163f10345dd72098279b8c5094acae
 ---

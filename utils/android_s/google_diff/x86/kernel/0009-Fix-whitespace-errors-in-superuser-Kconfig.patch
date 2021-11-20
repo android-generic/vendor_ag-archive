@@ -1,7 +1,7 @@
 From 25e80a2f3911bdb69aa145695aec0163ead89a4b Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Sat, 13 Nov 2021 18:16:56 -0500
-Subject: [PATCH] Fix whitespace errors in superuser Kconfig
+Subject: [PATCH 09/10] Fix whitespace errors in superuser Kconfig
 
 Change-Id: Ia9aa28fef5563e6031b1beb22a27ccd3e509a0f3
 ---

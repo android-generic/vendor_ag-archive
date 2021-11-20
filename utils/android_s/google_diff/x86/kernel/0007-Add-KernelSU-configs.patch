@@ -1,7 +1,7 @@
 From 581fa4f7023718ba98b492f05c5f6a8ba0631748 Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Fri, 12 Nov 2021 15:43:36 -0500
-Subject: [PATCH 7/8] Add KernelSU configs
+Subject: [PATCH 07/10] Add KernelSU configs
 
 Change-Id: I42fcd8b894163f10345dd72098279b8c5094acae
 ---

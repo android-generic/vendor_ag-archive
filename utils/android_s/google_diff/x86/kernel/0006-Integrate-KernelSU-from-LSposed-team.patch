@@ -1,7 +1,7 @@
 From 4a9118177506a8f6e1041305e8077af5af4b4212 Mon Sep 17 00:00:00 2001
 From: hmtheboy154 <buingoc67@gmail.com>
 Date: Sun, 7 Nov 2021 04:15:43 +0000
-Subject: [PATCH 6/8] Integrate KernelSU from LSposed team
+Subject: [PATCH 06/10] Integrate KernelSU from LSposed team
 
 The module was orginally created for gaining direct root on phones, later on got a bringup by LSposed team for gaining root access on Windows Subsystem for Android. We're gonna use it for temporary gaining root access for s-x86 builds.
 For more info of the module : https://github.com/LSPosed/WSA-Kernel-SU

@@ -1,0 +1,256 @@
+From a96b017c3823e73928718846285df79bb9a221a1 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sun, 14 Nov 2021 15:18:22 -0500
+Subject: [PATCH 10/10] Move to superuser.c module from WSA Community
+
+Source: https://github.com/WSA-Community/WSA-Linux-Kernel/
+Change-Id: Ib623222596fd326507c6e1f88591b7f79c6d6bbe
+---
+ drivers/base/superuser/superuser.c | 179 +++++++++++++++++------------
+ 1 file changed, 107 insertions(+), 72 deletions(-)
+
+diff --git a/drivers/base/superuser/superuser.c b/drivers/base/superuser/superuser.c
+index da669af9d4cc..d4cc7985691f 100644
+--- a/drivers/base/superuser/superuser.c
++++ b/drivers/base/superuser/superuser.c
+@@ -1,7 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0
+ /*
+  * Copyright (C) 2015-2018 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
+- * Copyright (C) 2021 LoveSy <shana@zju.edu.cn>. All Rights Reserved.
++ * Copyright (C) 2002-2022 Jim Wu <mlgmxyysd@meowcat.org>. All Rights Reserved.
+  */
+ 
+ /* Hello. If this is enabled in your kernel for some reason, whoever is
+@@ -19,30 +19,51 @@
+ #include <linux/mman.h>
+ #include <linux/ptrace.h>
+ #include <linux/syscalls.h>
+-#include <policycap.h>
+-#include <security.h>
+-#include <ebitmap.h>
+-#include <services.h>
+-#include <objsec.h>
+-
+-typedef long (* syscall_wrapper)(struct pt_regs *);
+-
+-static bool is_permitive(void) {
+-#ifdef CONFIG_HIDE_ASSISTED_SUPERUSER
+-	struct cred *cred = (struct cred *)__task_cred(current);
+-	return cred->uid.val == 0 || cred->uid.val == 2000 || cred->gid.val == 0 || cred->gid.val == 2000;
+-#else
+-	return true;
++#include "../../security/selinux/include/policycap.h"
++
++/*
++ * Security server interface header
++ * 
++ * ../../security/selinux/include/security.h
++ * 
++ * Jim.Wu, 2021/10/30
++ * 
++ */
++struct selinux_state { // L90
++#ifdef CONFIG_SECURITY_SELINUX_DISABLE
++	bool disabled;
+ #endif
+-}
++#ifdef CONFIG_SECURITY_SELINUX_DEVELOP
++	bool enforcing;
++#endif
++	bool checkreqprot;
++	bool initialized;
++	bool policycap[__POLICYDB_CAPABILITY_MAX];
++	bool android_netlink_route;
++	bool android_netlink_getneigh;
++
++	struct page *status_page;
++	struct mutex status_lock;
++
++	struct selinux_avc *avc;
++	struct selinux_policy __rcu *policy;
++	struct mutex policy_mutex;
++} __randomize_layout; // L109
++
++extern struct selinux_state selinux_state; // L113
++
++static inline void enforcing_set(struct selinux_state *state, bool value) // L133
++{
++	WRITE_ONCE(state->enforcing, value);
++} // L136
+ 
+ static bool is_su(const char __user *filename)
+ {
+-	static const char su_path[] = "/system/xbin/su";
++	static const char su_path[] = "/system/bin/su";
+ 	char ufn[sizeof(su_path)];
+ 
+ 	return likely(!copy_from_user(ufn, filename, sizeof(ufn))) &&
+-		   unlikely(!memcmp(ufn, su_path, sizeof(ufn)));
++	       unlikely(!memcmp(ufn, su_path, sizeof(ufn)));
+ }
+ 
+ static void __user *userspace_stack_buffer(const void *d, size_t len)
+@@ -60,72 +81,88 @@ static char __user *sh_user_path(void)
+ 	return userspace_stack_buffer(sh_path, sizeof(sh_path));
+ }
+ 
+-static syscall_wrapper old_newfstatat;
++/*
++ * Kernel Registers Calling Conventions
++ * 
++ * https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md#calling-conventions
++ * 
++ * Jim.Wu & Shelling, 2021/11/01
++ * 
++ */
++#ifdef __aarch64__ /* arm64 */
++typedef u64 t_ret;
++#define arg0(pt_regs) pt_regs->regs[0]
++#define arg1(pt_regs) pt_regs->regs[1]
++#define arg2(pt_regs) pt_regs->regs[2]
++#define arg3(pt_regs) pt_regs->regs[3]
++#define arg4(pt_regs) pt_regs->regs[4]
++#define arg5(pt_regs) pt_regs->regs[5]
++#elif defined(__arm__) /* arm */
++typedef unsigned long t_ret;
++#define arg0(pt_regs) pt_regs->uregs[0]
++#define arg1(pt_regs) pt_regs->uregs[1]
++#define arg2(pt_regs) pt_regs->uregs[2]
++#define arg3(pt_regs) pt_regs->uregs[3]
++#define arg4(pt_regs) pt_regs->uregs[4]
++#define arg5(pt_regs) pt_regs->uregs[5]
++#elif defined(__i386__) /* x86 */
++typedef unsigned long t_ret;
++#define arg0(pt_regs) pt_regs->bx
++#define arg1(pt_regs) pt_regs->cx
++#define arg2(pt_regs) pt_regs->dx
++#define arg3(pt_regs) pt_regs->si
++#define arg4(pt_regs) pt_regs->di
++#define arg5(pt_regs) pt_regs->bp
++#else /* x86_64 */
++typedef unsigned long t_ret;
++#define arg0(pt_regs) pt_regs->di
++#define arg1(pt_regs) pt_regs->si
++#define arg2(pt_regs) pt_regs->dx
++#define arg3(pt_regs) pt_regs->r10
++#define arg4(pt_regs) pt_regs->r8
++#define arg5(pt_regs) pt_regs->r9
++#endif
+ 
+-static long new_newfstatat(struct pt_regs* regs)
++static long(*old_newfstatat)(struct pt_regs* pt_regs);
++static long new_newfstatat(struct pt_regs* pt_regs)
+ {
+-	if (is_permitive() && is_su((const char __user*)regs->si))
+-		regs->si = (ulong) sh_user_path();
+-	return old_newfstatat(regs);
++	if (!is_su((const char __user *)arg1(pt_regs)))
++		return old_newfstatat(pt_regs);
++	arg1(pt_regs) = (t_ret)sh_user_path();
++	return old_newfstatat(pt_regs);
+ }
+ 
+-static syscall_wrapper old_faccessat;
+-static long new_faccessat(struct pt_regs* regs)
++static long(*old_faccessat)(struct pt_regs* pt_regs);
++static long new_faccessat(struct pt_regs* pt_regs)
+ {
+-	if (is_permitive() && is_su((const char __user*)regs->si))
+-		regs->si = (ulong) sh_user_path();
+-	return old_faccessat(regs);
++	if (!is_su((const char __user *)arg1(pt_regs)))
++		return old_faccessat(pt_regs);
++	arg1(pt_regs) = (t_ret)sh_user_path();
++	return old_faccessat(pt_regs);
+ }
+ 
+-static syscall_wrapper old_execve;
+-static long new_execve(struct pt_regs* regs)
++static long (*old_execve)(struct pt_regs* pt_regs);
++static long new_execve(struct pt_regs* pt_regs)
+ {
+-	static const char now_root[] = "Welcome to LSPosed KernelSU\n";
+-	int sid = -1;
+ 	struct cred *cred;
+-	struct selinux_policy *policy;
+-	struct policydb *policydb;
+-	struct type_datum *typedatum;
+-	struct task_security_struct *current_security;
+ 
+-	const char __user * filename = (const char *) regs->di;
+-	if (!is_permitive() || !is_su(filename))
+-		return old_execve(regs);
++	if (!is_su((const char __user *)arg0(pt_regs)))
++		return old_execve(pt_regs);
+ 
+-	if (!old_execve(regs))
++	if (!old_execve(pt_regs))
+ 		return 0;
+ 
++	/* Set SELinux permissive
++	 *
++	 * Jim.Wu & LibXZR, 2021/10/27
++	 */
++	enforcing_set(&selinux_state, false);
++
+ 	/* Rather than the usual commit_creds(prepare_kernel_cred(NULL)) idiom,
+ 	 * we manually zero out the fields in our existing one, so that we
+ 	 * don't have to futz with the task's key ring for disk access.
+ 	 */
+ 	cred = (struct cred *)__task_cred(current);
+-
+-	
+-	if (!security_context_str_to_sid(&selinux_state, "u:r:su:s0", &sid, GFP_KERNEL)) {
+-		current_security = cred->security;
+-		policy = rcu_dereference(selinux_state.policy);
+-		policydb = &policy->policydb;
+-		if ((typedatum = symtab_search(&policydb->p_types, "su"))) {
+-			ebitmap_set_bit(&policydb->permissive_map, typedatum->value, true);
+-			printk("sucessfully set su (sid=%d) to permissive", sid);
+-		} else {
+-			pr_err("failed to set su (sid=%d) to permissive", sid);
+-		}
+-	} else {
+-		pr_err("failed to get su sid");
+-	}
+-
+-	if (sid != -1) {
+-		current_security->sid = sid;
+-		current_security->exec_sid = sid;
+-	} else {
+-		/* It might be enough to just change the security ctx of the
+-		* current task, but that requires slightly more thought than
+-		* just axing the whole thing here.
+-		*/
+-		enforcing_set(&selinux_state, false);
+-	}
+ 	memset(&cred->uid, 0, sizeof(cred->uid));
+ 	memset(&cred->gid, 0, sizeof(cred->gid));
+ 	memset(&cred->suid, 0, sizeof(cred->suid));
+@@ -139,13 +176,11 @@ static long new_execve(struct pt_regs* regs)
+ 	memset(&cred->cap_bset, 0xff, sizeof(cred->cap_bset));
+ 	memset(&cred->cap_ambient, 0xff, sizeof(cred->cap_ambient));
+ 
+-	ksys_write(2, userspace_stack_buffer(now_root, sizeof(now_root)),
+-		  sizeof(now_root) - 1);
+-
+-	regs->di = (ulong) sh_user_path();
+-	return old_execve(regs);
++	arg0(pt_regs) = (t_ret)sh_user_path();
++	return old_execve(pt_regs);
+ }
+ 
++extern const unsigned long sys_call_table[];
+ static void read_syscall(void **ptr, unsigned int syscall)
+ {
+ 	*ptr = READ_ONCE(*((void **)sys_call_table + syscall));
+@@ -178,4 +213,4 @@ static int superuser_init(void)
+ module_init(superuser_init);
+ MODULE_LICENSE("GPL v2");
+ MODULE_DESCRIPTION("Kernel-assisted superuser for Android");
+-MODULE_AUTHOR("Jason A. Donenfeld <Jason@zx2c4.com> & LoveSy <shana@zju.edu.cn>");
++MODULE_AUTHOR("Jason A. Donenfeld <Jason@zx2c4.com> & Jim Wu <mlgmxyysd@meowcat.org>");
+-- 
+2.25.1
+

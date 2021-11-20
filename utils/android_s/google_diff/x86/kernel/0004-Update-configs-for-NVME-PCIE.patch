@@ -1,7 +1,7 @@
 From e3ccd7f50e01a0c5a7dc55b80367dacd3aa9342f Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Fri, 12 Nov 2021 15:42:40 -0500
-Subject: [PATCH 4/8] Update configs for NVME/PCIE
+Subject: [PATCH 04/10] Update configs for NVME/PCIE
 
 Change-Id: I6509c7f1d1d69e79f95296a9da710ee425a8e104
 ---

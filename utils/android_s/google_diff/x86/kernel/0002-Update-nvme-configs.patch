@@ -1,7 +1,7 @@
 From 8b930fdaa51de30a496c739f380f290b8b5ad517 Mon Sep 17 00:00:00 2001
 From: Jon West <electrikjesus@gmail.com>
 Date: Wed, 10 Nov 2021 18:46:52 -0500
-Subject: [PATCH 2/8] Update nvme configs
+Subject: [PATCH 02/10] Update nvme configs
 
 Change-Id: I05879762a78fc21390d9527c1536e2b970bde214
 ---
