@@ -1,7 +1,7 @@
-From 7986f38bf58ee53a71268b339c1e42da8eea353e Mon Sep 17 00:00:00 2001
+From ad6de1d961c8904e24dffb75806069752436db6f Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Sun, 14 Nov 2021 22:56:05 -0500
-Subject: [PATCH] Add powerbtnd thread (s-x86)
+Subject: [PATCH 2/2] Add powerbtnd thread (s-x86)
 
 Also send wakeup key on resume to ensure the system wakes up
 normally.
@@ -12,21 +12,16 @@ Change-Id: I7e717fec631c05fa01d18b6a844ef7b0ad747878
 
 Change-Id: Icd2d6a7eee295cdc546f497e6f42a5bdc6800c80
 ---
- suspend/1.0/default/SystemSuspend.cpp         | 150 ++++++++++++++++++
+ suspend/1.0/default/SystemSuspend.cpp         | 149 ++++++++++++++++++
  suspend/1.0/default/SystemSuspend.h           |   2 +
  .../android.system.suspend@1.0-service.rc     |   2 +-
- 3 files changed, 153 insertions(+), 1 deletion(-)
+ 3 files changed, 152 insertions(+), 1 deletion(-)
 
 diff --git a/suspend/1.0/default/SystemSuspend.cpp b/suspend/1.0/default/SystemSuspend.cpp
-index 5b22a28..3f96466 100644
+index 8cd0d92..94582af 100644
 --- a/suspend/1.0/default/SystemSuspend.cpp
 +++ b/suspend/1.0/default/SystemSuspend.cpp
-@@ -19,10 +19,15 @@
- #include <android-base/file.h>
- #include <android-base/logging.h>
- #include <android-base/properties.h>
-+#include <android-base/stringprintf.h>
- #include <android-base/strings.h>
+@@ -24,6 +24,10 @@
  #include <fcntl.h>
  #include <hidl/Status.h>
  #include <hwbinder/IPCThreadState.h>
@@ -37,7 +32,7 @@ index 5b22a28..3f96466 100644
  #include <sys/stat.h>
  #include <sys/types.h>
  
-@@ -30,9 +35,11 @@
+@@ -31,9 +35,11 @@
  #include <thread>
  
  using ::android::base::Error;
@@ -49,7 +44,7 @@ index 5b22a28..3f96466 100644
  using ::android::hardware::Void;
  using ::std::string;
  
-@@ -53,6 +60,146 @@ static constexpr char kSysPowerWakeLock[] = "/sys/power/wake_lock";
+@@ -54,6 +60,146 @@ static constexpr char kSysPowerWakeLock[] = "/sys/power/wake_lock";
  static constexpr char kSysPowerWakeUnlock[] = "/sys/power/wake_unlock";
  static constexpr char kUnknownWakeup[] = "unknown";
  
@@ -196,7 +191,7 @@ index 5b22a28..3f96466 100644
  // This function assumes that data in fd is small enough that it can be read in one go.
  // We use this function instead of the ones available in libbase because it doesn't block
  // indefinitely when reading from socket streams which are used for testing.
-@@ -151,6 +298,7 @@ SystemSuspend::SystemSuspend(unique_fd wakeupCountFd, unique_fd stateFd, unique_
+@@ -152,6 +298,7 @@ SystemSuspend::SystemSuspend(unique_fd wakeupCountFd, unique_fd stateFd, unique_
      : mSuspendCounter(0),
        mWakeupCountFd(std::move(wakeupCountFd)),
        mStateFd(std::move(stateFd)),
@@ -204,7 +199,7 @@ index 5b22a28..3f96466 100644
        mSuspendStatsFd(std::move(suspendStatsFd)),
        mSuspendTimeFd(std::move(suspendTimeFd)),
        kSleepTimeConfig(sleepTimeConfig),
-@@ -264,6 +412,8 @@ void SystemSuspend::initAutosuspend() {
+@@ -276,6 +423,8 @@ void SystemSuspend::initAutosuspend() {
  
              if (!success) {
                  PLOG(VERBOSE) << "error writing to /sys/power/state";
@@ -214,7 +209,7 @@ index 5b22a28..3f96466 100644
  
              struct SuspendTime suspendTime = readSuspendTime(mSuspendTimeFd);
 diff --git a/suspend/1.0/default/SystemSuspend.h b/suspend/1.0/default/SystemSuspend.h
-index 37e9358..6ec3d0e 100644
+index 4cbc218..0825c80 100644
 --- a/suspend/1.0/default/SystemSuspend.h
 +++ b/suspend/1.0/default/SystemSuspend.h
 @@ -46,6 +46,7 @@ using ::android::system::suspend::internal::SuspendInfo;
@@ -225,7 +220,7 @@ index 37e9358..6ec3d0e 100644
  class SystemSuspend;
  
  struct SuspendStats {
-@@ -125,6 +126,7 @@ class SystemSuspend : public ISystemSuspend {
+@@ -126,6 +127,7 @@ class SystemSuspend : public ISystemSuspend {
      unique_fd mWakeupCountFd;
      unique_fd mStateFd;
      std::string mSleepState;
@@ -245,5 +240,5 @@ index 965ca16..c0c2f5c 100644
 +    group system wakelock uhid input
      capabilities BLOCK_SUSPEND
 -- 
-2.25.1
+2.17.1
 

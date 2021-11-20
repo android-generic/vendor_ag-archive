@@ -1,4 +1,4 @@
-From 73ca36cf371e6bdc2b1e81496468e362ec30307f Mon Sep 17 00:00:00 2001
+From 55e97d3184e145065b4e14771e7612147124c527 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Mon, 20 Apr 2020 18:43:48 +0800
 Subject: [PATCH 1/2] Make sleep state configurable and add a fallback (s-x86)
@@ -20,7 +20,7 @@ Change-Id: I74e61b3f77cbded24578a8f9463dc4c6f3b660a7
  2 files changed, 25 insertions(+), 2 deletions(-)
 
 diff --git a/suspend/1.0/default/SystemSuspend.cpp b/suspend/1.0/default/SystemSuspend.cpp
-index a61af6a..aaab7ea 100644
+index e9bb646..8cd0d92 100644
 --- a/suspend/1.0/default/SystemSuspend.cpp
 +++ b/suspend/1.0/default/SystemSuspend.cpp
 @@ -18,6 +18,7 @@
@@ -31,7 +31,7 @@ index a61af6a..aaab7ea 100644
  #include <android-base/stringprintf.h>
  #include <android-base/strings.h>
  #include <fcntl.h>
-@@ -29,6 +30,7 @@
+@@ -30,6 +31,7 @@
  #include <thread>
  
  using ::android::base::Error;
@@ -39,7 +39,7 @@ index a61af6a..aaab7ea 100644
  using ::android::base::ReadFdToString;
  using ::android::base::WriteStringToFd;
  using ::android::hardware::Void;
-@@ -193,7 +195,7 @@ bool SystemSuspend::forceSuspend() {
+@@ -194,7 +196,7 @@ bool SystemSuspend::forceSuspend() {
      //  returns from suspend, the wakelocks and SuspendCounter will not have
      //  changed.
      auto counterLock = std::unique_lock(mCounterLock);
@@ -48,7 +48,7 @@ index a61af6a..aaab7ea 100644
      counterLock.unlock();
  
      if (!success) {
-@@ -257,7 +259,7 @@ void SystemSuspend::initAutosuspend() {
+@@ -269,7 +271,7 @@ void SystemSuspend::initAutosuspend() {
                  PLOG(VERBOSE) << "error writing from /sys/power/wakeup_count";
                  continue;
              }
@@ -57,7 +57,7 @@ index a61af6a..aaab7ea 100644
              counterLock.unlock();
  
              if (!success) {
-@@ -277,6 +279,25 @@ void SystemSuspend::initAutosuspend() {
+@@ -295,6 +297,25 @@ void SystemSuspend::initAutosuspend() {
      LOG(INFO) << "automatic system suspend enabled";
  }
  
@@ -84,10 +84,10 @@ index a61af6a..aaab7ea 100644
   * Updates sleep time depending on the result of suspend attempt.
   * Time (in milliseconds) between suspend attempts is described the formula
 diff --git a/suspend/1.0/default/SystemSuspend.h b/suspend/1.0/default/SystemSuspend.h
-index 5632325..37e9358 100644
+index b84b1c9..4cbc218 100644
 --- a/suspend/1.0/default/SystemSuspend.h
 +++ b/suspend/1.0/default/SystemSuspend.h
-@@ -117,12 +117,14 @@ class SystemSuspend : public ISystemSuspend {
+@@ -118,12 +118,14 @@ class SystemSuspend : public ISystemSuspend {
  
     private:
      void initAutosuspend();
@@ -103,5 +103,5 @@ index 5632325..37e9358 100644
      unique_fd mSuspendStatsFd;
      unique_fd mSuspendTimeFd;
 -- 
-2.30.2
+2.17.1
 
