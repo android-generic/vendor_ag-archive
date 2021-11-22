@@ -114,7 +114,8 @@ appsType() {
 	if [ "${answer}" = "FOSS" ]; then
 		echo "you chose ${answer}"		
 		if [ ! -d $rompath/vendor/foss ]; then
-			echo -e "You will need to clone the foss vendor"
+			echo -e "Cloning vendor/foss now. You will need to re-run this command"
+			git clone https://github.com/BlissRoms-x86/vendor_foss vendor/foss
 		else
 			apps="&& export USE_FOSS_APPS=true "
 			echo -e ${apps} > $temp_path/apps.config
@@ -326,30 +327,37 @@ extraOptions() {
 }
 
 desktopMode() {
-	# Apps type selection	
-	alert_message 'Which make type of Desktop Mode do you want?'
-	echo -e ${CL_CYN}"(default is 'Taskbar')"
-	TMOUT=10
-	title="Choose a type"
-	selection=("Taskbar" "Smart-Dock" "None")
-	menu "Taskbar" "Smart-Dock" "None"
-	echo "Timeout in $TMOUT sec."${CL_RST}
-	answer=$(0< "${dir_tmp}/${file_tmp}" )
-	if [ "${answer}" = "Taskbar" ]; then
-		echo "you chose ${answer}"
-		desktop_mode="&& export USE_TASKBAR_UI=true "
-		echo -e ${desktop_mode} > $temp_path/desktop_mode.config
-	elif [ "${answer}" = "Smart-Dock" ]; then
-		echo "you chose ${answer}"
-		desktop_mode="&& export USE_SMARTDOCK=true "
-		echo -e ${desktop_mode} > $temp_path/desktop_mode.config
-	elif [ "${answer}" = "None" ]; then
-		echo "you chose ${answer}"
-		desktop_mode=""
-		echo -e ${desktop_mode} > $temp_path/desktop_mode.config
+	# Apps type selection
+	if [ -d $rompath/vendor/prebuilts/agp-apps ]; then
+		alert_message 'Which make type of Desktop Mode do you want?'
+		echo -e ${CL_CYN}"(default is 'Taskbar')"
+		TMOUT=10
+		title="Choose a type"
+		selection=("Taskbar" "Smart-Dock" "None")
+		menu "Taskbar" "Smart-Dock" "None"
+		echo "Timeout in $TMOUT sec."${CL_RST}
+		answer=$(0< "${dir_tmp}/${file_tmp}" )
+		if [ "${answer}" = "Taskbar" ]; then
+			echo "you chose ${answer}"
+			desktop_mode="&& export USE_TASKBAR_UI=true "
+			echo -e ${desktop_mode} > $temp_path/desktop_mode.config
+		elif [ "${answer}" = "Smart-Dock" ]; then
+			echo "you chose ${answer}"
+			desktop_mode="&& export USE_SMARTDOCK=true "
+			echo -e ${desktop_mode} > $temp_path/desktop_mode.config
+		elif [ "${answer}" = "None" ]; then
+			echo "you chose ${answer}"
+			desktop_mode=""
+			echo -e ${desktop_mode} > $temp_path/desktop_mode.config
+		else
+			echo "invalid option ${answer}"
+			exit
+		fi
 	else
-		echo "invalid option ${answer}"
-		exit
+		echo -e ${CL_CYN} "agp-apps are needed for Desktop Mode options."${CL_RST}
+		echo -e ${CL_CYN} "cloning that now and adding to device tree..."${CL_RST}
+		. vendor/ag/pc_scripts/tools-add-ag-prebuilt-apps/tools-add-ag-prebuilt-apps.sh
+		echo -e ${CL_CYN} "You can nor run the desktop mode selection again to choose desired mode"${CL_RST}
 	fi
 	
 }
