@@ -1,0 +1,39 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sun, 30 Oct 2016 16:39:13 +0800
+Subject: [PATCH 22/54] shmem: enable user xattr for tmpfs
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Forward port the commit 0b98841 of Michael Müller to kernel 4.8.
+This is necessary for android-x86 live mode.
+---
+ mm/shmem.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/mm/shmem.c b/mm/shmem.c
+index dc551017eed6..1dc579f19c6e 100644
+--- a/mm/shmem.c
++++ b/mm/shmem.c
+@@ -3251,6 +3251,12 @@ static int shmem_xattr_handler_set(const struct xattr_handler *handler,
+ 	return simple_xattr_set(&info->xattrs, name, value, size, flags, NULL);
+ }
+ 
++static const struct xattr_handler shmem_user_xattr_handler = {
++	.prefix = XATTR_USER_PREFIX,
++	.get = shmem_xattr_handler_get,
++	.set = shmem_xattr_handler_set,
++};
++
+ static const struct xattr_handler shmem_security_xattr_handler = {
+ 	.prefix = XATTR_SECURITY_PREFIX,
+ 	.get = shmem_xattr_handler_get,
+@@ -3268,6 +3274,7 @@ static const struct xattr_handler *shmem_xattr_handlers[] = {
+ 	&posix_acl_access_xattr_handler,
+ 	&posix_acl_default_xattr_handler,
+ #endif
++	&shmem_user_xattr_handler,
+ 	&shmem_security_xattr_handler,
+ 	&shmem_trusted_xattr_handler,
+ 	NULL

@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jesse Chan <jc@lineageos.org>
+Date: Fri, 3 Mar 2017 20:42:40 +0800
+Subject: [PATCH 10/15] stagefright: allow multiple custom OMXPlugins
+
+* Separated by comma(,)
+* Example: media.sf.omx-plugin=libffmpeg_omx.so,libsomxcore.so
+
+Change-Id: I15556a48df282b01f54ca864317eafff5468e739
+Signed-off-by: Jesse Chan <jc@lineageos.org>
+---
+ media/libstagefright/omx/OMXStore.cpp | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/media/libstagefright/omx/OMXStore.cpp b/media/libstagefright/omx/OMXStore.cpp
+index 0ec8d181bf..6c459546d1 100644
+--- a/media/libstagefright/omx/OMXStore.cpp
++++ b/media/libstagefright/omx/OMXStore.cpp
+@@ -72,8 +72,13 @@ void OMXStore::addPlatformPlugin() {
+ 
+ void OMXStore::addUserPlugin() {
+     char plugin[PROPERTY_VALUE_MAX];
++    char *each_plugin;
+     if (property_get("media.sf.omx-plugin", plugin, NULL)) {
+-        addPlugin(plugin);
++        each_plugin = strtok(plugin, ",");
++        while (each_plugin != NULL) {
++            addPlugin(each_plugin);
++            each_plugin = strtok(NULL, ",");
++        }
+     }
+ }
+ 

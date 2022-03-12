@@ -1,0 +1,334 @@
+From 22e1763209614a3bf555a6ebbabb48f7343e3930 Mon Sep 17 00:00:00 2001
+From: utzcoz <utzcoz@outlook.com>
+Date: Thu, 11 Jun 2020 20:16:55 +0800
+Subject: [PATCH 22/30] Add back button for freeform window
+
+Signed-off-by: utzcoz <utzcoz@outlook.com>
+Change-Id: Ic847315ef5fb606cacde03f30ad0ec41730d36b7
+
+Conflicts:
+	config/hiddenapi-private-dex.txt
+	core/java/com/android/internal/widget/DecorCaptionView.java
+---
+ core/java/android/app/Activity.java           |  7 +++-
+ core/java/android/view/Window.java            |  3 ++
+ .../android/internal/policy/DecorView.java    | 12 ++++++-
+ .../internal/widget/DecorCaptionView.java     | 34 ++++++++++++++++++-
+ .../res/drawable/decor_back_button_dark.xml   | 34 +++++++++++++++++++
+ .../res/drawable/decor_back_button_light.xml  | 31 +++++++++++++++++
+ core/res/res/layout/decor_caption.xml         | 16 +++++++++
+ core/res/res/values/arrays.xml                |  4 +++
+ core/res/res/values/strings.xml               |  3 ++
+ core/res/res/values/symbols.xml               |  5 +++
+ 10 files changed, 146 insertions(+), 3 deletions(-)
+ create mode 100644 core/res/res/drawable/decor_back_button_dark.xml
+ create mode 100644 core/res/res/drawable/decor_back_button_light.xml
+
+diff --git a/core/java/android/app/Activity.java b/core/java/android/app/Activity.java
+index e13ce6cbb780..5741a65c39b6 100644
+--- a/core/java/android/app/Activity.java
++++ b/core/java/android/app/Activity.java
+@@ -1026,7 +1026,12 @@ public class Activity extends ContextThemeWrapper
+         public boolean moveTaskToBack(boolean nonRoot) {
+             return ActivityClient.getInstance().moveActivityTaskToBack(mToken, nonRoot);
+         }
+-
++        // region @boringdroid
++        // @Override
++        public void onBackPressed() {
++            Activity.this.onBackPressed();
++        }
++        // endregion
+     };
+ 
+     private static native String getDlWarning();
+diff --git a/core/java/android/view/Window.java b/core/java/android/view/Window.java
+index faadac9988bb..57f6ef248b72 100644
+--- a/core/java/android/view/Window.java
++++ b/core/java/android/view/Window.java
+@@ -661,6 +661,9 @@ public abstract class Window {
+         void updateNavigationBarColor(int color);
+ 
+         boolean moveTaskToBack(boolean nonRoot);
++        // region @boringdroid
++        default void onBackPressed() {};
++        // endregion
+     }
+ 
+     /**
+diff --git a/core/java/com/android/internal/policy/DecorView.java b/core/java/com/android/internal/policy/DecorView.java
+index caeee7146bad..db54e9f7740f 100644
+--- a/core/java/com/android/internal/policy/DecorView.java
++++ b/core/java/com/android/internal/policy/DecorView.java
+@@ -2306,7 +2306,12 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
+     }
+ 
+     private void setLightDecorCaptionShade(DecorCaptionView view) {
+-		view.findViewById(R.id.pip_window).setBackgroundResource(
++        // region @boringdroid
++        view.findViewById(R.id.back_window).setBackgroundResource(
++                R.drawable.decor_back_button_light
++        );
++        // endregion
++        view.findViewById(R.id.pip_window).setBackgroundResource(
+                 R.drawable.decor_pip_button_light);
+         view.findViewById(R.id.minimize_window).setBackgroundResource(
+                 R.drawable.decor_minimize_button_light);
+@@ -2317,6 +2322,11 @@ public class DecorView extends FrameLayout implements RootViewSurfaceTaker, Wind
+     }
+ 
+     private void setDarkDecorCaptionShade(DecorCaptionView view) {
++        // region @boringdroid
++        view.findViewById(R.id.back_window).setBackgroundResource(
++                R.drawable.decor_back_button_dark
++        );
++        // endregion
+ 		view.findViewById(R.id.pip_window).setBackgroundResource(
+                 R.drawable.decor_pip_button_dark);
+ 		view.findViewById(R.id.minimize_window).setBackgroundResource(
+diff --git a/core/java/com/android/internal/widget/DecorCaptionView.java b/core/java/com/android/internal/widget/DecorCaptionView.java
+index 2352d1a529df..efe67b5158a4 100644
+--- a/core/java/com/android/internal/widget/DecorCaptionView.java
++++ b/core/java/com/android/internal/widget/DecorCaptionView.java
+@@ -16,6 +16,7 @@
+ 
+ package com.android.internal.widget;
+ 
++import android.app.Activity;
+ import android.content.Context;
+ import android.graphics.Rect;
+ import android.util.AttributeSet;
+@@ -102,6 +103,10 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+     private final Rect mPipRect = new Rect();
+     private View mClickTarget;
+     private int mRootScrollY;
++    // region @boringdroid
++    private View mBack;
++    private final Rect mBackRect = new Rect();
++    // endregion
+ 
+     public DecorCaptionView(Context context) {
+         super(context);
+@@ -139,6 +144,9 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+         // By changing the outline provider to BOUNDS, the window can remove its
+         // background without removing the shadow.
+         mOwner.getDecorView().setOutlineProvider(ViewOutlineProvider.BOUNDS);
++        // region @boringdroid
++        mBack = findViewById(R.id.back_window);
++        // endregion
+         mPip = findViewById(R.id.pip_window);
+         mMinimize = findViewById(R.id.minimize_window);
+         mMaximize = findViewById(R.id.maximize_window);
+@@ -152,6 +160,11 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+         if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+             final int x = (int) ev.getX();
+             final int y = (int) ev.getY();
++            // region @boringdroid
++            if (mBackRect.contains(x, y)) {
++                mClickTarget = mBack;
++            }
++            // endregion
+             // Only offset y for containment tests because the actual views are already translated.
+             if (mPipRect.contains(x, y - mRootScrollY)) {
+                 mClickTarget = mPip;
+@@ -298,12 +311,18 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+         if (mCaption.getVisibility() != View.GONE) {
+             mCaption.layout(0, 0, mCaption.getMeasuredWidth(), mCaption.getMeasuredHeight());
+             captionHeight = mCaption.getBottom() - mCaption.getTop();
++            // region @boringdroid
++            mBack.getHitRect(mBackRect);
++            // endregion
+             mPip.getHitRect(mPipRect);
+             mMinimize.getHitRect(mMinimizeRect);
+             mMaximize.getHitRect(mMaximizeRect);
+             mClose.getHitRect(mCloseRect);
+         } else {
+             captionHeight = 0;
++            // region @boringdroid
++            mBackRect.setEmpty();
++            // endregion
+             mPipRect.setEmpty();
+             mMinimizeRect.setEmpty();
+             mMaximizeRect.setEmpty();
+@@ -322,8 +341,12 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+         ((DecorView) mOwner.getDecorView()).notifyCaptionHeightChanged();
+ 
+         // This assumes that the caption bar is at the top.
+-        mOwner.notifyRestrictedCaptionAreaCallback(mPip.getLeft(), mMaximize.getTop(),
++        // region @boringdroid
++        // mOwner.notifyRestrictedCaptionAreaCallback(mPip.getLeft(), mMaximize.getTop(),
++        //         mClose.getRight(), mClose.getBottom());
++        mOwner.notifyRestrictedCaptionAreaCallback(mBack.getLeft(), mBack.getTop(),
+                 mClose.getRight(), mClose.getBottom());
++        // endregion
+     }
+ 
+     /**
+@@ -410,6 +433,15 @@ public class DecorCaptionView extends ViewGroup implements View.OnTouchListener,
+ 
+     @Override
+     public boolean onSingleTapUp(MotionEvent e) {
++        // region @boringdroid
++        if (mClickTarget == mBack) {
++            Window.WindowControllerCallback callback = mOwner.getWindowControllerCallback();
++            if (callback != null) {
++                callback.onBackPressed();
++            }
++            return true;
++        }
++        // endregion
+         if (mClickTarget == mMinimize) {
+             minimizeWindow();
+         } else if (mClickTarget == mPip) {
+diff --git a/core/res/res/drawable/decor_back_button_dark.xml b/core/res/res/drawable/decor_back_button_dark.xml
+new file mode 100644
+index 000000000000..ec0f6a92d230
+--- /dev/null
++++ b/core/res/res/drawable/decor_back_button_dark.xml
+@@ -0,0 +1,34 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (C) 2015 The Android Open Source Project
++     Copyright (C) 2020 boringdroid
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++        android:width="32.0dp"
++        android:height="32.0dp"
++        android:viewportWidth="32.0"
++        android:viewportHeight="32.0"
++        android:tint="@color/decor_button_dark_color">
++    <group android:scaleX="0.5"
++           android:scaleY="0.5"
++           android:translateX="8.0"
++           android:translateY="8.0">
++        <path
++            android:fillColor="@color/white"
++            android:pathData="M2.0,16.0l28.0,14.0l0.0,-28z" />
++    </group>
++</vector>
++
++
+diff --git a/core/res/res/drawable/decor_back_button_light.xml b/core/res/res/drawable/decor_back_button_light.xml
+new file mode 100644
+index 000000000000..7b9344a0dce4
+--- /dev/null
++++ b/core/res/res/drawable/decor_back_button_light.xml
+@@ -0,0 +1,31 @@
++<!-- Copyright (C) 2015 The Android Open Source Project
++     Copyright (C) boringdroid
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++         http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++
++<vector xmlns:android="http://schemas.android.com/apk/res/android"
++        android:width="32.0dp"
++        android:height="32.0dp"
++        android:viewportWidth="32.0"
++        android:viewportHeight="32.0"
++        android:tint="@color/decor_button_light_color">
++    <group android:scaleX="0.5"
++           android:scaleY="0.5"
++           android:translateX="8.0"
++           android:translateY="8.0">
++        <path
++            android:fillColor="@color/white"
++            android:pathData="M2.0,16.0l28.0,14.0l0.0,-28z" />
++    </group>
++</vector>
+diff --git a/core/res/res/layout/decor_caption.xml b/core/res/res/layout/decor_caption.xml
+index 55edbfcfbb91..534d27d825eb 100644
+--- a/core/res/res/layout/decor_caption.xml
++++ b/core/res/res/layout/decor_caption.xml
+@@ -30,6 +30,22 @@
+             android:background="@drawable/decor_caption_title"
+             android:focusable="false"
+             android:descendantFocusability="blocksDescendants" >
++        <!-- region @boringdroid -->
++        <Button
++            android:id="@+id/back_window"
++            android:layout_width="32dp"
++            android:layout_height="32dp"
++            android:layout_margin="5dp"
++            android:padding="4dp"
++            android:layout_gravity="center_vertical|start"
++            android:contentDescription="@string/back_button_text"
++            android:background="@drawable/decor_back_button_dark" />
++        <Space
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_weight="1"
++            android:background="@color/transparent" />
++        <!-- endregion -->
+         <Button
+                 android:id="@+id/pip_window"
+                 android:layout_width="32dp"
+diff --git a/core/res/res/values/arrays.xml b/core/res/res/values/arrays.xml
+index 168ca7917c65..633e928ed2ad 100644
+--- a/core/res/res/values/arrays.xml
++++ b/core/res/res/values/arrays.xml
+@@ -143,6 +143,10 @@
+       <item>@drawable/decor_minimize_button_light</item>
+       <item>@drawable/decor_pip_button_dark</item>
+       <item>@drawable/decor_pip_button_light</item>
++      <!-- region @boringdroid -->
++      <item>@drawable/decor_back_button_dark</item>
++      <item>@drawable/decor_back_button_light</item>
++      <!-- endregion -->
+    </array>
+ 
+     <!-- Used in LocalePicker -->
+diff --git a/core/res/res/values/strings.xml b/core/res/res/values/strings.xml
+index 0af0e1ab87c3..bbaa556fc7a3 100644
+--- a/core/res/res/values/strings.xml
++++ b/core/res/res/values/strings.xml
+@@ -5194,6 +5194,9 @@
+     <string name="floating_toolbar_close_overflow_description">Close overflow</string>
+ 
+     <!-- Free style window strings -->
++    <!-- region @boringdroid -->
++    <string name="back_button_text">Back</string>
++    <!-- endregion -->
+     <!-- Accessibility text for the minimize window button -->
+     <string name="pip_button_text">Picture In Picture</string>
+     <!-- Accessibility text for the minimize window button -->
+diff --git a/core/res/res/values/symbols.xml b/core/res/res/values/symbols.xml
+index e6dbb31f4e5f..468f4fa9260c 100644
+--- a/core/res/res/values/symbols.xml
++++ b/core/res/res/values/symbols.xml
+@@ -2351,6 +2351,11 @@
+   <java-symbol type="drawable" name="decor_maximize_button_light" />
+   <java-symbol type="drawable" name="decor_pip_button_dark" />
+   <java-symbol type="drawable" name="decor_pip_button_light" />
++  <!-- region @boringdroid -->
++  <java-symbol type="id" name="back_window" />
++  <java-symbol type="drawable" name="decor_back_button_dark" />
++  <java-symbol type="drawable" name="decor_back_button_light" />
++  <!-- endregion -->
+   <java-symbol type="color" name="decor_button_dark_color" />
+   <java-symbol type="color" name="decor_button_light_color" />
+   <java-symbol type="array" name="unloggable_phone_numbers" />
+-- 
+2.25.1
+

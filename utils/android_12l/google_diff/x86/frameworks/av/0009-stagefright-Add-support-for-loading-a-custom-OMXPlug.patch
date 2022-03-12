@@ -1,0 +1,98 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Steve Kondik <steve@cyngn.com>
+Date: Wed, 8 Jul 2015 09:56:01 -0700
+Subject: [PATCH 09/15] stagefright: Add support for loading a custom OMXPlugin
+
+ * To facilitate moving the stagefright-plugins glue out of the
+   framework, support is added to OMXStore to load multiple
+   external plugins besides internal/vendor versions.
+ * This is currently limited to one plugin, defined by the
+   "mm.sf.omx-plugin" system property. The code will allow any
+   number of libraries to be loaded, though.
+ * Should also be useful for nonstandard vendor implementations too.
+
+Change-Id: I27d7e16ad56baa17754d8ea47a8c608a0d73d6f1
+---
+ media/libstagefright/omx/OMXStore.cpp                  | 10 ++++++++++
+ media/libstagefright/omx/SoftOMXPlugin.cpp             |  6 +++++-
+ .../omx/include/media/stagefright/omx/OMXStore.h       |  1 +
+ 3 files changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/media/libstagefright/omx/OMXStore.cpp b/media/libstagefright/omx/OMXStore.cpp
+index e8fee42a6e..0ec8d181bf 100644
+--- a/media/libstagefright/omx/OMXStore.cpp
++++ b/media/libstagefright/omx/OMXStore.cpp
+@@ -28,6 +28,8 @@
+ #include <dlfcn.h>
+ #include <fcntl.h>
+ 
++#include <cutils/properties.h>
++
+ namespace android {
+ 
+ OMXStore::OMXStore() {
+@@ -53,6 +55,7 @@ OMXStore::OMXStore() {
+ 
+     addVendorPlugin();
+     addPlatformPlugin();
++    addUserPlugin();
+ }
+ 
+ OMXStore::~OMXStore() {
+@@ -67,6 +70,13 @@ void OMXStore::addPlatformPlugin() {
+     addPlugin("libstagefright_softomx_plugin.so");
+ }
+ 
++void OMXStore::addUserPlugin() {
++    char plugin[PROPERTY_VALUE_MAX];
++    if (property_get("media.sf.omx-plugin", plugin, NULL)) {
++        addPlugin(plugin);
++    }
++}
++
+ void OMXStore::addPlugin(const char *libname) {
+     if (::android::base::GetIntProperty("vendor.media.omx", int64_t(1)) == 0) {
+         return;
+diff --git a/media/libstagefright/omx/SoftOMXPlugin.cpp b/media/libstagefright/omx/SoftOMXPlugin.cpp
+index 8c186c90f8..e93c8528be 100644
+--- a/media/libstagefright/omx/SoftOMXPlugin.cpp
++++ b/media/libstagefright/omx/SoftOMXPlugin.cpp
+@@ -86,6 +86,7 @@ OMX_ERRORTYPE SoftOMXPlugin::makeComponentInstance(
+         OMX_COMPONENTTYPE **component) {
+     ALOGV("makeComponentInstance '%s'", name);
+ 
++    dlerror(); // clear any existing error
+     for (size_t i = 0; i < kNumComponents; ++i) {
+         if (strcmp(name, kComponents[i].mName)) {
+             continue;
+@@ -117,6 +118,8 @@ OMX_ERRORTYPE SoftOMXPlugin::makeComponentInstance(
+             return OMX_ErrorComponentNotFound;
+         }
+ 
++        ALOGV("load component %s for %s", libName.c_str(), name);
++
+         typedef SoftOMXComponent *(*CreateSoftOMXComponentFunc)(
+                 const char *, const OMX_CALLBACKTYPE *,
+                 OMX_PTR, OMX_COMPONENTTYPE **);
+@@ -127,7 +130,8 @@ OMX_ERRORTYPE SoftOMXPlugin::makeComponentInstance(
+                     "_Z22createSoftOMXComponentPKcPK16OMX_CALLBACKTYPE"
+                     "PvPP17OMX_COMPONENTTYPE");
+ 
+-        if (createSoftOMXComponent == NULL) {
++        if (const char *error = dlerror()) {
++            ALOGE("unable to dlsym %s: %s", libName.c_str(), error);
+             dlclose(libHandle);
+             libHandle = NULL;
+ 
+diff --git a/media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h b/media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h
+index 5d6c3ed29d..aaaefdaaad 100644
+--- a/media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h
++++ b/media/libstagefright/omx/include/media/stagefright/omx/OMXStore.h
+@@ -62,6 +62,7 @@ private:
+ 
+     void addVendorPlugin();
+     void addPlatformPlugin();
++    void addUserPlugin();
+     void addPlugin(const char *libname);
+     void addPlugin(OMXPluginBase *plugin);
+     void clearPlugins();

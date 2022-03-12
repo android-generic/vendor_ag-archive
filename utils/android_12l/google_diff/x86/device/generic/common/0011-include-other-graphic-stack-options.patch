@@ -1,0 +1,31 @@
+From a15c3720b4e426e8902280f1bed35853dfbd78e0 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 25 Feb 2022 19:32:24 -0500
+Subject: [PATCH 11/25] include other graphic stack options
+
+---
+ BoardConfig.mk | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index ee78fac..196b05e 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -100,6 +100,9 @@ BUILD_BROKEN_USES_BUILD_HOST_STATIC_LIBRARY := true
+ BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+ 
+ BOARD_USES_MINIGBM := true
++BOARD_USES_MINIGBM_INTEL := true
++BOARD_USES_GRALLOC1 := true
++BOARD_USES_IA_HWCOMPOSER := true
+ TARGET_USES_HWC2 ?= true
+ #BOARD_USES_VULKAN := true
+ 
+@@ -108,3 +111,4 @@ BOARD_MESA3D_CLASSIC_DRIVERS :=
+ BOARD_MESA3D_GALLIUM_DRIVERS := i915 crocus iris nouveau r300 r600 radeonsi svga virgl
+ BOARD_MESA3D_VULKAN_DRIVERS := amd intel
+ #BOARD_MESA3D_BUILD_LIBGBM := true
++BOARD_USES_GRALLOC_HANDLE := true
+-- 
+2.25.1
+

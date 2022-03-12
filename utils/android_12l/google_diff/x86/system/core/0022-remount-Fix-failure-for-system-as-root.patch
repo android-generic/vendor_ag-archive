@@ -1,0 +1,38 @@
+From e6803a6d1b7c57361e6f5f32daed44b477fc297a Mon Sep 17 00:00:00 2001
+From: Leo Yan <leo.yan@linaro.org>
+Date: Fri, 4 Jun 2021 15:19:33 +0100
+Subject: [PATCH 22/23] remount: Fix failure for system-as-root
+
+Since commit 5ad7b3cbc5c1 ("Try to remount mounted points only"), the
+system-as-root cannot be remounted successfully when execute command
+"adb remount".  This is because the mount point "/system" cannot be
+found and directly bails out with failure.
+
+Add an extra checking for the mount point "/system" for the
+system-as-root case, takes it as a found entry; thus the function can
+continue to run and fix up to remount root.
+
+Suggested-by: David Anderson <dvander@google.com>
+Signed-off-by: Leo Yan <leo.yan@linaro.org>
+Change-Id: Ia936c9d97bed951184813a087c70fe591cb33fe0
+---
+ fs_mgr/fs_mgr_remount.cpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/fs_mgr/fs_mgr_remount.cpp b/fs_mgr/fs_mgr_remount.cpp
+index e685070a87e..5411acacf82 100644
+--- a/fs_mgr/fs_mgr_remount.cpp
++++ b/fs_mgr/fs_mgr_remount.cpp
+@@ -420,7 +420,8 @@ static int do_remount(int argc, char* argv[]) {
+                 break;
+             }
+             // Find overlayfs mount point?
+-            if ((mount_point == "/") && (rentry.mount_point == "/system")) {
++            if ((mount_point == "/" && rentry.mount_point == "/system")  ||
++                (mount_point == "/system" && rentry.mount_point == "/")) {
+                 blk_device = rentry.blk_device;
+                 mount_point = "/system";
+                 found = true;
+-- 
+2.25.1
+

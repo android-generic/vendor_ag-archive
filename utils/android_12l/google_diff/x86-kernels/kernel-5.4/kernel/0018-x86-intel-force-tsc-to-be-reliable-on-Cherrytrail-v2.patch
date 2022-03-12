@@ -1,0 +1,26 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 28 Sep 2019 18:30:26 +0200
+Subject: [PATCH 18/54] x86/intel: force tsc to be reliable on Cherrytrail (v2)
+
+(v1) original Chih-Wei Huang commit f761999
+
+(v2) changes due to commits:
+     bba10c5 ("x86/cpu: Use constant definitions for CPU models")
+     0cc5359 ("x86/cpu: Update init data for new Airmont CPU model")
+---
+ arch/x86/kernel/cpu/intel.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/x86/kernel/cpu/intel.c b/arch/x86/kernel/cpu/intel.c
+index 7d07e8d1e2b5..11417331f99f 100644
+--- a/arch/x86/kernel/cpu/intel.c
++++ b/arch/x86/kernel/cpu/intel.c
+@@ -256,6 +256,7 @@ static void early_init_intel(struct cpuinfo_x86 *c)
+ 	/* Penwell and Cloverview have the TSC which doesn't sleep on S3 */
+ 	if (c->x86 == 6) {
+ 		switch (c->x86_model) {
++		case INTEL_FAM6_ATOM_AIRMONT:
+ 		case INTEL_FAM6_ATOM_SILVERMONT:
+ 			set_cpu_cap(c, X86_FEATURE_TSC_RELIABLE);
+ 		case INTEL_FAM6_ATOM_SALTWELL_MID:

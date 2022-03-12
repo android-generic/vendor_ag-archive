@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Billy <xiaobing.feng@windriver.com>
+Date: Thu, 20 Dec 2012 11:02:55 +0800
+Subject: [PATCH 03/15] FLACExtractor: Add more sample rates support
+
+In FLACExtractor.cpp, it has function to check file's sample rate.
+If the input sample rate is not in its list, it will return "unsupported
+sample rate" issue. Modify code to make other sample rates (100,1k,42k,46k)
+pass the check
+
+Issue: AXIA-1441
+Change-Id: I48f91119275560ec6d00feb0dedc70d10aa55262
+Signed-off-by: Xiaobing Feng <xiaobing.feng@windriver.com>
+Signed-off-by: Matt Gumbel <matthew.k.gumbel@intel.com>
+---
+ media/extractors/flac/FLACExtractor.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/media/extractors/flac/FLACExtractor.cpp b/media/extractors/flac/FLACExtractor.cpp
+index ec7cb24b93..3a98625bc6 100644
+--- a/media/extractors/flac/FLACExtractor.cpp
++++ b/media/extractors/flac/FLACExtractor.cpp
+@@ -535,7 +535,7 @@ status_t FLACParser::init()
+         // check sample rate
+         // Note: flac supports arbitrary sample rates up to 655350 Hz, but Android
+         // supports sample rates from 8kHz to 192kHz, so use that as the limit.
+-        if (getSampleRate() < 8000 || getSampleRate() > 192000) {
++        if (getSampleRate() < 100 || getSampleRate() > 192000) {
+             ALOGE("unsupported sample rate %u", getSampleRate());
+             return NO_INIT;
+         }

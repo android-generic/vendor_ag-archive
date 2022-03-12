@@ -1,0 +1,117 @@
+From 45dbfbb7c166eb603c45967617de2f23dcdc3c6c Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Wed, 28 Apr 2021 16:55:08 -0400
+Subject: [PATCH 01/25] Build kernel with clang
+
+---
+ build/tasks/kernel.mk | 55 ++++++++++++++++++++-----------------------
+ 1 file changed, 26 insertions(+), 29 deletions(-)
+
+diff --git a/build/tasks/kernel.mk b/build/tasks/kernel.mk
+index 0bd2dc8..f4ac869 100644
+--- a/build/tasks/kernel.mk
++++ b/build/tasks/kernel.mk
+@@ -10,35 +10,35 @@
+ 
+ ifneq ($(TARGET_NO_KERNEL),true)
+ ifeq ($(TARGET_PREBUILT_KERNEL),)
++ifneq ($(filter x86%,$(TARGET_ARCH)),)
+ 
+ KERNEL_DIR ?= kernel
+ 
+-ifneq ($(filter x86%,$(TARGET_ARCH)),)
+ TARGET_KERNEL_ARCH ?= $(TARGET_ARCH)
+ KERNEL_TARGET := bzImage
+ TARGET_KERNEL_CONFIG ?= android-$(TARGET_KERNEL_ARCH)_defconfig
+ KERNEL_CONFIG_DIR := arch/x86/configs
+-endif
+-ifeq ($(TARGET_ARCH),arm)
+-KERNEL_TARGET := zImage
+-TARGET_KERNEL_CONFIG ?= goldfish_defconfig
+-KERNEL_CONFIG_DIR := arch/arm/configs
+-endif
+ 
+-KERNEL_CLANG_CLAGS := HOSTCC=$(abspath $(LLVM_PREBUILTS_PATH)/clang)
+-ifeq ($(BUILD_KERNEL_WITH_CLANG),true)
+-CROSS_COMPILE := x86_64-linux-androidkernel-
+-KERNEL_CLANG_CLAGS += CC=$(abspath $(LLVM_PREBUILTS_PATH)/clang) CLANG_TRIPLE=x86_64-linux-gnu-
+-else
+ ifeq ($(TARGET_KERNEL_ARCH),x86_64)
+-ifeq ($(HOST_OS),darwin)
+-CROSS_COMPILE ?= $(abspath prebuilts/gcc/darwin-x86/host/i686-apple-darwin-4.2.1/bin)/i686-apple-darwin11-
++CROSS_COMPILE := $(abspath $(TARGET_TOOLS_PREFIX))
++KERNEL_CLANG_FLAGS := \
++        LLVM=1 \
++        CC=$(abspath $(LLVM_PREBUILTS_PATH)/clang) \
++        LD=$(abspath $(LLVM_PREBUILTS_PATH)/ld.lld) \
++        AR=$(abspath $(LLVM_PREBUILTS_PATH)/llvm-ar) \
++        NM=$(abspath $(LLVM_PREBUILTS_PATH)/llvm-nm) \
++        OBJCOPY=$(abspath $(LLVM_PREBUILTS_PATH)/llvm-objcopy) \
++        OBJDUMP=$(abspath $(LLVM_PREBUILTS_PATH)/llvm-objdump) \
++        READELF=$(abspath $(LLVM_PREBUILTS_PATH)/llvm-readelf) \
++        OBJSIZE=$(abspath $(LLVM_PREBUILTS_PATH)/llvm-size) \
++        STRIP=$(abspath $(LLVM_PREBUILTS_PATH)/llvm-strip) \
++        HOSTCC=$(abspath $(LLVM_PREBUILTS_PATH)/clang) \
++        HOSTCXX=$(abspath $(LLVM_PREBUILTS_PATH)/clang++) \
++        HOSTLD=$(abspath $(LLVM_PREBUILTS_PATH)/ld.lld) \
++        HOSTLDFLAGS=-fuse-ld=lld \
++        HOSTAR=$(abspath $(LLVM_PREBUILTS_PATH)/llvm-ar)
+ else
+-CROSS_COMPILE ?= $(abspath prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6/bin)/x86_64-linux-
+-endif
+-else
+-CROSS_COMPILE ?= $(abspath $(TARGET_TOOLS_PREFIX))
+-endif
++$(error not implemented)
+ endif
+ 
+ KBUILD_OUTPUT := $(TARGET_OUT_INTERMEDIATES)/kernel
+@@ -49,9 +49,9 @@ KBUILD_JOBS := $(shell echo $$((1-(`cat /sys/devices/system/cpu/present`))))
+ endif
+ 
+ mk_kernel := + $(hide) prebuilts/build-tools/$(HOST_PREBUILT_TAG)/bin/make -j$(KBUILD_JOBS) -l$$(($(KBUILD_JOBS)+2)) \
+-	-C $(KERNEL_DIR) O=$(abspath $(KBUILD_OUTPUT)) ARCH=$(TARGET_ARCH) CROSS_COMPILE="$(abspath $(CC_WRAPPER)) $(CROSS_COMPILE)" $(if $(SHOW_COMMANDS),V=1) \
+-	YACC=$(abspath $(BISON)) LEX=$(abspath $(LEX)) M4=$(abspath $(M4)) DEPMOD=/sbin/depmod \
+-	$(KERNEL_CLANG_CLAGS)
++	-C $(KERNEL_DIR) O=$(abspath $(KBUILD_OUTPUT)) ARCH=$(TARGET_ARCH) CROSS_COMPILE=$(CROSS_COMPILE) \
++	YACC=$(abspath $(BISON)) LEX=$(abspath $(LEX)) M4=$(abspath $(M4)) DEPMOD=/sbin/depmod PERL=/usr/bin/perl \
++	$(KERNEL_CLANG_FLAGS)
+ 
+ KERNEL_CONFIG_FILE := $(if $(wildcard $(TARGET_KERNEL_CONFIG)),$(TARGET_KERNEL_CONFIG),$(KERNEL_DIR)/$(KERNEL_CONFIG_DIR)/$(TARGET_KERNEL_CONFIG))
+ 
+@@ -69,16 +69,11 @@ $(KERNEL_ARCH_CHANGED):
+ endif
+ $(KERNEL_DOTCONFIG_FILE): $(KERNEL_CONFIG_FILE) $(wildcard $(TARGET_KERNEL_DIFFCONFIG)) $(KERNEL_ARCH_CHANGED)
+ 	$(hide) mkdir -p $(@D) && cat $(wildcard $^) > $@
+-	$(hide) ln -sf ../../../../../../prebuilts $(@D)
+ 	$(hide) rm -f $(KERNEL_ARCH_CHANGED)
+ 
+ BUILT_KERNEL_TARGET := $(KBUILD_OUTPUT)/arch/$(TARGET_ARCH)/boot/$(KERNEL_TARGET)
+-$(BUILT_KERNEL_TARGET): $(KERNEL_DOTCONFIG_FILE)
++$(BUILT_KERNEL_TARGET): $(KERNEL_DOTCONFIG_FILE) $(M4) $(LEX) $(BISON)
+ 	# A dirty hack to use ar & ld
+-	$(hide) mkdir -p $(OUT_DIR)/.path; ln -sf ../../$(LLVM_PREBUILTS_PATH)/llvm-ar $(OUT_DIR)/.path/ar; ln -sf ../../$(LLVM_PREBUILTS_PATH)/ld.lld $(OUT_DIR)/.path/ld
+-ifeq ($(BUILD_KERNEL_WITH_CLANG),true)
+-	$(hide) cd $(OUT_DIR)/.path; ln -sf ../../$(dir $(TARGET_TOOLS_PREFIX))x86_64-linux-androidkernel-* .; ln -sf x86_64-linux-androidkernel-as x86_64-linux-gnu-as
+-endif
+ 	$(mk_kernel) olddefconfig
+ 	$(mk_kernel) $(KERNEL_TARGET) $(if $(MOD_ENABLED),modules)
+ 	$(if $(FIRMWARE_ENABLED),$(mk_kernel) INSTALL_MOD_PATH=$(abspath $(TARGET_OUT)) firmware_install)
+@@ -112,6 +107,7 @@ TARGET_PREBUILT_KERNEL := $(BUILT_KERNEL_TARGET)
+ .PHONY: kernel
+ kernel: $(INSTALLED_KERNEL_TARGET) $(KERNEL_MODULES_DEP)
+ 
++endif # TARGET_ARCH
+ endif # TARGET_PREBUILT_KERNEL
+ 
+ ifndef LINEAGE_BUILD
+@@ -122,4 +118,5 @@ ifdef TARGET_PREBUILT_MODULES
+ 	$(hide) cp -r $(TARGET_PREBUILT_MODULES) $(TARGET_OUT)/lib
+ endif
+ endif # LINEAGE_BUILD
+-endif # KBUILD_OUTPUT
++
++endif # TARGET_NO_KERNEL
+-- 
+2.25.1
+

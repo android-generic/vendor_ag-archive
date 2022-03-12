@@ -1,0 +1,25 @@
+From 360b882158983351bd2d5ce4ebd82b4eaefd5660 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 31 Dec 2021 18:58:34 -0500
+Subject: [PATCH 30/30] Import PowerManager in GlobalActionsDialog
+
+Change-Id: I1a37a05a7d565d44cd665b051f14b1754a1476b0
+---
+ .../android/systemui/globalactions/GlobalActionsDialogLite.java  | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
+index 2fdd60f4b150..5a8e2740dc11 100644
+--- a/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
++++ b/packages/SystemUI/src/com/android/systemui/globalactions/GlobalActionsDialogLite.java
+@@ -59,6 +59,7 @@ import android.os.Binder;
+ import android.os.Handler;
+ import android.os.IBinder;
+ import android.os.Message;
++import android.os.PowerManager;
+ import android.os.RemoteException;
+ import android.os.SystemClock;
+ import android.os.SystemProperties;
+-- 
+2.25.1
+

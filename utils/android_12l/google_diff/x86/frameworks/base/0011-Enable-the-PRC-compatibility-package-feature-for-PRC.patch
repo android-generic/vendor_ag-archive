@@ -1,0 +1,1093 @@
+From 0e7624e845c1a4550479e5ca7a5830c5ca74cf86 Mon Sep 17 00:00:00 2001
+From: xiajiang <xia1.jiang@intel.com>
+Date: Wed, 17 Feb 2016 13:59:14 -0500
+Subject: [PATCH 11/30] Enable the PRC compatibility package feature for PRC
+ market
+
+In PRC market, some APKs are packed in non-standard way, that is,
+the x86(_64) libraries aren't workable although they're found in the APK.
+This patch intends to relieve the impact from below 2 defects,
+which is based-on the heuristic algorithm.
+
+NOTE: To enable this feature, set "PRC_COMPATIBILITY_PACKAGE := true"
+in device BoardConfig.mk before enabling houdini.
+
+1. Missing x86(_64) libraries: The x86(_64) libraries are ported and
+   existing in the APK. But it's incomplete, and not workable.
+2. Mixed arm(64) libraries: Several libraries are existing in lib/x86(_64)/
+   directory in the APK. But some of them are arm(64) libraries,
+   instead of x86(_64) ones.
+
+All of above always cause APP crash if installed x86(_64) libraries
+by PackageManager.
+
+This patch aims to improve PackageManager to figure out these defects
+and install arm(64) libraries to run the APP with houdini support.
+The basic idea is to compare x86(_64) libraries with arm(64) alternatives
+to determine which one should be workable.
+
+To customize it for specific APPs, 3 lists are provided under
+/system/vendor/etc/misc/ on the device.
+
+1. /system/vendor/etc/misc/.OEMWhiteList:
+   This patch will be disabled for the APPs containing in the OEMWhiteList
+2. /system/vendor/etc/misc/.OEMBlackList:
+   The APP is enforced to install the arm(64) libraries if existed.
+3. /system/vendor/etc/misc/.ThirdPartySO:
+   This is another list which contains the names of all 3rd-party libraries,
+   which will impact on the final decision of APP installation.
+
+Change-Id: I2613d9ebc8fe012c801f4a38fc5dede413f15a91
+Tracked-On: https://jira01.devtools.intel.com/browse/OAM-20470
+Signed-off-by: xiajiang <xia1.jiang@intel.com>
+Reviewed-on: https://android.intel.com:443/471490
+---
+ .../internal/content/NativeLibraryHelper.java |  23 +-
+ core/jni/Android.bp                           |   2 +
+ core/jni/abipicker/ABIPicker.cpp              | 694 ++++++++++++++++++
+ core/jni/abipicker/ABIPicker.h                |  55 ++
+ core/jni/abipicker/ELFLite.h                  |  58 ++
+ ...d_internal_content_NativeLibraryHelper.cpp |  63 ++
+ .../pm/parsing/pkg/AndroidPackageUtils.java   |   3 +-
+ 7 files changed, 891 insertions(+), 7 deletions(-)
+ create mode 100644 core/jni/abipicker/ABIPicker.cpp
+ create mode 100644 core/jni/abipicker/ABIPicker.h
+ create mode 100644 core/jni/abipicker/ELFLite.h
+
+diff --git a/core/java/com/android/internal/content/NativeLibraryHelper.java b/core/java/com/android/internal/content/NativeLibraryHelper.java
+index 10750b695a39..0b469973f4b6 100644
+--- a/core/java/com/android/internal/content/NativeLibraryHelper.java
++++ b/core/java/com/android/internal/content/NativeLibraryHelper.java
+@@ -84,6 +84,7 @@ public class NativeLibraryHelper {
+         final boolean multiArch;
+         final boolean extractNativeLibs;
+         final boolean debuggable;
++        final String pkgName;
+ 
+         public static Handle create(File packageFile) throws IOException {
+             final ParseTypeImpl input = ParseTypeImpl.forDefaultParsing();
+@@ -98,11 +99,11 @@ public class NativeLibraryHelper {
+ 
+         public static Handle create(PackageLite lite) throws IOException {
+             return create(lite.getAllApkPaths(), lite.isMultiArch(), lite.isExtractNativeLibs(),
+-                    lite.isDebuggable());
++                    lite.isDebuggable(), lite.getPackageName());
+         }
+ 
+         public static Handle create(List<String> codePaths, boolean multiArch,
+-                boolean extractNativeLibs, boolean debuggable) throws IOException {
++                boolean extractNativeLibs, boolean debuggable, String pkgName) throws IOException {
+             final int size = codePaths.size();
+             final String[] apkPaths = new String[size];
+             final long[] apkHandles = new long[size];
+@@ -119,7 +120,7 @@ public class NativeLibraryHelper {
+                 }
+             }
+ 
+-            return new Handle(apkPaths, apkHandles, multiArch, extractNativeLibs, debuggable);
++            return new Handle(apkPaths, apkHandles, multiArch, extractNativeLibs, debuggable, pkgName);
+         }
+ 
+         public static Handle createFd(PackageLite lite, FileDescriptor fd) throws IOException {
+@@ -131,16 +132,17 @@ public class NativeLibraryHelper {
+             }
+ 
+             return new Handle(new String[]{path}, apkHandles, lite.isMultiArch(),
+-                    lite.isExtractNativeLibs(), lite.isDebuggable());
++                    lite.isExtractNativeLibs(), lite.isDebuggable(), lite.getPackageName());
+         }
+ 
+         Handle(String[] apkPaths, long[] apkHandles, boolean multiArch,
+-                boolean extractNativeLibs, boolean debuggable) {
++                boolean extractNativeLibs, boolean debuggable, String pkgName) {
+             this.apkPaths = apkPaths;
+             this.apkHandles = apkHandles;
+             this.multiArch = multiArch;
+             this.extractNativeLibs = extractNativeLibs;
+             this.debuggable = debuggable;
++            this.pkgName = pkgName;
+             mGuard.open("close");
+         }
+ 
+@@ -215,7 +217,13 @@ public class NativeLibraryHelper {
+     public static int findSupportedAbi(Handle handle, String[] supportedAbis) {
+         int finalRes = NO_NATIVE_LIBRARIES;
+         for (long apkHandle : handle.apkHandles) {
+-            final int res = nativeFindSupportedAbi(apkHandle, supportedAbis, handle.debuggable);
++            int res;
++            if (true) {
++                res = nativeFindSupportedAbiReplace(apkHandle, supportedAbis, handle.debuggable, handle.pkgName);
++            } else {
++                res = nativeFindSupportedAbi(apkHandle, supportedAbis, handle.debuggable);
++            }
++
+             if (res == NO_NATIVE_LIBRARIES) {
+                 // No native code, keep looking through all APKs.
+             } else if (res == INSTALL_FAILED_NO_MATCHING_ABIS) {
+@@ -240,6 +248,9 @@ public class NativeLibraryHelper {
+     private native static int nativeFindSupportedAbi(long handle, String[] supportedAbis,
+             boolean debuggable);
+ 
++    private native static int nativeFindSupportedAbiReplace(long handle, String[] supportedAbis,
++            boolean debuggable, String pkgName);
++
+     // Convenience method to call removeNativeBinariesFromDirLI(File)
+     public static void removeNativeBinariesLI(String nativeLibraryPath) {
+         if (nativeLibraryPath == null) return;
+diff --git a/core/jni/Android.bp b/core/jni/Android.bp
+index 6b9d3754c247..4ae44b30dc0f 100644
+--- a/core/jni/Android.bp
++++ b/core/jni/Android.bp
+@@ -28,6 +28,7 @@ cc_library_shared {
+         "-DEGL_EGLEXT_PROTOTYPES",
+ 
+         "-DU_USING_ICU_NAMESPACE=0",
++        "-D_PRC_COMPATIBILITY_PACKAGE_",
+ 
+         "-Wall",
+         "-Werror",
+@@ -88,6 +89,7 @@ cc_library_shared {
+                 "com_android_internal_content_NativeLibraryHelper.cpp",
+                 "com_google_android_gles_jni_EGLImpl.cpp",
+                 "com_google_android_gles_jni_GLImpl.cpp", // TODO: .arm
++                "abipicker/ABIPicker.cpp",
+                 "android_app_Activity.cpp",
+                 "android_app_ActivityThread.cpp",
+                 "android_app_NativeActivity.cpp",
+diff --git a/core/jni/abipicker/ABIPicker.cpp b/core/jni/abipicker/ABIPicker.cpp
+new file mode 100644
+index 000000000000..187ac566aa79
+--- /dev/null
++++ b/core/jni/abipicker/ABIPicker.cpp
+@@ -0,0 +1,694 @@
++#define LOG_TAG "ABIPicker"
++
++#include "abipicker/ABIPicker.h"
++#include "abipicker/ELFLite.h"
++
++#include <androidfw/ZipFileRO.h>
++#include <androidfw/ZipUtils.h>
++
++namespace android {
++#define ARR_SIZE(x)     (sizeof(x)/sizeof(x[0]))
++
++#define SO_NAME_MAX (4096)
++#define IMPOSSIBLE_LIB_NAME    "/mixed/"
++#define IMPOSSIBLE_LIB_LEN  (sizeof(IMPOSSIBLE_LIB_NAME)-1)
++#define ARMABI      "armeabi"
++#define ARMV7ABI    "armeabi-v7a"
++#define ARM64ABI    "arm64-v8a"
++#define X86ABI      "x86"
++#define X8664ABI    "x86_64"
++#define ARMABI_NAME_PREFIX        "arm"
++
++#define APK_LIB "lib/"
++#define APK_LIB_LEN (sizeof(APK_LIB) - 1)
++//#define PICK_LOGGER //flag to debug
++#ifdef PICK_LOGGER
++#define P_LOG(...) ALOGI(__VA_ARGS__)
++#else
++#define P_LOG(...)
++#endif
++
++#define OEMWHITE  "/vendor/etc/misc/.OEMWhiteList"
++#define OEMBLACK  "/vendor/etc/misc/.OEMBlackList"
++#define THIRDPARTY "/vendor/etc/misc/.ThirdPartySO"
++
++// load once, hold until poweroff
++static Vector <char*> thirdPartySO;
++static Vector <char*> cfgWhite;
++static Vector <char*> cfgBlack;
++static bool thirdload = false;
++static bool whiteload = false;
++static bool blackload = false;
++
++static const char* iaRelated[] = {"intel", "atom", "x86", "x64"};
++
++//////////////////////////////////////////////////////////////////////
++void getConfig(const char* cfgFile , Vector<char*>& cfgVec) {
++    FILE* fp = fopen(cfgFile, "r");
++    int read = -1;
++    char *line = NULL;
++    size_t len = 0;
++
++    while ((read = getline(&line, &len, fp)) != -1) {
++        int i = 0 , j = 0;
++        char *cfgline = (char*)malloc(len);
++        if (!cfgline) {
++           P_LOG("malloc error");
++           break;
++        }
++        for (i = 0; i < read; i++) {
++           if (!isspace(line[i])) {
++              cfgline[j++] = line[i];
++           }
++        }
++        cfgline[j] = '\0';
++        cfgVec.push_back(cfgline);
++        P_LOG("orignal %s , vec: %s ", line, cfgline);
++    }
++    free(line);
++    fclose(fp);
++}
++
++//////////////////////////////////////////////////////////////////////
++void freeAllString(Vector<char*>& list) {
++    Vector<char*>::iterator it = list.begin();
++    while (it != list.end()) {
++        if (*it != NULL) {
++           P_LOG("freeAllSring  %p , %s", it, *it);
++           free(*it);
++           *it = NULL;
++        }
++        it++;
++    }
++}
++
++//////////////////////////////////////////////////////////////////////
++bool isInOEMWhiteList(const char* pkgName) {
++    bool result = false;
++    if (!pkgName) return result;
++
++    if (!whiteload) {
++       getConfig(OEMWHITE, cfgWhite);
++       whiteload = true;
++    }
++
++    Vector<char*>::iterator it = cfgWhite.begin();
++    for (; it != cfgWhite.end(); it++) {
++       P_LOG("whitelist : %s", *it);
++       if (0 == strcmp(pkgName, *it)) {
++          ALOGI("found %s in whitelist", pkgName);
++          result = true;
++          break;
++       }
++    }
++    return result;
++}
++
++//////////////////////////////////////////////////////////////////////
++bool isInOEMBlackList(const char* pkgName) {
++    bool result = false;
++    if (!pkgName) return result;
++
++    if (!blackload) {
++       getConfig(OEMBLACK,  cfgBlack);
++       blackload = true;
++    }
++
++    Vector<char*>::iterator it = cfgBlack.begin();
++    for (; it != cfgBlack.end(); it++) {
++       if (0 == strcmp(pkgName, *it)) {
++          ALOGI("found %s in blacklist", pkgName);
++          result = true;
++          break;
++       }
++    }
++    return result;
++}
++
++
++//////////////////////////////////////////////////////////////////////
++bool isReliableLib(Vector<char*>& libList) {
++    unsigned sz = libList.size();
++    int len = ARR_SIZE(iaRelated);
++    for (unsigned i = 0; i < sz; i++) {
++        for (int j=0; j < len; j++) {
++            if (NULL != strstr(libList[i], iaRelated[j])) {
++                return true;
++            }
++        }
++    }
++
++    return false;
++}
++
++
++//////////////////////////////////////////////////////////////////////
++static bool isValidELF(char* buffer) {
++    if (buffer[EI_MAG0] != ELFMAG0 &&
++        buffer[EI_MAG1] != ELFMAG1 &&
++        buffer[EI_MAG2] != ELFMAG2 &&
++        buffer[EI_MAG3] != ELFMAG3) {
++        return false;
++    }
++    return true;
++}
++
++// assume that x86 has the only machine-code 3, and x86_64 62
++static bool isMixedLib(char* libCur, char* buffer) {
++    bool isX86_64 = (0 == strcmp(libCur, X8664ABI)) ? true: false;
++    uint16_t machine_code = *((uint16_t*)(&buffer[ELF_MACHINE_OFFSET]));
++    bool mixed = false;
++    if (isX86_64) {
++        if (machine_code != EM_X86_64)
++            mixed = true;
++    } else {
++        if (machine_code != EM_386)
++            mixed = true;
++    }
++    return mixed;
++}
++
++static bool isInThirdPartySOList(char* libName) {
++    if (!libName) return false;
++    size_t libLen = strlen(libName);
++    bool ret = false;
++    size_t sz = thirdPartySO.size();
++    for (size_t i = 0; i < sz; i++) {
++        size_t n = strlen(thirdPartySO[i]);
++        // three for prefix "lib", and 3 for suffix ".so"
++        if ((libLen == (n+6))&&(0 == strncmp(libName + 3, thirdPartySO[i], n))) {
++            ret = true;
++            break;
++        }
++    }
++    P_LOG("ABIpicker libName %s,In Third %d", libName, ret);
++    return ret;
++}
++
++static void insertionSort(Vector<char*>& list) {
++    P_LOG("in insertionSort, list size = %d\n", list.size());
++
++    for (size_t i = 1; i < list.size(); i++) {
++        char* x = list[i];
++
++        int j = i - 1;
++        P_LOG("sort 1. x=%s, i=%d, j=%d\n", x, i, j);
++        while (j >= 0 && (strcmp(list[j], x) > 0)) {
++            list.replaceAt(list[j], j + 1);
++            j--;
++        }
++        list.replaceAt(x, j + 1);
++    }
++}
++
++
++
++//////////////////////////////////////////////////////////////////////
++// Use armRef as a reference, compare all libraries of iaRef with all
++// libraries of armRef. If both are match, iaRef will be returned with
++// *result and true is return value. Or else, *result is rawResult and
++// false is return value
++bool ABIPicker::compare(char* armRef, char* iaRef,
++                        char* rawResult, char** result) {
++    bool ret = true;
++    *result = rawResult;
++
++    do {
++        assert(armRef != NULL);
++        if (0 == strlen(armRef)) {
++            *result = strlen(iaRef) > 0 ? iaRef : rawResult;
++            ret = strlen(iaRef) > 0 ? true : false;
++            break;
++        }
++        assert(iaRef != NULL);
++        if (0 == strlen(iaRef)) {
++            *result = armRef;
++            ret = false;
++            break;
++        }
++
++        Vector<char*>* iaRefList = getLibList(iaRef);
++        Vector<char*>* armRefList = getLibList(armRef);
++
++        // if contains the key words in iaRelated, just return true
++        if (isReliableLib(*iaRefList)) {
++            *result = iaRef;
++            break;
++        }
++
++        if (compareLibList(*iaRefList, *armRefList)) {
++            *result = iaRef;
++            break;
++        }
++
++        size_t iaIsvLibCount = 0;
++        size_t armIsvLibCount = 0;
++        if (!compare3rdPartyLibList(iaRef, armRef,
++                    &iaIsvLibCount, &armIsvLibCount)) {
++            *result = armRef;
++            ret = false;
++            break;
++        }
++
++        if (iaIsvLibCount > 0) {
++            *result = iaRef;
++            break;
++        }
++
++        *result = armRef;
++        ret = false;
++    } while (false);
++
++    ALOGV("%s Vs. %s, return %s\n",
++            iaRef ? iaRef : "NULL",
++            armRef ? armRef : "NULL", *result);
++    return ret;
++}
++
++bool ABIPicker::compareLibList(Vector<char*>& iaRefList,
++        Vector<char*>& armRefList) {
++    if (iaRefList.size() != armRefList.size()) {
++        return false;
++    }
++
++    Vector<char*>::iterator itIa = iaRefList.begin();
++    Vector<char*>::iterator itArm = armRefList.begin();
++    while (itIa != iaRefList.end() && itArm != armRefList.end()) {
++        char* iaLibName = *itIa;
++        char* armLibName = *itArm;
++
++        // NOTE:
++        // WIN treats file names in-case-sensitive,
++        // but LINUX  treats them case-sensitive.
++        if (0 != strcmp(iaLibName, armLibName)) {
++            return false;
++        }
++
++        itIa++;
++        itArm++;
++    }
++
++    return true;
++}
++
++bool ABIPicker::compare3rdPartyLibList(
++                char* iaRef, char* armRef,
++                size_t* iaIsvLibCount, size_t* armIsvLibCount) {
++    Vector<char*>* iaRefList = getLibList(iaRef);
++    Vector<char*>* armRefList = getLibList(armRef);
++
++    Vector<char*>* armRef3rdPartyLibList = new Vector<char*>();
++    Vector<char*>::iterator itArm = armRefList->begin();
++
++    // Load thirdPartyso
++    if (!thirdload) {
++        getConfig(THIRDPARTY, thirdPartySO);
++        thirdload = true;
++    }
++    while (itArm != armRefList->end()) {
++        char* armLibName = *itArm;
++        if (isInThirdPartySOList(armLibName)) {
++            armRef3rdPartyLibList->push_back(armLibName);
++        } else {
++            (*armIsvLibCount)++;
++        }
++
++        itArm++;
++    }
++
++    Vector<char*>::iterator itIa = iaRefList->begin();
++    Vector<char*>* iaRef3rdPartyLibList = new Vector<char*>();
++    while (itIa != iaRefList->end()) {
++        char* iaLibName = *itIa;
++        if (isInThirdPartySOList(iaLibName)) {
++            iaRef3rdPartyLibList->push_back(iaLibName);
++        } else {
++            (*iaIsvLibCount)++;
++        }
++
++        itIa++;
++    }
++    return compareLibList(*iaRef3rdPartyLibList, *armRef3rdPartyLibList);
++}
++
++char* ABIPicker::getAbiName(int abi) {
++    if (abi <  0 || (unsigned)abi >= mLibList->size()) {
++        return NULL;
++    }
++
++    char* ret = NULL;
++    int index = 0;
++    Vector<struct libInfo*>::iterator it = mLibList->begin();
++    while (it != mLibList->end()) {
++        if (index == abi) {
++            ret = (*it)->abiName;
++            break;
++        }
++
++        index++;
++        it++;
++    }
++
++    return ret;
++}
++
++int ABIPicker::getAbiIndex(const char* abiName) {
++    int ret = -1;
++
++    int index = 0;
++    Vector<struct libInfo*>::iterator it = mLibList->begin();
++    while (it != mLibList->end()) {
++        if (0 == strcmp(abiName, (*it)->abiName)) {
++            ret = index;
++            break;
++        }
++
++        index++;
++        it++;
++    }
++
++    return ret;
++}
++
++Vector<char*>* ABIPicker::getLibList(const char* abiName) {
++    Vector<char*>* ret = NULL;
++    Vector<struct libInfo*>::iterator it = mLibList->begin();
++    while (it != mLibList->end()) {
++        if (0 == strcmp(abiName, (*it)->abiName)) {
++            ret = (*it)->libNameList;
++            break;
++        }
++        it++;
++    }
++    P_LOG("getLibList of %s return %p\n", abiName, ret);
++    return ret;
++}
++
++
++size_t ABIPicker::getSpecficABILibCount(const char* abiName) {
++    Vector<char*>* specificAbiLibList = getLibList(abiName);
++    return specificAbiLibList && specificAbiLibList->size();
++}
++
++bool ABIPicker::foundMixedELF(const char* abiName) {
++    Vector<char*>* libNameList = getLibList(abiName);
++    if (!libNameList) {
++        return false;
++    }
++    if (libNameList->size() == 0) {
++        return false;
++    }
++
++    if (0 != strcasecmp(*(libNameList->begin()), IMPOSSIBLE_LIB_NAME)) {
++        return false;
++    }
++
++    return true;
++}
++
++
++//////////////////////////////////////////////////////////////////////
++ABIPicker::ABIPicker(const char* pkgName, Vector<ScopedUtfChars*> abiList) {
++    mLibList = new Vector<struct libInfo*>();
++    mpkgName = (char*)malloc(strlen(pkgName)+1);
++    if (!mpkgName) {
++        P_LOG("ABIPicker Construct Allocated space fails");
++    } else {
++        strcpy(mpkgName, pkgName);
++    }
++    Vector<ScopedUtfChars*>::iterator it = abiList.begin();
++    while (it != abiList.end()) {
++        if (!(*it)) {
++            break;
++        }
++
++        struct libInfo* tmp = (struct libInfo*)calloc(1,
++                sizeof(struct libInfo));
++        if (!tmp) {
++           P_LOG("ABIPicker Construct Allocated space fail %s", (*it)->c_str());
++           break;
++        }
++
++        snprintf(tmp->abiName, (*it)->size() + 1, "%s", (*it)->c_str());
++        tmp->libNameList = new Vector<char*>();
++        P_LOG("ABIPicker Construct %s , libNameList: %p",
++             tmp->abiName, tmp->libNameList);
++        mLibList->push_back(tmp);
++        it++;
++    }
++}
++
++ABIPicker::~ABIPicker(void) {
++    free(mpkgName);
++    mpkgName = NULL;
++    Vector<struct libInfo*>::iterator it = mLibList->begin();
++    while (it != mLibList->end()) {
++        freeAllString(*((*it)->libNameList));
++        (*it)->libNameList->clear();
++        delete (*it)->libNameList;
++        (*it)->libNameList = NULL;
++
++        free(*it);
++        *it = NULL;
++        it++;
++    }
++    mLibList->clear();
++}
++
++bool ABIPicker::buildNativeLibList(void* apkHandle) {
++    bool ret = false;
++
++    if (!apkHandle) {
++        ALOGE("apkHandle is NULL\n");
++        return ret;
++    }
++
++    ZipFileRO* zipFile = reinterpret_cast<ZipFileRO*>(apkHandle);
++    void* cookie = NULL;
++    if (!zipFile->startIteration(&cookie)) {
++        ALOGE("apk file is broken\n");
++        return ret;
++    }
++
++    ZipEntryRO next = NULL;
++    char* unCompBuff = NULL;
++    char fileName[SO_NAME_MAX + 1];
++    while ((next = zipFile->nextEntry(cookie))) {
++        if (zipFile->getEntryFileName(next, fileName, SO_NAME_MAX)) {
++            ALOGE("apk file is broken, can not get entry name\n");
++            ret = false;
++            break;
++        }
++        fileName[SO_NAME_MAX] = '\0';
++
++        // Make sure we're in the lib directory of the ZIP.
++        // find out entries with such names: "lib/xxxxxxx" or "lib/"
++        if (strncmp(fileName, APK_LIB, APK_LIB_LEN)) {
++            continue;
++        }
++
++        // find out any invalid ELF file
++        uint32_t unCompLen = 0;
++        if (!zipFile->getEntryInfo(next, NULL, &unCompLen, NULL, NULL, NULL,
++                                    NULL)) {
++            ALOGE("apk file is broken, can not get entry info\n");
++            ret = false;
++            break;
++        }
++
++        if (unCompLen == 0) {
++            ALOGV("skip a empty file(%s)\n", fileName);
++            continue;
++        }
++
++        free(unCompBuff);
++        unCompBuff = NULL;
++
++        unCompBuff = (char*)malloc(unCompLen);
++        if (!unCompBuff) {
++            ALOGE("malloc failed size %d\n", unCompLen);
++            ret = false;
++            break;
++        }
++
++        // THE MOST TIME COST OPERATION
++        if (!zipFile->uncompressEntry(next, unCompBuff, unCompLen)) {
++            ALOGE("%s: uncompress failed\n", fileName);
++            ret = false;
++            break;
++        }
++
++        if (!isValidELF(unCompBuff)) {
++            ALOGI("skip a fake .ELF file(%s)\n", fileName);
++            continue;
++        }
++
++        // It is a real .so file, prepare to record
++        // find abi name and focus on what we care: arm(s) and x86(s)
++        // at least lastSlash points to the end of "lib/"
++        const char* lastSlash = strrchr(fileName, '/');
++        const char* cpuAbiOffset = fileName + APK_LIB_LEN;
++        // just in case if fileName is in an abnormal format, like lib/libname,
++        // lib//libname
++        if (lastSlash <= cpuAbiOffset) {
++            ALOGI("skip a invalid lib file(%s)\n", fileName);
++            continue;
++        }
++
++        const size_t cpuAbiRegionSize = lastSlash - cpuAbiOffset;
++        char curAbiName[ABI_NAME_MAX_LENGTH];
++        if (cpuAbiRegionSize >= ABI_NAME_MAX_LENGTH) {
++            continue;
++        }
++        snprintf(curAbiName, cpuAbiRegionSize + 1, "%s", cpuAbiOffset);
++
++        Vector<char*>* libListOfCurAbi = getLibList(curAbiName);
++        if (!libListOfCurAbi) {
++            P_LOG("getLibList of %s return NULL\n", curAbiName);
++            continue;
++        }
++
++        // mixed arm elf in lib/x86 or lib/x86_64
++        // but we don't consider a compareable scenario in lib/arm*
++        if (0 == strcmp(curAbiName, X86ABI) ||
++                0 == strcmp(curAbiName, X8664ABI)) {
++            if (!libListOfCurAbi->empty()) {
++                char* firstElement = libListOfCurAbi->itemAt(0);
++                if (0 == strcmp(firstElement, IMPOSSIBLE_LIB_NAME)) {
++                    // won't add any new into the list if found mixed
++                    // lib before
++                    P_LOG("won't count count if found mixed lib before");
++                    continue;
++                }
++            }
++
++            if (isMixedLib(curAbiName, unCompBuff)) {
++                P_LOG("found mixed lib(%s) in lib/%s/", curAbiName, fileName);
++                freeAllString(*libListOfCurAbi);
++                libListOfCurAbi->clear();
++                char* mixedLib = (char*)malloc(IMPOSSIBLE_LIB_LEN+1);
++                if (!mixedLib) {
++                    ALOGE("malloc failed size %zu", IMPOSSIBLE_LIB_LEN + 1);
++                    ret = false;
++                    break;
++                }
++                strcpy(mixedLib, (char*)IMPOSSIBLE_LIB_NAME);
++                mixedLib[IMPOSSIBLE_LIB_LEN] ='\0';
++                libListOfCurAbi->push_back(mixedLib);
++                continue;
++            }
++        }
++
++        // now, lastSlash should point to lib name
++        lastSlash++;
++        const size_t libNameSize = strlen(lastSlash);
++        char* curLibName = (char*)malloc(libNameSize+1);
++        if (!curLibName) {
++            ALOGE("malloc failed size %zu\n", libNameSize+1);
++            ret = false;
++            break;
++        }
++        strcpy(curLibName, lastSlash);
++        curLibName[libNameSize] = '\0';
++
++        libListOfCurAbi->push_back(curLibName);
++
++        ret = true;
++    }
++
++    free(unCompBuff);
++    unCompBuff = NULL;
++
++    zipFile->endIteration(cookie);
++
++    for (unsigned i = 0; i < mLibList->size(); i++) {
++        struct libInfo* tmp = mLibList->itemAt(i);
++        insertionSort(*(tmp->libNameList));
++    }
++    return ret;
++}
++
++int ABIPicker::pickupRightABI(int sysPrefer) {
++    char* sysPreferAbiName = getAbiName(sysPrefer);
++    if (!sysPreferAbiName) {
++        return sysPrefer;
++    }
++
++    bool is64BitPrefer = (0 == strcmp(sysPreferAbiName, X8664ABI));
++    bool x8664HasMixedELF = foundMixedELF(X8664ABI);
++    bool x86HasMixedELF = foundMixedELF(X86ABI);
++
++    size_t armv7LibCount = getSpecficABILibCount(ARMV7ABI);
++    size_t armv5LibCount = getSpecficABILibCount(ARMABI);
++    size_t armv8LibCount = getSpecficABILibCount(ARM64ABI);
++    size_t x86LibCount = x86HasMixedELF ? 0 : getSpecficABILibCount(X86ABI);
++    size_t x8664LibCount = x8664HasMixedELF ? 0 : getSpecficABILibCount(X8664ABI);
++    P_LOG("armv7LibCount:%d armv5LibCount:%d armv8LibCount:%d x86LibCount:%d x8664LibCount:%d", armv7LibCount, armv5LibCount, armv8LibCount, x86LibCount, x8664LibCount);
++
++    // in OEMBlackList, need to be supported by bt
++    // but in case of armlib doesn't exist, we choose x86 or x86_64
++    if (isInOEMBlackList(mpkgName)) {
++        if (armv7LibCount > 0) {
++            return getAbiIndex(ARMV7ABI);
++        } else if (armv5LibCount > 0) {
++            return getAbiIndex(ARMABI);
++        } else if (armv8LibCount > 0) {
++            return getAbiIndex(ARM64ABI);
++        }
++    }
++
++    char arm64Ref[ABI_NAME_MAX_LENGTH];
++    if (armv8LibCount > 0) {
++        snprintf(arm64Ref, sizeof(ARM64ABI), "%s", ARM64ABI);
++    } else {
++        arm64Ref[0] = '\0';
++    }
++
++    char arm32Ref[ABI_NAME_MAX_LENGTH];
++    if (armv7LibCount > 0) {
++        snprintf(arm32Ref, sizeof(ARMV7ABI), "%s", ARMV7ABI);
++    } else if (armv5LibCount > 0) {
++        snprintf(arm32Ref, sizeof(ARMABI), "%s", ARMABI);
++    } else {
++        arm32Ref[0] = '\0';
++    }
++
++    char ia32Ref[ABI_NAME_MAX_LENGTH];
++    if (x86LibCount > 0) {
++        snprintf(ia32Ref, sizeof(X86ABI), "%s", X86ABI);
++    } else {
++        ia32Ref[0] = '\0';
++    }
++
++    char ia64Ref[ABI_NAME_MAX_LENGTH];
++    if (x8664LibCount > 0) {
++        snprintf(ia64Ref, ABI_NAME_MAX_LENGTH, "%s", X8664ABI);
++    } else {
++        ia64Ref[0] = '\0';
++    }
++
++    char* retAbiName = sysPreferAbiName;
++    do {
++        // # The basic rule is:
++        // - on 32 bit system, compare ia32Ref native libraries with
++        // arm32Ref native libraries. If pass, return ia32Ref .
++        // If fail, return arm32Ref.
++        // - on 64 bit system, IA has two chances. if ia64Ref native
++        // libraries can't pass the comparation with arm64Ref, we should
++        // run the comparation again with ia32Ref
++        if (is64BitPrefer) {
++            if (!compare(arm64Ref, ia64Ref, sysPreferAbiName, &retAbiName)) {
++                char rawRes[ABI_NAME_MAX_LENGTH];
++                strcpy(rawRes, retAbiName);
++                compare(arm32Ref, ia32Ref, rawRes, &retAbiName);
++            }
++        } else {
++            compare(arm32Ref, ia32Ref, sysPreferAbiName, &retAbiName);
++        }
++    } while (false);
++    int ret = getAbiIndex(retAbiName);
++    ALOGI("selected abi %s(%d) for %s", retAbiName, ret, mpkgName);
++    return ret;
++}
++
++}  // namespace android
+diff --git a/core/jni/abipicker/ABIPicker.h b/core/jni/abipicker/ABIPicker.h
+new file mode 100644
+index 000000000000..eb873df2b016
+--- /dev/null
++++ b/core/jni/abipicker/ABIPicker.h
+@@ -0,0 +1,55 @@
++#ifndef _ABIPICKER_H_
++#define _ABIPICKER_H_
++
++#include <jni.h>
++#include <stdlib.h>
++#include <utils/Vector.h>
++#include <sys/types.h>
++
++#include <nativehelper/ScopedUtfChars.h>
++
++namespace android {
++//  assumption: the length of name of any abi type in abi list,
++//  like armeabi-v7a, armeabi, x86, is not longer than 64
++#define ABI_NAME_MAX_LENGTH     (64)
++/*
++class LibInfo {
++ public:
++    LibInfo(char* s, List<char*> list);
++    ~LibInfo(void);
++
++ private:
++    char abiName[ABI_NAME_MAX_LENGTH];
++    List<char*> libNameList;
++};
++*/
++
++class ABIPicker {
++ public:
++    explicit ABIPicker(const char* pkgName,Vector<ScopedUtfChars*> abiList);
++    ~ABIPicker(void);
++
++    bool buildNativeLibList(void* apkHandle);
++    int  pickupRightABI(int sysPrefer);
++ private:
++    struct libInfo{
++        char abiName[ABI_NAME_MAX_LENGTH];
++        Vector<char*>* libNameList;
++    };
++    Vector<struct libInfo*>* mLibList;
++    char* mpkgName;
++
++    bool foundMixedELF(const char* abiName);
++    bool compare(char* armRef, char* iaRef, char* rawResult, char** result);
++    bool compareLibList(Vector<char*>& iaRefList, Vector<char*>& armRefList);
++    bool compare3rdPartyLibList( char* iaRef, char* armRef,
++            size_t* iaIsvLibCount, size_t* armIsvLibCount);
++    char*  getAbiName(int abi);
++    int    getAbiIndex(const char* abiName);
++    size_t getSpecficABILibCount(const char* abiName);
++    Vector<char*>* getLibList(const char* abiName);
++};
++
++bool isInOEMWhiteList(const char* pkgName);
++}  // namespace android
++#endif  // _ABIPICKER_H_
+diff --git a/core/jni/abipicker/ELFLite.h b/core/jni/abipicker/ELFLite.h
+new file mode 100644
+index 000000000000..e609e8ac4595
+--- /dev/null
++++ b/core/jni/abipicker/ELFLite.h
+@@ -0,0 +1,58 @@
++#ifndef _ELFLITE_H__
++#define _ELFLITE_H__
++
++#include <ctype.h>
++#include <fcntl.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <unistd.h>
++
++namespace android {
++#define EI_NIDENT   16   /* Size of e_ident[] */
++
++/*
++ * Fields in e_ident[]
++ */
++#define EI_MAG0     0    /* File identification byte 0 index */
++#define ELFMAG0     0x7F /* Magic number byte 0 */
++#define EI_MAG1     1    /* File identification byte 1 index */
++#define ELFMAG1     'E'  /* Magic number byte 1 */
++#define EI_MAG2     2    /* File identification byte 2 index */
++#define ELFMAG2     'L'  /* Magic number byte 2 */
++#define EI_MAG3     3    /* File identification byte 3 index */
++#define ELFMAG3     'F'  /* Magic number byte 3 */
++
++/*
++ * according to implementations of ELF Header
++ *     unsigned char e_ident[16];        // ELF "magic number"
++ *     unsigned char e_type[2];          // Identifies object file type
++ *     unsigned char e_machine[2];       // Specifies required architecture
++ */
++#define ELF_MACHINE_OFFSET  18
++
++/*
++ * Values for e_machine, which identifies the architecture.  These numbers
++ * are officially assigned by registry@sco.com.  See below for a list of
++ * ad-hoc numbers used during initial development.
++ * Please always sync them.
++ */
++#define EM_386        3 /* Intel 80386 */
++#define EM_486        6 /* Intel 80486 */
++#define EM_860        7 /* Intel 80860 */
++#define EM_960       19 /* Intel 80960 */
++#define EM_ARM       40 /* ARM */
++#define EM_IA_64     50 /* Intel IA-64 Processor */
++#define EM_X86_64    62 /* AMD x86-64 architecture */
++#define EM_8051     165 /* Intel 8051 and variants */
++#define EM_L1OM     180 /* Intel L1OM */
++#define EM_K1OM     181 /* Intel K1OM */
++#define EM_INTEL182 182 /* Reserved by Intel */
++#define EM_AARCH64  183 /* ARM 64-bit architecture */
++#define EM_ARM184   184 /* Reserved by ARM */
++#define EM_INTEL205 205 /* Reserved by Intel */
++#define EM_INTEL206 206 /* Reserved by Intel */
++#define EM_INTEL207 207 /* Reserved by Intel */
++#define EM_INTEL208 208 /* Reserved by Intel */
++#define EM_INTEL209 209 /* Reserved by Intel */
++}  // namespace android
++#endif  // _ELFLITE_H__
+diff --git a/core/jni/com_android_internal_content_NativeLibraryHelper.cpp b/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
+index be82879c8411..627adbf7c4f9 100644
+--- a/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
++++ b/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
+@@ -39,6 +39,10 @@
+ 
+ #include <memory>
+ 
++#ifdef _PRC_COMPATIBILITY_PACKAGE_
++#include "abipicker/ABIPicker.h"
++#endif
++
+ #define APK_LIB "lib/"
+ #define APK_LIB_LEN (sizeof(APK_LIB) - 1)
+ 
+@@ -53,6 +57,11 @@
+ #define TMP_FILE_PATTERN "/tmp.XXXXXX"
+ #define TMP_FILE_PATTERN_LEN (sizeof(TMP_FILE_PATTERN) - 1)
+ 
++#ifdef _PRC_COMPATIBILITY_PACKAGE_
++#define X86ABI     "x86"
++#define X8664ABI   "x86_64"
++#endif
++
+ namespace android {
+ 
+ // These match PackageManager.java install codes
+@@ -511,6 +520,57 @@ com_android_internal_content_NativeLibraryHelper_findSupportedAbi(JNIEnv *env, j
+     return (jint) findSupportedAbi(env, apkHandle, javaCpuAbisToSearch, debuggable);
+ }
+ 
++static jint
++com_android_internal_content_NativeLibraryHelper_findSupportedAbi_replace(
++        JNIEnv *env,
++        jclass clazz,
++        jlong apkHandle,
++        jobjectArray javaCpuAbisToSearch,
++        jboolean debuggable,
++        jstring apkPkgName)
++{
++#ifdef _PRC_COMPATIBILITY_PACKAGE_
++    const int numAbis = env->GetArrayLength(javaCpuAbisToSearch);
++    Vector<ScopedUtfChars*> supportedAbis;
++    for (int i = 0; i < numAbis; i++) {
++        ScopedUtfChars* abiName = new ScopedUtfChars(env,
++                 (jstring)env->GetObjectArrayElement(
++                     javaCpuAbisToSearch, i));
++        supportedAbis.push_back(abiName);
++    }
++
++    int abiType = findSupportedAbi(env, apkHandle, javaCpuAbisToSearch, debuggable);
++    do {
++
++        if (abiType < 0 || abiType >= numAbis ) break ;
++       // if one package's name is on OEM's specific white list, then the
++        // package should be installed as default
++        ScopedUtfChars name(env, apkPkgName);
++         if (isInOEMWhiteList(name.c_str())) {
++            break;
++        }
++
++        if (0 != strcmp(supportedAbis[abiType]->c_str(), X86ABI) &&
++            0 != strcmp(supportedAbis[abiType]->c_str(), X8664ABI)){
++            break;
++        }
++        ABIPicker picker(name.c_str(),supportedAbis);
++        if (!picker.buildNativeLibList((void*)apkHandle)) {
++            break;
++        }
++
++        abiType = picker.pickupRightABI(abiType);
++    } while (false);
++
++    for (int i = 0; i < numAbis; ++i) {
++        delete supportedAbis[i];
++    }
++    return (jint)abiType;
++#else
++    return (jint)findSupportedAbi(env, apkHandle, javaCpuAbisToSearch, debuggable);
++#endif
++}
++
+ enum bitcode_scan_result_t {
+   APK_SCAN_ERROR = -1,
+   NO_BITCODE_PRESENT = 0,
+@@ -602,6 +662,9 @@ static const JNINativeMethod gMethods[] = {
+     {"nativeFindSupportedAbi",
+             "(J[Ljava/lang/String;Z)I",
+             (void *)com_android_internal_content_NativeLibraryHelper_findSupportedAbi},
++    {"nativeFindSupportedAbiReplace",
++            "(J[Ljava/lang/String;ZLjava/lang/String;)I",
++            (void *)com_android_internal_content_NativeLibraryHelper_findSupportedAbi_replace},
+     {"hasRenderscriptBitcode", "(J)I",
+             (void *)com_android_internal_content_NativeLibraryHelper_hasRenderscriptBitcode},
+ };
+diff --git a/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java b/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
+index 5ee612b6d55f..abfec23e6c36 100644
+--- a/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
++++ b/services/core/java/com/android/server/pm/parsing/pkg/AndroidPackageUtils.java
+@@ -138,7 +138,8 @@ public class AndroidPackageUtils {
+                 AndroidPackageUtils.getAllCodePaths(pkg),
+                 pkg.isMultiArch(),
+                 pkg.isExtractNativeLibs(),
+-                pkg.isDebuggable()
++                pkg.isDebuggable(),
++                pkg.getPackageName()
+         );
+     }
+ 
+-- 
+2.25.1
+

@@ -1,0 +1,51 @@
+From 2ceb1e61b15737b0b1b1612471bc14741ba0983f Mon Sep 17 00:00:00 2001
+From: Madhusudhan S <madhusudhan.s@intel.com>
+Date: Mon, 12 Nov 2018 13:18:34 +0530
+Subject: [PATCH 29/30] Enabling suspend on IVI after clicking sleep from the
+ power button menu.
+
+Tracked-on: OAM-56502
+
+Change-Id: Ib8e5f351815474d8e99739938ac5845227f711ff
+Signed-off-by: Madhusudhan S <madhusudhan.s@intel.com>
+
+Conflicts:
+	services/core/java/com/android/server/power/PowerManagerService.java
+
+Conflicts:
+	services/core/java/com/android/server/power/PowerManagerService.java
+
+Conflicts:
+	services/core/java/com/android/server/power/PowerManagerService.java
+---
+ .../java/com/android/server/power/PowerManagerService.java | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/services/core/java/com/android/server/power/PowerManagerService.java b/services/core/java/com/android/server/power/PowerManagerService.java
+index 74caa83a74b7..2d8986fd77f3 100644
+--- a/services/core/java/com/android/server/power/PowerManagerService.java
++++ b/services/core/java/com/android/server/power/PowerManagerService.java
+@@ -132,6 +132,7 @@ import java.util.Arrays;
+ import java.util.List;
+ import java.util.NoSuchElementException;
+ import java.util.Objects;
++import android.os.FileUtils;
+ 
+ /**
+  * The power manager service is responsible for coordinating power management
+@@ -1891,6 +1892,12 @@ public final class PowerManagerService extends SystemService
+             Slog.i(TAG, "Powering off display group due to "
+                     + PowerManager.sleepReasonToString(reason) + " (groupId= " + groupId
+                     + ", uid= " + uid + ")...");
++            // Adding force suspend code to enter S3 after pressing sleep button
++			try {
++				FileUtils.stringToFile("/sys/power/state", "mem");
++			} catch (IOException e) {
++				Slog.v(TAG, "IOException: " + e);
++			}
+ 
+             mDisplayGroupPowerStateMapper.setSandmanSummoned(groupId, true);
+             setWakefulnessLocked(groupId, WAKEFULNESS_DOZING, eventTime, uid, reason,
+-- 
+2.25.1
+

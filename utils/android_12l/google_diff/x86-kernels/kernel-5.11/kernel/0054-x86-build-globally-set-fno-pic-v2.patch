@@ -1,0 +1,45 @@
+From 383acee3f34bb68cb33ec4fdaeba675b5e772956 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 14 Feb 2021 22:56:52 +0100
+Subject: [PATCH 054/106] x86, build: globally set -fno-pic (v2)
+
+(v2) Resolution of conflict due to commits:
+     256b92af784d ("x86/build: Disable CET instrumentation in the kernel for 32-bit too")
+     20bf2b378729 ("x86/build: Disable CET instrumentation in the kernel")
+
+Android toolchain enables -fpic by default.
+We never want this for 32-bit and 64-bit kernels
+and it will break the build.
+---
+ arch/x86/Makefile | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/arch/x86/Makefile b/arch/x86/Makefile
+index 30920d70b48b..a7743309ef39 100644
+--- a/arch/x86/Makefile
++++ b/arch/x86/Makefile
+@@ -53,6 +53,10 @@ KBUILD_CFLAGS += $(call cc-option,-mno-avx,)
+ # Intel CET isn't enabled in the kernel
+ KBUILD_CFLAGS += $(call cc-option,-fcf-protection=none)
+ 
++# Never want PIC in x86 kernel, prevent breakage with GCC built
++# with nonstandard options
++KBUILD_CFLAGS += -fno-pic
++
+ ifeq ($(CONFIG_X86_32),y)
+         BITS := 32
+         UTS_MACHINE := i386
+@@ -64,10 +68,6 @@ ifeq ($(CONFIG_X86_32),y)
+ 
+         KBUILD_CFLAGS += -msoft-float -mregparm=3 -freg-struct-return
+ 
+-        # Never want PIC in a 32-bit kernel, prevent breakage with GCC built
+-        # with nonstandard options
+-        KBUILD_CFLAGS += -fno-pic
+-
+         # Align the stack to the register width instead of using the default
+         # alignment of 16 bytes. This reduces stack usage and the number of
+         # alignment instructions.
+-- 
+2.17.1
+

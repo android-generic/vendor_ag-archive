@@ -1,0 +1,39 @@
+From 989cabe91039ca46501f879c2183a25f8046b14d Mon Sep 17 00:00:00 2001
+From: Masaki Muranaka <monaka@monami-ya.com>
+Date: Mon, 21 Oct 2013 12:49:28 +0000
+Subject: [PATCH 048/100] Add device ID for Egalax multitouch 0x72e9.
+
+---
+ drivers/hid/hid-ids.h        | 1 +
+ drivers/hid/hid-multitouch.c | 3 +++
+ 2 files changed, 4 insertions(+)
+
+diff --git a/drivers/hid/hid-ids.h b/drivers/hid/hid-ids.h
+index e42aaae3138f..024a37e11358 100644
+--- a/drivers/hid/hid-ids.h
++++ b/drivers/hid/hid-ids.h
+@@ -382,6 +382,7 @@
+ #define USB_DEVICE_ID_DWAV_EGALAX_MULTITOUCH_72AA	0x72aa
+ #define USB_DEVICE_ID_DWAV_EGALAX_MULTITOUCH_72C4	0x72c4
+ #define USB_DEVICE_ID_DWAV_EGALAX_MULTITOUCH_72D0	0x72d0
++#define USB_DEVICE_ID_DWAV_EGALAX_MULTITOUCH_72E9	0x72e9
+ #define USB_DEVICE_ID_DWAV_EGALAX_MULTITOUCH_72FA	0x72fa
+ #define USB_DEVICE_ID_DWAV_EGALAX_MULTITOUCH_7302	0x7302
+ #define USB_DEVICE_ID_DWAV_EGALAX_MULTITOUCH_7349	0x7349
+diff --git a/drivers/hid/hid-multitouch.c b/drivers/hid/hid-multitouch.c
+index 9d9f3e1bd5f4..120d867baefb 100644
+--- a/drivers/hid/hid-multitouch.c
++++ b/drivers/hid/hid-multitouch.c
+@@ -1893,6 +1893,9 @@ static const struct hid_device_id mt_devices[] = {
+ 	{ .driver_data = MT_CLS_EGALAX,
+ 		HID_USB_DEVICE(USB_VENDOR_ID_DWAV,
+ 			USB_DEVICE_ID_DWAV_EGALAX_MULTITOUCH_72D0) },
++	{ .driver_data = MT_CLS_EGALAX,
++		MT_USB_DEVICE(USB_VENDOR_ID_DWAV,
++			USB_DEVICE_ID_DWAV_EGALAX_MULTITOUCH_72E9) },
+ 	{ .driver_data = MT_CLS_EGALAX,
+ 		MT_USB_DEVICE(USB_VENDOR_ID_DWAV,
+ 			USB_DEVICE_ID_DWAV_EGALAX_MULTITOUCH_72FA) },
+-- 
+2.17.1
+

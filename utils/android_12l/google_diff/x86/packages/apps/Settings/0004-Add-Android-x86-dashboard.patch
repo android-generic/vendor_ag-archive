@@ -1,0 +1,251 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 30 Mar 2018 17:40:06 +0800
+Subject: [PATCH 4/4] Add Android-x86 dashboard
+
+Add an option to enable or disable native bridge.
+More options will be added in the future.
+
+Change-Id: Ib4b1e44b6c8a3b0ee337d9233725e80589c69827
+---
+ AndroidManifest.xml                           | 22 ++++++++
+ res/values-zh-rCN/strings.xml                 |  4 ++
+ res/values-zh-rHK/strings.xml                 |  4 ++
+ res/values-zh-rTW/strings.xml                 |  4 ++
+ res/values/strings.xml                        |  6 ++
+ res/xml/android_x86_options.xml               | 26 +++++++++
+ src/com/android/settings/Settings.java        |  1 +
+ .../core/gateway/SettingsGateway.java         |  3 +
+ .../system/AndroidX86DashboardFragment.java   | 55 +++++++++++++++++++
+ 9 files changed, 125 insertions(+)
+ create mode 100644 res/xml/android_x86_options.xml
+ create mode 100644 src/com/android/settings/system/AndroidX86DashboardFragment.java
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 9b2cf2412a..168993eb3a 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -3331,6 +3331,28 @@
+                        android:value="com.android.settings.applications.AppDashboardFragment"/>
+         </activity>
+ 
++        <activity
++            android:name=".Settings$AndroidX86DashboardActivity"
++            android:label="@string/android_x86_options_title"
++            android:exported="true"
++            android:icon="@drawable/ic_settings_applications">
++            <intent-filter>
++                <action android:name="android.intent.action.MAIN" />
++                <category android:name="android.intent.category.DEFAULT" />
++            </intent-filter>
++            <intent-filter android:priority="6">
++                <action android:name="com.android.settings.action.SETTINGS" />
++            </intent-filter>
++            <meta-data android:name="com.android.settings.FRAGMENT_CLASS"
++                android:value="com.android.settings.system.AndroidX86DashboardFragment" />
++            <meta-data android:name="com.android.settings.category"
++                android:value="com.android.settings.category.ia.homepage" />
++            <meta-data android:name="com.android.settings.summary"
++                       android:resource="@string/android_x86_dashboard_summary"/>
++            <meta-data android:name="com.android.settings.PRIMARY_PROFILE_CONTROLLED"
++                android:value="true" />
++        </activity>
++
+         <activity
+             android:name=".Settings$AccountDashboardActivity"
+             android:label="@string/account_dashboard_title"
+diff --git a/res/values-zh-rCN/strings.xml b/res/values-zh-rCN/strings.xml
+index 73ee6251a4..a936a167fd 100644
+--- a/res/values-zh-rCN/strings.xml
++++ b/res/values-zh-rCN/strings.xml
+@@ -2170,6 +2170,10 @@
+     <string name="runningservicedetails_stop_dlg_title" msgid="6201041461740445113">"要停止系统服务吗？"</string>
+     <string name="runningservicedetails_stop_dlg_text" product="tablet" msgid="2076922609580490122">"如果停止此服务，您平板电脑上的某些功能也将随之停止工作，并在您将平板电脑关机然后再重新打开后才能使用。"</string>
+     <string name="runningservicedetails_stop_dlg_text" product="default" msgid="2625863973434309085">"如果停止此服务，您手机上的某些功能也将随之停止工作，并在您将手机关机然后再重新打开后才能使用。"</string>
++    <string name="android_x86_options_title">"安卓X86设置"</string>
++    <string name="android_x86_dashboard_summary">兼容模式、统计</string>
++    <string name="nativebridge_toggle_title">"兼容模式"</string>
++    <string name="nativebridge_toggle_summary">"可兼容於使用 arm 庫的应用"</string>
+     <string name="language_input_gesture_title" msgid="3292455685728572960">"语言、输入法和手势"</string>
+     <string name="language_input_gesture_summary_on_with_assist" msgid="8670153838520237089"></string>
+     <string name="language_input_gesture_summary_on_non_assist" msgid="2738661322747920463"></string>
+diff --git a/res/values-zh-rHK/strings.xml b/res/values-zh-rHK/strings.xml
+index 4b859bf0b5..d23d4f6190 100644
+--- a/res/values-zh-rHK/strings.xml
++++ b/res/values-zh-rHK/strings.xml
+@@ -2172,6 +2172,10 @@
+     <string name="runningservicedetails_stop_dlg_title" msgid="6201041461740445113">"停止系統服務？"</string>
+     <string name="runningservicedetails_stop_dlg_text" product="tablet" msgid="2076922609580490122">"如果您停用這項服務，您平板電腦上的某些功能可能會停止正常運作，待您重新開機後才會恢復正常。"</string>
+     <string name="runningservicedetails_stop_dlg_text" product="default" msgid="2625863973434309085">"如果您停用這項服務，您手機上的某些功能可能會停止正常運作，待您重新開機後才會恢復正常。"</string>
++    <string name="android_x86_options_title">"Android-x86 設定"</string>
++    <string name="android_x86_dashboard_summary">原生相容模式、統計</string>
++    <string name="nativebridge_toggle_title">"原生相容模式"</string>
++    <string name="nativebridge_toggle_summary">"可相容於使用 arm 原生函式庫的應用程式"</string>
+     <string name="language_input_gesture_title" msgid="3292455685728572960">"語言、輸入和手勢"</string>
+     <string name="language_input_gesture_summary_on_with_assist" msgid="8670153838520237089"></string>
+     <string name="language_input_gesture_summary_on_non_assist" msgid="2738661322747920463"></string>
+diff --git a/res/values-zh-rTW/strings.xml b/res/values-zh-rTW/strings.xml
+index 934fec72e6..15f5280baa 100644
+--- a/res/values-zh-rTW/strings.xml
++++ b/res/values-zh-rTW/strings.xml
+@@ -2172,6 +2172,10 @@
+     <string name="runningservicedetails_stop_dlg_title" msgid="6201041461740445113">"停止系統服務？"</string>
+     <string name="runningservicedetails_stop_dlg_text" product="tablet" msgid="2076922609580490122">"如果你停用這項服務，你的平板電腦上的某些功能可能無法正常運作，待你重新開機後才會恢復正常。"</string>
+     <string name="runningservicedetails_stop_dlg_text" product="default" msgid="2625863973434309085">"如果你停用這項服務，你的手機上的某些功能可能無法正常運作，待你重新開機後才會恢復正常。"</string>
++    <string name="android_x86_options_title">"Android-x86 設定"</string>
++    <string name="android_x86_dashboard_summary">原生相容模式、統計</string>
++    <string name="nativebridge_toggle_title">"原生相容模式"</string>
++    <string name="nativebridge_toggle_summary">"可相容於使用 arm 原生函式庫的應用程式"</string>
+     <string name="language_input_gesture_title" msgid="3292455685728572960">"語言、輸入和手勢"</string>
+     <string name="language_input_gesture_summary_on_with_assist" msgid="8670153838520237089"></string>
+     <string name="language_input_gesture_summary_on_non_assist" msgid="2738661322747920463"></string>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index f8c4fc2c4c..2e0f61a49b 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -4987,6 +4987,12 @@
+         features of your phone may stop working correctly until you power it off
+         and then on again.</string>
+ 
++    <!-- Android-x86 settings -->
++    <string name="android_x86_options_title">Android-x86 options</string>
++    <string name="android_x86_dashboard_summary">Native bridge, statistics</string>
++    <string name="nativebridge_toggle_title">Enable native bridge</string>
++    <string name="nativebridge_toggle_summary">To support apps with arm native libraries</string>
++
+     <!-- Languages Settings --> <skip />
+     <!-- Title of Language, input & gestures setting on main settings screen. -->
+     <string name="language_input_gesture_title">Languages, input &amp; gestures</string>
+diff --git a/res/xml/android_x86_options.xml b/res/xml/android_x86_options.xml
+new file mode 100644
+index 0000000000..c0561f7fca
+--- /dev/null
++++ b/res/xml/android_x86_options.xml
+@@ -0,0 +1,26 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!-- Copyright (C) 2015 The Android-x86 Open Source Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++
++<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
++                  xmlns:settings="http://schemas.android.com/apk/res/com.android.settings"
++        android:title="@string/android_x86_options_title">
++
++    <SwitchPreference android:key="toggle_nb"
++        android:title="@string/nativebridge_toggle_title"
++        android:summary="@string/nativebridge_toggle_summary"
++        android:persistent="false" />
++
++</PreferenceScreen>
+diff --git a/src/com/android/settings/Settings.java b/src/com/android/settings/Settings.java
+index 404207ddb7..67e37f8413 100644
+--- a/src/com/android/settings/Settings.java
++++ b/src/com/android/settings/Settings.java
+@@ -107,6 +107,7 @@ public class Settings extends SettingsActivity {
+     public static class MyDeviceInfoActivity extends SettingsActivity { /* empty */ }
+     public static class ModuleLicensesActivity extends SettingsActivity { /* empty */ }
+     public static class ApplicationSettingsActivity extends SettingsActivity { /* empty */ }
++    public static class AndroidX86DashboardActivity extends SettingsActivity { /* empty */ }
+     public static class ManageApplicationsActivity extends SettingsActivity { /* empty */ }
+     public static class ManageAssistActivity extends SettingsActivity { /* empty */ }
+     public static class HighPowerApplicationsActivity extends SettingsActivity { /* empty */ }
+diff --git a/src/com/android/settings/core/gateway/SettingsGateway.java b/src/com/android/settings/core/gateway/SettingsGateway.java
+index d0fb7abaa7..bd7a6bc6fb 100644
+--- a/src/com/android/settings/core/gateway/SettingsGateway.java
++++ b/src/com/android/settings/core/gateway/SettingsGateway.java
+@@ -145,6 +145,7 @@ import com.android.settings.security.SecuritySettings;
+ import com.android.settings.shortcut.CreateShortcut;
+ import com.android.settings.sound.MediaControlsSettings;
+ import com.android.settings.support.SupportDashboardActivity;
++import com.android.settings.system.AndroidX86DashboardFragment;
+ import com.android.settings.system.ResetDashboardFragment;
+ import com.android.settings.system.SystemDashboardFragment;
+ import com.android.settings.tts.TextToSpeechSettings;
+@@ -295,6 +296,7 @@ public class SettingsGateway {
+             AppDashboardFragment.class.getName(),
+             WifiCallingDisclaimerFragment.class.getName(),
+             AccountDashboardFragment.class.getName(),
++            AndroidX86DashboardFragment.class.getName(),
+             EnterprisePrivacySettings.class.getName(),
+             WebViewAppPicker.class.getName(),
+             LockscreenDashboardFragment.class.getName(),
+@@ -321,6 +323,7 @@ public class SettingsGateway {
+             Settings.NetworkDashboardActivity.class.getName(),
+             Settings.ConnectedDeviceDashboardActivity.class.getName(),
+             Settings.AppDashboardActivity.class.getName(),
++            Settings.AndroidX86DashboardActivity.class.getName(),
+             Settings.DisplaySettingsActivity.class.getName(),
+             Settings.SoundSettingsActivity.class.getName(),
+             Settings.StorageDashboardActivity.class.getName(),
+diff --git a/src/com/android/settings/system/AndroidX86DashboardFragment.java b/src/com/android/settings/system/AndroidX86DashboardFragment.java
+new file mode 100644
+index 0000000000..ff3fbf7919
+--- /dev/null
++++ b/src/com/android/settings/system/AndroidX86DashboardFragment.java
+@@ -0,0 +1,55 @@
++/*
++ * Copyright (C) 2018 The Android-x86 Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.system;
++
++import android.os.Bundle;
++import android.os.SystemProperties;
++import androidx.preference.Preference;
++import androidx.preference.SwitchPreference;
++import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
++import com.android.settings.R;
++import com.android.settings.SettingsPreferenceFragment;
++
++public class AndroidX86DashboardFragment extends SettingsPreferenceFragment {
++
++    private SwitchPreference mNativeBridgePreference;
++
++    private static final String KEY_TOGGLE_NB = "toggle_nb";
++    private static final String PROPERTY_NATIVEBRIDGE = "persist.sys.nativebridge";
++
++    @Override
++    public void onCreate(Bundle icicle) {
++        super.onCreate(icicle);
++
++        addPreferencesFromResource(R.xml.android_x86_options);
++        mNativeBridgePreference = (SwitchPreference) findPreference(KEY_TOGGLE_NB);
++        mNativeBridgePreference.setChecked(SystemProperties.getBoolean(PROPERTY_NATIVEBRIDGE, false));
++    }
++
++    @Override
++    public boolean onPreferenceTreeClick(Preference preference) {
++        if (preference == mNativeBridgePreference) {
++            SystemProperties.set(PROPERTY_NATIVEBRIDGE, mNativeBridgePreference.isChecked() ? "1" : "0");
++        }
++        return super.onPreferenceTreeClick(preference);
++    }
++
++    @Override
++    public int getMetricsCategory() {
++        return MetricsEvent.APPLICATION;
++    }
++}

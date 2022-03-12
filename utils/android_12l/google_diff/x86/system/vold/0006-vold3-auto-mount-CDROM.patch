@@ -1,0 +1,102 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sun, 26 Mar 2017 00:45:41 +0800
+Subject: [PATCH 6/8] vold3: auto mount CDROM
+
+Luo Chunbo's ISO9660 support (commit 133632d5) is not complete. Still
+need to handle block devices with major number of CDROM.
+---
+ VolumeManager.cpp      | 3 +++
+ model/Disk.cpp         | 9 ++++++++-
+ model/Disk.h           | 2 ++
+ model/PublicVolume.cpp | 2 +-
+ 4 files changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/VolumeManager.cpp b/VolumeManager.cpp
+index 0709bae..88d4761 100644
+--- a/VolumeManager.cpp
++++ b/VolumeManager.cpp
+@@ -104,6 +104,7 @@ static const std::string kEmptyString("");
+ /* 512MiB is large enough for testing purposes */
+ static const unsigned int kSizeVirtualDisk = 536870912;
+ 
++static const unsigned int kMajorBlockCdrom = 11;
+ static const unsigned int kMajorBlockMmc = 179;
+ 
+ using ScanProcCallback = bool(*)(uid_t uid, pid_t pid, int nsFd, const char* name, void* params);
+@@ -226,6 +227,8 @@ void VolumeManager::handleBlockEvent(NetlinkEvent* evt) {
+                     int flags = source->getFlags();
+                     if (major == kMajorBlockMmc || IsVirtioBlkDevice(major)) {
+                         flags |= android::vold::Disk::Flags::kSd;
++                    } else if (major == kMajorBlockCdrom) {
++                        flags |= android::vold::Disk::Flags::kCdrom;
+                     } else {
+                         flags |= android::vold::Disk::Flags::kUsb;
+                     }
+diff --git a/model/Disk.cpp b/model/Disk.cpp
+index 6880341..295e114 100644
+--- a/model/Disk.cpp
++++ b/model/Disk.cpp
+@@ -75,6 +75,7 @@ static const unsigned int kMajorBlockScsiP = 135;
+ static const unsigned int kMajorBlockMmc = 179;
+ static const unsigned int kMajorBlockDynamicMin = 234;
+ static const unsigned int kMajorBlockDynamicMax = 512;
++static const unsigned int kMajorBlockCdrom = 11;
+ 
+ static const char* kGptBasicData = "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7";
+ static const char* kGptAndroidMeta = "19A710A2-B3CA-11E4-B026-10604B889DCF";
+@@ -250,6 +251,9 @@ status_t Disk::readMetadata() {
+             mLabel = "Virtual";
+             break;
+         }
++        case kMajorBlockCdrom:
++            LOG(DEBUG) << "Found a CDROM: " << mSysPath;
++            FALLTHROUGH_INTENDED;
+         // clang-format off
+         case kMajorBlockScsiA: case kMajorBlockScsiB: case kMajorBlockScsiC:
+         case kMajorBlockScsiD: case kMajorBlockScsiE: case kMajorBlockScsiF:
+@@ -338,7 +342,7 @@ status_t Disk::readPartitions() {
+     cmd.push_back(mDevPath);
+ 
+     std::vector<std::string> output;
+-    status_t res = ForkExecvp(cmd, &output);
++    status_t res = maxMinors ? ForkExecvp(cmd, &output) : ENODEV;
+     if (res != OK) {
+         LOG(WARNING) << "sgdisk failed to scan " << mDevPath;
+ 
+@@ -599,6 +603,9 @@ int Disk::getMaxMinors() {
+             // Per Documentation/devices.txt this is static
+             return 15;
+         }
++        case kMajorBlockCdrom: {
++            return 0;
++        }
+         case kMajorBlockMmc: {
+             // Per Documentation/devices.txt this is dynamic
+             std::string tmp;
+diff --git a/model/Disk.h b/model/Disk.h
+index cb2ee9a..4dcef57 100644
+--- a/model/Disk.h
++++ b/model/Disk.h
+@@ -61,6 +61,8 @@ class Disk {
+         kStubVisible = 1 << 6,
+         /* Flag that disk is non-removable */
+         kNonRemovable = 1 << 7,
++        /* Flag that disk is CDROM */
++        kCdrom = 1 << 8,
+     };
+ 
+     const std::string& getId() const { return mId; }
+diff --git a/model/PublicVolume.cpp b/model/PublicVolume.cpp
+index 29671f1..1fd6286 100644
+--- a/model/PublicVolume.cpp
++++ b/model/PublicVolume.cpp
+@@ -154,7 +154,7 @@ status_t PublicVolume::doMount() {
+         ret = ntfs::Check(mDevPath);
+     } else if (mFsType == "vfat") {
+         ret = vfat::Check(mDevPath);
+-    } else {
++    } else if (mFsType != "iso9660") {
+         LOG(WARNING) << getId() << " unsupported filesystem check, skipping";
+     }
+     if (ret) {

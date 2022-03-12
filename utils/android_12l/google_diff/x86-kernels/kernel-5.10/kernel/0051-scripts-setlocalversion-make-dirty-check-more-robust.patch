@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 3 Oct 2019 13:33:14 +0800
+Subject: [PATCH 51/54] scripts/setlocalversion: make -dirty check more robust
+
+git diff-index will show files changed even if you just touch the files.
+That should not be considered dirty.
+---
+ scripts/setlocalversion | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/scripts/setlocalversion b/scripts/setlocalversion
+index 3f8a8ee14b10..9ede11dade9b 100755
+--- a/scripts/setlocalversion
++++ b/scripts/setlocalversion
+@@ -115,7 +115,7 @@ scm_version()
+ 		# git-update-index(1), git-diff-index(1), and git-status(1).
+ 		if {
+ 			git --no-optional-locks status -uno --porcelain 2>/dev/null ||
+-			git diff-index --name-only HEAD
++			git diff --name-only HEAD
+ 		} | grep -qvE '^(.. )?scripts/package'; then
+ 			printf '%s' -dirty
+ 		fi

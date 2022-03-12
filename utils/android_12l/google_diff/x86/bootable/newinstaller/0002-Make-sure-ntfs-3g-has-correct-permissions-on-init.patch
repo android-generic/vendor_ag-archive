@@ -1,0 +1,25 @@
+From 8feeaf42e05043bdaa90a259cda41e80ed4ee6fb Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Tue, 15 Dec 2020 11:42:48 -0500
+Subject: [PATCH 2/4] Make sure ntfs-3g has correct permissions on init
+
+---
+ initrd/init | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/initrd/init b/initrd/init
+index 0c286a0..cd7422d 100755
+--- a/initrd/init
++++ b/initrd/init
+@@ -23,6 +23,8 @@ else
+ fi
+ exec 2>> $LOG
+ 
++chmod 755 /sbin/mount.ntfs-3g
++
+ # early boot
+ if test x"$HAS_CTTY" != x"Yes"; then
+ 	# initialise /proc and /sys
+-- 
+2.17.1
+

@@ -1,0 +1,52 @@
+From a0eab4a04d2a87cf6ff5be8efad89100e070e061 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?=C3=8Dcaro=20Hoff?= <icarohoff@gmail.com>
+Date: Sun, 4 Jun 2017 12:17:51 -0300
+Subject: [PATCH 10/13] Revert "fingerprint: handle PerformanceStats NULL
+ pointers"
+
+This reverts commit 0d30896d43c97bb1572e960a5e2852e3ec63ec2b.
+---
+ .../biometrics/BiometricServiceBase.java      | 20 ++++++++-----------
+ 1 file changed, 8 insertions(+), 12 deletions(-)
+
+diff --git a/services/core/java/com/android/server/biometrics/BiometricServiceBase.java b/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
+index 9be8b9d24a9..b1522e9b286 100644
+--- a/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
++++ b/services/core/java/com/android/server/biometrics/BiometricServiceBase.java
+@@ -284,12 +284,10 @@ public abstract class BiometricServiceBase extends SystemService
+         @Override
+         public int handleFailedAttempt() {
+             final int lockoutMode = getLockoutMode();
+-            if (mPerformanceStats != null) {
+-                if (lockoutMode == AuthenticationClient.LOCKOUT_PERMANENT) {
+-                    mPerformanceStats.permanentLockout++;
+-                } else if (lockoutMode == AuthenticationClient.LOCKOUT_TIMED) {
+-                    mPerformanceStats.lockout++;
+-                }
++            if (lockoutMode == AuthenticationClient.LOCKOUT_PERMANENT) {
++                mPerformanceStats.permanentLockout++;
++            } else if (lockoutMode == AuthenticationClient.LOCKOUT_TIMED) {
++                mPerformanceStats.lockout++;
+             }
+ 
+             // Failing multiple times will continue to push out the lockout time
+@@ -731,12 +729,10 @@ public abstract class BiometricServiceBase extends SystemService
+         if (client != null && client.onAuthenticated(identifier, authenticated, token)) {
+             removeClient(client);
+         }
+-        if (mPerformanceStats != null) {
+-            if (authenticated) {
+-                mPerformanceStats.accept++;
+-            } else {
+-                mPerformanceStats.reject++;
+-            }
++        if (authenticated) {
++            mPerformanceStats.accept++;
++        } else {
++            mPerformanceStats.reject++;
+         }
+     }
+ 
+-- 
+2.17.1
+

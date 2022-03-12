@@ -1,0 +1,26 @@
+From e1591a91b76456ed34dfbe6b3fcdc7c23158eb96 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 2 Mar 2022 19:01:37 -0500
+Subject: [PATCH 17/25] Fix vendor issues on startup
+
+---
+ init.x86.rc | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/init.x86.rc b/init.x86.rc
+index 58b3800..6fb35be 100644
+--- a/init.x86.rc
++++ b/init.x86.rc
+@@ -31,6 +31,9 @@ on post-fs-data
+ 
+     # Set indication (checked by vold) that we have finished this action
+     setprop vold.post_fs_data_done 1
++    
++    # Fix vendor issues on startup
++    chmod 777 /vendor/*
+ 
+ on boot
+     setprop ro.radio.use-ppp yes
+-- 
+2.25.1
+

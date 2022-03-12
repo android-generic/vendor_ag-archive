@@ -1,0 +1,31 @@
+From ef0055e475a5f2b247b1683beec8c67822729655 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Wed, 28 Apr 2021 17:02:27 -0400
+Subject: [PATCH 03/25] Deprecate PRODUCT_DEFAULT_PROPERTY_OVERRIDES
+
+Merge into PRODUCT_PROPERTY_OVERRIDES instead.
+---
+ device.mk | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/device.mk b/device.mk
+index 9ad7f0d..633cf07 100644
+--- a/device.mk
++++ b/device.mk
+@@ -27,11 +27,9 @@ PRODUCT_PROPERTY_OVERRIDES := \
+     debug.stagefright.ccodec=0 \
+     debug.stagefright.omx_default_rank.sw-audio=1 \
+     debug.stagefright.omx_default_rank=0 \
+-    ro.lmk.kill_timeout_ms=100
+-
+-PRODUCT_DEFAULT_PROPERTY_OVERRIDES := \
++    ro.lmk.kill_timeout_ms=100 \
+     ro.arch=x86 \
+-    persist.rtc_local_time=1 \
++    persist.rtc_local_time=1
+ 
+ PRODUCT_COPY_FILES := \
+     $(if $(wildcard $(PRODUCT_DIR)init.rc),$(PRODUCT_DIR)init.rc:root/init.rc) \
+-- 
+2.25.1
+

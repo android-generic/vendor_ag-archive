@@ -1,0 +1,26 @@
+From e81f23d13f24c672d6373f0c78704048a4a4439a Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Mon, 1 Nov 2021 12:43:52 +0100
+Subject: [PATCH 07/25] Add AOSP's minigbm_intel gralloc
+
+---
+ gpu/gpu_mesa.mk | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/gpu/gpu_mesa.mk b/gpu/gpu_mesa.mk
+index fd42e93..c9613dd 100644
+--- a/gpu/gpu_mesa.mk
++++ b/gpu/gpu_mesa.mk
+@@ -11,7 +11,8 @@
+ PRODUCT_PACKAGES := \
+     amdgpu.ids \
+     hwcomposer.drm hwcomposer.drm_minigbm \
+-    gralloc.gbm gralloc.minigbm \
++    gralloc.drm \
++    gralloc.gbm gralloc.minigbm gralloc.minigbm_intel gralloc.intel \
+     libGLES_mesa    \
+     libtxc_dxtn     \
+ 
+-- 
+2.25.1
+

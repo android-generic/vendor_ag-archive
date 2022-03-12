@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 5 Sep 2014 21:07:38 +0800
+Subject: [PATCH 07/54] HACK: drm: disable GPU authentication
+
+Signed-off-by: Chih-Wei Huang <cwhuang@linux.org.tw>
+---
+ drivers/gpu/drm/Kconfig     | 7 +++++++
+ drivers/gpu/drm/drm_ioctl.c | 2 ++
+ 2 files changed, 9 insertions(+)
+
+diff --git a/drivers/gpu/drm/Kconfig b/drivers/gpu/drm/Kconfig
+index ca868271f4c4..375ea2c1e2b3 100644
+--- a/drivers/gpu/drm/Kconfig
++++ b/drivers/gpu/drm/Kconfig
+@@ -74,6 +74,13 @@ config DRM_DEBUG_SELFTEST
+ 
+ 	  If in doubt, say "N".
+ 
++config NO_GPU_AUTHENTICATION
++	bool "Disable GPU authentication"
++	depends on DRM
++	default n
++	help
++	  Choose this option if you want to disable GPU authentication.
++
+ config DRM_KMS_HELPER
+ 	tristate
+ 	depends on DRM
+diff --git a/drivers/gpu/drm/drm_ioctl.c b/drivers/gpu/drm/drm_ioctl.c
+index 9aa3909fb6cd..b88c0cb8b88d 100644
+--- a/drivers/gpu/drm/drm_ioctl.c
++++ b/drivers/gpu/drm/drm_ioctl.c
+@@ -537,6 +537,7 @@ int drm_version(struct drm_device *dev, void *data,
+  */
+ int drm_ioctl_permit(u32 flags, struct drm_file *file_priv)
+ {
++#ifndef CONFIG_NO_GPU_AUTHENTICATION
+ 	/* ROOT_ONLY is only for CAP_SYS_ADMIN */
+ 	if (unlikely((flags & DRM_ROOT_ONLY) && !capable(CAP_SYS_ADMIN)))
+ 		return -EACCES;
+@@ -555,6 +556,7 @@ int drm_ioctl_permit(u32 flags, struct drm_file *file_priv)
+ 	if (unlikely(!(flags & DRM_RENDER_ALLOW) &&
+ 		     drm_is_render_client(file_priv)))
+ 		return -EACCES;
++#endif
+ 
+ 	return 0;
+ }

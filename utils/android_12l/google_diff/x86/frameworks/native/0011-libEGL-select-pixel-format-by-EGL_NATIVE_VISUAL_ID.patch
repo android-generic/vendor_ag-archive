@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Mon, 4 Sep 2017 19:26:33 +0800
+Subject: [PATCH 11/15] libEGL: select pixel format by EGL_NATIVE_VISUAL_ID
+
+We need this workaround until Mesa supports HAL_PIXEL_FORMAT_RGBA_8888.
+---
+ opengl/libs/EGL/egl_platform_entries.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/opengl/libs/EGL/egl_platform_entries.cpp b/opengl/libs/EGL/egl_platform_entries.cpp
+index de36a7aea6..a2c34df8ba 100644
+--- a/opengl/libs/EGL/egl_platform_entries.cpp
++++ b/opengl/libs/EGL/egl_platform_entries.cpp
+@@ -616,7 +616,10 @@ void getNativePixelFormat(EGLDisplay dpy, egl_connection_t* cnx, EGLConfig confi
+         if (componentType == EGL_COLOR_COMPONENT_TYPE_FIXED_EXT) {
+             if (colorDepth > 24) {
+                 *format = HAL_PIXEL_FORMAT_RGBA_1010102;
++            } else if (cnx->egl.eglGetConfigAttrib(dpy, config, EGL_NATIVE_VISUAL_ID, &colorDepth)) {
++                *format = android_pixel_format(colorDepth);
+             } else {
++                ALOGE("eglGetConfigAttrib(EGL_NATIVE_VISUAL_ID) failed: %#x", eglGetError());
+                 *format = HAL_PIXEL_FORMAT_RGBA_8888;
+             }
+         } else {

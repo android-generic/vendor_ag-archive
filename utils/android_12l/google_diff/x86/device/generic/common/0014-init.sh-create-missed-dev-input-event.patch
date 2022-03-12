@@ -1,0 +1,30 @@
+From 6607e3a54da5b60a78a53e1d4269504001f005f2 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 12 Aug 2021 17:08:05 +0800
+Subject: [PATCH 14/25] init.sh: create missed /dev/input/event*
+
+Due to unknown reasons some input device nodes are not created at
+boot time. The script checks what nodes are missed and re-issue
+the add uevent to create them.
+---
+ init.sh | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/init.sh b/init.sh
+index 698acce..07f5d35 100644
+--- a/init.sh
++++ b/init.sh
+@@ -539,6 +539,10 @@ function do_bootcomplete()
+ 		fi
+ 	done
+ 
++	for e in /sys/class/input/event*; do
++		[ -c /dev/input/`basename $e` ] || echo add > $e/uevent
++	done
++
+ 	post_bootcomplete
+ }
+ 
+-- 
+2.25.1
+

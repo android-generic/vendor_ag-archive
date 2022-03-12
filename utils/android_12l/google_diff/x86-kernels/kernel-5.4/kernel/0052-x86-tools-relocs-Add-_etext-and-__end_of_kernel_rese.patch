@@ -1,0 +1,45 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Arvind Sankar <nivedita@alum.mit.edu>
+Date: Fri, 10 Jan 2020 16:50:05 -0500
+Subject: [PATCH 52/54] x86/tools/relocs: Add _etext and
+ __end_of_kernel_reserve to S_REL
+
+Prior to binutiles-2.23, ld treats the location counter as absolute if
+used outside an output section definition. From version 2.23 onwards,
+the location counter is treated as relative to an adjacent output
+section (usually the previous one, unless there isn't one or the
+location counter has been assigned to previously, in which case the next
+one).
+
+The result is that a symbol definition in the linker script, such as
+	_etext = .;
+that appears outside an output section definition makes _etext an
+absolute symbol prior to binutils-2.23 and a relative symbol from
+version 2.23 onwards. So when using a 2.21 or 2.22 vintage linker, the
+build fails with
+	Invalid absolute R_X86_64_32S relocation: _etext
+for x86-64, and a similar message with R_386_32 for x86-32.
+
+Fix this by adding these symbols to S_REL to tell the relocs tool that
+these should always be treated as relative symbols needing relocation.
+
+Fixes: b907693883fd ("x86/vmlinux: Actually use _etext for the end of the text segment")
+Fixes: c603a309cc75 ("x86/mm: Identify the end of the kernel area to be reserved")
+Signed-off-by: Arvind Sankar <nivedita@alum.mit.edu>
+---
+ arch/x86/tools/relocs.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/x86/tools/relocs.c b/arch/x86/tools/relocs.c
+index 50e48633a8e3..0b1b89e85d22 100644
+--- a/arch/x86/tools/relocs.c
++++ b/arch/x86/tools/relocs.c
+@@ -79,6 +79,8 @@ static const char * const sym_regex_kernel[S_NSYMTYPES] = {
+ 	"__end_rodata_hpage_align|"
+ #endif
+ 	"__vvar_page|"
++	"_etext|"
++	"__end_of_kernel_reserve|"
+ 	"_end)$"
+ };
+ 

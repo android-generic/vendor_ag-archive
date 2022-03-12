@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Thu, 21 Oct 2021 18:30:01 +0200
+Subject: [PATCH] Mark activities with android:exported="true"
+
+This is required for apps targeting Android S+ when using
+intent-filter.
+---
+ AndroidManifest.xml | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/AndroidManifest.xml b/AndroidManifest.xml
+index 60969b7..5b0491c 100644
+--- a/AndroidManifest.xml
++++ b/AndroidManifest.xml
+@@ -25,6 +25,7 @@ limitations under the License.
+     <activity android:name=".TSCalibration"
+               android:label="Calibration"
+               android:launchMode="standard"
++              android:exported="true"
+               android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+               android:configChanges="keyboard|keyboardHidden|navigation|orientation">
+       <intent-filter>
+@@ -32,7 +33,8 @@ limitations under the License.
+         <category android:name="android.intent.category.LAUNCHER" />
+       </intent-filter>
+     </activity>
+-    <activity android:name=".TSCalibrationStartup">
++    <activity android:name=".TSCalibrationStartup"
++              android:exported="true">
+       <intent-filter android:priority="100">
+         <action android:name="android.intent.action.MAIN" />
+         <category android:name="android.intent.category.HOME" />

@@ -1,0 +1,37 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Daniel Charles <daniel.charles@intel.com>
+Date: Wed, 9 May 2012 11:28:37 -0700
+Subject: [PATCH 02/15] Change max width and height supported by H.263 decoder.
+
+Currently this is set to CIF PAL resolution (352x288) which
+won't calculate the actual output buffer size for higher resolutions
+
+The h.263 decoder needs the max width and height supported to be able
+to decode
+
+H.263 decoders supports: QCIF, CIF, D1 and 16CIF; all PAL.
+
+Change-Id: If5e44c522cb3cb56bb6235ec2992e2544b1737e9
+Original-Change-Id: I7f8d2ae4263925ac4cf9250404ef92fc819ca33a
+Signed-off-by: Daniel Charles <daniel.charles@intel.com>
+---
+ media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.cpp | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.cpp b/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.cpp
+index a4b3e2f434..ce298043cf 100644
+--- a/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.cpp
++++ b/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.cpp
+@@ -60,6 +60,12 @@ SoftMPEG4::SoftMPEG4(
+       mFramesConfigured(false),
+       mNumSamplesOutput(0),
+       mPvTime(0) {
++    if (mMode == MODE_H263) {
++        // H.263 requires the max size supported by the decoder
++        // which is 16CIF (1408x1152)
++        mWidth=1408;
++        mHeight=1152;
++    }
+     initPorts(
+             kNumInputBuffers,
+             352 * 288 * 3 / 2 /* minInputBufferSize */,

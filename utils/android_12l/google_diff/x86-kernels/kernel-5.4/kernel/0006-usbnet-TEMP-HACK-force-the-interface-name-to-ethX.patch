@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 23 Jan 2014 10:47:22 +0800
+Subject: [PATCH 06/54] usbnet: [TEMP HACK] force the interface name to ethX
+
+Currently the android framework only recognizes ethX as the
+Ethernet interface name.
+---
+ drivers/net/usb/usbnet.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/usb/usbnet.c b/drivers/net/usb/usbnet.c
+index 6062dc27870e..bcf26b0f71ad 100644
+--- a/drivers/net/usb/usbnet.c
++++ b/drivers/net/usb/usbnet.c
+@@ -1692,7 +1692,7 @@ usbnet_probe (struct usb_interface *udev, const struct usb_device_id *prod)
+ 	dev->interrupt_count = 0;
+ 
+ 	dev->net = net;
+-	strcpy (net->name, "usb%d");
++	strcpy (net->name, "eth%d");
+ 	memcpy (net->dev_addr, node_id, sizeof node_id);
+ 
+ 	/* rx and tx sides can use different message sizes;

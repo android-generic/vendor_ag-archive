@@ -1,0 +1,33 @@
+From 826bfa3e98ce96fab88cba82f0644cb500160544 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 2 Mar 2022 18:56:16 -0500
+Subject: [PATCH 16/25] Update soong namespaces
+
+---
+ device.mk | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/device.mk b/device.mk
+index 6940c97..a515173 100644
+--- a/device.mk
++++ b/device.mk
+@@ -157,6 +157,16 @@ PRODUCT_COPY_FILES += \
+ 
+ $(call inherit-product, frameworks/native/build/tablet-10in-xhdpi-2048-dalvik-heap.mk)
+ 
++# Include PRODUCT_SOONG_NAMESPACES
++PRODUCT_SOONG_NAMESPACES += device/generic/goldfish-opengl # for vulkan
++PRODUCT_SOONG_NAMESPACES += hardware/google/camera
++PRODUCT_SOONG_NAMESPACES += hardware/google/camera/devices/EmulatedCamera
++PRODUCT_SOONG_NAMESPACES += external/mesa
++PRODUCT_SOONG_NAMESPACES += external/libdrm
++PRODUCT_SOONG_NAMESPACES += external/drm_hwcomposer
++PRODUCT_SOONG_NAMESPACES += external/clang
++PRODUCT_SOONG_NAMESPACES += packages/apps/Bluetooth
++
+ # Need this so that the application's loop on reading input can be synchronized with HW VSYNC
+ PRODUCT_VENDOR_PROPERTIES += \
+     ro.surface_flinger.running_without_sync_framework=true
+-- 
+2.25.1
+

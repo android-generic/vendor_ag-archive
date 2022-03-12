@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Thu, 21 Oct 2021 20:57:52 +0200
+Subject: [PATCH] Add android:exported to NotePad and RSSReader
+ activities/services
+
+Android S+ requires android:exported to be explicitly included in
+activities and services using intent-filter. The package manager service
+fails to initialize on first boot if any system app does not pass the
+requirement.
+
+Change-Id: I5eaec51d3b43653b5e1a7cc8c720f7fe0b5da21a
+---
+ samples/NotePad/AndroidManifest.xml   | 4 +++-
+ samples/RSSReader/AndroidManifest.xml | 2 +-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/samples/NotePad/AndroidManifest.xml b/samples/NotePad/AndroidManifest.xml
+index 51e848d8e..a8fc3173d 100644
+--- a/samples/NotePad/AndroidManifest.xml
++++ b/samples/NotePad/AndroidManifest.xml
+@@ -33,7 +33,7 @@
+             <grant-uri-permission android:pathPattern=".*" />
+         </provider>
+ 
+-        <activity android:name="NotesList" android:label="@string/title_notes_list">
++        <activity android:name="NotesList" android:label="@string/title_notes_list" android:exported="true">
+             <intent-filter>
+                 <action android:name="android.intent.action.MAIN" />
+                 <category android:name="android.intent.category.LAUNCHER" />
+@@ -56,6 +56,7 @@
+             android:theme="@android:style/Theme.Holo.Light"
+             android:screenOrientation="sensor"
+             android:configChanges="keyboardHidden|orientation"
++            android:exported="true"
+         >
+             <!-- This filter says that we can view or edit the data of
+                  a single note -->
+@@ -84,6 +85,7 @@
+             android:label="@string/title_edit_title"
+             android:icon="@drawable/ic_menu_edit"
+             android:theme="@android:style/Theme.Holo.Dialog"
++            android:exported="true"
+             android:windowSoftInputMode="stateVisible">
+             <!-- This activity implements an alternative action that can be
+                  performed on notes: editing their title.  It can be used as
+diff --git a/samples/RSSReader/AndroidManifest.xml b/samples/RSSReader/AndroidManifest.xml
+index c59411d9c..a606a414d 100644
+--- a/samples/RSSReader/AndroidManifest.xml
++++ b/samples/RSSReader/AndroidManifest.xml
+@@ -23,7 +23,7 @@
+     package="com.example.android.rssreader">
+   <uses-permission android:name="android.permission.INTERNET" />
+   <application android:label="RSS Reader">
+-        <activity android:name="RssReader">
++        <activity android:name="RssReader" android:exported="true">
+             <intent-filter>
+                 <action android:name="android.intent.action.MAIN" />
+                 <category android:name="android.intent.category.DEFAULT" />

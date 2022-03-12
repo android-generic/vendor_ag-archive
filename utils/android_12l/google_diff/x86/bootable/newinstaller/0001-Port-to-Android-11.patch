@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Wed, 1 Apr 2020 17:49:33 -0400
+Subject: [PATCH] Port to Android 11
+
+---
+ Android.mk  | 2 +-
+ initrd/init | 7 ++++++-
+ 2 files changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/Android.mk b/Android.mk
+index 49219b9..51b9037 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -27,7 +27,7 @@ VER ?= $$(date +"%F")
+ 
+ # use squashfs for iso, unless explictly disabled
+ ifneq ($(USE_SQUASHFS),0)
+-MKSQUASHFS := $(MAKE_SQUASHFS)
++MKSQUASHFS := $(HOST_OUT_EXECUTABLES)/mksquashfs$(HOST_EXECUTABLE_SUFFIX)
+ 
+ define build-squashfs-target
+ 	$(hide) $(MKSQUASHFS) $(1) $(2) -noappend -comp gzip
+diff --git a/initrd/init b/initrd/init
+index 16aaed2..0c286a0 100755
+--- a/initrd/init
++++ b/initrd/init
+@@ -168,8 +168,10 @@ ln -s ../system/lib/firmware ../system/lib/modules /lib
+ 
+ if [ -d system/apex/com.android.runtime.debug ]; then
+ 	ln -s ../android/system/apex/com.android.runtime.debug /apex/com.android.runtime
+-else
++elif [ -d system/apex/com.android.runtime.release ]; then
+ 	ln -s ../android/system/apex/com.android.runtime.release /apex/com.android.runtime
++elif [ -d system/apex/com.android.runtime ]; then
++	ln -s ../android/system/apex/com.android.runtime /apex/com.android.runtime
+ fi
+ 
+ if [ -n "$INSTALL" ]; then
+@@ -219,6 +221,9 @@ fi
+ # since it conflicts with Android's init
+ echo > /proc/sys/kernel/hotplug
+ 
++# Use correct modprobe location
++echo /system/bin/modprobe > /proc/sys/kernel/modprobe
++
+ export ANDROID_ROOT=/system
+ 
+ exec ${SWITCH:-switch_root} /android /init

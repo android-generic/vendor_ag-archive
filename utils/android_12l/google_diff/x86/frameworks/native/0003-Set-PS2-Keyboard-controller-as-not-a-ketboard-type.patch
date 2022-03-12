@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: juntingwang <Junting.Wang@windriver.com>
+Date: Fri, 1 Mar 2013 16:02:56 +0800
+Subject: [PATCH 03/15] Set PS2 Keyboard controller as not a ketboard type
+
+The Eventhub detects the platforms built-in PS/2 keyboard controller
+as a physical keyboard. So the system will not display the software
+keyboard by default. Modify it device type in Keyboard-less tablets,
+so that ActivityManager will not ignore the PS/2 controller.
+
+Issue: AXIA-1875
+
+Change-Id: Ia5b7592e82aaf1970066bab5e9ca5f46ac83ab1c
+Signed-off-by: juntingwang <Junting.Wang@windriver.com>
+---
+ services/inputflinger/reader/EventHub.cpp | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/services/inputflinger/reader/EventHub.cpp b/services/inputflinger/reader/EventHub.cpp
+index 7e96babac3..0bf62108c2 100644
+--- a/services/inputflinger/reader/EventHub.cpp
++++ b/services/inputflinger/reader/EventHub.cpp
+@@ -2089,7 +2089,10 @@ void EventHub::openDeviceLocked(const std::string& devicePath) {
+ 
+         // 'Q' key support = cheap test of whether this is an alpha-capable kbd
+         if (device->hasKeycodeLocked(AKEYCODE_Q)) {
+-            device->classes |= InputDeviceClass::ALPHAKEY;
++            if ((device->identifier.name != "AT Translated Set 2 keyboard") ||
++                    !property_get_bool("ro.ignore_atkbd", 0)) {
++                device->classes |= InputDeviceClass::ALPHAKEY;
++            }
+         }
+ 
+         // See if this device has a DPAD.

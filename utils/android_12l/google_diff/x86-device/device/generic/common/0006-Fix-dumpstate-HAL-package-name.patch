@@ -1,0 +1,27 @@
+From 7c681958204ba43dab2d61cd279d1ad62506cad2 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Fri, 18 Sep 2020 14:54:08 -0400
+Subject: [PATCH 06/36] Fix dumpstate HAL package name
+
+Suffix ".example" has been added to the package name. Having dumpstate
+HAL is required to load the developer settings in Android Settings.
+---
+ treble.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/treble.mk b/treble.mk
+index d6e6889..7416071 100644
+--- a/treble.mk
++++ b/treble.mk
+@@ -33,7 +33,7 @@ PRODUCT_PACKAGES += \
+ # DumpState HAL
+ PRODUCT_PACKAGES += \
+     android.hardware.dumpstate@1.0-impl \
+-    android.hardware.dumpstate@1.0-service
++    android.hardware.dumpstate@1.0-service.example
+ 
+ # Gatekeeper HAL
+ #PRODUCT_PACKAGES += \
+-- 
+2.17.1
+

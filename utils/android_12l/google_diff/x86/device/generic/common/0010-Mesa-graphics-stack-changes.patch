@@ -1,0 +1,110 @@
+From 3928e731f73ab1a82d1f5ef021301a993caa9d70 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 20 Feb 2022 12:36:48 -0500
+Subject: [PATCH 10/25] Mesa graphics stack changes
+
+Conflicts:
+	BoardConfig.mk
+
+Conflicts:
+	gpu/gpu_mesa.mk
+---
+ BoardConfig.mk  |  6 ++++++
+ gpu/gpu_mesa.mk | 21 +++++++++++++++++----
+ init.sh         |  9 +++++++--
+ 3 files changed, 30 insertions(+), 6 deletions(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index b0f4ca5..ee78fac 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -102,3 +102,9 @@ BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+ BOARD_USES_MINIGBM := true
+ TARGET_USES_HWC2 ?= true
+ #BOARD_USES_VULKAN := true
++
++BOARD_MESA3D_USES_MESON_BUILD := true
++BOARD_MESA3D_CLASSIC_DRIVERS :=
++BOARD_MESA3D_GALLIUM_DRIVERS := i915 crocus iris nouveau r300 r600 radeonsi svga virgl
++BOARD_MESA3D_VULKAN_DRIVERS := amd intel
++#BOARD_MESA3D_BUILD_LIBGBM := true
+diff --git a/gpu/gpu_mesa.mk b/gpu/gpu_mesa.mk
+index c9613dd..9bccef3 100644
+--- a/gpu/gpu_mesa.mk
++++ b/gpu/gpu_mesa.mk
+@@ -12,16 +12,25 @@ PRODUCT_PACKAGES := \
+     amdgpu.ids \
+     hwcomposer.drm hwcomposer.drm_minigbm \
+     gralloc.drm \
+-    gralloc.gbm gralloc.minigbm gralloc.minigbm_intel gralloc.intel \
++    gralloc.gbm gralloc.minigbm gralloc.minigbm_intel \
++    gralloc.intel gralloc.minigbm_dmabuf gralloc.minigbm_gbm_mesa \
+     libGLES_mesa    \
+     libtxc_dxtn     \
++    modetest
+ 
+ PRODUCT_PACKAGES += \
+     libEGL_swiftshader \
+     libGLESv1_CM_swiftshader \
+     libGLESv2_swiftshader \
+-    vulkan.android-x86 \
+-    vulkan.radv
++    vulkan.radeon \
++    vulkan.intel
++
++PRODUCT_PACKAGES += \
++    libEGL_mesa \
++    libGLESv1_CM_mesa \
++    libGLESv2_mesa \
++    libgallium_dri \
++    libglapi
+ 
+ PRODUCT_PROPERTY_OVERRIDES := \
+     ro.opengles.version = 196608 \
+@@ -30,4 +39,8 @@ PRODUCT_PROPERTY_OVERRIDES := \
+ 
+ PRODUCT_COPY_FILES += \
+     frameworks/native/data/etc/android.hardware.vulkan.level-1.xml:system/etc/permissions/android.hardware.vulkan.level.xml \
+-    frameworks/native/data/etc/android.hardware.vulkan.version-1_1.xml:system/etc/permissions/android.hardware.vulkan.version.xml
++    frameworks/native/data/etc/android.hardware.vulkan.version-1_1.xml:system/etc/permissions/android.hardware.vulkan.version.xml \
++    frameworks/native/data/etc/android.hardware.opengles.aep.xml:system/etc/permissions/android.hardware.opengles.aep.xml \
++    frameworks/native/data/etc/android.hardware.vulkan.compute-0.xml:system/etc/permissions/android.hardware.vulkan.compute-0.xml \
++    frameworks/native/data/etc/android.software.opengles.deqp.level-2021-03-01.xml:system/etc/permissions/android.software.opengles.deqp.level-2021-03-01.xml \
++    frameworks/native/data/etc/android.software.vulkan.deqp.level-2021-03-01.xml:system/etc/permissions/android.software.vulkan.deqp.level-2021-03-01.xml \
+diff --git a/init.sh b/init.sh
+index 1f2842d..698acce 100644
+--- a/init.sh
++++ b/init.sh
+@@ -189,11 +189,13 @@ function init_hal_gralloc()
+ 			HWC=${HWC:-drm}
+ 			GRALLOC=${GRALLOC:-gbm}
+ 			video=${video:-1280x768}
++			[ -f /vendor/lib/egl/libEGL_mesa.so ] && set_property ro.hardware.egl mesa
+ 			;&
+ 		*i915|*radeon|*nouveau|*vmwgfx|*amdgpu)
+ 			if [ "$HWACCEL" != "0" ]; then
+ 				${HWC:+set_property ro.hardware.hwcomposer $HWC}
+ 				set_property ro.hardware.gralloc ${GRALLOC:-gbm}
++				[ -f /vendor/lib/egl/libEGL_mesa.so ] && set_property ro.hardware.egl mesa
+ 				set_drm_mode
+ 			fi
+ 			;;
+@@ -221,10 +223,13 @@ function init_hal_vulkan()
+ {
+ 	case "$(readlink /sys/class/graphics/fb0/device/driver)" in
+ 		*i915)
+-			set_property ro.hardware.vulkan android-x86
++			set_property ro.hardware.vulkan intel
+ 			;;
+ 		*amdgpu)
+-			set_property ro.hardware.vulkan radv
++			set_property ro.hardware.vulkan radeon
++			;;
++		*virtio_gpu)
++			set_property ro.hardware.vulkan virtio
+ 			;;
+ 		*)
+ 			;;
+-- 
+2.25.1
+

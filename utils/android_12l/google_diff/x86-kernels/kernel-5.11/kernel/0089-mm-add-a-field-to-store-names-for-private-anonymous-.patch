@@ -1,0 +1,620 @@
+From 423e51bbac41dbf7e0b6a7ee25e6a7240f0bbdb0 Mon Sep 17 00:00:00 2001
+From: Colin Cross <ccross@google.com>
+Date: Tue, 1 Sep 2020 14:49:01 +0530
+Subject: [PATCH 089/106] mm: add a field to store names for private anonymous
+ memory (v2)
+
+In many userspace applications, and especially in VM based applications
+like Android uses heavily, there are multiple different allocators in use.
+ At a minimum there is libc malloc and the stack, and in many cases there
+are libc malloc, the stack, direct syscalls to mmap anonymous memory, and
+multiple VM heaps (one for small objects, one for big objects, etc.).
+Each of these layers usually has its own tools to inspect its usage;
+malloc by compiling a debug version, the VM through heap inspection tools,
+and for direct syscalls there is usually no way to track them.
+
+On Android we heavily use a set of tools that use an extended version of
+the logic covered in Documentation/vm/pagemap.txt to walk all pages mapped
+in userspace and slice their usage by process, shared (COW) vs.  unique
+mappings, backing, etc.  This can account for real physical memory usage
+even in cases like fork without exec (which Android uses heavily to share
+as many private COW pages as possible between processes), Kernel SamePage
+Merging, and clean zero pages.  It produces a measurement of the pages
+that only exist in that process (USS, for unique), and a measurement of
+the physical memory usage of that process with the cost of shared pages
+being evenly split between processes that share them (PSS).
+
+If all anonymous memory is indistinguishable then figuring out the real
+physical memory usage (PSS) of each heap requires either a pagemap walking
+tool that can understand the heap debugging of every layer, or for every
+layer's heap debugging tools to implement the pagemap walking logic, in
+which case it is hard to get a consistent view of memory across the whole
+system.
+
+Tracking the information in userspace leads to all sorts of problems.
+It either needs to be stored inside the process, which means every
+process has to have an API to export its current heap information upon
+request, or it has to be stored externally in a filesystem that
+somebody needs to clean up on crashes.  It needs to be readable while
+the process is still running, so it has to have some sort of
+synchronization with every layer of userspace.  Efficiently tracking
+the ranges requires reimplementing something like the kernel vma
+trees, and linking to it from every layer of userspace.  It requires
+more memory, more syscalls, more runtime cost, and more complexity to
+separately track regions that the kernel is already tracking.
+
+This patch adds a field to /proc/pid/maps and /proc/pid/smaps to show a
+userspace-provided name for anonymous vmas.  The names of named anonymous
+vmas are shown in /proc/pid/maps and /proc/pid/smaps as [anon:<name>].
+
+Userspace can set the name for a region of memory by calling
+prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, start, len, (unsigned long)name);
+Setting the name to NULL clears it.
+
+The name is stored in a user pointer in the shared union in vm_area_struct
+that points to a null terminated string inside the user process.  vmas
+that point to the same address and are otherwise mergeable will be merged,
+but vmas that point to equivalent strings at different addresses will not
+be merged.
+
+The idea to store a userspace pointer to reduce the complexity within mm
+(at the expense of the complexity of reading /proc/pid/mem) came from Dave
+Hansen.  This results in no runtime overhead in the mm subsystem other
+than comparing the anon_name pointers when considering vma merging.  The
+pointer is stored in a union with fields that are only used on file-backed
+mappings, so it does not increase memory usage.
+(Upstream changed to remove the union, so this patch adds it back as well)
+
+Signed-off-by: Colin Cross <ccross@google.com>
+Cc: Pekka Enberg <penberg@kernel.org>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Ingo Molnar <mingo@kernel.org>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Jan Glauber <jan.glauber@gmail.com>
+Cc: John Stultz <john.stultz@linaro.org>
+Cc: Rob Landley <rob@landley.net>
+Cc: Cyrill Gorcunov <gorcunov@openvz.org>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: "Serge E. Hallyn" <serge.hallyn@ubuntu.com>
+Cc: David Rientjes <rientjes@google.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Hugh Dickins <hughd@google.com>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Mel Gorman <mgorman@suse.de>
+Cc: Michel Lespinasse <walken@google.com>
+Cc: Tang Chen <tangchen@cn.fujitsu.com>
+Cc: Robin Holt <holt@sgi.com>
+Cc: Shaohua Li <shli@fusionio.com>
+Cc: Sasha Levin <sasha.levin@oracle.com>
+Cc: Johannes Weiner <hannes@cmpxchg.org>
+Cc: Minchan Kim <minchan@kernel.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Sumit Semwal <sumit.semwal@linaro.org>
+
+(v2) Changes due to commit:
+     1446e1df9eb ("kernel: Implement selective syscall userspace redirection")
+---
+ Documentation/filesystems/proc.rst |  2 ++
+ fs/proc/task_mmu.c                 | 24 ++++++++++++-
+ fs/userfaultfd.c                   |  7 ++--
+ include/linux/mm.h                 |  5 ++-
+ include/linux/mm_types.h           | 25 +++++++++++---
+ include/uapi/linux/prctl.h         |  3 ++
+ kernel/sys.c                       | 32 ++++++++++++++++++
+ mm/interval_tree.c                 |  2 +-
+ mm/madvise.c                       | 54 +++++++++++++++++++++++++++---
+ mm/mempolicy.c                     |  3 +-
+ mm/mlock.c                         |  2 +-
+ mm/mmap.c                          | 38 ++++++++++++---------
+ mm/mprotect.c                      |  2 +-
+ 13 files changed, 166 insertions(+), 33 deletions(-)
+
+diff --git a/Documentation/filesystems/proc.rst b/Documentation/filesystems/proc.rst
+index 2fa69f710e2a..6e996104e434 100644
+--- a/Documentation/filesystems/proc.rst
++++ b/Documentation/filesystems/proc.rst
+@@ -431,6 +431,8 @@ is not associated with a file:
+  [stack]                    the stack of the main process
+  [vdso]                     the "virtual dynamic shared object",
+                             the kernel system call handler
++[anon:<name>]               an anonymous mapping that has been
++                            named by userspace
+  =======                    ====================================
+ 
+  or if empty, the mapping is anonymous.
+diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+index 602e3a52884d..19d826c35df8 100644
+--- a/fs/proc/task_mmu.c
++++ b/fs/proc/task_mmu.c
+@@ -97,6 +97,21 @@ unsigned long task_statm(struct mm_struct *mm,
+ 	return mm->total_vm;
+ }
+ 
++static void seq_print_vma_name(struct seq_file *m, struct vm_area_struct *vma)
++{
++	struct mm_struct *mm = vma->vm_mm;
++	char anon_name[NAME_MAX + 1];
++	int n;
++
++	n = access_remote_vm_locked(mm, (unsigned long)vma_anon_name(vma), anon_name,
++				    NAME_MAX, 0);
++	if (n > 0) {
++		seq_puts(m, "[anon:");
++		seq_write(m, anon_name, strnlen(anon_name, n));
++		seq_putc(m, ']');
++	}
++}
++
+ #ifdef CONFIG_NUMA
+ /*
+  * Save get_task_policy() for show_numa_map().
+@@ -319,8 +334,15 @@ show_map_vma(struct seq_file *m, struct vm_area_struct *vma)
+ 			goto done;
+ 		}
+ 
+-		if (is_stack(vma))
++		if (is_stack(vma)) {
+ 			name = "[stack]";
++			goto done;
++		}
++
++		if (vma_anon_name(vma)) {
++			seq_pad(m, ' ');
++			seq_print_vma_name(m, vma);
++		}
+ 	}
+ 
+ done:
+diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
+index 894cc28142e7..08ad4103780f 100644
+--- a/fs/userfaultfd.c
++++ b/fs/userfaultfd.c
+@@ -876,7 +876,7 @@ static int userfaultfd_release(struct inode *inode, struct file *file)
+ 				 new_flags, vma->anon_vma,
+ 				 vma->vm_file, vma->vm_pgoff,
+ 				 vma_policy(vma),
+-				 NULL_VM_UFFD_CTX);
++				 NULL_VM_UFFD_CTX, vma_anon_name(vma));
+ 		if (prev)
+ 			vma = prev;
+ 		else
+@@ -1424,7 +1424,8 @@ static int userfaultfd_register(struct userfaultfd_ctx *ctx,
+ 		prev = vma_merge(mm, prev, start, vma_end, new_flags,
+ 				 vma->anon_vma, vma->vm_file, vma->vm_pgoff,
+ 				 vma_policy(vma),
+-				 ((struct vm_userfaultfd_ctx){ ctx }));
++				 ((struct vm_userfaultfd_ctx){ ctx }),
++				 vma_anon_name(vma));
+ 		if (prev) {
+ 			vma = prev;
+ 			goto next;
+@@ -1594,7 +1595,7 @@ static int userfaultfd_unregister(struct userfaultfd_ctx *ctx,
+ 		prev = vma_merge(mm, prev, start, vma_end, new_flags,
+ 				 vma->anon_vma, vma->vm_file, vma->vm_pgoff,
+ 				 vma_policy(vma),
+-				 NULL_VM_UFFD_CTX);
++				 NULL_VM_UFFD_CTX, vma_anon_name(vma));
+ 		if (prev) {
+ 			vma = prev;
+ 			goto next;
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 12050acd7cd7..ab6a7a490038 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -2518,7 +2518,7 @@ static inline int vma_adjust(struct vm_area_struct *vma, unsigned long start,
+ extern struct vm_area_struct *vma_merge(struct mm_struct *,
+ 	struct vm_area_struct *prev, unsigned long addr, unsigned long end,
+ 	unsigned long vm_flags, struct anon_vma *, struct file *, pgoff_t,
+-	struct mempolicy *, struct vm_userfaultfd_ctx);
++	struct mempolicy *, struct vm_userfaultfd_ctx, const char __user *);
+ extern struct anon_vma *find_mergeable_anon_vma(struct vm_area_struct *);
+ extern int __split_vma(struct mm_struct *, struct vm_area_struct *,
+ 	unsigned long addr, int new_below);
+@@ -3179,5 +3179,8 @@ unsigned long wp_shared_mapping_range(struct address_space *mapping,
+ 
+ extern int sysctl_nr_trim_pages;
+ 
++int madvise_set_anon_name(unsigned long start, unsigned long len_in,
++			  unsigned long name_addr);
++
+ #endif /* __KERNEL__ */
+ #endif /* _LINUX_MM_H */
+diff --git a/include/linux/mm_types.h b/include/linux/mm_types.h
+index 07d9acb5b19c..30a13c70e46a 100644
+--- a/include/linux/mm_types.h
++++ b/include/linux/mm_types.h
+@@ -334,11 +334,19 @@ struct vm_area_struct {
+ 	/*
+ 	 * For areas with an address space and backing store,
+ 	 * linkage into the address_space->i_mmap interval tree.
++	 *
++	 * For private anonymous mappings, a pointer to a null terminated string
++	 * in the user process containing the name given to the vma, or NULL
++	 * if unnamed.
+ 	 */
+-	struct {
+-		struct rb_node rb;
+-		unsigned long rb_subtree_last;
+-	} shared;
++
++	union {
++		struct {
++			struct rb_node rb;
++			unsigned long rb_subtree_last;
++		} shared;
++		const char __user *anon_name;
++	};
+ 
+ 	/*
+ 	 * A file's MAP_PRIVATE vma can be in both i_mmap tree and anon_vma
+@@ -791,4 +799,13 @@ typedef struct {
+ 	unsigned long val;
+ } swp_entry_t;
+ 
++/* Return the name for an anonymous mapping or NULL for a file-backed mapping */
++static inline const char __user *vma_anon_name(struct vm_area_struct *vma)
++{
++	if (vma->vm_file)
++		return NULL;
++
++	return vma->anon_name;
++}
++
+ #endif /* _LINUX_MM_TYPES_H */
+diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
+index 667f1aed091c..5d836c99a82c 100644
+--- a/include/uapi/linux/prctl.h
++++ b/include/uapi/linux/prctl.h
+@@ -255,4 +255,7 @@ struct prctl_mm_map {
+ # define SYSCALL_DISPATCH_FILTER_ALLOW	0
+ # define SYSCALL_DISPATCH_FILTER_BLOCK	1
+ 
++#define PR_SET_VMA		0x53564d41
++# define PR_SET_VMA_ANON_NAME		0
++
+ #endif /* _LINUX_PRCTL_H */
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 51f00fe20e4d..1c79cfebcec6 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2281,6 +2281,35 @@ int __weak arch_prctl_spec_ctrl_set(struct task_struct *t, unsigned long which,
+ 
+ #define PR_IO_FLUSHER (PF_MEMALLOC_NOIO | PF_LOCAL_THROTTLE)
+ 
++#ifdef CONFIG_MMU
++static int prctl_set_vma(unsigned long opt, unsigned long addr,
++			 unsigned long len, unsigned long arg)
++{
++	struct mm_struct *mm = current->mm;
++	int error;
++
++	mmap_write_lock(mm);
++
++	switch (opt) {
++	case PR_SET_VMA_ANON_NAME:
++		error = madvise_set_anon_name(addr, len, arg);
++		break;
++	default:
++		error = -EINVAL;
++	}
++
++	mmap_write_unlock(mm);
++
++	return error;
++}
++#else /* CONFIG_MMU */
++static int prctl_set_vma(unsigned long opt, unsigned long start,
++			 unsigned long len_in, unsigned long arg)
++{
++	return -EINVAL;
++}
++#endif
++
+ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 		unsigned long, arg4, unsigned long, arg5)
+ {
+@@ -2535,6 +2564,9 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 		error = set_syscall_user_dispatch(arg2, arg3, arg4,
+ 						  (char __user *) arg5);
+ 		break;
++	case PR_SET_VMA:
++		error = prctl_set_vma(arg2, arg3, arg4, arg5);
++		break;
+ 	default:
+ 		error = -EINVAL;
+ 		break;
+diff --git a/mm/interval_tree.c b/mm/interval_tree.c
+index 11c75fb07584..dd522625d6f6 100644
+--- a/mm/interval_tree.c
++++ b/mm/interval_tree.c
+@@ -45,7 +45,7 @@ void vma_interval_tree_insert_after(struct vm_area_struct *node,
+ 			parent->shared.rb_subtree_last = last;
+ 		while (parent->shared.rb.rb_left) {
+ 			parent = rb_entry(parent->shared.rb.rb_left,
+-				struct vm_area_struct, shared.rb);
++					  struct vm_area_struct, shared.rb);
+ 			if (parent->shared.rb_subtree_last < last)
+ 				parent->shared.rb_subtree_last = last;
+ 		}
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 1b7a0efc440d..a27f5bf5a51c 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -66,13 +66,14 @@ static int madvise_need_mmap_write(int behavior)
+  */
+ static int madvise_update_vma(struct vm_area_struct *vma,
+ 			      struct vm_area_struct **prev, unsigned long start,
+-			      unsigned long end, unsigned long new_flags)
++			      unsigned long end, unsigned long new_flags,
++			      const char __user *new_anon_name)
+ {
+ 	struct mm_struct *mm = vma->vm_mm;
+ 	int error;
+ 	pgoff_t pgoff;
+ 
+-	if (new_flags == vma->vm_flags) {
++	if (new_flags == vma->vm_flags && new_anon_name == vma_anon_name(vma)) {
+ 		*prev = vma;
+ 		return 0;
+ 	}
+@@ -80,7 +81,7 @@ static int madvise_update_vma(struct vm_area_struct *vma,
+ 	pgoff = vma->vm_pgoff + ((start - vma->vm_start) >> PAGE_SHIFT);
+ 	*prev = vma_merge(mm, *prev, start, end, new_flags, vma->anon_vma,
+ 			  vma->vm_file, pgoff, vma_policy(vma),
+-			  vma->vm_userfaultfd_ctx);
++			  vma->vm_userfaultfd_ctx, new_anon_name);
+ 	if (*prev) {
+ 		vma = *prev;
+ 		goto success;
+@@ -113,10 +114,30 @@ static int madvise_update_vma(struct vm_area_struct *vma,
+ 	 * vm_flags is protected by the mmap_lock held in write mode.
+ 	 */
+ 	vma->vm_flags = new_flags;
++	if (!vma->vm_file)
++		vma->anon_name = new_anon_name;
+ 
+ 	return 0;
+ }
+ 
++static int madvise_vma_anon_name(struct vm_area_struct *vma,
++				 struct vm_area_struct **prev,
++				 unsigned long start, unsigned long end,
++				 unsigned long name_addr)
++{
++	int error;
++
++	/* Only anonymous mappings can be named */
++	if (vma->vm_file)
++		return -EINVAL;
++
++	error = madvise_update_vma(vma, prev, start, end, vma->vm_flags,
++				   (const char __user *)name_addr);
++	if (error == -ENOMEM)
++		error = -EAGAIN;
++	return error;
++}
++
+ #ifdef CONFIG_SWAP
+ static int swapin_walk_pmd_entry(pmd_t *pmd, unsigned long start,
+ 	unsigned long end, struct mm_walk *walk)
+@@ -885,7 +906,8 @@ static int madvise_vma_behavior(struct vm_area_struct *vma,
+ 		break;
+ 	}
+ 
+-	error = madvise_update_vma(vma, prev, start, end, new_flags);
++	error = madvise_update_vma(vma, prev, start, end, new_flags,
++				   vma_anon_name(vma));
+ 
+ out:
+ 	if (error == -ENOMEM)
+@@ -1058,6 +1080,30 @@ int madvise_walk_vmas(unsigned long start, unsigned long end,
+ 	return unmapped_error;
+ }
+ 
++int madvise_set_anon_name(unsigned long start, unsigned long len_in,
++			  unsigned long name_addr)
++{
++	unsigned long end;
++	unsigned long len;
++
++	if (start & ~PAGE_MASK)
++		return -EINVAL;
++	len = (len_in + ~PAGE_MASK) & PAGE_MASK;
++
++	/* Check to see whether len was rounded up from small -ve to zero */
++	if (len_in && !len)
++		return -EINVAL;
++
++	end = start + len;
++	if (end < start)
++		return -EINVAL;
++
++	if (end == start)
++		return 0;
++
++	return madvise_walk_vmas(start, end, name_addr, madvise_vma_anon_name);
++}
++
+ /*
+  * The madvise(2) system call.
+  *
+diff --git a/mm/mempolicy.c b/mm/mempolicy.c
+index 2c3a86502053..857b56e7508c 100644
+--- a/mm/mempolicy.c
++++ b/mm/mempolicy.c
+@@ -829,7 +829,8 @@ static int mbind_range(struct mm_struct *mm, unsigned long start,
+ 			((vmstart - vma->vm_start) >> PAGE_SHIFT);
+ 		prev = vma_merge(mm, prev, vmstart, vmend, vma->vm_flags,
+ 				 vma->anon_vma, vma->vm_file, pgoff,
+-				 new_pol, vma->vm_userfaultfd_ctx);
++				 new_pol, vma->vm_userfaultfd_ctx,
++				 vma_anon_name(vma));
+ 		if (prev) {
+ 			vma = prev;
+ 			next = vma->vm_next;
+diff --git a/mm/mlock.c b/mm/mlock.c
+index 55b3b3672977..e2ddd9828ce8 100644
+--- a/mm/mlock.c
++++ b/mm/mlock.c
+@@ -511,7 +511,7 @@ static int mlock_fixup(struct vm_area_struct *vma, struct vm_area_struct **prev,
+ 	pgoff = vma->vm_pgoff + ((start - vma->vm_start) >> PAGE_SHIFT);
+ 	*prev = vma_merge(mm, *prev, start, end, newflags, vma->anon_vma,
+ 			  vma->vm_file, pgoff, vma_policy(vma),
+-			  vma->vm_userfaultfd_ctx);
++			  vma->vm_userfaultfd_ctx, vma_anon_name(vma));
+ 	if (*prev) {
+ 		vma = *prev;
+ 		goto success;
+diff --git a/mm/mmap.c b/mm/mmap.c
+index dc7206032387..8ffde568a24f 100644
+--- a/mm/mmap.c
++++ b/mm/mmap.c
+@@ -1028,7 +1028,8 @@ int __vma_adjust(struct vm_area_struct *vma, unsigned long start,
+  */
+ static inline int is_mergeable_vma(struct vm_area_struct *vma,
+ 				struct file *file, unsigned long vm_flags,
+-				struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
++				struct vm_userfaultfd_ctx vm_userfaultfd_ctx,
++				const char __user *anon_name)
+ {
+ 	/*
+ 	 * VM_SOFTDIRTY should not prevent from VMA merging, if we
+@@ -1046,6 +1047,8 @@ static inline int is_mergeable_vma(struct vm_area_struct *vma,
+ 		return 0;
+ 	if (!is_mergeable_vm_userfaultfd_ctx(vma, vm_userfaultfd_ctx))
+ 		return 0;
++	if (vma_anon_name(vma) != anon_name)
++		return 0;
+ 	return 1;
+ }
+ 
+@@ -1078,9 +1081,10 @@ static int
+ can_vma_merge_before(struct vm_area_struct *vma, unsigned long vm_flags,
+ 		     struct anon_vma *anon_vma, struct file *file,
+ 		     pgoff_t vm_pgoff,
+-		     struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
++		     struct vm_userfaultfd_ctx vm_userfaultfd_ctx,
++		     const char __user *anon_name)
+ {
+-	if (is_mergeable_vma(vma, file, vm_flags, vm_userfaultfd_ctx) &&
++	if (is_mergeable_vma(vma, file, vm_flags, vm_userfaultfd_ctx, anon_name) &&
+ 	    is_mergeable_anon_vma(anon_vma, vma->anon_vma, vma)) {
+ 		if (vma->vm_pgoff == vm_pgoff)
+ 			return 1;
+@@ -1099,9 +1103,10 @@ static int
+ can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
+ 		    struct anon_vma *anon_vma, struct file *file,
+ 		    pgoff_t vm_pgoff,
+-		    struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
++		    struct vm_userfaultfd_ctx vm_userfaultfd_ctx,
++		     const char __user *anon_name)
+ {
+-	if (is_mergeable_vma(vma, file, vm_flags, vm_userfaultfd_ctx) &&
++	if (is_mergeable_vma(vma, file, vm_flags, vm_userfaultfd_ctx, anon_name) &&
+ 	    is_mergeable_anon_vma(anon_vma, vma->anon_vma, vma)) {
+ 		pgoff_t vm_pglen;
+ 		vm_pglen = vma_pages(vma);
+@@ -1112,9 +1117,9 @@ can_vma_merge_after(struct vm_area_struct *vma, unsigned long vm_flags,
+ }
+ 
+ /*
+- * Given a mapping request (addr,end,vm_flags,file,pgoff), figure out
+- * whether that can be merged with its predecessor or its successor.
+- * Or both (it neatly fills a hole).
++ * Given a mapping request (addr,end,vm_flags,file,pgoff,anon_name),
++ * figure out whether that can be merged with its predecessor or its
++ * successor.  Or both (it neatly fills a hole).
+  *
+  * In most cases - when called for mmap, brk or mremap - [addr,end) is
+  * certain not to be mapped by the time vma_merge is called; but when
+@@ -1159,7 +1164,8 @@ struct vm_area_struct *vma_merge(struct mm_struct *mm,
+ 			unsigned long end, unsigned long vm_flags,
+ 			struct anon_vma *anon_vma, struct file *file,
+ 			pgoff_t pgoff, struct mempolicy *policy,
+-			struct vm_userfaultfd_ctx vm_userfaultfd_ctx)
++			struct vm_userfaultfd_ctx vm_userfaultfd_ctx,
++			const char __user *anon_name)
+ {
+ 	pgoff_t pglen = (end - addr) >> PAGE_SHIFT;
+ 	struct vm_area_struct *area, *next;
+@@ -1189,7 +1195,7 @@ struct vm_area_struct *vma_merge(struct mm_struct *mm,
+ 			mpol_equal(vma_policy(prev), policy) &&
+ 			can_vma_merge_after(prev, vm_flags,
+ 					    anon_vma, file, pgoff,
+-					    vm_userfaultfd_ctx)) {
++					    vm_userfaultfd_ctx, anon_name)) {
+ 		/*
+ 		 * OK, it can.  Can we now merge in the successor as well?
+ 		 */
+@@ -1198,7 +1204,7 @@ struct vm_area_struct *vma_merge(struct mm_struct *mm,
+ 				can_vma_merge_before(next, vm_flags,
+ 						     anon_vma, file,
+ 						     pgoff+pglen,
+-						     vm_userfaultfd_ctx) &&
++						     vm_userfaultfd_ctx, anon_name) &&
+ 				is_mergeable_anon_vma(prev->anon_vma,
+ 						      next->anon_vma, NULL)) {
+ 							/* cases 1, 6 */
+@@ -1221,7 +1227,7 @@ struct vm_area_struct *vma_merge(struct mm_struct *mm,
+ 			mpol_equal(policy, vma_policy(next)) &&
+ 			can_vma_merge_before(next, vm_flags,
+ 					     anon_vma, file, pgoff+pglen,
+-					     vm_userfaultfd_ctx)) {
++					     vm_userfaultfd_ctx, anon_name)) {
+ 		if (prev && addr < prev->vm_end)	/* case 4 */
+ 			err = __vma_adjust(prev, prev->vm_start,
+ 					 addr, prev->vm_pgoff, NULL, next);
+@@ -1765,7 +1771,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
+ 	 * Can we just expand an old mapping?
+ 	 */
+ 	vma = vma_merge(mm, prev, addr, addr + len, vm_flags,
+-			NULL, file, pgoff, NULL, NULL_VM_UFFD_CTX);
++			NULL, file, pgoff, NULL, NULL_VM_UFFD_CTX, NULL);
+ 	if (vma)
+ 		goto out;
+ 
+@@ -1824,7 +1830,7 @@ unsigned long mmap_region(struct file *file, unsigned long addr,
+ 		 */
+ 		if (unlikely(vm_flags != vma->vm_flags && prev)) {
+ 			merge = vma_merge(mm, prev, vma->vm_start, vma->vm_end, vma->vm_flags,
+-				NULL, vma->vm_file, vma->vm_pgoff, NULL, NULL_VM_UFFD_CTX);
++				NULL, vma->vm_file, vma->vm_pgoff, NULL, NULL_VM_UFFD_CTX, NULL);
+ 			if (merge) {
+ 				/* ->mmap() can change vma->vm_file and fput the original file. So
+ 				 * fput the vma->vm_file here or we would add an extra fput for file
+@@ -3100,7 +3106,7 @@ static int do_brk_flags(unsigned long addr, unsigned long len, unsigned long fla
+ 
+ 	/* Can we just expand an old private anonymous mapping? */
+ 	vma = vma_merge(mm, prev, addr, addr + len, flags,
+-			NULL, NULL, pgoff, NULL, NULL_VM_UFFD_CTX);
++			NULL, NULL, pgoff, NULL, NULL_VM_UFFD_CTX, NULL);
+ 	if (vma)
+ 		goto out;
+ 
+@@ -3299,7 +3305,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
+ 		return NULL;	/* should never get here */
+ 	new_vma = vma_merge(mm, prev, addr, addr + len, vma->vm_flags,
+ 			    vma->anon_vma, vma->vm_file, pgoff, vma_policy(vma),
+-			    vma->vm_userfaultfd_ctx);
++			    vma->vm_userfaultfd_ctx, vma_anon_name(vma));
+ 	if (new_vma) {
+ 		/*
+ 		 * Source vma may have been merged into new_vma
+diff --git a/mm/mprotect.c b/mm/mprotect.c
+index ab709023e9aa..9b20ca9fe603 100644
+--- a/mm/mprotect.c
++++ b/mm/mprotect.c
+@@ -454,7 +454,7 @@ mprotect_fixup(struct vm_area_struct *vma, struct vm_area_struct **pprev,
+ 	pgoff = vma->vm_pgoff + ((start - vma->vm_start) >> PAGE_SHIFT);
+ 	*pprev = vma_merge(mm, *pprev, start, end, newflags,
+ 			   vma->anon_vma, vma->vm_file, pgoff, vma_policy(vma),
+-			   vma->vm_userfaultfd_ctx);
++			   vma->vm_userfaultfd_ctx, vma_anon_name(vma));
+ 	if (*pprev) {
+ 		vma = *pprev;
+ 		VM_WARN_ON((vma->vm_flags ^ newflags) & ~VM_SOFTDIRTY);
+-- 
+2.17.1
+

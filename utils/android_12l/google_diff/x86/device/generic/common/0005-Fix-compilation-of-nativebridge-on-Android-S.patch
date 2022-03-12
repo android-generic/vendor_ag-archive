@@ -1,0 +1,47 @@
+From e13257cd41113d6688ffd7fd4cd63850b96227a5 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Tue, 4 May 2021 15:14:16 -0400
+Subject: [PATCH 05/25] Fix compilation of nativebridge on Android S
+
+Use LOCAL_HEADERS_LIBRARIES instead of hard-coded include paths.
+
+Move ro.dalvik.vm.native.bridge to PRODUCT_PRODUCT_PROPERTIES. As we're
+not using a vendor image, PRODUCT_PROPERTY_OVERRIDES content ends up in
+/system/build.prop. However, Android S now forbids duplicate sysprop
+entries on the same partition (unless they're marked optional, but
+that's not the case here). Simple solution is to move this sysprop to
+/product/etc/build.prop.
+---
+ nativebridge/Android.mk      | 2 +-
+ nativebridge/nativebridge.mk | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/nativebridge/Android.mk b/nativebridge/Android.mk
+index 5516935..90570b8 100644
+--- a/nativebridge/Android.mk
++++ b/nativebridge/Android.mk
+@@ -17,7 +17,7 @@ LOCAL_SRC_FILES := src/libnb.cpp
+ LOCAL_CFLAGS := -Werror -Wall
+ LOCAL_CPPFLAGS := -std=c++11
+ LOCAL_SHARED_LIBRARIES := libcutils libdl liblog
+-LOCAL_C_INCLUDES := art/libnativebridge/include
++LOCAL_HEADER_LIBRARIES := jni_headers libnativebridge-headers
+ LOCAL_MULTILIB := both
+ LOCAL_POST_INSTALL_CMD := $(hide) \
+     rm -rf $(TARGET_OUT)/{bin,lib}/{arm*,*houdini*} {$(TARGET_OUT),$(PRODUCT_OUT)}/vendor/{bin,lib}/{arm*,*houdini*}; \
+diff --git a/nativebridge/nativebridge.mk b/nativebridge/nativebridge.mk
+index 1fa831e..69b14f0 100644
+--- a/nativebridge/nativebridge.mk
++++ b/nativebridge/nativebridge.mk
+@@ -32,7 +32,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
+ endif
+ 
+ ifneq ($(HOUDINI_PREINSTALL),intel)
+-PRODUCT_PROPERTY_OVERRIDES := ro.dalvik.vm.native.bridge=libnb.so
++PRODUCT_PRODUCT_PROPERTIES := ro.dalvik.vm.native.bridge=libnb.so
+ 
+ PRODUCT_PACKAGES := libnb
+ endif
+-- 
+2.25.1
+

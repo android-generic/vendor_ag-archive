@@ -1,0 +1,31 @@
+From d52299db9e9965d904fb6f081a054aa283d16bb0 Mon Sep 17 00:00:00 2001
+From: Alex Naidis <alex.naidis@linux.com>
+Date: Thu, 22 Dec 2016 22:04:42 +0100
+Subject: [PATCH 23/23] init.rc: don't start console unless asked to
+
+This can have a major impact on performance.
+
+We don't want this, even on userdebug/eng builds.
+
+Use the new property "ro.console.enable" to
+enable the console service explicitly.
+---
+ rootdir/init.rc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 51db8529125..c5e724db073 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -1220,7 +1220,7 @@ on property:ro.debuggable=1
+     # Give reads to anyone for the accessibility trace folder on debug builds.
+     chmod 0775 /data/misc/a11ytrace
+ 
+-on init && property:ro.debuggable=1
++on init && property:ro.debuggable=1 && property:ro.console.enable=1
+     start console
+ 
+ on userspace-reboot-requested
+-- 
+2.25.1
+

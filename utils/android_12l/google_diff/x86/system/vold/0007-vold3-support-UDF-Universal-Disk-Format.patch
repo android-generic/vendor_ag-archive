@@ -1,0 +1,111 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sun, 26 Mar 2017 00:46:42 +0800
+Subject: [PATCH 7/8] vold3: support UDF (Universal Disk Format)
+
+Refer to https://en.wikipedia.org/wiki/Universal_Disk_Format.
+---
+ fs/Iso9660.cpp         | 10 ++--------
+ fs/Iso9660.h           |  2 +-
+ model/Disk.cpp         |  5 +++--
+ model/PublicVolume.cpp |  9 +++++----
+ 4 files changed, 11 insertions(+), 15 deletions(-)
+
+diff --git a/fs/Iso9660.cpp b/fs/Iso9660.cpp
+index 3bbfaee..a9e3e6f 100644
+--- a/fs/Iso9660.cpp
++++ b/fs/Iso9660.cpp
+@@ -29,8 +29,7 @@ bool IsSupported() {
+ }
+ 
+ status_t Mount(const std::string& source, const std::string& target,
+-        int ownerUid, int ownerGid ) {
+-    int rc;
++        int ownerUid, int ownerGid, const char* type) {
+     unsigned long flags;
+     char mountData[256];
+ 
+@@ -42,12 +41,7 @@ status_t Mount(const std::string& source, const std::string& target,
+     snprintf(mountData, sizeof(mountData),
+             "utf8,uid=%d,gid=%d", ownerUid, ownerGid);
+ 
+-    rc = mount(c_source, c_target, "iso9660", flags, mountData);
+-    if (rc != 0) {
+-        rc = mount(c_source, c_target, "udf", flags, mountData);
+-    }
+-
+-    return rc;
++    return mount(c_source, c_target, type, flags, mountData);
+ }
+ 
+ }  // namespace iso9660
+diff --git a/fs/Iso9660.h b/fs/Iso9660.h
+index 3bd57bc..1d730a6 100644
+--- a/fs/Iso9660.h
++++ b/fs/Iso9660.h
+@@ -25,7 +25,7 @@ namespace iso9660 {
+ 
+ bool IsSupported();
+ status_t Mount(const std::string& source, const std::string& target,
+-        int ownerUid, int ownerGid );
++        int ownerUid, int ownerGid, const char* type);
+ 
+ }  // namespace iso9660
+ }  // namespace vold
+diff --git a/model/Disk.cpp b/model/Disk.cpp
+index 295e114..b8d2403 100644
+--- a/model/Disk.cpp
++++ b/model/Disk.cpp
+@@ -348,8 +348,8 @@ status_t Disk::readPartitions() {
+ 
+         std::string fsType, unused;
+         if (ReadMetadataUntrusted(mDevPath, &fsType, &unused, &unused) == OK) {
+-            if (fsType == "iso9660") {
+-                LOG(INFO) << "Detect iso9660";
++            if (fsType == "iso9660" || fsType == "udf") {
++                LOG(INFO) << "Detect " << fsType;
+                 createPublicVolume(mDevice);
+                 res = OK;
+             }
+@@ -399,6 +399,7 @@ status_t Disk::readPartitions() {
+                 }
+ 
+                 switch (type) {
++                    case 0x00: // ISO9660
+                     case 0x06:  // FAT16
+                     case 0x07:  // HPFS/NTFS/exFAT
+                     case 0x0b:  // W95 FAT32 (LBA)
+diff --git a/model/PublicVolume.cpp b/model/PublicVolume.cpp
+index 1fd6286..e788d71 100644
+--- a/model/PublicVolume.cpp
++++ b/model/PublicVolume.cpp
+@@ -67,7 +67,7 @@ status_t PublicVolume::readMetadata() {
+     status_t res = ReadMetadataUntrusted(mDevPath, &mFsType, &mFsUuid, &mFsLabel);
+ 
+     // iso9660 has no UUID, we use label as UUID
+-    if (mFsType == "iso9660" && mFsUuid.empty() && !mFsLabel.empty()) {
++    if ((mFsType == "iso9660" || mFsType == "udf") && mFsUuid.empty() && !mFsLabel.empty()) {
+         std::replace(mFsLabel.begin(), mFsLabel.end(), ' ', '_');
+         mFsUuid = mFsLabel;
+     }
+@@ -154,7 +154,7 @@ status_t PublicVolume::doMount() {
+         ret = ntfs::Check(mDevPath);
+     } else if (mFsType == "vfat") {
+         ret = vfat::Check(mDevPath);
+-    } else if (mFsType != "iso9660") {
++    } else if (mFsType != "iso9660" && mFsType != "udf") {
+         LOG(WARNING) << getId() << " unsupported filesystem check, skipping";
+     }
+     if (ret) {
+@@ -169,8 +169,9 @@ status_t PublicVolume::doMount() {
+         ret = ext4::Mount(mDevPath, mRawPath, false, false, true, mMntOpts);
+     } else if (mFsType == "f2fs") {
+         ret = f2fs::Mount(mDevPath, mRawPath, mMntOpts);
+-    } else if (mFsType == "iso9660") {
+-        ret = iso9660::Mount(mDevPath, mRawPath, AID_MEDIA_RW, AID_MEDIA_RW);
++    } else if (mFsType == "iso9660" || mFsType == "udf") {
++        ret = iso9660::Mount(mDevPath, mRawPath,
++                AID_MEDIA_RW, AID_MEDIA_RW, mFsType.c_str());
+     } else if (mFsType == "ntfs") {
+         ret = ntfs::Mount(mDevPath, mRawPath, AID_ROOT,
+                           (isVisible ? AID_MEDIA_RW : AID_EXTERNAL_STORAGE), 0007);

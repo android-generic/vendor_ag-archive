@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 1 Jun 2017 12:00:10 +0800
+Subject: [PATCH 07/15] media: enable dithering for RGB565 conversion
+
+This seems to improve video playback quality.
+
+Inspired by a patch from WuZhen.
+---
+ media/libstagefright/colorconversion/ColorConverter.cpp | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/media/libstagefright/colorconversion/ColorConverter.cpp b/media/libstagefright/colorconversion/ColorConverter.cpp
+index c7dc415d8b..896e7d2715 100644
+--- a/media/libstagefright/colorconversion/ColorConverter.cpp
++++ b/media/libstagefright/colorconversion/ColorConverter.cpp
+@@ -348,9 +348,8 @@ status_t ColorConverter::convertYUV420PlanarUseLibYUV(
+     switch (mDstFormat) {
+     case OMX_COLOR_Format16bitRGB565:
+     {
+-        DECLARE_YUV2RGBFUNC(func, RGB565);
+-        (*func)(src_y, src.mStride, src_u, src.mStride / 2, src_v, src.mStride / 2,
+-                (uint8_t *)dst_ptr, dst.mStride, src.cropWidth(), src.cropHeight());
++        libyuv::I420ToRGB565Dither(src_y, src.mStride, src_u, src.mStride / 2, src_v, src.mStride / 2,
++                (uint8_t *)dst_ptr, dst.mStride, NULL, src.cropWidth(), src.cropHeight());
+         break;
+     }
+ 

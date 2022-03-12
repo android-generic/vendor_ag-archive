@@ -1,0 +1,200 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Luo Chunbo <luochunbo@jidemail.com>
+Date: Wed, 25 May 2016 16:16:48 +0800
+Subject: [PATCH 5/8] vold: ISO9660 support
+
+Ref: T7691
+
+Change-Id: Ifc602781e7d87aea9f3181263e09ffe143e9a231
+Signed-off-by: Luo Chunbo <luochunbo@jidemail.com>
+---
+ Android.bp             |  1 +
+ fs/Iso9660.cpp         | 55 ++++++++++++++++++++++++++++++++++++++++++
+ fs/Iso9660.h           | 35 +++++++++++++++++++++++++++
+ main.cpp               |  1 +
+ model/Disk.cpp         |  9 +++++++
+ model/PublicVolume.cpp |  9 +++++++
+ 6 files changed, 110 insertions(+)
+ create mode 100644 fs/Iso9660.cpp
+ create mode 100644 fs/Iso9660.h
+
+diff --git a/Android.bp b/Android.bp
+index 6d518b0..643004e 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -140,6 +140,7 @@ cc_library_static {
+         "fs/Exfat.cpp",
+         "fs/Ext4.cpp",
+         "fs/F2fs.cpp",
++        "fs/Iso9660.cpp",
+         "fs/Ntfs.cpp",
+         "fs/Vfat.cpp",
+         "model/Disk.cpp",
+diff --git a/fs/Iso9660.cpp b/fs/Iso9660.cpp
+new file mode 100644
+index 0000000..3bbfaee
+--- /dev/null
++++ b/fs/Iso9660.cpp
+@@ -0,0 +1,55 @@
++/*
++ * Copyright (C) 2008 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#include <stdio.h>
++#include <sys/mount.h>
++#include <utils/Errors.h>
++#include "Iso9660.h"
++#include "Utils.h"
++
++namespace android {
++namespace vold {
++namespace iso9660 {
++
++bool IsSupported() {
++    return IsFilesystemSupported("iso9660");
++}
++
++status_t Mount(const std::string& source, const std::string& target,
++        int ownerUid, int ownerGid ) {
++    int rc;
++    unsigned long flags;
++    char mountData[256];
++
++    const char* c_source = source.c_str();
++    const char* c_target = target.c_str();
++
++    flags = MS_NODEV | MS_NOEXEC | MS_NOSUID | MS_DIRSYNC | MS_RDONLY;
++
++    snprintf(mountData, sizeof(mountData),
++            "utf8,uid=%d,gid=%d", ownerUid, ownerGid);
++
++    rc = mount(c_source, c_target, "iso9660", flags, mountData);
++    if (rc != 0) {
++        rc = mount(c_source, c_target, "udf", flags, mountData);
++    }
++
++    return rc;
++}
++
++}  // namespace iso9660
++}  // namespace vold
++}  // namespace android
+diff --git a/fs/Iso9660.h b/fs/Iso9660.h
+new file mode 100644
+index 0000000..3bd57bc
+--- /dev/null
++++ b/fs/Iso9660.h
+@@ -0,0 +1,35 @@
++/*
++ * Copyright (C) 2008 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++#ifndef _ISO9660_H
++#define _ISO9660_H
++
++#include <string>
++
++namespace android {
++namespace vold {
++namespace iso9660 {
++
++bool IsSupported();
++status_t Mount(const std::string& source, const std::string& target,
++        int ownerUid, int ownerGid );
++
++}  // namespace iso9660
++}  // namespace vold
++}  // namespace android
++
++
++#endif
+diff --git a/main.cpp b/main.cpp
+index 158b99a..ad6dc27 100644
+--- a/main.cpp
++++ b/main.cpp
+@@ -71,6 +71,7 @@ int main(int argc, char** argv) {
+                << (android::vold::IsFilesystemSupported("exfat") ? " exfat" : "")
+                << (android::vold::IsFilesystemSupported("ext4") ? " ext4" : "")
+                << (android::vold::IsFilesystemSupported("f2fs") ? " f2fs" : "")
++               << (android::vold::IsFilesystemSupported("iso9660") ? " iso9660" : "")
+                << (android::vold::IsFilesystemSupported("ntfs") ? " ntfs" : "")
+                << (android::vold::IsFilesystemSupported("vfat") ? " vfat" : "");
+ 
+diff --git a/model/Disk.cpp b/model/Disk.cpp
+index b50ca50..6880341 100644
+--- a/model/Disk.cpp
++++ b/model/Disk.cpp
+@@ -342,6 +342,15 @@ status_t Disk::readPartitions() {
+     if (res != OK) {
+         LOG(WARNING) << "sgdisk failed to scan " << mDevPath;
+ 
++        std::string fsType, unused;
++        if (ReadMetadataUntrusted(mDevPath, &fsType, &unused, &unused) == OK) {
++            if (fsType == "iso9660") {
++                LOG(INFO) << "Detect iso9660";
++                createPublicVolume(mDevice);
++                res = OK;
++            }
++        }
++
+         auto listener = VolumeManager::Instance()->getListener();
+         if (listener) listener->onDiskScanned(getId());
+ 
+diff --git a/model/PublicVolume.cpp b/model/PublicVolume.cpp
+index 3461a54..29671f1 100644
+--- a/model/PublicVolume.cpp
++++ b/model/PublicVolume.cpp
+@@ -22,6 +22,7 @@
+ #include "fs/Exfat.h"
+ #include "fs/Ext4.h"
+ #include "fs/F2fs.h"
++#include "fs/Iso9660.h"
+ #include "fs/Ntfs.h"
+ #include "fs/Vfat.h"
+ 
+@@ -65,6 +66,12 @@ PublicVolume::~PublicVolume() {}
+ status_t PublicVolume::readMetadata() {
+     status_t res = ReadMetadataUntrusted(mDevPath, &mFsType, &mFsUuid, &mFsLabel);
+ 
++    // iso9660 has no UUID, we use label as UUID
++    if (mFsType == "iso9660" && mFsUuid.empty() && !mFsLabel.empty()) {
++        std::replace(mFsLabel.begin(), mFsLabel.end(), ' ', '_');
++        mFsUuid = mFsLabel;
++    }
++
+     auto listener = getListener();
+     if (listener) listener->onVolumeMetadataChanged(getId(), mFsType, mFsUuid, mFsLabel);
+ 
+@@ -162,6 +169,8 @@ status_t PublicVolume::doMount() {
+         ret = ext4::Mount(mDevPath, mRawPath, false, false, true, mMntOpts);
+     } else if (mFsType == "f2fs") {
+         ret = f2fs::Mount(mDevPath, mRawPath, mMntOpts);
++    } else if (mFsType == "iso9660") {
++        ret = iso9660::Mount(mDevPath, mRawPath, AID_MEDIA_RW, AID_MEDIA_RW);
+     } else if (mFsType == "ntfs") {
+         ret = ntfs::Mount(mDevPath, mRawPath, AID_ROOT,
+                           (isVisible ? AID_MEDIA_RW : AID_EXTERNAL_STORAGE), 0007);

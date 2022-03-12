@@ -1,0 +1,22 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 14 Dec 2018 22:43:05 +0800
+Subject: [PATCH 42/54] x86/speculation: lower error level
+
+---
+ arch/x86/kernel/cpu/bugs.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/x86/kernel/cpu/bugs.c b/arch/x86/kernel/cpu/bugs.c
+index d41b70fe4918..e43713413b82 100644
+--- a/arch/x86/kernel/cpu/bugs.c
++++ b/arch/x86/kernel/cpu/bugs.c
+@@ -899,7 +899,7 @@ static void __init spectre_v2_select_mitigation(void)
+ 			goto retpoline_auto;
+ 		break;
+ 	}
+-	pr_err("Spectre mitigation: kernel not compiled with retpoline; no mitigation available!");
++	pr_info("Spectre mitigation: kernel not compiled with retpoline; no mitigation available!");
+ 	return;
+ 
+ retpoline_auto:

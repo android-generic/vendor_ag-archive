@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Sat, 17 Apr 2021 15:45:41 -0400
+Subject: [PATCH 3/5] Fix YUV420p buffer offset computation for odd stride
+ value
+
+Computation of YUV offset within buffer has been changed in AOSP's
+SoftwareRenderer. This leads to offset mismatch of the stride value is
+not a multiple of 2.
+
+See https://cs.android.com/android/_/android/platform/frameworks/av/+/6a867d536f4b5c00ffca2d2025d8d36b7f6a58d8
+---
+ omx/SoftFFmpegVideo.cpp | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/omx/SoftFFmpegVideo.cpp b/omx/SoftFFmpegVideo.cpp
+index e9daf61..49e4606 100644
+--- a/omx/SoftFFmpegVideo.cpp
++++ b/omx/SoftFFmpegVideo.cpp
+@@ -547,9 +547,12 @@ int32_t SoftFFmpegVideo::drainOneOutputBuffer() {
+     uint32_t frameHeight = mFrame->height;
+ #endif
+ 
++    // offsets and linesizes must match expected YUV420p layout in:
++    // frameworks/av/media/libstagefright/colorconversion/SoftwareRenderer.cpp
++
+     data[0] = dst;
+     data[1] = dst + bufferWidth * bufferHeight;
+-    data[2] = data[1] + (bufferWidth / 2  * bufferHeight / 2);
++    data[2] = data[1] + bufferWidth * bufferHeight / 4;
+     linesize[0] = bufferWidth;
+     linesize[1] = bufferWidth / 2;
+     linesize[2] = bufferWidth / 2;

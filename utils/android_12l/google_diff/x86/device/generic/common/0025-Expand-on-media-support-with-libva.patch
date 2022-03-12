@@ -1,0 +1,128 @@
+From 4479c2e81bce693895314c86e09d7414c6dd8115 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 4 Mar 2022 18:09:56 -0500
+Subject: [PATCH 25/25] Expand on media support with libva
+
+---
+ device.mk                     |  2 +
+ media_packages.mk             | 74 +++++++++++++++++++++++++++++++++++
+ product_property_overrides.mk | 13 ++++++
+ 3 files changed, 89 insertions(+)
+ create mode 100644 media_packages.mk
+ create mode 100644 product_property_overrides.mk
+
+diff --git a/device.mk b/device.mk
+index dbfa5f5..17bdc69 100644
+--- a/device.mk
++++ b/device.mk
+@@ -149,6 +149,8 @@ $(call inherit-product-if-exists, vendor/google/chromeos-x86/target/native_bridg
+ $(call inherit-product-if-exists, vendor/google/chromeos-x86/target/widevine.mk)
+ 
+ $(call inherit-product,$(if $(wildcard $(PRODUCT_DIR)packages.mk),$(PRODUCT_DIR),$(LOCAL_PATH)/)packages.mk)
++$(call inherit-product,$(if $(wildcard $(PRODUCT_DIR)media_packages.mk),$(PRODUCT_DIR),$(LOCAL_PATH)/)media_packages.mk)
++$(call inherit-product-if-exists,$(LOCAL_PATH)/product_property_overrides.mk)
+ 
+ $(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_vendor.mk)
+ 
+diff --git a/media_packages.mk b/media_packages.mk
+new file mode 100644
+index 0000000..2d061f3
+--- /dev/null
++++ b/media_packages.mk
+@@ -0,0 +1,74 @@
++#
++# Copyright (C) 2014 The Android-x86 Open Source Project
++#
++# Licensed under the Apache License, Version 2.0 (the "License");
++# you may not use this file except in compliance with the License.
++# You may obtain a copy of the License at
++#
++#      http://www.apache.org/licenses/LICENSE-2.0
++#
++# Unless required by applicable law or agreed to in writing, software
++# distributed under the License is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++# See the License for the specific language governing permissions and
++# limitations under the License.
++#
++
++# Common packages for media on Android-x86 platform.
++
++# IMG graphics
++PRODUCT_PACKAGES += \
++    IMG_graphics \
++
++# libva
++PRODUCT_PACKAGES += \
++    libva \
++    libva-android \
++    libva-tpi \
++    vainfo
++
++#libstagefrighthw
++PRODUCT_PACKAGES += \
++    libstagefrighthw
++
++# libmix
++PRODUCT_PACKAGES += \
++    libmixvbp_mpeg4 \
++    libmixvbp_h264 \
++    libmixvbp_h264secure \
++    libmixvbp_vc1 \
++    libmixvbp_vp8 \
++    libmixvbp_mpeg2 \
++    libmixvbp \
++    libva_videodecoder \
++    libva_videoencoder
++
++PRODUCT_PACKAGES += \
++    libwrs_omxil_common \
++    libwrs_omxil_core_pvwrapped \
++    libOMXVideoDecoderAVC \
++    libOMXVideoDecoderH263 \
++    libOMXVideoDecoderMPEG4 \
++    libOMXVideoDecoderWMV \
++    libOMXVideoDecoderVP8 \
++    libOMXVideoDecoderMPEG2 \
++    libOMXVideoDecoderVP9HWR \
++    libOMXVideoDecoderVP9Hybrid \
++    libOMXVideoEncoderAVC \
++    libOMXVideoEncoderH263 \
++    libOMXVideoEncoderMPEG4 \
++    libOMXVideoEncoderVP8
++
++#libISV
++PRODUCT_PACKAGES += libisv_omx_core
++
++# pvr
++PRODUCT_PACKAGES += \
++    libpvr2d
++
++# libdrm
++PRODUCT_PACKAGES += \
++    libdrm \
++    dristat \
++    drmstat
++
+diff --git a/product_property_overrides.mk b/product_property_overrides.mk
+new file mode 100644
+index 0000000..7c7c2bd
+--- /dev/null
++++ b/product_property_overrides.mk
+@@ -0,0 +1,13 @@
++# Dolby audio
++PRODUCT_PROPERTY_OVERRIDES += \
++    ro.platform.support.dts=true \
++    ro.platform.support.dolby=true
++
++# Default OMX service to non-Treble
++PRODUCT_PROPERTY_OVERRIDES += \
++    persist.media.treble_omx=false
++
++# Some CTS tests will be skipped based on what the initial API level that
++# shipped on device was.
++PRODUCT_PROPERTY_OVERRIDES += \
++ ro.product.first_api_level=21
+-- 
+2.25.1
+

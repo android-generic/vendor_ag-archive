@@ -1,0 +1,24 @@
+From 93ee8bc82a0982c5e1bab9e49a4f03416d09d800 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 4 Mar 2022 16:51:23 -0500
+Subject: [PATCH 24/25] inherit common bt sepolicy
+
+---
+ BoardConfig.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index eab3540..8aee01d 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -8,6 +8,7 @@ TARGET_BOARD_PLATFORM := android-x86
+ BOARD_HAVE_BLUETOOTH := true
+ BOARD_HAVE_BLUETOOTH_LINUX := true
+ BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR := device/generic/common/bluetooth
++BOARD_SEPOLICY_DIRS += system/bt/vendor_libs/linux/sepolicy
+ 
+ BOARD_USE_LEGACY_UI := true
+ 
+-- 
+2.25.1
+

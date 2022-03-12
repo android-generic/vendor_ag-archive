@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Tue, 4 May 2021 15:11:56 -0400
+Subject: [PATCH 2/2] Remove TARGET_PREFER_32_BIT_APPS
+
+This has been deprecated/removed in Android S. It does not seem to have
+been used in android-x86 either, just remove the corresponding code path
+and assume TARGET_PREFER_32_BIT_APPS is always false.
+---
+ android/ffmpeg.mk | 10 ++--------
+ 1 file changed, 2 insertions(+), 8 deletions(-)
+
+diff --git a/android/ffmpeg.mk b/android/ffmpeg.mk
+index d5c69e0476..7c550e88ef 100644
+--- a/android/ffmpeg.mk
++++ b/android/ffmpeg.mk
+@@ -12,14 +12,8 @@ FFMPEG_ARCH := $(TARGET_ARCH)
+ 
+ FFMPEG_2ND_ARCH := false
+ ifneq ($(TARGET_2ND_ARCH_VARIANT),)
+-   ifeq ($(TARGET_PREFER_32_BIT_APPS),true)
+-       ifeq ($(FFMPEG_MULTILIB),64)
+-          FFMPEG_2ND_ARCH := true
+-       endif
+-   else
+-       ifeq ($(FFMPEG_MULTILIB),32)
+-          FFMPEG_2ND_ARCH := true
+-       endif
++   ifeq ($(FFMPEG_MULTILIB),32)
++      FFMPEG_2ND_ARCH := true
+    endif
+ endif
+ 

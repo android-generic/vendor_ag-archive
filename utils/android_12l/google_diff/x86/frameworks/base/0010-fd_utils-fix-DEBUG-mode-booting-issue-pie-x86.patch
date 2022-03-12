@@ -1,0 +1,33 @@
+From 7f9d21c670ab25a4f2399516eaca75115c751a26 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Fri, 8 Mar 2019 17:28:25 +0100
+Subject: [PATCH 10/30] fd_utils: fix DEBUG mode booting issue (pie-x86)
+
+Porting to pie-x86 codebase of oreo-86 commit
+c283ba107a ("fd_utils: fix DEBUG mode booting issue")
+
+Original commit message:
+
+Remove the "/android/" prefix before the white list checking.
+
+Suggested by Chris Vandomelen <chris@sightworks.com>.
+---
+ core/jni/fd_utils.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/core/jni/fd_utils.cpp b/core/jni/fd_utils.cpp
+index 6f5cc5314d0b..c8c74459d582 100644
+--- a/core/jni/fd_utils.cpp
++++ b/core/jni/fd_utils.cpp
+@@ -261,6 +261,8 @@ FileDescriptorInfo* FileDescriptorInfo::CreateFromFd(int fd, fail_fn_t fail_fn)
+     fail_fn(android::base::StringPrintf("Could not read fd link %s: %s",
+                                         fd_path.c_str(),
+                                         strerror(errno)));
++  } else if (android::base::StartsWith(file_path, "/android/")) {
++    file_path = file_path.substr(8);
+   }
+ 
+   if (!allowlist->IsAllowed(file_path)) {
+-- 
+2.25.1
+

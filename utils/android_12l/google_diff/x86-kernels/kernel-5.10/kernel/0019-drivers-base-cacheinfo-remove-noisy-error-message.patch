@@ -1,0 +1,24 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sun, 5 Jun 2016 15:34:04 +0800
+Subject: [PATCH 19/54] drivers/base: cacheinfo: remove noisy error message
+
+This error message is considered annoying and irrelevant.
+Lower the message to debug level.
+---
+ drivers/base/cacheinfo.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/base/cacheinfo.c b/drivers/base/cacheinfo.c
+index bfc095956dd1..c20b39651f3a 100644
+--- a/drivers/base/cacheinfo.c
++++ b/drivers/base/cacheinfo.c
+@@ -172,7 +172,7 @@ static int cache_setup_of_node(unsigned int cpu)
+ 	}
+ 	np = cpu_dev->of_node;
+ 	if (!np) {
+-		pr_err("Failed to find cpu%d device node\n", cpu);
++		pr_debug("Failed to find cpu%d device node\n", cpu);
+ 		return -ENOENT;
+ 	}
+ 

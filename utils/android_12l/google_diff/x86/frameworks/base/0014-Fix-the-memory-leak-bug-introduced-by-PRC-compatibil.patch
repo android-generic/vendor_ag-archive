@@ -1,0 +1,428 @@
+From 4b36758afe3b83f6b193c629a022dc76e344bcb3 Mon Sep 17 00:00:00 2001
+From: jgu21 <jinghui.gu@intel.com>
+Date: Fri, 1 Apr 2016 00:40:31 -0400
+Subject: [PATCH 14/30] Fix the memory leak bug introduced by PRC compatibility
+ feature
+
+Fix the memory leak bug introduced by PRC compatibility feature,
+introduced by https://android.intel.com/#/c/471490/
+
+Change-Id: Iaf9bd21afa17f3a81ab700c63ae7c0bb0851a594
+Tracked-On: https://jira01.devtools.intel.com/browse/OAM-27449
+Signed-off-by: jgu21 <jinghui.gu@intel.com>
+Reviewed-on: https://android.intel.com:443/489353
+---
+ core/jni/abipicker/ABIPicker.cpp              | 113 +++++++++---------
+ core/jni/abipicker/ABIPicker.h                |  13 +-
+ ...d_internal_content_NativeLibraryHelper.cpp |  41 ++++---
+ 3 files changed, 81 insertions(+), 86 deletions(-)
+
+diff --git a/core/jni/abipicker/ABIPicker.cpp b/core/jni/abipicker/ABIPicker.cpp
+index 374b1f831e51..3fc6bad19eca 100644
+--- a/core/jni/abipicker/ABIPicker.cpp
++++ b/core/jni/abipicker/ABIPicker.cpp
+@@ -10,14 +10,15 @@ namespace android {
+ #define ARR_SIZE(x)     (sizeof(x)/sizeof(x[0]))
+ 
+ #define SO_NAME_MAX (4096)
++
+ #define IMPOSSIBLE_LIB_NAME    "/mixed/"
+ #define IMPOSSIBLE_LIB_LEN  (sizeof(IMPOSSIBLE_LIB_NAME)-1)
++
+ #define ARMABI      "armeabi"
+ #define ARMV7ABI    "armeabi-v7a"
+ #define ARM64ABI    "arm64-v8a"
+ #define X86ABI      "x86"
+ #define X8664ABI    "x86_64"
+-#define ARMABI_NAME_PREFIX        "arm"
+ 
+ #define APK_LIB "lib/"
+ #define APK_LIB_LEN (sizeof(APK_LIB) - 1)
+@@ -28,9 +29,10 @@ namespace android {
+ #define P_LOG(...)
+ #endif
+ 
+-#define OEMWHITE  "/vendor/etc/misc/.OEMWhiteList"
+-#define OEMBLACK  "/vendor/etc/misc/.OEMBlackList"
+-#define THIRDPARTY "/vendor/etc/misc/.ThirdPartySO"
++#define LISTPATH    "/vendor/etc/misc/"
++#define OEMWHITE    LISTPATH ".OEMWhiteList"
++#define OEMBLACK    LISTPATH ".OEMBlackList"
++#define THIRDPARTY  LISTPATH ".ThirdPartySO"
+ 
+ // load once, hold until poweroff
+ static Vector <char*> thirdPartySO;
+@@ -42,7 +44,18 @@ static bool blackload = false;
+ 
+ static const char* iaRelated[] = {"intel", "intl", "atom", "x86", "x64"};
+ 
+-//////////////////////////////////////////////////////////////////////
++void freeAllString(Vector<char*>& list) {
++    Vector<char*>::iterator it = list.begin();
++    while (it != list.end()) {
++        if (*it != NULL) {
++           P_LOG("freeAllSring  %p , %s", it, *it);
++           free(*it);
++           *it = NULL;
++        }
++        it++;
++    }
++}
++
+ void getConfig(const char* cfgFile , Vector<char*>& cfgVec) {
+     int read = -1;
+     char *line = NULL;
+@@ -53,10 +66,13 @@ void getConfig(const char* cfgFile , Vector<char*>& cfgVec) {
+         return;
+     }
+ 
++    freeAllString(cfgVec);
++    cfgVec.clear();
++
+     while ((read = getline(&line, &len, fp)) != -1) {
+         int i = 0 , j = 0;
+         char *cfgline = (char*)malloc(len);
+-        if (!cfgline) {
++        if (cfgline == NULL) {
+            P_LOG("malloc error");
+            break;
+         }
+@@ -73,23 +89,11 @@ void getConfig(const char* cfgFile , Vector<char*>& cfgVec) {
+     fclose(fp);
+ }
+ 
+-//////////////////////////////////////////////////////////////////////
+-void freeAllString(Vector<char*>& list) {
+-    Vector<char*>::iterator it = list.begin();
+-    while (it != list.end()) {
+-        if (*it != NULL) {
+-           P_LOG("freeAllSring  %p , %s", it, *it);
+-           free(*it);
+-           *it = NULL;
+-        }
+-        it++;
+-    }
+-}
+-
+-//////////////////////////////////////////////////////////////////////
+ bool isInOEMWhiteList(const char* pkgName) {
+     bool result = false;
+-    if (!pkgName) return result;
++    if (pkgName == NULL) {
++        return result;
++    }
+ 
+     if (!whiteload) {
+        getConfig(OEMWHITE, cfgWhite);
+@@ -108,10 +112,11 @@ bool isInOEMWhiteList(const char* pkgName) {
+     return result;
+ }
+ 
+-//////////////////////////////////////////////////////////////////////
+ bool isInOEMBlackList(const char* pkgName) {
+     bool result = false;
+-    if (!pkgName) return result;
++    if (pkgName == NULL) {
++        return result;
++    }
+ 
+     if (!blackload) {
+        getConfig(OEMBLACK,  cfgBlack);
+@@ -129,8 +134,6 @@ bool isInOEMBlackList(const char* pkgName) {
+     return result;
+ }
+ 
+-
+-//////////////////////////////////////////////////////////////////////
+ bool isReliableLib(Vector<char*>& libList) {
+     unsigned sz = libList.size();
+     int len = ARR_SIZE(iaRelated);
+@@ -151,8 +154,6 @@ bool isReliableLib(Vector<char*>& libList) {
+     return false;
+ }
+ 
+-
+-//////////////////////////////////////////////////////////////////////
+ static bool isValidELF(char* buffer) {
+     if (buffer[EI_MAG0] != ELFMAG0 &&
+         buffer[EI_MAG1] != ELFMAG1 &&
+@@ -169,11 +170,13 @@ static bool isMixedLib(char* libCur, char* buffer) {
+     uint16_t machine_code = *((uint16_t*)(&buffer[ELF_MACHINE_OFFSET]));
+     bool mixed = false;
+     if (isX86_64) {
+-        if (machine_code != EM_X86_64)
++        if (machine_code != EM_X86_64) {
+             mixed = true;
++        }
+     } else {
+-        if (machine_code != EM_386)
++        if (machine_code != EM_386) {
+             mixed = true;
++        }
+     }
+     return mixed;
+ }
+@@ -201,6 +204,7 @@ static bool isInThirdPartySOList(char* libName) {
+     size_t sz = thirdPartySO.size();
+     for (size_t i = 0; i < sz; i++) {
+         // thirdPartySO[i] won't be NULL
++        assert(thirdPartySO[i] != NULL);
+         size_t n = strlen(thirdPartySO[i]);
+         // three char for ".so"
+         int j = libLen - 4;
+@@ -225,9 +229,8 @@ static void insertionSort(Vector<char*>& list) {
+     P_LOG("in insertionSort, list size = %d\n", list.size());
+ 
+     for (size_t i = 1; i < list.size(); i++) {
+-        char* x = list[i];
+-
+         int j = i - 1;
++        char* x = list[i];
+         P_LOG("sort 1. x=%s, i=%d, j=%d\n", x, i, j);
+         while (j >= 0 && (strcmp(list[j], x) > 0)) {
+             list.replaceAt(list[j], j + 1);
+@@ -237,9 +240,6 @@ static void insertionSort(Vector<char*>& list) {
+     }
+ }
+ 
+-
+-
+-//////////////////////////////////////////////////////////////////////
+ // Use armRef as a reference, compare all libraries of iaRef with all
+ // libraries of armRef.If the two are match or iaRef is more, iaRef
+ // will be returned with *result and true is return value. Or else,
+@@ -392,7 +392,9 @@ bool ABIPicker::compare3rdPartyLibList(
+     }
+     result = compareLibList(*iaRef3rdPartyLibList, *armRef3rdPartyLibList);
+ 
++    armRef3rdPartyLibList->clear();
+     delete armRef3rdPartyLibList;
++    iaRef3rdPartyLibList->clear();
+     delete iaRef3rdPartyLibList;
+     return result;
+ }
+@@ -451,9 +453,9 @@ Vector<char*>* ABIPicker::getLibList(const char* abiName) {
+ }
+ 
+ 
+-size_t ABIPicker::getSpecficABILibCount(const char* abiName) {
++bool ABIPicker::isABILibValid(const char* abiName) {
+     Vector<char*>* specificAbiLibList = getLibList(abiName);
+-    return specificAbiLibList && specificAbiLibList->size();
++    return ((specificAbiLibList && specificAbiLibList->size()) > 0);
+ }
+ 
+ bool ABIPicker::foundMixedELF(const char* abiName) {
+@@ -472,12 +474,10 @@ bool ABIPicker::foundMixedELF(const char* abiName) {
+     return true;
+ }
+ 
+-
+-//////////////////////////////////////////////////////////////////////
+ ABIPicker::ABIPicker(const char* pkgName, Vector<ScopedUtfChars*> abiList) {
+     mLibList = new Vector<struct libInfo*>();
+     mpkgName = strdup(pkgName);
+-    if (!mpkgName) {
++    if (mpkgName == NULL) {
+         P_LOG("ABIPicker Construct Allocated space fails");
+     }
+     Vector<ScopedUtfChars*>::iterator it = abiList.begin();
+@@ -488,7 +488,7 @@ ABIPicker::ABIPicker(const char* pkgName, Vector<ScopedUtfChars*> abiList) {
+ 
+         struct libInfo* tmp = (struct libInfo*)calloc(1,
+                 sizeof(struct libInfo));
+-        if (!tmp) {
++        if (tmp == NULL) {
+            P_LOG("ABIPicker Construct Allocated space fail %s", (*it)->c_str());
+            break;
+         }
+@@ -517,13 +517,13 @@ ABIPicker::~ABIPicker(void) {
+         it++;
+     }
+     mLibList->clear();
+-    delete(mLibList);
++    delete mLibList;
+ }
+ 
+ bool ABIPicker::buildNativeLibList(void* apkHandle) {
+     bool ret = false;
+ 
+-    if (!apkHandle) {
++    if (apkHandle == NULL) {
+         ALOGE("apkHandle is NULL\n");
+         return ret;
+     }
+@@ -570,7 +570,7 @@ bool ABIPicker::buildNativeLibList(void* apkHandle) {
+         unCompBuff = NULL;
+ 
+         unCompBuff = (char*)malloc(unCompLen);
+-        if (!unCompBuff) {
++        if (unCompBuff == NULL) {
+             ALOGE("malloc failed size %d\n", unCompLen);
+             ret = false;
+             break;
+@@ -683,50 +683,49 @@ int ABIPicker::pickupRightABI(int sysPrefer) {
+     bool x8664HasMixedELF = foundMixedELF(X8664ABI);
+     bool x86HasMixedELF = foundMixedELF(X86ABI);
+ 
+-    size_t armv7LibCount = getSpecficABILibCount(ARMV7ABI);
+-    size_t armv5LibCount = getSpecficABILibCount(ARMABI);
+-    size_t armv8LibCount = getSpecficABILibCount(ARM64ABI);
+-    size_t x86LibCount = x86HasMixedELF ? 0 : getSpecficABILibCount(X86ABI);
+-    size_t x8664LibCount = x8664HasMixedELF ? 0 : getSpecficABILibCount(X8664ABI);
+-    P_LOG("armv7LibCount:%d armv5LibCount:%d armv8LibCount:%d x86LibCount:%d x8664LibCount:%d", armv7LibCount, armv5LibCount, armv8LibCount, x86LibCount, x8664LibCount);
++    bool armv7LibValid = isABILibValid(ARMV7ABI);
++    bool armv5LibValid = isABILibValid(ARMABI);
++    bool armv8LibValid = isABILibValid(ARM64ABI);
++    bool x86LibValid = x86HasMixedELF ? 0 : isABILibValid(X86ABI);
++    bool x8664LibValid = x8664HasMixedELF ? 0 : isABILibValid(X8664ABI);
+ 
+     // in OEMBlackList, need to be supported by bt
+     // but in case of armlib doesn't exist, we choose x86 or x86_64
+     if (isInOEMBlackList(mpkgName)) {
+-        if (armv7LibCount > 0) {
++        if (armv7LibValid) {
+             return getAbiIndex(ARMV7ABI);
+-        } else if (armv5LibCount > 0) {
++        } else if (armv5LibValid) {
+             return getAbiIndex(ARMABI);
+-        } else if (armv8LibCount > 0) {
++        } else if (armv8LibValid) {
+             return getAbiIndex(ARM64ABI);
+         }
+     }
+ 
+     char arm64Ref[ABI_NAME_MAX_LENGTH];
+-    if (armv8LibCount > 0) {
++    if (armv8LibValid) {
+         snprintf(arm64Ref, sizeof(ARM64ABI), "%s", ARM64ABI);
+     } else {
+         arm64Ref[0] = '\0';
+     }
+ 
+     char arm32Ref[ABI_NAME_MAX_LENGTH];
+-    if (armv7LibCount > 0) {
++    if (armv7LibValid) {
+         snprintf(arm32Ref, sizeof(ARMV7ABI), "%s", ARMV7ABI);
+-    } else if (armv5LibCount > 0) {
++    } else if (armv5LibValid) {
+         snprintf(arm32Ref, sizeof(ARMABI), "%s", ARMABI);
+     } else {
+         arm32Ref[0] = '\0';
+     }
+ 
+     char ia32Ref[ABI_NAME_MAX_LENGTH];
+-    if (x86LibCount > 0) {
++    if (x86LibValid) {
+         snprintf(ia32Ref, sizeof(X86ABI), "%s", X86ABI);
+     } else {
+         ia32Ref[0] = '\0';
+     }
+ 
+     char ia64Ref[ABI_NAME_MAX_LENGTH];
+-    if (x8664LibCount > 0) {
++    if (x8664LibValid) {
+         snprintf(ia64Ref, ABI_NAME_MAX_LENGTH, "%s", X8664ABI);
+     } else {
+         ia64Ref[0] = '\0';
+diff --git a/core/jni/abipicker/ABIPicker.h b/core/jni/abipicker/ABIPicker.h
+index eb873df2b016..dc5102c321c7 100644
+--- a/core/jni/abipicker/ABIPicker.h
++++ b/core/jni/abipicker/ABIPicker.h
+@@ -12,17 +12,6 @@ namespace android {
+ //  assumption: the length of name of any abi type in abi list,
+ //  like armeabi-v7a, armeabi, x86, is not longer than 64
+ #define ABI_NAME_MAX_LENGTH     (64)
+-/*
+-class LibInfo {
+- public:
+-    LibInfo(char* s, List<char*> list);
+-    ~LibInfo(void);
+-
+- private:
+-    char abiName[ABI_NAME_MAX_LENGTH];
+-    List<char*> libNameList;
+-};
+-*/
+ 
+ class ABIPicker {
+  public:
+@@ -46,7 +35,7 @@ class ABIPicker {
+             size_t* iaIsvLibCount, size_t* armIsvLibCount);
+     char*  getAbiName(int abi);
+     int    getAbiIndex(const char* abiName);
+-    size_t getSpecficABILibCount(const char* abiName);
++    bool isABILibValid(const char* abiName);
+     Vector<char*>* getLibList(const char* abiName);
+ };
+ 
+diff --git a/core/jni/com_android_internal_content_NativeLibraryHelper.cpp b/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
+index 8bb5a86a0830..8f14b9c63146 100644
+--- a/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
++++ b/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
+@@ -541,30 +541,34 @@ com_android_internal_content_NativeLibraryHelper_findSupportedAbi_replace(
+         return (jint)abiType;
+     }
+ 
++    int abiIndex = 0;
+     abiFlag[apkdir_size] = '/';
+     abiFlag[apkdir_size + 1] = '.';
+-    for (int i = 0; i < numAbis; i++) {
++    for (abiIndex = 0; abiIndex < numAbis; abiIndex++) {
+         ScopedUtfChars* abiName = new ScopedUtfChars(env,
+-                 (jstring)env->GetObjectArrayElement(javaCpuAbisToSearch, i));
+-        assert(abiName != NULL);
+-        assert(abiName->c_str() != NULL);
+-        if (strlcpy(abiFlag + apkdir_size + 2, abiName->c_str(), 256 - apkdir_size - 2)
+-                == abiName->size()) {
+-            if (access(abiFlag, F_OK) == 0) {
+-                abiType = i;
+-                for (int j = 0; j < i; ++j) {
+-                    delete supportedAbis[j];
+-                }
+-                delete abiName;
+-                return (jint)abiType;
+-            }
++                 (jstring)env->GetObjectArrayElement(javaCpuAbisToSearch, abiIndex));
++        supportedAbis.push_back(abiName);
++        if (abiName == NULL || abiName->c_str() == NULL || abiName->size() <= 0) {
++            break;
++        }
++        if ((strlcpy(abiFlag + apkdir_size + 2, abiName->c_str(), 256 - apkdir_size - 2)
++                    == abiName->size()) && (access(abiFlag, F_OK) == 0)) {
++            abiType = abiIndex;
++            break;
+         }
++    }
+ 
+-        supportedAbis.push_back(abiName);
++    if (abiIndex < numAbis) {
++        for (int j = 0; j < abiIndex; ++j) {
++            if (supportedAbis[j] != NULL) {
++                delete supportedAbis[j];
++            }
++        }
++        return (jint)abiType;
+     }
+ 
+     do {
+-        if (abiType < 0 || abiType >= numAbis ) {
++        if (abiType < 0 || abiType >= numAbis) {
+             break;
+         }
+ 
+@@ -591,7 +595,10 @@ com_android_internal_content_NativeLibraryHelper_findSupportedAbi_replace(
+         if (abiType >= 0 && abiType < numAbis &&
+                 (strlcpy(abiFlag + apkdir_size + 2, supportedAbis[abiType]->c_str(),
+                          256 - apkdir_size - 2) == supportedAbis[abiType]->size())) {
+-            creat(abiFlag, 0644);
++            int flagFp = creat(abiFlag, 0644);
++            if (flagFp != -1) {
++                close(flagFp);
++            }
+         }
+ 
+     } while(0);
+-- 
+2.25.1
+

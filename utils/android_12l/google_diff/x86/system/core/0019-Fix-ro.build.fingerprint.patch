@@ -1,0 +1,50 @@
+From 4268ce0908fe9eaa7f91e94ce44d4a2bb361b869 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Wed, 15 Jan 2020 16:48:22 +0800
+Subject: [PATCH 19/23] Fix ro.build.fingerprint
+
+Fix mismatched fingerprints, a stupid bug of Android 10.
+
+Change-Id: Ic91681647ddabb9c0ce3306f947a91c62fe4f139
+---
+ init/property_service.cpp | 24 ++----------------------
+ 1 file changed, 2 insertions(+), 22 deletions(-)
+
+diff --git a/init/property_service.cpp b/init/property_service.cpp
+index f8c81d17241..aea7fcb76a7 100644
+--- a/init/property_service.cpp
++++ b/init/property_service.cpp
+@@ -889,28 +889,8 @@ static void property_initialize_build_id() {
+     }
+ }
+ 
+-static std::string ConstructBuildFingerprint(bool legacy) {
+-    const std::string UNKNOWN = "unknown";
+-    std::string build_fingerprint = GetProperty("ro.product.brand", UNKNOWN);
+-    build_fingerprint += '/';
+-    build_fingerprint += GetProperty("ro.product.name", UNKNOWN);
+-    build_fingerprint += '/';
+-    build_fingerprint += GetProperty("ro.product.device", UNKNOWN);
+-    build_fingerprint += ':';
+-    build_fingerprint += GetProperty("ro.build.version.release_or_codename", UNKNOWN);
+-    build_fingerprint += '/';
+-
+-    std::string build_id =
+-            legacy ? GetProperty(LEGACY_ID_PROP, UNKNOWN) : GetProperty(ID_PROP, UNKNOWN);
+-    build_fingerprint += build_id;
+-    build_fingerprint += '/';
+-    build_fingerprint += GetProperty("ro.build.version.incremental", UNKNOWN);
+-    build_fingerprint += ':';
+-    build_fingerprint += GetProperty("ro.build.type", UNKNOWN);
+-    build_fingerprint += '/';
+-    build_fingerprint += GetProperty("ro.build.tags", UNKNOWN);
+-
+-    return build_fingerprint;
++static std::string ConstructBuildFingerprint(bool /* legacy */) {
++    return GetProperty("ro.vendor.build.fingerprint", "");
+ }
+ 
+ // Derive the legacy build fingerprint if we overwrite the build id at runtime.
+-- 
+2.25.1
+

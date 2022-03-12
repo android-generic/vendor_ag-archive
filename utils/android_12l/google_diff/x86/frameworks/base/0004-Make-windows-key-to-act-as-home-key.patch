@@ -1,0 +1,30 @@
+From 0bf002c27e8eb10b9eef5b25a03676398e714462 Mon Sep 17 00:00:00 2001
+From: juntingwang <Junting.Wang@windriver.com>
+Date: Wed, 24 Apr 2013 14:06:08 +0800
+Subject: [PATCH 04/30] Make "windows" key to act as "home" key
+
+Issue: AXIA-1893
+Change-Id: I7b2b19f7e34ec8a1867e8e6ce522e65133e5267f
+Signed-off-by: juntingwang <Junting.Wang@windriver.com>
+---
+ data/keyboards/Generic.kl | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/data/keyboards/Generic.kl b/data/keyboards/Generic.kl
+index bd0e56a39e03..4453931e96f7 100644
+--- a/data/keyboards/Generic.kl
++++ b/data/keyboards/Generic.kl
+@@ -144,8 +144,8 @@ key 121   NUMPAD_COMMA
+ key 122   KANA
+ key 123   EISU
+ key 124   YEN
+-key 125   META_LEFT
+-key 126   META_RIGHT
++key 125   HOME
++key 126   HOME
+ key 127   MENU
+ key 128   MEDIA_STOP
+ # key 129 "KEY_AGAIN"
+-- 
+2.25.1
+

@@ -1,0 +1,54 @@
+From b048a98f147ce55dfe146049f60c32a9486ad005 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 23 Oct 2021 08:00:36 -0400
+Subject: [PATCH] libavcodec: avoid bitwise operations on boolean
+
+Cast to (const int) to avoid the following building errors:
+
+external/ffmpeg/libavcodec/utvideoenc.c:412:23:
+error: bitwise negation of a boolean expression; did you mean logical negation? [-Werror,-Wbool-operation]
+    const int cmask = ~(!plane_no && avctx->pix_fmt == AV_PIX_FMT_YUV420P);
+                      ^~~~~~~~~~~
+                      !
+1 error generated.
+
+external/ffmpeg/libavcodec/utvideodec.c:241:107:
+error: bitwise negation of a boolean expression; did you mean logical negation? [-Werror,-Wbool-operation]
+    const int cmask = c->interlaced ? ~(1 + 2 * (!plane_no && c->avctx->pix_fmt == AV_PIX_FMT_YUV420P)) : ~(!plane_no && c->avctx->pix_fmt == AV_PIX_FMT_YUV420P);
+                                                                                                          ^~~~~~~~~~~
+                                                                                                          !
+1 error generated.
+---
+ libavcodec/utvideodec.c | 2 +-
+ libavcodec/utvideoenc.c | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libavcodec/utvideodec.c b/libavcodec/utvideodec.c
+index 7979618f42..5fde1eb66c 100644
+--- a/libavcodec/utvideodec.c
++++ b/libavcodec/utvideodec.c
+@@ -238,7 +238,7 @@ static int decode_plane(UtvideoContext *c, int plane_no,
+     VLC vlc;
+     GetBitContext gb;
+     int prev, fsym;
+-    const int cmask = c->interlaced ? ~(1 + 2 * (!plane_no && c->avctx->pix_fmt == AV_PIX_FMT_YUV420P)) : ~(!plane_no && c->avctx->pix_fmt == AV_PIX_FMT_YUV420P);
++    const int cmask = c->interlaced ? ~(1 + 2 * (!plane_no && c->avctx->pix_fmt == AV_PIX_FMT_YUV420P)) : ~(const int)(!plane_no && c->avctx->pix_fmt == AV_PIX_FMT_YUV420P);
+ 
+     if (build_huff(src, &vlc, &fsym)) {
+         av_log(c->avctx, AV_LOG_ERROR, "Cannot build Huffman codes\n");
+diff --git a/libavcodec/utvideoenc.c b/libavcodec/utvideoenc.c
+index 840742caf7..91cd38732f 100644
+--- a/libavcodec/utvideoenc.c
++++ b/libavcodec/utvideoenc.c
+@@ -409,7 +409,7 @@ static int encode_plane(AVCodecContext *avctx, uint8_t *src,
+     HuffEntry he[256];
+ 
+     uint32_t offset = 0, slice_len = 0;
+-    const int cmask = ~(!plane_no && avctx->pix_fmt == AV_PIX_FMT_YUV420P);
++    const int cmask = ~(const int)(!plane_no && avctx->pix_fmt == AV_PIX_FMT_YUV420P);
+     int      i, sstart, send = 0;
+     int      symbol;
+     int      ret;
+-- 
+2.17.1
+

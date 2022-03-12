@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 30 Mar 2018 11:52:00 +0800
+Subject: [PATCH 40/54] ALSA: x86: modify modalias to match more devices
+
+The driver declares a modalias platform:hdmi_lpe_audio. However, in
+/sys/devices/pci0000:00/0000:00:02.0/hdmi-lpe-audio/modalias of
+ASUS VivoStick PC (TS10) it is platform:hdmi-lpe-audio.
+
+Extend the modalias pattern to match this device.
+
+Tested-by: Chih-Wei Huang <cwhuang@linux.org.tw>
+Signed-off-by: Chih-Wei Huang <cwhuang@linux.org.tw>
+---
+ sound/x86/intel_hdmi_audio.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/sound/x86/intel_hdmi_audio.c b/sound/x86/intel_hdmi_audio.c
+index 9f9fcd2749f2..03278e0116cd 100644
+--- a/sound/x86/intel_hdmi_audio.c
++++ b/sound/x86/intel_hdmi_audio.c
+@@ -1880,7 +1880,7 @@ static struct platform_driver hdmi_lpe_audio_driver = {
+ };
+ 
+ module_platform_driver(hdmi_lpe_audio_driver);
+-MODULE_ALIAS("platform:hdmi_lpe_audio");
++MODULE_ALIAS("platform:hdmi*lpe*audio");
+ 
+ MODULE_AUTHOR("Sailaja Bandarupalli <sailaja.bandarupalli@intel.com>");
+ MODULE_AUTHOR("Ramesh Babu K V <ramesh.babu@intel.com>");

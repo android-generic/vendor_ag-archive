@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Tom Briden <tom@decompile.me.uk>
+Date: Mon, 6 Jul 2015 21:20:17 +0100
+Subject: [PATCH 13/54] sony-laptop: Add poll/select support to tablet mode
+ change
+
+---
+ drivers/platform/x86/sony-laptop.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/platform/x86/sony-laptop.c b/drivers/platform/x86/sony-laptop.c
+index c934e2043b20..0f3186c524ff 100644
+--- a/drivers/platform/x86/sony-laptop.c
++++ b/drivers/platform/x86/sony-laptop.c
+@@ -3225,6 +3225,8 @@ static int sony_nc_tablet_mode_update(void) {
+ 	input_report_switch(key_dev, SW_TABLET_MODE, tablet_ctl->mode == tablet_mode);
+ 	input_sync(key_dev);
+ 
++	sysfs_notify(&sony_pf_device->dev.kobj, NULL, "tablet");
++
+ 	return tablet_ctl->mode;
+ }
+ 

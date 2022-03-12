@@ -1,0 +1,297 @@
+From 65295d11f40d0248428c1bfe7a45b94c2796e97d Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Sat, 28 Sep 2019 20:32:44 -0400
+Subject: [PATCH 14/23] ueventd: auto load modules on uevents
+
+---
+ init/modalias_handler.cpp               | 13 ++++++-
+ init/modalias_handler.h                 |  4 +++
+ init/uevent_handler.h                   |  2 ++
+ init/ueventd.cpp                        | 16 ++++++++-
+ libmodprobe/include/modprobe/modprobe.h |  4 +++
+ libmodprobe/libmodprobe.cpp             | 46 +++++++++++++++++++++++--
+ rootdir/init.rc                         |  5 ---
+ rootdir/ueventd.rc                      |  1 +
+ toolbox/modprobe.cpp                    |  4 +--
+ 9 files changed, 83 insertions(+), 12 deletions(-)
+
+diff --git a/init/modalias_handler.cpp b/init/modalias_handler.cpp
+index 07b05d8b428..160635425ec 100644
+--- a/init/modalias_handler.cpp
++++ b/init/modalias_handler.cpp
+@@ -25,12 +25,23 @@ namespace android {
+ namespace init {
+ 
+ ModaliasHandler::ModaliasHandler(const std::vector<std::string>& base_paths)
+-    : modprobe_(base_paths) {}
++    : modprobe_(base_paths) {
++    modprobe_.EnableDeferred(true);
++}
+ 
+ void ModaliasHandler::HandleUevent(const Uevent& uevent) {
+     if (uevent.modalias.empty()) return;
+     modprobe_.LoadWithAliases(uevent.modalias, true);
+ }
+ 
++bool ModaliasHandler::IsUeventDeferred(const Uevent& uevent) {
++    if (! uevent.modalias.empty() && modprobe_.IsAliasDeferred(uevent.modalias)) return true;
++    return false;
++}
++
++void ModaliasHandler::ColdbootDone() {
++    modprobe_.EnableDeferred(false);
++}
++
+ }  // namespace init
+ }  // namespace android
+diff --git a/init/modalias_handler.h b/init/modalias_handler.h
+index ce89a059f53..02a99c8dc03 100644
+--- a/init/modalias_handler.h
++++ b/init/modalias_handler.h
+@@ -34,6 +34,10 @@ class ModaliasHandler : public UeventHandler {
+ 
+     void HandleUevent(const Uevent& uevent) override;
+ 
++    bool IsUeventDeferred(const Uevent& uevent) override;
++
++    void ColdbootDone() override;
++
+   private:
+     Modprobe modprobe_;
+ };
+diff --git a/init/uevent_handler.h b/init/uevent_handler.h
+index 75d19902ef6..4967b7d5f7b 100644
+--- a/init/uevent_handler.h
++++ b/init/uevent_handler.h
+@@ -27,6 +27,8 @@ class UeventHandler {
+ 
+     virtual void HandleUevent(const Uevent& uevent) = 0;
+ 
++    virtual bool IsUeventDeferred(const Uevent& uevent) { return false; }
++
+     virtual void ColdbootDone() {}
+ };
+ 
+diff --git a/init/ueventd.cpp b/init/ueventd.cpp
+index 331255b1e76..d601b27eeb8 100644
+--- a/init/ueventd.cpp
++++ b/init/ueventd.cpp
+@@ -138,6 +138,7 @@ class ColdBoot {
+     bool enable_parallel_restorecon_;
+ 
+     std::vector<Uevent> uevent_queue_;
++    std::vector<Uevent> uevent_deferred_queue_;
+ 
+     std::set<pid_t> subprocess_pids_;
+ 
+@@ -185,6 +186,13 @@ void ColdBoot::GenerateRestoreCon(const std::string& directory) {
+ 
+ void ColdBoot::RegenerateUevents() {
+     uevent_listener_.RegenerateUevents([this](const Uevent& uevent) {
++        for (auto& uevent_handler : uevent_handlers_) {
++            if (uevent_handler->IsUeventDeferred(uevent)) {
++                LOG(INFO) << "deferring uevent(action=" << uevent.action << ", modalias=" << uevent.modalias << ")";
++                uevent_deferred_queue_.emplace_back(uevent);
++                return ListenerAction::kContinue;
++            }
++        }
+         uevent_queue_.emplace_back(uevent);
+         return ListenerAction::kContinue;
+     });
+@@ -263,6 +271,12 @@ void ColdBoot::Run() {
+ 
+     WaitForSubProcesses();
+ 
++    for (auto& uevent : uevent_deferred_queue_) {
++        for (auto& uevent_handler : uevent_handlers_) {
++            uevent_handler->HandleUevent(uevent);
++        }
++    }
++
+     android::base::SetProperty(kColdBootDoneProp, "true");
+     LOG(INFO) << "Coldboot took " << cold_boot_timer.duration().count() / 1000.0f << " seconds";
+ }
+@@ -306,7 +320,7 @@ int ueventd_main(int argc, char** argv) {
+             std::move(ueventd_configuration.external_firmware_handlers)));
+ 
+     if (ueventd_configuration.enable_modalias_handling) {
+-        std::vector<std::string> base_paths = {"/odm/lib/modules", "/vendor/lib/modules"};
++        std::vector<std::string> base_paths = {"/system/lib/modules", "/odm/lib/modules", "/vendor/lib/modules"};
+         uevent_handlers.emplace_back(std::make_unique<ModaliasHandler>(base_paths));
+     }
+     UeventListener uevent_listener(ueventd_configuration.uevent_socket_rcvbuf_size);
+diff --git a/libmodprobe/include/modprobe/modprobe.h b/libmodprobe/include/modprobe/modprobe.h
+index c934860ec35..96ea4f13e4a 100644
+--- a/libmodprobe/include/modprobe/modprobe.h
++++ b/libmodprobe/include/modprobe/modprobe.h
+@@ -37,6 +37,8 @@ class Modprobe {
+                             std::vector<std::string>* post_dependencies);
+     void ResetModuleCount() { module_count_ = 0; }
+     int GetModuleCount() { return module_count_; }
++    bool IsAliasDeferred(const std::string& alias_name);
++    void EnableDeferred(bool enable);
+ 
+   private:
+     std::string MakeCanonical(const std::string& module_path);
+@@ -66,7 +68,9 @@ class Modprobe {
+     std::vector<std::string> module_load_;
+     std::unordered_map<std::string, std::string> module_options_;
+     std::set<std::string> module_blocklist_;
++    std::vector<std::string> module_deferred_aliases_;
+     std::unordered_set<std::string> module_loaded_;
+     int module_count_ = 0;
+     bool blocklist_enabled = false;
++    bool deferred_enabled = false;
+ };
+diff --git a/libmodprobe/libmodprobe.cpp b/libmodprobe/libmodprobe.cpp
+index 1a9d3642c22..fda9109f491 100644
+--- a/libmodprobe/libmodprobe.cpp
++++ b/libmodprobe/libmodprobe.cpp
+@@ -19,6 +19,8 @@
+ #include <fnmatch.h>
+ #include <sys/stat.h>
+ #include <sys/syscall.h>
++#include <sys/utsname.h>
++#include <unistd.h>
+ 
+ #include <algorithm>
+ #include <set>
+@@ -199,7 +201,7 @@ bool Modprobe::ParseBlocklistCallback(const std::vector<std::string>& args) {
+     auto it = args.begin();
+     const std::string& type = *it++;
+ 
+-    if (type != "blocklist") {
++    if (type != "blocklist" && type != "deferred") {
+         LOG(ERROR) << "non-blocklist line encountered in modules.blocklist";
+         return false;
+     }
+@@ -215,7 +217,16 @@ bool Modprobe::ParseBlocklistCallback(const std::vector<std::string>& args) {
+     if (canonical_name.empty()) {
+         return false;
+     }
+-    this->module_blocklist_.emplace(canonical_name);
++    if (type == "blocklist") {
++        this->module_blocklist_.emplace(canonical_name);
++    }
++    else if (type == "deferred") {
++        for (auto& [alias, aliased_module]: this->module_aliases_) {
++            if (MakeCanonical(aliased_module) == canonical_name) {
++                this->module_deferred_aliases_.push_back(alias);
++            }
++        }
++    }
+ 
+     return true;
+ }
+@@ -317,30 +328,50 @@ Modprobe::Modprobe(const std::vector<std::string>& base_paths, const std::string
+                    bool use_blocklist)
+     : blocklist_enabled(use_blocklist) {
+     using namespace std::placeholders;
++    std::string release;
++    struct utsname uts;
++
++    uname(&uts);
++    release = uts.release;
+ 
+     for (const auto& base_path : base_paths) {
++        const std::string release_base_path = base_path + "/" + release;
++
+         auto alias_callback = std::bind(&Modprobe::ParseAliasCallback, this, _1);
++        ParseCfg(release_base_path + "/modules.alias", alias_callback);
+         ParseCfg(base_path + "/modules.alias", alias_callback);
+ 
++        auto dep_callback_release = std::bind(&Modprobe::ParseDepCallback, this, release_base_path, _1);
++        ParseCfg(release_base_path + "/modules.dep", dep_callback_release);
++
+         auto dep_callback = std::bind(&Modprobe::ParseDepCallback, this, base_path, _1);
+         ParseCfg(base_path + "/modules.dep", dep_callback);
+ 
+         auto softdep_callback = std::bind(&Modprobe::ParseSoftdepCallback, this, _1);
++        ParseCfg(release_base_path + "/modules.softdep", softdep_callback);
+         ParseCfg(base_path + "/modules.softdep", softdep_callback);
+ 
+         auto load_callback = std::bind(&Modprobe::ParseLoadCallback, this, _1);
++        ParseCfg(release_base_path + "/" + load_file, load_callback);
+         ParseCfg(base_path + "/" + load_file, load_callback);
+ 
+         auto options_callback = std::bind(&Modprobe::ParseOptionsCallback, this, _1);
++        ParseCfg(release_base_path + "/modules.options", options_callback);
+         ParseCfg(base_path + "/modules.options", options_callback);
+ 
+         auto blocklist_callback = std::bind(&Modprobe::ParseBlocklistCallback, this, _1);
++        ParseCfg(release_base_path + "/modules.blocklist", blocklist_callback);
+         ParseCfg(base_path + "/modules.blocklist", blocklist_callback);
++        ParseCfg("/system/etc/modules.blocklist", blocklist_callback);
+     }
+ 
+     ParseKernelCmdlineOptions();
+ }
+ 
++void Modprobe::EnableDeferred(bool enable) {
++    deferred_enabled = enable;
++}
++
+ std::vector<std::string> Modprobe::GetDependencies(const std::string& module) {
+     auto it = module_deps_.find(module);
+     if (it == module_deps_.end()) {
+@@ -503,3 +534,14 @@ bool Modprobe::GetAllDependencies(const std::string& module,
+     }
+     return true;
+ }
++
++bool Modprobe::IsAliasDeferred(const std::string& alias_name)
++{
++    if (deferred_enabled) {
++        for (auto& deferred_alias: module_deferred_aliases_) {
++            if (fnmatch(deferred_alias.c_str(), alias_name.c_str(), 0) != 0) continue;
++            return true;
++        }
++    }
++    return false;
++}
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index c34010628a3..355bb1a7a71 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -16,11 +16,6 @@ on early-init
+     # Disable sysrq from keyboard
+     write /proc/sys/kernel/sysrq 0
+ 
+-    # Android doesn't need kernel module autoloading, and it causes SELinux
+-    # denials.  So disable it by setting modprobe to the empty string.  Note: to
+-    # explicitly set a sysctl to an empty string, a trailing newline is needed.
+-    write /proc/sys/kernel/modprobe \n
+-
+     # Set the security context of /adb_keys if present.
+     restorecon /adb_keys
+ 
+diff --git a/rootdir/ueventd.rc b/rootdir/ueventd.rc
+index 7d2fd943d4b..57e3894cfab 100644
+--- a/rootdir/ueventd.rc
++++ b/rootdir/ueventd.rc
+@@ -2,6 +2,7 @@ import /vendor/etc/ueventd.rc
+ import /odm/etc/ueventd.rc
+ 
+ firmware_directories /system/lib/firmware
++modalias_handling enabled
+ uevent_socket_rcvbuf_size 16M
+ 
+ subsystem graphics
+diff --git a/toolbox/modprobe.cpp b/toolbox/modprobe.cpp
+index 711586a9844..4d7ac6746c9 100644
+--- a/toolbox/modprobe.cpp
++++ b/toolbox/modprobe.cpp
+@@ -205,9 +205,7 @@ extern "C" int modprobe_main(int argc, char** argv) {
+         }
+     }
+     if (mod_dirs.empty()) {
+-        LOG(ERROR) << "No module configuration directories given.";
+-        print_usage();
+-        return EXIT_FAILURE;
++        mod_dirs.emplace_back("/system/lib/modules");
+     }
+     if (parameter_count && modules.size() > 1) {
+         LOG(ERROR) << "Only one module may be loaded when specifying module parameters.";
+-- 
+2.25.1
+

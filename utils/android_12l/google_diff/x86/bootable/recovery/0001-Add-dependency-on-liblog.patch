@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Wed, 28 Apr 2021 16:39:09 -0400
+Subject: [PATCH] Add dependency on liblog
+
+Recovery UI module uses libdrm as a whole_static_lib. As it depends on
+liblog, this dependency must be imported here.
+---
+ recovery_ui/Android.bp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/recovery_ui/Android.bp b/recovery_ui/Android.bp
+index f64b0d1c..d5dad2c2 100644
+--- a/recovery_ui/Android.bp
++++ b/recovery_ui/Android.bp
+@@ -49,6 +49,7 @@ cc_library {
+ 
+     shared_libs: [
+         "libbase",
++        "liblog",
+         "libpng",
+         "libz",
+     ],

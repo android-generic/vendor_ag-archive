@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 18 Sep 2018 11:01:37 +0800
+Subject: [PATCH 41/54] ASoC: add quirk for Surface 3 with bad DMI table
+
+Some Microsoft Surface 3 owners including me encountered a strange issue
+when play Android-x86 on the tablet. The DMI table was erased due to
+unknown reason and sound doesn't work in Android-x86 (but it's normal
+in Windows). See more details:
+
+https://groups.google.com/d/msg/android-x86/z6GDuvV2oWk/mzyg0RQiCAAJ
+
+Since the DMI table is incorrect, kernel won't enable quirk for it.
+To workaround such an issue, add quirk for the bad data "OEMB".
+It should not affect any product with correct DMI data.
+---
+ sound/soc/codecs/rt5645.c                         | 9 +++++++++
+ sound/soc/intel/common/soc-acpi-intel-cht-match.c | 8 ++++++++
+ 2 files changed, 17 insertions(+)
+
+diff --git a/sound/soc/codecs/rt5645.c b/sound/soc/codecs/rt5645.c
+index 420003d062c7..217e488cd4fa 100644
+--- a/sound/soc/codecs/rt5645.c
++++ b/sound/soc/codecs/rt5645.c
+@@ -3687,6 +3687,15 @@ static const struct dmi_system_id dmi_platform_data[] = {
+ 		},
+ 		.driver_data = (void *)&intel_braswell_platform_data,
+ 	},
++	{
++		.ident = "Microsoft Surface 3",
++		.matches = {
++			DMI_MATCH(DMI_BIOS_VENDOR, "American Megatrends Inc."),
++			DMI_MATCH(DMI_SYS_VENDOR, "OEMB"),
++			DMI_MATCH(DMI_PRODUCT_NAME, "OEMB"),
++		},
++		.driver_data = (void *)&intel_braswell_platform_data,
++	},
+ 	{
+ 		/*
+ 		 * Match for the GPDwin which unfortunately uses somewhat
+diff --git a/sound/soc/intel/common/soc-acpi-intel-cht-match.c b/sound/soc/intel/common/soc-acpi-intel-cht-match.c
+index 2752dc955733..ef36a316e2ed 100644
+--- a/sound/soc/intel/common/soc-acpi-intel-cht-match.c
++++ b/sound/soc/intel/common/soc-acpi-intel-cht-match.c
+@@ -27,6 +27,14 @@ static const struct dmi_system_id cht_table[] = {
+ 			DMI_MATCH(DMI_PRODUCT_NAME, "Surface 3"),
+ 		},
+ 	},
++	{
++		.callback = cht_surface_quirk_cb,
++		.matches = {
++			DMI_MATCH(DMI_BIOS_VENDOR, "American Megatrends Inc."),
++			DMI_MATCH(DMI_SYS_VENDOR, "OEMB"),
++			DMI_MATCH(DMI_PRODUCT_NAME, "OEMB"),
++		},
++	},
+ 	{ }
+ };
+ 

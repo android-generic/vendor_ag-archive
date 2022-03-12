@@ -1,0 +1,23 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Wed, 1 Apr 2020 17:54:21 -0400
+Subject: [PATCH] Add dependency on libbinder_headers
+
+---
+ Android.mk | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/Android.mk b/Android.mk
+index b58d7f5..cefd080 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -27,6 +27,9 @@ LOCAL_SHARED_LIBRARIES := \
+ 	libui \
+ 	libutils \
+ 
++LOCAL_HEADER_LIBRARIES := \
++	libbinder_headers
++
+ LOCAL_MODULE := camera.x86
+ LOCAL_MODULE_TAGS := optional
+ LOCAL_MODULE_RELATIVE_PATH := hw

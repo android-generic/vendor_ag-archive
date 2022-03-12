@@ -1,0 +1,39 @@
+From 57d1d474a392f77ca466c20c0b5b8383134a39d1 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 2 Mar 2022 19:02:52 -0500
+Subject: [PATCH 21/25] Update bluetooth hardware hidl
+
+---
+ manifest.xml | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/manifest.xml b/manifest.xml
+index c6cf5a9..7cc03b5 100644
+--- a/manifest.xml
++++ b/manifest.xml
+@@ -20,12 +20,21 @@
+     <hal format="hidl">
+         <name>android.hardware.bluetooth</name>
+         <transport>hwbinder</transport>
+-        <version>1.0</version>
++        <version>1.1</version>
+         <interface>
+             <name>IBluetoothHci</name>
+             <instance>default</instance>
+         </interface>
+     </hal>
++    <hal format="hidl">
++        <name>android.hardware.bluetooth.audio</name>
++        <transport>hwbinder</transport>
++        <version>2.0</version>
++        <interface>
++            <name>IBluetoothAudioProvidersFactory</name>
++            <instance>default</instance>
++        </interface>
++    </hal>
+     <hal format="hidl">
+         <name>android.hardware.camera.provider</name>
+         <transport>hwbinder</transport>
+-- 
+2.25.1
+

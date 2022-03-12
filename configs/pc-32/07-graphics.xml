@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+		
+	<project path="external/drm_framebuffer" name="platform/external/drm_framebuffer" remote="x86" revision="r-x86" />
+	<project path="external/drm_hwcomposer" name="drm_hwcomposer" remote="BR-x86" revision="drm-hwcomposer-most-bottom-plane-special-handling" />
+	<project path="external/drmfb-composer" name="platform/external/drmfb-composer" remote="x86" revision="r-x86" />
+	<project path="external/ffmpeg" name="platform/external/ffmpeg" remote="x86" revision="r-x86" />
+	<project path="external/gbm_gralloc" name="platform/external/gbm_gralloc" remote="x86" revision="r-x86" />
+	<project path="external/libdrm" name="drm" remote="maurossi" revision="2.4.110_s-x86" />
+	<project path="external/llvm-project" name="llvm-project" remote="maurossi" revision="release_13.x" />
+	<project path="external/mesa" name="mesa" remote="maurossi" revision="22.0.0_branch" />
+	<project path="external/minigbm" name="minigbm" remote="maurossi" revision="gbm_mesa_y22_w02_S" />
+	<project path="external/minigbm_intel" name="platform/external/minigbm" remote="x86" revision="pie-x86_intel" />
+	<project path="external/stagefright-plugins" name="platform/external/stagefright-plugins" remote="x86" revision="r-x86" />
+	<project path="external/swiftshader" name="platform/external/swiftshader"  remote="aosp" />
+
+</manifest>

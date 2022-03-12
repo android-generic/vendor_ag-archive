@@ -1,0 +1,47 @@
+From b2d5544c31aba0784354db0a32db77abcdf7bbb3 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Mon, 23 Nov 2015 17:57:37 +0800
+Subject: [PATCH 08/23] init: expand variables on mount_all command
+
+This allows mount_all to handle fstab.${ro.hardware} instead
+of hardcoding the file name.
+
+Change-Id: Ia7fb4e5a84dd50a46afdd4239b9b06204f449cfe
+---
+ init/util.cpp | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/init/util.cpp b/init/util.cpp
+index 9f7bfdb5b42..1eec0b8e9e8 100644
+--- a/init/util.cpp
++++ b/init/util.cpp
+@@ -623,7 +623,11 @@ Result<MountAllOptions> ParseMountAll(const std::vector<std::string>& args) {
+ 
+     std::string fstab_path;
+     if (first_option_arg > 1) {
+-        fstab_path = args[1];
++        auto fstab_path_expanded = ExpandProps(args[1]);
++        if (!fstab_path_expanded.ok()) {
++            return Error() << "mount_all: cannot expand '" << args[1] << "': " << fstab_path_expanded.error();
++        }
++        fstab_path = *fstab_path_expanded;
+     } else if (compat_mode) {
+         return Error() << "mount_all argument 1 must be the fstab path";
+     }
+@@ -693,7 +697,12 @@ Result<std::string> ParseUmountAll(const std::vector<std::string>& args) {
+         }
+         return {};
+     }
+-    return args[1];
++
++    auto fstab_path_expanded = ExpandProps(args[1]);
++    if (!fstab_path_expanded.ok()) {
++        return Error() << "umount_all: cannot expand '" << args[1] << "': " << fstab_path_expanded.error();
++    }
++    return *fstab_path_expanded;
+ }
+ 
+ static void InitAborter(const char* abort_message) {
+-- 
+2.25.1
+

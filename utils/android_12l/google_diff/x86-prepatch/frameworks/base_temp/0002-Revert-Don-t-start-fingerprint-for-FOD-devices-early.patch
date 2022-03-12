@@ -1,0 +1,46 @@
+From 2f4f4e7f11e2a1627939dad7147f4982536eb1be Mon Sep 17 00:00:00 2001
+From: Victor Bo <bvoid@yandex.ru>
+Date: Thu, 29 Apr 2021 15:01:31 -0400
+Subject: [PATCH 02/13] Revert "Don't start fingerprint for FOD devices early"
+
+This reverts commit 5c493164e7f77e5bf8784d850cde6116481a9602.
+---
+ .../android/systemui/keyguard/KeyguardViewMediator.java   | 8 +-------
+ 1 file changed, 1 insertion(+), 7 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java b/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
+index b0a6a644cab..75f4809d752 100644
+--- a/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
++++ b/packages/SystemUI/src/com/android/systemui/keyguard/KeyguardViewMediator.java
+@@ -380,8 +380,6 @@ public class KeyguardViewMediator extends SystemUI implements Dumpable {
+     private IKeyguardDrawnCallback mDrawnCallback;
+     private CharSequence mCustomMessage;
+ 
+-    private boolean mHasFod;
+-
+     private final DeviceConfig.OnPropertiesChangedListener mOnPropertiesChangedListener =
+             new DeviceConfig.OnPropertiesChangedListener() {
+             @Override
+@@ -750,8 +748,6 @@ public class KeyguardViewMediator extends SystemUI implements Dumpable {
+                 QuickStepContract.isGesturalMode(navigationModeController.addListener(mode -> {
+                     mInGestureNavigationMode = QuickStepContract.isGesturalMode(mode);
+                 }));
+-        mHasFod = context.getResources().getBoolean(
+-                com.android.internal.R.bool.config_needCustomFODView);
+     }
+ 
+     public void userActivity() {
+@@ -882,9 +878,7 @@ public class KeyguardViewMediator extends SystemUI implements Dumpable {
+             // explicitly DO NOT want to call
+             // mKeyguardViewControllerLazy.get().setKeyguardGoingAwayState(false)
+             // here, since that will mess with the device lock state.
+-            if (!mHasFod) {
+-                mUpdateMonitor.dispatchKeyguardGoingAway(false);
+-            }
++            mUpdateMonitor.dispatchKeyguardGoingAway(false);
+ 
+             // Lock immediately based on setting if secure (user has a pin/pattern/password).
+             // This also "locks" the device when not secure to provide easy access to the
+-- 
+2.17.1
+

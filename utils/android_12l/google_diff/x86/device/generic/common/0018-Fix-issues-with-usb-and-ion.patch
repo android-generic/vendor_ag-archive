@@ -1,0 +1,31 @@
+From 9cae41f1b430bb6f3c82051c7375556b1c708065 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 2 Mar 2022 19:02:21 -0500
+Subject: [PATCH 18/25] Fix issues with usb and ion
+
+---
+ ueventd.x86.rc | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/ueventd.x86.rc b/ueventd.x86.rc
+index 97a8e60..06949da 100644
+--- a/ueventd.x86.rc
++++ b/ueventd.x86.rc
+@@ -2,11 +2,12 @@
+ /dev/ttyACM*              0660  system        radio
+ /dev/ttyUSB*              0660  radio         radio
+ /dev/video*               0660  cameraserver  system
+-/dev/iio:device*          0660  system        system
+-/dev/ion                  0664  system        system
++/dev/iio:device*          0666  system        system
++/dev/ion                  0666  system        system
+ 
+ # for bluetooth nodes
+ /dev/rfkill               0660  bluetooth     wifi
+ /dev/uhid                 0660  bluetooth     bluetooth
+ 
+ /sys/devices/system/cpu/cpu*    online        0664   system     system
++/dev/bus/usb/*/*          0660   system     system
+-- 
+2.25.1
+

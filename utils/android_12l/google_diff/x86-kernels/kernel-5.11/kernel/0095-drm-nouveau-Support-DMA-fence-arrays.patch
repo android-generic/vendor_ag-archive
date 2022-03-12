@@ -1,0 +1,73 @@
+From 60868308ea3fb2c2b780c60f169a2c8b738eb94f Mon Sep 17 00:00:00 2001
+From: Thierry Reding <treding@nvidia.com>
+Date: Fri, 28 Aug 2020 12:40:15 +0200
+Subject: [PATCH 095/106] drm/nouveau: Support DMA fence arrays
+
+A DMA fence can be composed of multiple fences in an array. Support this
+in the Nouveau driver by iteratively synchronizing to each DMA fence in
+the array.
+
+Signed-off-by: Thierry Reding <treding@nvidia.com>
+---
+ drivers/gpu/drm/nouveau/nouveau_fence.c | 31 ++++++++++++++++++++++---
+ 1 file changed, 28 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/gpu/drm/nouveau/nouveau_fence.c b/drivers/gpu/drm/nouveau/nouveau_fence.c
+index 8530c2684832..c0849e09279c 100644
+--- a/drivers/gpu/drm/nouveau/nouveau_fence.c
++++ b/drivers/gpu/drm/nouveau/nouveau_fence.c
+@@ -24,6 +24,7 @@
+  *
+  */
+ 
++#include <linux/dma-fence-array.h>
+ #include <linux/ktime.h>
+ #include <linux/hrtimer.h>
+ #include <linux/sched/signal.h>
+@@ -338,9 +339,9 @@ nouveau_fence_wait(struct nouveau_fence *fence, bool lazy, bool intr)
+ 		return 0;
+ }
+ 
+-int
+-nouveau_fence_sync(struct dma_fence *fence, struct nouveau_channel *chan,
+-		   bool intr)
++static int
++__nouveau_fence_sync(struct dma_fence *fence, struct nouveau_channel *chan,
++		     bool intr)
+ {
+ 	struct nouveau_fence_chan *fctx = chan->fence;
+ 	struct nouveau_channel *prev = NULL;
+@@ -363,6 +364,30 @@ nouveau_fence_sync(struct dma_fence *fence, struct nouveau_channel *chan,
+ 	return ret;
+ }
+ 
++int
++nouveau_fence_sync(struct dma_fence *fence, struct nouveau_channel *chan,
++		   bool intr)
++{
++	int ret = 0;
++
++	if (dma_fence_is_array(fence)) {
++		struct dma_fence_array *array = to_dma_fence_array(fence);
++		unsigned int i;
++
++		for (i = 0; i < array->num_fences; i++) {
++			struct dma_fence *f = array->fences[i];
++
++			ret = __nouveau_fence_sync(f, chan, intr);
++			if (ret < 0)
++				break;
++		}
++	} else {
++		ret = __nouveau_fence_sync(fence, chan, intr);
++	}
++
++	return ret;
++}
++
+ struct nouveau_fence *
+ nouveau_fence_ref(struct nouveau_fence *fence)
+ {
+-- 
+2.17.1
+

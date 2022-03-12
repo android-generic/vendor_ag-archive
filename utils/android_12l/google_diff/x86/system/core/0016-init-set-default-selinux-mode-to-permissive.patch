@@ -1,0 +1,47 @@
+From 12f270395ca71122fe49944fdb072f629aa902e4 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sat, 23 Nov 2019 15:39:21 +0800
+Subject: [PATCH 16/23] init: set default selinux mode to permissive
+
+To support selinux enforcing mode, we still have a long way to go.
+Let's set the default mode to permissive.
+---
+ init/Android.bp  | 2 +-
+ init/selinux.cpp | 6 +++---
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/init/Android.bp b/init/Android.bp
+index 7eeafa24b8b..177787d2efa 100644
+--- a/init/Android.bp
++++ b/init/Android.bp
+@@ -103,7 +103,7 @@ cc_defaults {
+         "-Wthread-safety",
+         "-DALLOW_FIRST_STAGE_CONSOLE=0",
+         "-DALLOW_LOCAL_PROP_OVERRIDE=0",
+-        "-DALLOW_PERMISSIVE_SELINUX=0",
++        "-DALLOW_PERMISSIVE_SELINUX=1",
+         "-DREBOOT_BOOTLOADER_ON_PANIC=0",
+         "-DWORLD_WRITABLE_KMSG=0",
+         "-DDUMP_ON_UMOUNT_FAILURE=0",
+diff --git a/init/selinux.cpp b/init/selinux.cpp
+index 42d302324fc..54f52cb6865 100644
+--- a/init/selinux.cpp
++++ b/init/selinux.cpp
+@@ -94,11 +94,11 @@ namespace {
+ enum EnforcingStatus { SELINUX_PERMISSIVE, SELINUX_ENFORCING };
+ 
+ EnforcingStatus StatusFromProperty() {
+-    EnforcingStatus status = SELINUX_ENFORCING;
++    EnforcingStatus status = SELINUX_PERMISSIVE;
+ 
+     ImportKernelCmdline([&](const std::string& key, const std::string& value) {
+-        if (key == "androidboot.selinux" && value == "permissive") {
+-            status = SELINUX_PERMISSIVE;
++        if (key == "androidboot.selinux" && value == "enforcing") {
++            status = SELINUX_ENFORCING;
+         }
+     });
+ 
+-- 
+2.25.1
+

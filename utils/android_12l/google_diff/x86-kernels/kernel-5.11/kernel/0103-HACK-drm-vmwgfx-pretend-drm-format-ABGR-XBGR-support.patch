@@ -1,0 +1,66 @@
+From b01e70186892b3422733747bbe92c01a53240411 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 25 Oct 2020 21:50:30 +0100
+Subject: [PATCH 103/106] HACK: drm/vmwgfx: pretend drm format ABGR/XBGR
+ support (v3)
+
+For testing and study purposes
+
+(v2) AGBR/XBGR formats in vmw_create_bo_proxy()
+
+(v3) AGBR/XBGR formats in vmw_kms_new_framebuffer_bo()
+---
+ drivers/gpu/drm/vmwgfx/vmwgfx_kms.c | 6 ++++++
+ drivers/gpu/drm/vmwgfx/vmwgfx_kms.h | 2 ++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_kms.c b/drivers/gpu/drm/vmwgfx/vmwgfx_kms.c
+index e2182ba6dfdf..6cdc21e327a9 100644
+--- a/drivers/gpu/drm/vmwgfx/vmwgfx_kms.c
++++ b/drivers/gpu/drm/vmwgfx/vmwgfx_kms.c
+@@ -920,9 +920,11 @@ static int vmw_kms_new_framebuffer_surface(struct vmw_private *dev_priv,
+ 	}
+ 
+ 	switch (mode_cmd->pixel_format) {
++	case DRM_FORMAT_ABGR8888:
+ 	case DRM_FORMAT_ARGB8888:
+ 		format = SVGA3D_A8R8G8B8;
+ 		break;
++	case DRM_FORMAT_XBGR8888:
+ 	case DRM_FORMAT_XRGB8888:
+ 		format = SVGA3D_X8R8G8B8;
+ 		break;
+@@ -1155,6 +1157,8 @@ static int vmw_create_bo_proxy(struct drm_device *dev,
+ 	switch (mode_cmd->pixel_format) {
+ 	case DRM_FORMAT_ARGB8888:
+ 	case DRM_FORMAT_XRGB8888:
++	case DRM_FORMAT_ABGR8888:
++	case DRM_FORMAT_XBGR8888:
+ 		format = SVGA3D_X8R8G8B8;
+ 		bytes_pp = 4;
+ 		break;
+@@ -1231,6 +1235,8 @@ static int vmw_kms_new_framebuffer_bo(struct vmw_private *dev_priv,
+ 		switch (mode_cmd->pixel_format) {
+ 		case DRM_FORMAT_XRGB8888:
+ 		case DRM_FORMAT_ARGB8888:
++		case DRM_FORMAT_XBGR8888:
++		case DRM_FORMAT_ABGR8888:
+ 			break;
+ 		case DRM_FORMAT_XRGB1555:
+ 		case DRM_FORMAT_RGB565:
+diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_kms.h b/drivers/gpu/drm/vmwgfx/vmwgfx_kms.h
+index 03f3694015ce..2e98fc7c0383 100644
+--- a/drivers/gpu/drm/vmwgfx/vmwgfx_kms.h
++++ b/drivers/gpu/drm/vmwgfx/vmwgfx_kms.h
+@@ -251,6 +251,8 @@ static const uint32_t vmw_primary_plane_formats[] = {
+ 	DRM_FORMAT_RGB888,
+ 	DRM_FORMAT_XRGB8888,
+ 	DRM_FORMAT_ARGB8888,
++	DRM_FORMAT_XBGR8888,
++	DRM_FORMAT_ABGR8888,
+ };
+ 
+ static const uint32_t vmw_cursor_plane_formats[] = {
+-- 
+2.17.1
+
