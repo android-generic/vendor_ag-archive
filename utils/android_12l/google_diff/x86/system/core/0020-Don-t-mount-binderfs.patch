@@ -1,0 +1,48 @@
+From d7add9497d7d41160733afaf9a13993e1fc90596 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Wed, 1 Apr 2020 18:04:44 -0400
+Subject: [PATCH 20/23] Don't mount binderfs
+
+---
+ rootdir/init.rc | 20 ++++++++++----------
+ 1 file changed, 10 insertions(+), 10 deletions(-)
+
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 355bb1a7a71..51db8529125 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -222,21 +222,21 @@ on init
+     chmod 0770 /config/sdcardfs
+     chown system package_info /config/sdcardfs
+ 
+-    # Mount binderfs
+-    mkdir /dev/binderfs
+-    mount binder binder /dev/binderfs stats=global
+-    chmod 0755 /dev/binderfs
++    # # Mount binderfs
++    # mkdir /dev/binderfs
++    # mount binder binder /dev/binderfs stats=global
++    # chmod 0755 /dev/binderfs
+ 
+     # Mount fusectl
+     mount fusectl none /sys/fs/fuse/connections
+ 
+-    symlink /dev/binderfs/binder /dev/binder
+-    symlink /dev/binderfs/hwbinder /dev/hwbinder
+-    symlink /dev/binderfs/vndbinder /dev/vndbinder
++    # symlink /dev/binderfs/binder /dev/binder
++    # symlink /dev/binderfs/hwbinder /dev/hwbinder
++    # symlink /dev/binderfs/vndbinder /dev/vndbinder
+ 
+-    chmod 0666 /dev/binderfs/hwbinder
+-    chmod 0666 /dev/binderfs/binder
+-    chmod 0666 /dev/binderfs/vndbinder
++    # chmod 0666 /dev/binderfs/hwbinder
++    # chmod 0666 /dev/binderfs/binder
++    # chmod 0666 /dev/binderfs/vndbinder
+ 
+     mkdir /mnt/secure 0700 root root
+     mkdir /mnt/secure/asec 0700 root root
+-- 
+2.25.1
+

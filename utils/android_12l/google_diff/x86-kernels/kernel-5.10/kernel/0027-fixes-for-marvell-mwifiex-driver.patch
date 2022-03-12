@@ -1,0 +1,85 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jake Day <jake@ninebysix.com>
+Date: Tue, 3 Oct 2017 18:52:03 -0400
+Subject: [PATCH 27/54] fixes for marvell mwifiex driver
+
+This disables power save, fixes handling of amsdu packets, and adds
+checking len on cmd complete.
+---
+ drivers/net/wireless/marvell/mwifiex/11n_aggr.c |  3 +--
+ drivers/net/wireless/marvell/mwifiex/cfg80211.c |  3 +++
+ drivers/net/wireless/marvell/mwifiex/pcie.c     | 10 ++++++++++
+ drivers/net/wireless/marvell/mwifiex/sta_cmd.c  |  4 ++--
+ 4 files changed, 16 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/net/wireless/marvell/mwifiex/11n_aggr.c b/drivers/net/wireless/marvell/mwifiex/11n_aggr.c
+index 46f41dbcf30d..be2738bed254 100644
+--- a/drivers/net/wireless/marvell/mwifiex/11n_aggr.c
++++ b/drivers/net/wireless/marvell/mwifiex/11n_aggr.c
+@@ -198,8 +198,7 @@ mwifiex_11n_aggregate_pkt(struct mwifiex_private *priv,
+ 
+ 	do {
+ 		/* Check if AMSDU can accommodate this MSDU */
+-		if ((skb_aggr->len + skb_src->len + LLC_SNAP_LEN) >
+-		    adapter->tx_buf_size)
++		if (skb_tailroom(skb_aggr) < (skb_src->len + LLC_SNAP_LEN))
+ 			break;
+ 
+ 		skb_src = skb_dequeue(&pra_list->skb_head);
+diff --git a/drivers/net/wireless/marvell/mwifiex/cfg80211.c b/drivers/net/wireless/marvell/mwifiex/cfg80211.c
+index a6b9dc6700b1..f1343f7f14b6 100644
+--- a/drivers/net/wireless/marvell/mwifiex/cfg80211.c
++++ b/drivers/net/wireless/marvell/mwifiex/cfg80211.c
+@@ -435,6 +435,9 @@ mwifiex_cfg80211_set_power_mgmt(struct wiphy *wiphy,
+ 
+ 	ps_mode = enabled;
+ 
++	mwifiex_dbg(priv->adapter, ERROR, "overriding ps_mode to false\n");
++	ps_mode = 0;
++
+ 	return mwifiex_drv_set_power(priv, &ps_mode);
+ }
+ 
+diff --git a/drivers/net/wireless/marvell/mwifiex/pcie.c b/drivers/net/wireless/marvell/mwifiex/pcie.c
+index b2de8d03c5fa..6eb8ec42d10f 100644
+--- a/drivers/net/wireless/marvell/mwifiex/pcie.c
++++ b/drivers/net/wireless/marvell/mwifiex/pcie.c
+@@ -1899,6 +1899,16 @@ static int mwifiex_pcie_process_cmd_complete(struct mwifiex_adapter *adapter)
+ 	}
+ 
+ 	rx_len = get_unaligned_le16(skb->data);
++
++
++	if (rx_len == 0) {
++		mwifiex_dbg(adapter, ERROR,
++				    "0 byte cmdrsp\n");
++		mwifiex_map_pci_memory(adapter, skb, MWIFIEX_UPLD_SIZE,
++					   PCI_DMA_FROMDEVICE);
++		return 0;
++	}
++
+ 	skb_put(skb, MWIFIEX_UPLD_SIZE - skb->len);
+ 	skb_trim(skb, rx_len);
+ 
+diff --git a/drivers/net/wireless/marvell/mwifiex/sta_cmd.c b/drivers/net/wireless/marvell/mwifiex/sta_cmd.c
+index d3a968ef21ef..985dda12501e 100644
+--- a/drivers/net/wireless/marvell/mwifiex/sta_cmd.c
++++ b/drivers/net/wireless/marvell/mwifiex/sta_cmd.c
+@@ -2332,7 +2332,7 @@ int mwifiex_sta_init_cmd(struct mwifiex_private *priv, u8 first_sta, bool init)
+ 		if (ret)
+ 			return -1;
+ 
+-		if (priv->bss_type != MWIFIEX_BSS_TYPE_UAP) {
++		if (0 && priv->bss_type != MWIFIEX_BSS_TYPE_UAP) {
+ 			/* Enable IEEE PS by default */
+ 			priv->adapter->ps_mode = MWIFIEX_802_11_POWER_MODE_PSP;
+ 			ret = mwifiex_send_cmd(priv,
+@@ -2388,7 +2388,7 @@ int mwifiex_sta_init_cmd(struct mwifiex_private *priv, u8 first_sta, bool init)
+ 	if (ret)
+ 		return -1;
+ 
+-	if (!disable_auto_ds && first_sta &&
++	if (0 && !disable_auto_ds && first_sta &&
+ 	    priv->bss_type != MWIFIEX_BSS_TYPE_UAP) {
+ 		/* Enable auto deep sleep */
+ 		auto_ds.auto_ds = DEEP_SLEEP_ON;

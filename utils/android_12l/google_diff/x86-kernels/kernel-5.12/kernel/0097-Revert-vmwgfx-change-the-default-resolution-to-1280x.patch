@@ -1,0 +1,29 @@
+From 6241bf59bb6e52ee4a588c63ec0bea25603a2e9f Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Thu, 29 Oct 2020 23:27:34 +0100
+Subject: [PATCH 097/100] Revert "vmwgfx: change the default resolution to
+ 1280x720"
+
+This reverts commit d8836d821a1caa03739ebdcbcd29355f4f79d54a.
+---
+ drivers/gpu/drm/vmwgfx/vmwgfx_drv.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_drv.c b/drivers/gpu/drm/vmwgfx/vmwgfx_drv.c
+index f484b532648b..dd69b51c40e4 100644
+--- a/drivers/gpu/drm/vmwgfx/vmwgfx_drv.c
++++ b/drivers/gpu/drm/vmwgfx/vmwgfx_drv.c
+@@ -44,8 +44,8 @@
+ 
+ #define VMWGFX_DRIVER_DESC "Linux drm driver for VMware graphics devices"
+ 
+-#define VMW_MIN_INITIAL_WIDTH 1280
+-#define VMW_MIN_INITIAL_HEIGHT 720
++#define VMW_MIN_INITIAL_WIDTH 800
++#define VMW_MIN_INITIAL_HEIGHT 600
+ 
+ #ifndef VMWGFX_GIT_VERSION
+ #define VMWGFX_GIT_VERSION "Unknown"
+-- 
+2.17.1
+

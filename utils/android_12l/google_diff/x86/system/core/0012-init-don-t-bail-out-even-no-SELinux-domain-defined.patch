@@ -1,0 +1,37 @@
+From 9cf1d77c4491177a9e68f032ba895d57988e28bc Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 12 Sep 2017 16:22:04 +0800
+Subject: [PATCH 12/23] init: don't bail out even no SELinux domain defined
+
+---
+ init/service.cpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/init/service.cpp b/init/service.cpp
+index c3069f5b2b5..8b9ea527eed 100644
+--- a/init/service.cpp
++++ b/init/service.cpp
+@@ -88,6 +88,12 @@ static Result<std::string> ComputeContextFromExecutable(const std::string& servi
+         free(new_con);
+     }
+     if (rc == 0 && computed_context == mycon.get()) {
++#if defined(__ANDROID__)
++        LOG(WARNING) << "File " << service_path << "(labeled \"" << filecon.get()
++                     << "\") has incorrect label or no domain transition from " << mycon.get()
++                     << " to another SELinux domain defined.";
++        return "skip";
++#else
+         return Error() << "File " << service_path << "(labeled \"" << filecon.get()
+                        << "\") has incorrect label or no domain transition from " << mycon.get()
+                        << " to another SELinux domain defined. Have you configured your "
+@@ -95,6 +101,7 @@ static Result<std::string> ComputeContextFromExecutable(const std::string& servi
+                           "device-policy#label_new_services_and_address_denials. Note: this "
+                           "error shows up even in permissive mode in order to make auditing "
+                           "denials possible.";
++#endif
+     }
+     if (rc < 0) {
+         return Error() << "Could not get process context";
+-- 
+2.25.1
+

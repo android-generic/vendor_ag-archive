@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 2 Jul 2015 00:07:20 +0800
+Subject: [PATCH] mkshrc: add back the aliases I like
+
+---
+ mkshrc | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/mkshrc b/mkshrc
+index d37de12..ae61b8e 100644
+--- a/mkshrc
++++ b/mkshrc
+@@ -8,6 +8,11 @@
+ 
+ set +o nohup
+ 
++alias l='ls'
++alias la='l -a'
++alias ll='l -l'
++alias lo='l -a -l'
++
+ if (( USER_ID )); then PS1='$'; else PS1='#'; fi
+ PS4='[$EPOCHREALTIME] '; PS1='${|
+ 	local e=$?

@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Tue, 19 Oct 2021 10:40:04 +0200
+Subject: [PATCH] Move houdini properties to PRODUCT_PRODUCT_PROPERTIES
+
+As we're not using a vendor image, PRODUCT_PROPERTY_OVERRIDES content
+ends up in /system/build.prop. However, Android S now forbids duplicate
+sysprop entries on the same partition (unless they're marked optional,
+but that's not the case here). Simple solution is to move properties to
+/product/etc/build.prop.
+---
+ target/houdini.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/target/houdini.mk b/target/houdini.mk
+index f3849d6..10250f5 100644
+--- a/target/houdini.mk
++++ b/target/houdini.mk
+@@ -1,7 +1,7 @@
+ # Bundle Houdini as ARM on x86 native bridge
+ WITH_NATIVE_BRIDGE := true
+ 
+-PRODUCT_PROPERTY_OVERRIDES += \
++PRODUCT_PRODUCT_PROPERTIES += \
+     ro.dalvik.vm.isa.arm=x86 \
+     ro.enable.native.bridge.exec=1 \
+     ro.dalvik.vm.native.bridge=libhoudini.so

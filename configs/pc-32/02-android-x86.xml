@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+	<!-- AOSP Repos -->
+	<project path="bionic" name="platform/bionic" remote="aosp" />
+	<project path="external/mksh" name="platform/external/mksh" remote="aosp" />
+	<project path="external/syslinux" name="platform/external/syslinux" remote="aosp" revision="master" />
+	<project path="frameworks/av" name="platform/frameworks/av" remote="aosp" />
+	<project path="frameworks/base" name="platform/frameworks/base" remote="aosp" />
+	<project path="frameworks/native" name="platform/frameworks/native" remote="aosp" />
+	<project path="hardware/ril" name="platform/hardware/ril" remote="aosp" />
+	<project path="packages/apps/Camera2" name="platform/packages/apps/Camera2" remote="aosp" />
+	<project path="packages/apps/Gallery2" name="platform/packages/apps/Gallery2" remote="aosp" />
+	<project path="packages/apps/Settings" name="platform/packages/apps/Settings" remote="aosp" />
+	<project path="system/core" name="platform/system/core" remote="aosp" />
+	<project path="system/extras" name="platform/system/extras" remote="aosp" />
+	<project path="system/hardware/interfaces" name="platform/system/hardware/interfaces" remote="aosp" />
+	<project path="system/vold" name="platform/system/vold" remote="aosp" />
+	
+	<!-- Android-x86 Repos -->
+	<project path="bootable/newinstaller" name="platform/bootable/newinstaller" remote="x86" revision="r-x86" />
+	<!-- <project path="external/IA-Hardware-Composer" name="IA-Hardware-Composer" remote="maurossi" revision="2020-Apr-19" /> -->
+	<!-- <project path="external/IA-Hardware-Composer" name="platform/external/IA-Hardware-Composer" remote="x86" revision="pie-x86" /> -->
+	<project path="external/alsa-lib" name="platform/external/alsa-lib" remote="x86" revision="r-x86" />
+	<project path="external/alsa-ucm-conf" name="platform/external/alsa-ucm-conf" remote="x86" revision="pie-x86" />
+	<project path="external/alsa-utils" name="platform/external/alsa-utils" remote="x86" revision="r-x86" />
+<!--
+	<project path="external/busybox" name="platform/external/busybox" remote="x86" revision="q-x86" />
+-->
+	<!-- <project path="external/drm_hwcomposer" name="drm_hwcomposer.git" remote="maurossi" revision="blueprint_pie-x86_y22_w02" /> -->
+	<project path="external/efibootmgr" name="platform/external/efibootmgr" remote="x86" revision="r-x86" />
+	<project path="external/efivar" name="platform/external/efivar" remote="x86" revision="r-x86" />
+	<project path="external/exfat" name="platform/external/exfat" remote="x86" revision="r-x86" />
+	<project path="external/koush/Superuser" name="platform/external/koush/Superuser" remote="x86" revision="r-x86" />
+	<project path="external/koush/Widgets" name="platform/external/koush/Widgets" remote="x86" revision="r-x86" />
+	<project path="external/libncurses" name="platform/external/libncurses" remote="x86" revision="pie-x86" />
+	<project path="external/ntfs-3g" name="platform/external/ntfs-3g" remote="x86" revision="r-x86" />
+	<project path="external/s2tc" name="platform/external/s2tc" remote="x86" revision="r-x86" />
+	<project path="external/v86d" name="platform/external/v86d" remote="x86" revision="r-x86" />
+	<project path="hardware/gps" name="platform/hardware/gps" remote="x86" revision="r-x86" />
+	<project path="hardware/intel/audio_media" name="platform/hardware/intel/audio_media" remote="x86" revision="r-x86" />
+	<project path="hardware/intel/common/libva" name="platform/hardware/intel/common/libva" remote="x86" revision="r-x86" />
+	<project path="hardware/intel/common/vaapi" name="platform/hardware/intel/common/vaapi" remote="x86" revision="r-x86" />
+	<project path="hardware/intel/libsensors" name="platform/hardware/intel/libsensors" remote="x86" revision="r-x86" />
+	<project path="hardware/libaudio" name="platform/hardware/libaudio" remote="x86" revision="q-x86" />
+	<project path="hardware/libcamera" name="platform/hardware/libcamera" remote="x86" revision="q-x86" />
+	<project path="hardware/liblights" name="platform/hardware/liblights" remote="x86" revision="r-x86" />
+	<project path="hardware/libsensors" name="platform/hardware/libsensors" remote="x86" revision="r-x86" />
+	<project path="hardware/memtrack" name="platform/hardware/memtrack" remote="x86" revision="r-x86" />
+	<project path="hardware/x86power" name="platform/hardware/x86power" remote="x86" revision="r-x86" />
+	<project path="packages/apps/Eleven" name="platform/packages/apps/Eleven" remote="x86" revision="q-x86" />
+	<!-- <project path="packages/apps/Taskbar" name="Taskbar" remote="maurossi" revision="s-x86" /> -->
+	<!-- <project path="packages/apps/Taskbar" name="platform/packages/apps/Taskbar" remote="x86" revision="r-x86" /> -->
+	<project path="packages/apps/TSCalibration2" name="platform/packages/apps/TSCalibration2" remote="x86" revision="q-x86" />
+	<!-- <project path="prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6" name="platform/prebuilts/gcc/linux-x86/host/x86_64-linux-glibc2.11-4.6" remote="aosp" revision="emu-1.4-release" /> -->
+	<!-- <project path="vendor/google/chromeos-x86" name="android_vendor_google_chromeos-x86.git" remote="blissroms-x86" revision="13816.82.0_hatch" /> -->
+	<!-- <project path="system/bt" name="platform/system/bt" remote="aosp" /> -->
+	<!-- <project path="system/media" name="platform/system/media" remote="x86" revision="r-x86" /> -->
+
+</manifest>

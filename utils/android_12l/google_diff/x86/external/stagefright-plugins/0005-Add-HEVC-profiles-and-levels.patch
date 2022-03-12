@@ -1,0 +1,36 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Wed, 12 May 2021 10:05:21 -0400
+Subject: [PATCH 5/5] Add HEVC profiles and levels
+
+These are required for proper capabilities checking, e.g. by ExoPlayer.
+---
+ omx/SoftFFmpegVideo.cpp | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/omx/SoftFFmpegVideo.cpp b/omx/SoftFFmpegVideo.cpp
+index 49e4606..62ab10d 100644
+--- a/omx/SoftFFmpegVideo.cpp
++++ b/omx/SoftFFmpegVideo.cpp
+@@ -48,6 +48,11 @@ static const CodecProfileLevel kAVCProfileLevels[] = {
+     { OMX_VIDEO_AVCProfileHigh,     OMX_VIDEO_AVCLevel52 },
+ };
+ 
++static const CodecProfileLevel kHEVCProfileLevels[] = {
++    { OMX_VIDEO_HEVCProfileMain,      OMX_VIDEO_HEVCMainTierLevel51 },
++    { OMX_VIDEO_HEVCProfileMainStill, OMX_VIDEO_HEVCMainTierLevel51 },
++};
++
+ SoftFFmpegVideo::SoftFFmpegVideo(
+         const char *name,
+         const char *componentRole,
+@@ -818,6 +823,9 @@ SoftOMXComponent* SoftFFmpegVideo::createSoftOMXComponent(
+     } else if (!strcmp(name, "OMX.ffmpeg.h264.decoder")) {
+         codec_profile_levels = kAVCProfileLevels;
+         codec_array_size = ARRAY_SIZE(kAVCProfileLevels);
++    } else if (!strcmp(name, "OMX.ffmpeg.hevc.decoder")) {
++        codec_profile_levels = kHEVCProfileLevels;
++        codec_array_size = ARRAY_SIZE(kHEVCProfileLevels);
+     } else {
+         codec_profile_levels = NULL;
+         codec_array_size = 0;

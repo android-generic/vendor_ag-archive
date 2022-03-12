@@ -1,0 +1,33 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 20 May 2014 00:38:35 +0800
+Subject: [PATCH] Disable the legacy su
+
+---
+ su/Android.mk | 17 -----------------
+ 1 file changed, 17 deletions(-)
+ delete mode 100644 su/Android.mk
+
+diff --git a/su/Android.mk b/su/Android.mk
+deleted file mode 100644
+index 18493992..00000000
+--- a/su/Android.mk
++++ /dev/null
+@@ -1,17 +0,0 @@
+-LOCAL_PATH:= $(call my-dir)
+-include $(CLEAR_VARS)
+-
+-LOCAL_CFLAGS := -Wall -Werror
+-
+-LOCAL_SRC_FILES:= su.cpp
+-
+-LOCAL_MODULE:= su
+-LOCAL_LICENSE_KINDS:= SPDX-license-identifier-Apache-2.0
+-LOCAL_LICENSE_CONDITIONS:= notice
+-LOCAL_NOTICE_FILE:= $(LOCAL_PATH)/NOTICE
+-
+-LOCAL_HEADER_LIBRARIES := libcutils_headers
+-
+-LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
+-
+-include $(BUILD_EXECUTABLE)

@@ -1,0 +1,63 @@
+From 557f45363c524f88927abe2cdc42fa29c556d2cf Mon Sep 17 00:00:00 2001
+From: Hans de Goede <hdegoede@redhat.com>
+Date: Tue, 10 Jul 2018 08:59:27 +0200
+Subject: [PATCH 067/106] drm/i915/intel_dsi: Read back pclk set by GOP and use
+ that as pclk
+
+On BYT and CHT the GOP sometimes initializes the pclk at a (slightly)
+different frequency then the pclk which we've calculated.
+
+This commit makes the DSI code read-back the pclk set by the GOP and
+if that is within a reasonable margin of the calculated pclk, uses
+that instead.
+
+This fixes the first modeset being a full modeset instead of a
+fast modeset on systems where the GOP pclk is different.
+
+Changes in v2:
+-Use intel_encoder_current_mode() to get the pclk setup by the GOP
+
+Signed-off-by: Hans de Goede <hdegoede@redhat.com>
+---
+ drivers/gpu/drm/i915/display/intel_dsi_vbt.c | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
+
+diff --git a/drivers/gpu/drm/i915/display/intel_dsi_vbt.c b/drivers/gpu/drm/i915/display/intel_dsi_vbt.c
+index eed037ec0b29..7401b0b381a2 100644
+--- a/drivers/gpu/drm/i915/display/intel_dsi_vbt.c
++++ b/drivers/gpu/drm/i915/display/intel_dsi_vbt.c
+@@ -730,6 +730,7 @@ bool intel_dsi_vbt_init(struct intel_dsi *intel_dsi, u16 panel_id)
+ 	struct mipi_config *mipi_config = dev_priv->vbt.dsi.config;
+ 	struct mipi_pps_data *pps = dev_priv->vbt.dsi.pps;
+ 	struct drm_display_mode *mode = dev_priv->vbt.lfp_lvds_vbt_mode;
++	struct drm_display_mode *curr;
+ 	u16 burst_mode_ratio;
+ 	enum port port;
+ 
+@@ -810,6 +811,23 @@ bool intel_dsi_vbt_init(struct intel_dsi *intel_dsi, u16 panel_id)
+ 	} else
+ 		burst_mode_ratio = 100;
+ 
++	/*
++	 * On BYT / CRC the GOP sometimes picks a slightly different pclk,
++	 * read back the GOP configured pclk and prefer it over ours.
++	 */
++	if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv)) {
++		curr = intel_encoder_current_mode(&intel_dsi->base);
++		if (curr) {
++			DRM_DEBUG_KMS("Calculated pclk %d GOP %d\n",
++				      intel_dsi->pclk, curr->clock);
++			if (curr->clock >= (intel_dsi->pclk * 9 / 10) &&
++			    curr->clock <= (intel_dsi->pclk * 11 / 10))
++				intel_dsi->pclk = curr->clock;
++
++			kfree(curr);
++		}
++	}
++
+ 	intel_dsi->burst_mode_ratio = burst_mode_ratio;
+ 
+ 	/* delays in VBT are in unit of 100us, so need to convert
+-- 
+2.17.1
+

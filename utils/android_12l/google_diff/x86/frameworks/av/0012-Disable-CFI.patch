@@ -1,0 +1,91 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Fri, 4 Oct 2019 20:11:48 -0400
+Subject: [PATCH 12/15] Disable CFI
+
+The presence of CFI sanitizer makes the corresponding libraries to be
+missing from the com.android.media.swcodec APEX, when building for x86.
+---
+ media/codec2/components/base/Android.bp    | 3 ---
+ media/codec2/sfplugin/utils/Android.bp     | 1 -
+ media/libstagefright/bqhelper/Android.bp   | 1 -
+ media/libstagefright/flac/dec/Android.bp   | 1 -
+ media/libstagefright/foundation/Android.bp | 1 -
+ 5 files changed, 7 deletions(-)
+
+diff --git a/media/codec2/components/base/Android.bp b/media/codec2/components/base/Android.bp
+index 160e250235..87d49a3a92 100644
+--- a/media/codec2/components/base/Android.bp
++++ b/media/codec2/components/base/Android.bp
+@@ -39,7 +39,6 @@ cc_library {
+             "unsigned-integer-overflow",
+             "signed-integer-overflow",
+         ],
+-        cfi: true,
+     },
+ 
+     ldflags: ["-Wl,-Bsymbolic"],
+@@ -87,7 +86,6 @@ cc_defaults {
+             "unsigned-integer-overflow",
+             "signed-integer-overflow",
+         ],
+-        cfi: true,
+     },
+ }
+ 
+@@ -107,7 +105,6 @@ cc_defaults {
+     name: "libcodec2_soft_sanitize_cfi-defaults",
+ 
+     sanitize: {
+-        cfi: true,
+         config: {
+             cfi_assembly_support: true,
+         },
+diff --git a/media/codec2/sfplugin/utils/Android.bp b/media/codec2/sfplugin/utils/Android.bp
+index 2f4d6b1cb5..7b9455a25c 100644
+--- a/media/codec2/sfplugin/utils/Android.bp
++++ b/media/codec2/sfplugin/utils/Android.bp
+@@ -44,7 +44,6 @@ cc_library {
+     ],
+ 
+     sanitize: {
+-        cfi: true,
+         misc_undefined: [
+             "unsigned-integer-overflow",
+             "signed-integer-overflow",
+diff --git a/media/libstagefright/bqhelper/Android.bp b/media/libstagefright/bqhelper/Android.bp
+index 0e2b47227d..018d9a48b0 100644
+--- a/media/libstagefright/bqhelper/Android.bp
++++ b/media/libstagefright/bqhelper/Android.bp
+@@ -61,7 +61,6 @@ cc_defaults {
+             "signed-integer-overflow",
+             "unsigned-integer-overflow",
+         ],
+-        cfi: true,
+     },
+ }
+ 
+diff --git a/media/libstagefright/flac/dec/Android.bp b/media/libstagefright/flac/dec/Android.bp
+index 665aae136f..cffeb80cc1 100644
+--- a/media/libstagefright/flac/dec/Android.bp
++++ b/media/libstagefright/flac/dec/Android.bp
+@@ -36,7 +36,6 @@ cc_library {
+             "signed-integer-overflow",
+             "unsigned-integer-overflow",
+         ],
+-        cfi: true,
+     },
+ 
+     shared_libs: [
+diff --git a/media/libstagefright/foundation/Android.bp b/media/libstagefright/foundation/Android.bp
+index dd2c66f60f..af71ab0a16 100644
+--- a/media/libstagefright/foundation/Android.bp
++++ b/media/libstagefright/foundation/Android.bp
+@@ -127,7 +127,6 @@ cc_defaults {
+             "unsigned-integer-overflow",
+             "signed-integer-overflow",
+         ],
+-        cfi: true,
+     },
+ }
+ 

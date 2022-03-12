@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Edward Peek <edwardpeek@gmail.com>
+Date: Wed, 4 Apr 2012 06:17:00 +1200
+Subject: [PATCH 02/15] Add option to disable touchscreen pressure sensitivity
+ from idc files
+
+---
+ services/inputflinger/reader/mapper/TouchInputMapper.cpp | 5 +++++
+ services/inputflinger/reader/mapper/TouchInputMapper.h   | 3 ++-
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/services/inputflinger/reader/mapper/TouchInputMapper.cpp b/services/inputflinger/reader/mapper/TouchInputMapper.cpp
+index 962d8d2935..fe309b62bf 100644
+--- a/services/inputflinger/reader/mapper/TouchInputMapper.cpp
++++ b/services/inputflinger/reader/mapper/TouchInputMapper.cpp
+@@ -1164,6 +1164,8 @@ void TouchInputMapper::parseCalibration() {
+             out.pressureCalibration = Calibration::PressureCalibration::PHYSICAL;
+         } else if (pressureCalibrationString == "amplitude") {
+             out.pressureCalibration = Calibration::PressureCalibration::AMPLITUDE;
++        } else if (pressureCalibrationString == "disable") {
++            out.pressureCalibration = Calibration::PressureCalibration::DISABLE;
+         } else if (pressureCalibrationString != "default") {
+             ALOGW("Invalid value for touch.pressure.calibration: '%s'",
+                   pressureCalibrationString.string());
+@@ -1232,6 +1234,9 @@ void TouchInputMapper::resolveCalibration() {
+     if (mRawPointerAxes.pressure.valid) {
+         if (mCalibration.pressureCalibration == Calibration::PressureCalibration::DEFAULT) {
+             mCalibration.pressureCalibration = Calibration::PressureCalibration::PHYSICAL;
++        } else if (mCalibration.pressureCalibration == Calibration::PressureCalibration::DISABLE) {
++            mRawPointerAxes.pressure.valid = false;
++            mCalibration.pressureCalibration = Calibration::PressureCalibration::NONE;
+         }
+     } else {
+         mCalibration.pressureCalibration = Calibration::PressureCalibration::NONE;
+diff --git a/services/inputflinger/reader/mapper/TouchInputMapper.h b/services/inputflinger/reader/mapper/TouchInputMapper.h
+index 920f8428f3..a8b330f35f 100644
+--- a/services/inputflinger/reader/mapper/TouchInputMapper.h
++++ b/services/inputflinger/reader/mapper/TouchInputMapper.h
+@@ -243,6 +243,7 @@ protected:
+             NONE,
+             PHYSICAL,
+             AMPLITUDE,
++            DISABLE,
+         };
+ 
+         PressureCalibration pressureCalibration;
+@@ -809,4 +810,4 @@ private:
+ 
+ } // namespace android
+ 
+-#endif // _UI_INPUTREADER_TOUCH_INPUT_MAPPER_H
+\ No newline at end of file
++#endif // _UI_INPUTREADER_TOUCH_INPUT_MAPPER_H

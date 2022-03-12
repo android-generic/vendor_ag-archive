@@ -1,0 +1,53 @@
+From 6ca6925905f4851449848773d741b76a13e3edf6 Mon Sep 17 00:00:00 2001
+From: Alistair Delva <adelva@google.com>
+Date: Mon, 19 Nov 2018 22:38:23 -0800
+Subject: [PATCH 016/100] ANDROID: fs: Restore vfs_path_lookup() export
+
+Partial revert of 197df04c749a ("rename user_path_umountat() to
+user_path_mountpoint_at()"), to restore access to vfs_path_lookup()
+without including fs/internal.h, as needed by sdcardfs.
+
+Test: HiKey/X15 + Pie + android-mainline,
+      and HiKey + AOSP Maser + android-mainline,
+      directories under /sdcard created,
+      output of mount is right,
+      CTS test collecting device infor works
+
+Change-Id: I757f2df9f4dcc66f633939e7833e6fa2ac0ff4f8
+Signed-off-by: Alistair Delva <adelva@google.com>
+Signed-off-by: Yongqin Liu <yongqin.liu@linaro.org>
+Signed-off-by: Matthias Maennich <maennich@google.com>
+---
+ fs/internal.h         | 2 --
+ include/linux/namei.h | 2 ++
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/fs/internal.h b/fs/internal.h
+index 6aeae7ef3380..993319ba2d52 100644
+--- a/fs/internal.h
++++ b/fs/internal.h
+@@ -70,8 +70,6 @@ extern int finish_clean_context(struct fs_context *fc);
+  */
+ extern int filename_lookup(int dfd, struct filename *name, unsigned flags,
+ 			   struct path *path, struct path *root);
+-extern int vfs_path_lookup(struct dentry *, struct vfsmount *,
+-			   const char *, unsigned int, struct path *);
+ long do_rmdir(int dfd, struct filename *name);
+ long do_unlinkat(int dfd, struct filename *name);
+ int may_linkat(struct user_namespace *mnt_userns, struct path *link);
+diff --git a/include/linux/namei.h b/include/linux/namei.h
+index 42cebfea6740..4006cdce9332 100644
+--- a/include/linux/namei.h
++++ b/include/linux/namei.h
+@@ -66,6 +66,8 @@ extern struct dentry *kern_path_create(int, const char *, struct path *, unsigne
+ extern struct dentry *user_path_create(int, const char __user *, struct path *, unsigned int);
+ extern void done_path_create(struct path *, struct dentry *);
+ extern struct dentry *kern_path_locked(const char *, struct path *);
++extern int vfs_path_lookup(struct dentry *, struct vfsmount *,
++			   const char *, unsigned int, struct path *);
+ 
+ extern struct dentry *try_lookup_one_len(const char *, struct dentry *, int);
+ extern struct dentry *lookup_one_len(const char *, struct dentry *, int);
+-- 
+2.17.1
+

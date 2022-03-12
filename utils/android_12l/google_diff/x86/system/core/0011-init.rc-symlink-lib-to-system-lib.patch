@@ -1,0 +1,29 @@
+From eddfc913ac16ad8c53cc40773442f4617404db33 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 29 Jul 2016 19:49:58 +0800
+Subject: [PATCH 11/23] init.rc: symlink /lib to /system/lib
+
+Currently more linux drivers use request_firmware_nowait() to load
+firmwares. It requires the firmwares exist in the standard path.
+
+Create the symlink before ueventd started to ensure firmwares
+could be loaded correctly.
+---
+ rootdir/Android.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/rootdir/Android.mk b/rootdir/Android.mk
+index 99d8f9a8348..a9d9dcc7b0d 100644
+--- a/rootdir/Android.mk
++++ b/rootdir/Android.mk
+@@ -88,6 +88,7 @@ LOCAL_POST_INSTALL_CMD := mkdir -p $(addprefix $(TARGET_ROOT_OUT)/, \
+     dev proc sys system data data_mirror odm oem acct config storage mnt apex debug_ramdisk \
+     linkerconfig second_stage_resources postinstall $(BOARD_ROOT_EXTRA_FOLDERS)); \
+     ln -sf /system/bin $(TARGET_ROOT_OUT)/bin; \
++    ln -sf /system/lib $(TARGET_ROOT_OUT)/lib; \
+     ln -sf /system/etc $(TARGET_ROOT_OUT)/etc; \
+     ln -sf /data/user_de/0/com.android.shell/files/bugreports $(TARGET_ROOT_OUT)/bugreports; \
+     ln -sfn /sys/kernel/debug $(TARGET_ROOT_OUT)/d; \
+-- 
+2.25.1
+

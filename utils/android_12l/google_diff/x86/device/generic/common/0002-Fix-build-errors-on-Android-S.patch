@@ -1,0 +1,41 @@
+From 03546cfac255c13d6449c97881d98a328ec2953c Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Wed, 28 Apr 2021 16:55:52 -0400
+Subject: [PATCH 02/25] Fix build errors on Android S
+
+- custom sepolicy are violating some AOSP rules
+- don't check ELF binaries (required for firmware blobs)
+---
+ BoardConfig.mk | 9 +++++----
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index 53c34dc..b0f4ca5 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -84,10 +84,10 @@ ZIP_OPTIMIZATION_NO_INTEGRITY := true
+ 
+ DEVICE_MANIFEST_FILE := device/generic/common/manifest.xml
+ 
+-BOARD_SEPOLICY_DIRS += device/generic/common/sepolicy/nonplat \
+-                       system/bt/vendor_libs/linux/sepolicy \
+-
+-BOARD_PLAT_PRIVATE_SEPOLICY_DIR := device/generic/common/sepolicy/plat_private
++# BOARD_SEPOLICY_DIRS += device/generic/common/sepolicy/nonplat \
++#                        system/bt/vendor_libs/linux/sepolicy \
++# 
++# BOARD_PLAT_PRIVATE_SEPOLICY_DIR := device/generic/common/sepolicy/plat_private
+ 
+ BOARD_BUILD_SYSTEM_ROOT_IMAGE := true
+ BOARD_SYSTEMIMAGE_PARTITION_RESERVED_SIZE := 33554432
+@@ -97,6 +97,7 @@ USE_XML_AUDIO_POLICY_CONF := 1
+ 
+ BUILD_BROKEN_USES_BUILD_HOST_EXECUTABLE := true
+ BUILD_BROKEN_USES_BUILD_HOST_STATIC_LIBRARY := true
++BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+ 
+ BOARD_USES_MINIGBM := true
+ TARGET_USES_HWC2 ?= true
+-- 
+2.25.1
+

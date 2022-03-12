@@ -1,0 +1,35 @@
+From faf19a4e8ee255d9926b1e3a9630b4d503036d38 Mon Sep 17 00:00:00 2001
+From: youling257 <youling257@gmail.com>
+Date: Tue, 5 Nov 2019 14:10:43 +0800
+Subject: [PATCH 042/106] Revert "usb: gadget: composite: Test get_alt()
+ presence instead of set_alt()"
+
+This revert commit 7e4da3fcf7c9fe042f2f7cb7bf23861a899b4a8f.
+
+device Android gadget audio_source, host usb_set_interface failed (-32).
+
+[  880.009642] usbcore: registered new interface driver snd-usb-audio
+[  880.222411] usb 1-1.2: 1:1: usb_set_interface failed (-32)
+[  880.224222] usb 1-1.2: 1:1: usb_set_interface failed (-32)
+
+Signed-off-by: youling257 <youling257@gmail.com>
+---
+ drivers/usb/gadget/composite.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/usb/gadget/composite.c b/drivers/usb/gadget/composite.c
+index 1a556a628971..0b37311f959d 100644
+--- a/drivers/usb/gadget/composite.c
++++ b/drivers/usb/gadget/composite.c
+@@ -1792,7 +1792,7 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
+ 		 * works. There is no need to check if set_alt() is not NULL
+ 		 * as we check this in usb_add_function().
+ 		 */
+-		if (w_value && !f->get_alt)
++		if (w_value && !f->set_alt)
+ 			break;
+ 
+ 		spin_lock(&cdev->lock);
+-- 
+2.17.1
+

@@ -1,0 +1,120 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sun, 2 Nov 2014 01:21:12 +0800
+Subject: [PATCH 06/15] InputReader: add 5-point calibration
+
+Updated for Android 5.0.
+
+Change-Id: Id3b3ce2869a3cf1ed66a0c071500def3bfa4a771
+---
+ .../reader/mapper/TouchInputMapper.cpp        | 41 +++++++++++++++++--
+ .../reader/mapper/TouchInputMapper.h          |  3 ++
+ 2 files changed, 41 insertions(+), 3 deletions(-)
+
+diff --git a/services/inputflinger/reader/mapper/TouchInputMapper.cpp b/services/inputflinger/reader/mapper/TouchInputMapper.cpp
+index fe309b62bf..50803d4cc0 100644
+--- a/services/inputflinger/reader/mapper/TouchInputMapper.cpp
++++ b/services/inputflinger/reader/mapper/TouchInputMapper.cpp
+@@ -394,6 +394,19 @@ void TouchInputMapper::configure(nsecs_t when, const InputReaderConfiguration* c
+         configureSurface(when, &resetNeeded);
+     }
+ 
++    if (!changes || (changes & InputReaderConfiguration::CHANGE_DEVICE_ALIAS)) {
++        // Get 5-point calibration parameters
++        int *p = mCalibration.fiveCal;
++        p[6] = 0;
++        if (FILE *file = fopen("/data/misc/tscal/pointercal", "r")) {
++            if (fscanf(file, "%d %d %d %d %d %d %d", &p[0], &p[1], &p[2], &p[3], &p[4], &p[5], &p[6]) == 7) {
++                p[0] *= mXScale, p[1] *= mYScale, p[3] *= mXScale, p[4] *= mYScale;
++                ALOGD("pointercal loaded ok");
++            }
++            fclose(file);
++        }
++    }
++
+     if (changes && resetNeeded) {
+         // Send reset, unless this is the first time the device has been configured,
+         // in which case the reader will call reset itself after all mappers are ready.
+@@ -2254,13 +2267,29 @@ void TouchInputMapper::cookPointerData() {
+         // TODO: Adjust coverage coords?
+         float xTransformed = in.x, yTransformed = in.y;
+         mAffineTransform.applyTo(xTransformed, yTransformed);
+-        rotateAndScale(xTransformed, yTransformed);
++        //rotateAndScale(xTransformed, yTransformed);
+ 
+         // Adjust X, Y, and coverage coords for surface orientation.
++        float x, y;
+         float left, top, right, bottom;
++        float x_temp = float(xTransformed - mRawPointerAxes.x.minValue);
++        float y_temp = float(yTransformed - mRawPointerAxes.y.minValue);
++        float x_cal, y_cal;
++        int *pc = mCalibration.fiveCal;
++        if (pc[6]) {
++            // Apply 5-point calibration algorithm
++            x_cal = (x_temp * pc[0] + y_temp * pc[1] + pc[2] ) / pc[6];
++            y_cal = (x_temp * pc[3] + y_temp * pc[4] + pc[5] ) / pc[6];
++            ALOGV("5cal: x_temp=%f y_temp=%f x_cal=%f y_cal=%f", x_temp, y_temp, x_cal, y_cal);
++        } else {
++            x_cal = x_temp * mXScale;
++            y_cal = y_temp * mYScale;
++        }
+ 
+         switch (mSurfaceOrientation) {
+             case DISPLAY_ORIENTATION_90:
++                x = y_cal + mYTranslate;
++                y = mRawSurfaceWidth - x_cal + mXTranslate;
+                 left = float(rawTop - mRawPointerAxes.y.minValue) * mYScale + mYTranslate;
+                 right = float(rawBottom - mRawPointerAxes.y.minValue) * mYScale + mYTranslate;
+                 bottom = float(mRawPointerAxes.x.maxValue - rawLeft) * mXScale + mXTranslate;
+@@ -2273,6 +2302,8 @@ void TouchInputMapper::cookPointerData() {
+                 }
+                 break;
+             case DISPLAY_ORIENTATION_180:
++                x = mRawSurfaceWidth - x_cal;
++                y = mRawSurfaceHeight - y_cal + mYTranslate;
+                 left = float(mRawPointerAxes.x.maxValue - rawRight) * mXScale;
+                 right = float(mRawPointerAxes.x.maxValue - rawLeft) * mXScale;
+                 bottom = float(mRawPointerAxes.y.maxValue - rawTop) * mYScale + mYTranslate;
+@@ -2285,6 +2316,8 @@ void TouchInputMapper::cookPointerData() {
+                 }
+                 break;
+             case DISPLAY_ORIENTATION_270:
++                x = mRawSurfaceHeight - y_cal;
++                y = x_cal + mXTranslate;
+                 left = float(mRawPointerAxes.y.maxValue - rawBottom) * mYScale;
+                 right = float(mRawPointerAxes.y.maxValue - rawTop) * mYScale;
+                 bottom = float(rawRight - mRawPointerAxes.x.minValue) * mXScale + mXTranslate;
+@@ -2297,6 +2330,8 @@ void TouchInputMapper::cookPointerData() {
+                 }
+                 break;
+             default:
++                x = x_cal + mXTranslate;
++                y = y_cal + mYTranslate;
+                 left = float(rawLeft - mRawPointerAxes.x.minValue) * mXScale + mXTranslate;
+                 right = float(rawRight - mRawPointerAxes.x.minValue) * mXScale + mXTranslate;
+                 bottom = float(rawBottom - mRawPointerAxes.y.minValue) * mYScale + mYTranslate;
+@@ -2307,8 +2342,8 @@ void TouchInputMapper::cookPointerData() {
+         // Write output coords.
+         PointerCoords& out = mCurrentCookedState.cookedPointerData.pointerCoords[i];
+         out.clear();
+-        out.setAxisValue(AMOTION_EVENT_AXIS_X, xTransformed);
+-        out.setAxisValue(AMOTION_EVENT_AXIS_Y, yTransformed);
++        out.setAxisValue(AMOTION_EVENT_AXIS_X, x);
++        out.setAxisValue(AMOTION_EVENT_AXIS_Y, y);
+         out.setAxisValue(AMOTION_EVENT_AXIS_PRESSURE, pressure);
+         out.setAxisValue(AMOTION_EVENT_AXIS_SIZE, size);
+         out.setAxisValue(AMOTION_EVENT_AXIS_TOUCH_MAJOR, touchMajor);
+diff --git a/services/inputflinger/reader/mapper/TouchInputMapper.h b/services/inputflinger/reader/mapper/TouchInputMapper.h
+index a8b330f35f..ea95b9ee8d 100644
+--- a/services/inputflinger/reader/mapper/TouchInputMapper.h
++++ b/services/inputflinger/reader/mapper/TouchInputMapper.h
+@@ -290,6 +290,9 @@ protected:
+                 *outSize = 0;
+             }
+         }
++
++        // 5-point calibration parameters
++        int fiveCal[7];
+     } mCalibration;
+ 
+     // Affine location transformation/calibration

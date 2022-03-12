@@ -1,0 +1,21 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 21 Mar 2019 17:27:45 +0800
+Subject: [PATCH 46/54] Ignore configs and prebuilts subdirs
+
+Change-Id: Ic727f8369cc910ea8197c742a67c9310449a4376
+---
+ .gitignore | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/.gitignore b/.gitignore
+index 372e57abbf41..c2f86d05f2fb 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -157,3 +157,6 @@ x509.genkey
+ 
+ # Documentation toolchain
+ sphinx_*/
++
++configs
++prebuilts

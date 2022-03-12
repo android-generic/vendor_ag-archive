@@ -1,0 +1,21 @@
+From 53eea26af3fa3cd163d6c7578b293c211db00d42 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 4 Mar 2022 16:50:59 -0500
+Subject: [PATCH 20/25] Set STAGEFRIGHT_AVCENC_CFLAGS
+
+---
+ BoardConfig.mk | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index f82a739..eab3540 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -120,3 +120,4 @@ PRODUCT_FULL_TREBLE := true
+ BUILD_BROKEN_DUP_RULES := true
+ RELAX_USES_LIBRARY_CHECK := true
+ 
++STAGEFRIGHT_AVCENC_CFLAGS := -DANDROID_GCE
+-- 
+2.25.1
+

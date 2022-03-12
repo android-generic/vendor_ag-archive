@@ -1,0 +1,440 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Steve Kondik <steve@cyngn.com>
+Date: Sun, 18 Oct 2015 23:46:41 -0700
+Subject: [PATCH 3/4] Settings: Add developer setting for root access
+
+Also includes following change:
+
+    Settings: Set root access options appropriately
+
+    It is possible to be running a user build with a debuggable boot image.
+    In this case, "su" will not be available.  So only show none/adb.
+
+    Issue-Id: BACON-4461
+    Change-Id: Iaa7df8311b9ea81eabb1566ba6f9159fdc9fab34
+
+Change-Id: If96219d893c0dfdcf4ad36e1cd8de3a413db0e8b
+---
+ res/values/cm_strings.xml                     |  27 ++++
+ res/values/lineage_arrays.xml                 |  43 ++++++
+ res/xml/development_settings.xml              |   5 +
+ .../DevelopmentSettingsDashboardFragment.java |  18 ++-
+ .../development/RootAccessDialogHost.java     |  33 +++++
+ .../RootAccessPreferenceController.java       | 136 ++++++++++++++++++
+ .../development/RootAccessWarningDialog.java  |  81 +++++++++++
+ 7 files changed, 342 insertions(+), 1 deletion(-)
+ create mode 100644 res/values/cm_strings.xml
+ create mode 100644 res/values/lineage_arrays.xml
+ create mode 100644 src/com/android/settings/development/RootAccessDialogHost.java
+ create mode 100644 src/com/android/settings/development/RootAccessPreferenceController.java
+ create mode 100644 src/com/android/settings/development/RootAccessWarningDialog.java
+
+diff --git a/res/values/cm_strings.xml b/res/values/cm_strings.xml
+new file mode 100644
+index 0000000000..32f430a0fb
+--- /dev/null
++++ b/res/values/cm_strings.xml
+@@ -0,0 +1,27 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     Copyright (C) 2012-2016 The CyanogenMod Project
++     Copyright (C) 2017 The LineageOS Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
++    <!-- Setting checkbox title for root access -->
++    <string name="root_access">Root access</string>
++    <string name="root_access_warning_title">Allow root access?</string>
++    <string name="root_access_warning_message">Allowing apps to request root access is very dangerous and could compromise the security of your system!</string>
++    <string name="root_access_none">Disabled</string>
++    <string name="root_access_apps">Apps only</string>
++    <string name="root_access_adb">ADB only</string>
++    <string name="root_access_all">Apps and ADB</string>
++</resources>
+diff --git a/res/values/lineage_arrays.xml b/res/values/lineage_arrays.xml
+new file mode 100644
+index 0000000000..8e51beec66
+--- /dev/null
++++ b/res/values/lineage_arrays.xml
+@@ -0,0 +1,43 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!--
++     Copyright (C) 2012-2015 The CyanogenMod Project
++     Copyright (C) 2018 The LinegeOS Project
++
++     Licensed under the Apache License, Version 2.0 (the "License");
++     you may not use this file except in compliance with the License.
++     You may obtain a copy of the License at
++
++          http://www.apache.org/licenses/LICENSE-2.0
++
++     Unless required by applicable law or agreed to in writing, software
++     distributed under the License is distributed on an "AS IS" BASIS,
++     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++     See the License for the specific language governing permissions and
++     limitations under the License.
++-->
++<resources>
++    <!-- Arrays for root access capability -->
++    <string-array name="root_access_entries" translatable="false">
++        <item>@string/root_access_none</item>
++        <item>@string/root_access_apps</item>
++        <item>@string/root_access_adb</item>
++        <item>@string/root_access_all</item>
++    </string-array>
++
++    <string-array name="root_access_values" translatable="false">
++        <item>0</item>
++        <item>1</item>
++        <item>2</item>
++        <item>3</item>
++    </string-array>
++
++    <string-array name="root_access_entries_adb" translatable="false">
++        <item>@string/root_access_none</item>
++        <item>@string/root_access_adb</item>
++    </string-array>
++
++    <string-array name="root_access_values_adb" translatable="false">
++        <item>0</item>
++        <item>2</item>
++    </string-array>
++</resources>
+diff --git a/res/xml/development_settings.xml b/res/xml/development_settings.xml
+index 621351681c..2239c07f15 100644
+--- a/res/xml/development_settings.xml
++++ b/res/xml/development_settings.xml
+@@ -127,6 +127,11 @@
+             android:key="quick_settings_tiles"
+             android:title="@string/quick_settings_developer_tiles"
+             android:fragment="com.android.settings.development.qstile.DevelopmentTileConfigFragment" />
++
++        <ListPreference
++            android:key="root_access"
++            android:title="@string/root_access"
++            android:persistent="false" />
+     </PreferenceCategory>
+ 
+     <PreferenceCategory
+diff --git a/src/com/android/settings/development/DevelopmentSettingsDashboardFragment.java b/src/com/android/settings/development/DevelopmentSettingsDashboardFragment.java
+index fbab1fd124..72caf895cf 100644
+--- a/src/com/android/settings/development/DevelopmentSettingsDashboardFragment.java
++++ b/src/com/android/settings/development/DevelopmentSettingsDashboardFragment.java
+@@ -80,7 +80,8 @@ public class DevelopmentSettingsDashboardFragment extends RestrictedDashboardFra
+         implements OnMainSwitchChangeListener, OemUnlockDialogHost, AdbDialogHost,
+         AdbClearKeysDialogHost, LogPersistDialogHost,
+         BluetoothA2dpHwOffloadRebootDialog.OnA2dpHwDialogConfirmedListener,
+-        AbstractBluetoothPreferenceController.Callback {
++        AbstractBluetoothPreferenceController.Callback,
++        RootAccessDialogHost {
+ 
+     private static final String TAG = "DevSettingsDashboard";
+ 
+@@ -358,6 +359,20 @@ public class DevelopmentSettingsDashboardFragment extends RestrictedDashboardFra
+         controller.onA2dpHwDialogConfirmed();
+     }
+ 
++    @Override
++    public void onRootAccessDialogConfirmed() {
++        final RootAccessPreferenceController controller =
++                getDevelopmentOptionsController(RootAccessPreferenceController.class);
++        controller.onRootAccessDialogConfirmed();
++    }
++
++    @Override
++    public void onRootAccessDialogDismissed() {
++        final RootAccessPreferenceController controller =
++                getDevelopmentOptionsController(RootAccessPreferenceController.class);
++        controller.onRootAccessDialogDismissed();
++    }
++
+     @Override
+     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+         boolean handledResult = false;
+@@ -551,6 +566,7 @@ public class DevelopmentSettingsDashboardFragment extends RestrictedDashboardFra
+         controllers.add(new NonResizableMultiWindowPreferenceController(context));
+         controllers.add(new ShortcutManagerThrottlingPreferenceController(context));
+         controllers.add(new EnableGnssRawMeasFullTrackingPreferenceController(context));
++        controllers.add(new RootAccessPreferenceController(context, fragment));
+         controllers.add(new DefaultLaunchPreferenceController(context, "running_apps"));
+         controllers.add(new DefaultLaunchPreferenceController(context, "demo_mode"));
+         controllers.add(new DefaultLaunchPreferenceController(context, "quick_settings_tiles"));
+diff --git a/src/com/android/settings/development/RootAccessDialogHost.java b/src/com/android/settings/development/RootAccessDialogHost.java
+new file mode 100644
+index 0000000000..4a31ae8650
+--- /dev/null
++++ b/src/com/android/settings/development/RootAccessDialogHost.java
+@@ -0,0 +1,33 @@
++/*
++ * Copyright (C) 2018 The LineageOS Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.development;
++
++/**
++ * Interface for RootAccessWarningDialogFragment callbacks.
++ */
++public interface RootAccessDialogHost {
++
++    /**
++     * Called when the user presses ok on the warning dialog.
++     */
++    void onRootAccessDialogConfirmed();
++
++    /**
++     * Called when the user dismisses or cancels the warning dialog.
++     */
++    void onRootAccessDialogDismissed();
++}
+diff --git a/src/com/android/settings/development/RootAccessPreferenceController.java b/src/com/android/settings/development/RootAccessPreferenceController.java
+new file mode 100644
+index 0000000000..c6c1d2b891
+--- /dev/null
++++ b/src/com/android/settings/development/RootAccessPreferenceController.java
+@@ -0,0 +1,136 @@
++/*
++ * Copyright (C) 2018 The LineageOS Project
++ * Copyright (C) 2019 The Android-x86 Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.development;
++
++import android.content.Context;
++import android.os.Build;
++import android.os.SystemProperties;
++import android.os.UserManager;
++import android.provider.Settings;
++import androidx.annotation.VisibleForTesting;
++import androidx.preference.ListPreference;
++import androidx.preference.Preference;
++import androidx.preference.PreferenceScreen;
++
++import com.android.settings.R;
++import com.android.settings.core.PreferenceControllerMixin;
++import com.android.settingslib.development.DeveloperOptionsPreferenceController;
++
++import java.io.File;
++
++public class RootAccessPreferenceController extends DeveloperOptionsPreferenceController
++        implements Preference.OnPreferenceChangeListener, PreferenceControllerMixin {
++
++    private static final String TAG = "RootAccessPreferenceController";
++    private static final String PREF_KEY = "root_access";
++
++    private static final String ROOT_ACCESS_PROPERTY = "persist.sys.root_access";
++
++    private final DevelopmentSettingsDashboardFragment mFragment;
++    private Object mPendingRootAccessValue;
++
++    public RootAccessPreferenceController(Context context,
++            DevelopmentSettingsDashboardFragment fragment) {
++        super(context);
++
++        mFragment = fragment;
++    }
++
++    @Override
++    public boolean isAvailable() {
++        // User builds don't get root, and eng always gets root
++        return Build.IS_DEBUGGABLE || "eng".equals(Build.TYPE);
++    }
++
++    @Override
++    public String getPreferenceKey() {
++        return PREF_KEY;
++    }
++
++    @Override
++    public void displayPreference(PreferenceScreen screen) {
++        super.displayPreference(screen);
++
++        final File file = new File("/system/xbin/su");
++        if (file.exists()) {
++            ((ListPreference) mPreference).setEntries(R.array.root_access_entries);
++            ((ListPreference) mPreference).setEntryValues(R.array.root_access_values);
++        } else {
++            ((ListPreference) mPreference).setEntries(R.array.root_access_entries_adb);
++            ((ListPreference) mPreference).setEntryValues(R.array.root_access_values_adb);
++        }
++
++        updatePreference();
++
++        if (!isAdminUser()) {
++            mPreference.setEnabled(false);
++        }
++    }
++
++    @Override
++    public boolean onPreferenceChange(Preference preference, Object newValue) {
++        if ("0".equals(newValue.toString())) {
++            writeRootAccessOptions(newValue);
++        } else {
++            mPendingRootAccessValue = newValue;
++            RootAccessWarningDialog.show(mFragment, this);
++        }
++        return true;
++    }
++
++    @Override
++    protected void onDeveloperOptionsSwitchEnabled() {
++        if (isAdminUser()) {
++            mPreference.setEnabled(true);
++        }
++    }
++
++    public void onRootAccessDialogConfirmed() {
++        writeRootAccessOptions(mPendingRootAccessValue);
++    }
++
++    public void onRootAccessDialogDismissed() {
++        updatePreference();
++    }
++
++    private void writeRootAccessOptions(Object newValue) {
++        String oldValue = SystemProperties.get(ROOT_ACCESS_PROPERTY, "0");
++        SystemProperties.set(ROOT_ACCESS_PROPERTY, newValue.toString());
++        if (Integer.valueOf(newValue.toString()) < 2 && !oldValue.equals(newValue)
++                && SystemProperties.getInt("service.adb.root", 0) == 1) {
++            SystemProperties.set("service.adb.root", "0");
++            Settings.Secure.putInt(mContext.getContentResolver(),
++                    Settings.Secure.ADB_ENABLED, 0);
++            Settings.Secure.putInt(mContext.getContentResolver(),
++                    Settings.Secure.ADB_ENABLED, 1);
++        }
++        updatePreference();
++    }
++
++    private void updatePreference() {
++        String value = SystemProperties.get(ROOT_ACCESS_PROPERTY, "0");
++        ((ListPreference) mPreference).setValue(value);
++        ((ListPreference) mPreference).setSummary(mContext.getResources()
++                .getStringArray(R.array.root_access_entries)[Integer.valueOf(value)]);
++    }
++
++    @VisibleForTesting
++    boolean isAdminUser() {
++        return ((UserManager) mContext.getSystemService(Context.USER_SERVICE)).isAdminUser();
++    }
++}
+diff --git a/src/com/android/settings/development/RootAccessWarningDialog.java b/src/com/android/settings/development/RootAccessWarningDialog.java
+new file mode 100644
+index 0000000000..d501695b1d
+--- /dev/null
++++ b/src/com/android/settings/development/RootAccessWarningDialog.java
+@@ -0,0 +1,81 @@
++/*
++ * Copyright (C) 2018 The LineageOS Project
++ * Copyright (C) 2019 The Android-x86 Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.development;
++
++import android.app.Dialog;
++import android.content.DialogInterface;
++import android.os.Bundle;
++
++import androidx.appcompat.app.AlertDialog;
++import androidx.fragment.app.FragmentManager;
++
++import com.android.internal.logging.nano.MetricsProto;
++import com.android.settings.R;
++import com.android.settings.core.instrumentation.InstrumentedDialogFragment;
++
++public class RootAccessWarningDialog extends InstrumentedDialogFragment implements
++        DialogInterface.OnClickListener, DialogInterface.OnDismissListener {
++
++    public static final String TAG = "RootAccessWarningDialog";
++
++    public static void show(DevelopmentSettingsDashboardFragment host,
++            RootAccessPreferenceController controller) {
++        final FragmentManager manager = host.getActivity().getSupportFragmentManager();
++        if (manager.findFragmentByTag(TAG) == null) {
++            final RootAccessWarningDialog dialog = new RootAccessWarningDialog();
++            dialog.setTargetFragment(host, 0 /* requestCode */);
++            dialog.show(manager, TAG);
++        }
++    }
++
++    @Override
++    public int getMetricsCategory() {
++        return MetricsProto.MetricsEvent.TYPE_UNKNOWN;
++    }
++
++    @Override
++    public Dialog onCreateDialog(Bundle savedInstanceState) {
++        return new AlertDialog.Builder(getActivity())
++                .setTitle(R.string.root_access_warning_title)
++                .setMessage(R.string.root_access_warning_message)
++                .setPositiveButton(android.R.string.ok, this /* onClickListener */)
++                .setNegativeButton(android.R.string.cancel, this /* onClickListener */)
++                .create();
++    }
++
++    @Override
++    public void onClick(DialogInterface dialog, int which) {
++        final RootAccessDialogHost host = (RootAccessDialogHost) getTargetFragment();
++        if (host != null) {
++            if (which == DialogInterface.BUTTON_POSITIVE) {
++                host.onRootAccessDialogConfirmed();
++            } else {
++                host.onRootAccessDialogDismissed();
++            }
++        }
++    }
++
++    @Override
++    public void onDismiss(DialogInterface dialog) {
++        super.onDismiss(dialog);
++        final RootAccessDialogHost host = (RootAccessDialogHost) getTargetFragment();
++        if (host != null) {
++            host.onRootAccessDialogDismissed();
++        }
++    }
++}

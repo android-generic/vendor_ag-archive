@@ -1,0 +1,84 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Hua Wang <Hua.Wang@windriver.com>
+Date: Fri, 18 Jan 2013 18:51:13 +0800
+Subject: [PATCH 04/15] CameraSource: set up right frame rate
+
+If camera recorder uses HW codec, the capabilities of the codec
+are from media_profile.xml; If using SW codec, it is invisible
+to the applications, In other words, the applications won't be
+able to use the codec or query the capabilities of the codec
+at all, it only gives some ranges. StagefrightRecorder will
+use default parameters to configure camera, as for framerate,
+it should be from camera HAL feedback.
+
+Issue:AXIA-1446
+Change-Id: I77bf41239a19d26e2da1c28258288fdaa1c98297
+Signed-off-by: Hua Wang <Hua.Wang@windriver.com>
+---
+ media/libmediaplayerservice/StagefrightRecorder.cpp |  4 +++-
+ media/libmediaplayerservice/StagefrightRecorder.h   |  1 +
+ media/libstagefright/CameraSource.cpp               | 10 ++++++++++
+ 3 files changed, 14 insertions(+), 1 deletion(-)
+
+diff --git a/media/libmediaplayerservice/StagefrightRecorder.cpp b/media/libmediaplayerservice/StagefrightRecorder.cpp
+index bffd7b3243..235a296fd4 100644
+--- a/media/libmediaplayerservice/StagefrightRecorder.cpp
++++ b/media/libmediaplayerservice/StagefrightRecorder.cpp
+@@ -371,6 +371,7 @@ status_t StagefrightRecorder::setVideoFrameRate(int frames_per_second) {
+ 
+     // Additional check on the frame rate will be performed later
+     mFrameRate = frames_per_second;
++    mUserSetupFrameRate = true;
+ 
+     return OK;
+ }
+@@ -1916,7 +1917,7 @@ status_t StagefrightRecorder::setupCameraSource(
+ 
+     // When frame rate is not set, the actual frame rate will be set to
+     // the current frame rate being used.
+-    if (mFrameRate == -1) {
++    if (mFrameRate == -1 || !mUserSetupFrameRate) {
+         int32_t frameRate = 0;
+         CHECK ((*cameraSource)->getFormat()->findInt32(
+                     kKeyFrameRate, &frameRate));
+@@ -2459,6 +2460,7 @@ status_t StagefrightRecorder::reset() {
+     mCameraSourceTimeLapse = NULL;
+     mMetaDataStoredInVideoBuffers = kMetadataBufferTypeInvalid;
+     mEncoderProfiles = MediaProfiles::getInstance();
++    mUserSetupFrameRate = false;
+     mRotationDegrees = 0;
+     mLatitudex10000 = -3600000;
+     mLongitudex10000 = -3600000;
+diff --git a/media/libmediaplayerservice/StagefrightRecorder.h b/media/libmediaplayerservice/StagefrightRecorder.h
+index d6de47f3cd..e89c941a2c 100644
+--- a/media/libmediaplayerservice/StagefrightRecorder.h
++++ b/media/libmediaplayerservice/StagefrightRecorder.h
+@@ -176,6 +176,7 @@ private:
+     sp<MediaCodecSource> mVideoEncoderSource;
+ 
+     bool mStarted;
++    bool mUserSetupFrameRate;
+     // Needed when GLFrames are encoded.
+     // An <IGraphicBufferProducer> pointer
+     // will be sent to the client side using which the
+diff --git a/media/libstagefright/CameraSource.cpp b/media/libstagefright/CameraSource.cpp
+index 95afa62620..00d16219e7 100644
+--- a/media/libstagefright/CameraSource.cpp
++++ b/media/libstagefright/CameraSource.cpp
+@@ -542,6 +542,16 @@ status_t CameraSource::initWithCameraAccess(
+     if ((err = isCameraColorFormatSupported(params)) != OK) {
+         return err;
+     }
++    const char* supportedFrameRates =
++            params.get(CameraParameters::KEY_SUPPORTED_PREVIEW_FRAME_RATES);
++    CHECK(supportedFrameRates != NULL);
++    char buffer[4];
++    snprintf(buffer, 4, "%d", frameRate);
++    if (!strstr(supportedFrameRates, buffer)) {
++        frameRate = atoi(supportedFrameRates);
++    } else {
++        frameRate = params.getPreviewFrameRate();
++    }
+ 
+     // Set the camera to use the requested video frame size
+     // and/or frame rate.

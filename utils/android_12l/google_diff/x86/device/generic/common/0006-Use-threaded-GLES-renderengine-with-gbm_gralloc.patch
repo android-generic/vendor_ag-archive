@@ -1,0 +1,29 @@
+From dc5dd7661326a4bd7422f4e5380b5327dabd49ab Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Thu, 21 Oct 2021 21:19:02 +0200
+Subject: [PATCH 06/25] Use threaded GLES renderengine with gbm_gralloc
+
+gbm_gralloc does not work with Skia renderengine, which is default in
+Android S. This engine attempts to use HAL_PIXEL_FORMAT_RGBA_FP16
+format, not supported by gbm_gralloc. Use threaded GLES instead when
+using gbm_gralloc.
+---
+ init.sh | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/init.sh b/init.sh
+index b46eadc..1f2842d 100644
+--- a/init.sh
++++ b/init.sh
+@@ -205,6 +205,8 @@ function init_hal_gralloc()
+ 	esac
+ 
+ 	[ -z "$(getprop ro.hardware.gralloc)" ] && set_property ro.hardware.egl swiftshader
++	# gbm_gralloc does not support (yet) the skia renderengine (default in Android S)
++	[ "$(getprop ro.hardware.gralloc)" = "gbm" ] && set_property debug.renderengine.backend threaded
+ 	[ -n "$DEBUG" ] && set_property debug.egl.trace error
+ }
+ 
+-- 
+2.25.1
+

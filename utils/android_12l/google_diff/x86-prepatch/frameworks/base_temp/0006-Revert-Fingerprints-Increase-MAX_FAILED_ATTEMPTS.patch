@@ -1,0 +1,26 @@
+From 492e67b164092a731525430f84661e91ddff3b0b Mon Sep 17 00:00:00 2001
+From: xyyx <xyyx@mail.ru>
+Date: Tue, 26 Sep 2017 10:51:30 +0800
+Subject: [PATCH 06/13] Revert "Fingerprints: Increase MAX_FAILED_ATTEMPTS"
+
+This reverts commit 53327ea29d1b47843725ba02558529539132f76d.
+---
+ .../server/biometrics/fingerprint/FingerprintService.java       | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/services/core/java/com/android/server/biometrics/fingerprint/FingerprintService.java b/services/core/java/com/android/server/biometrics/fingerprint/FingerprintService.java
+index 82f5eab8862..0f237f0fcbe 100644
+--- a/services/core/java/com/android/server/biometrics/fingerprint/FingerprintService.java
++++ b/services/core/java/com/android/server/biometrics/fingerprint/FingerprintService.java
+@@ -105,7 +105,7 @@ public class FingerprintService extends BiometricServiceBase {
+     private static final String FP_DATA_DIR = "fpdata";
+     private static final String ACTION_LOCKOUT_RESET =
+             "com.android.server.biometrics.fingerprint.ACTION_LOCKOUT_RESET";
+-    private static final int MAX_FAILED_ATTEMPTS_LOCKOUT_TIMED = 10;
++    private static final int MAX_FAILED_ATTEMPTS_LOCKOUT_TIMED = 5;
+     private static final int MAX_FAILED_ATTEMPTS_LOCKOUT_PERMANENT = 20;
+     private static final long FAIL_LOCKOUT_TIMEOUT_MS = 30 * 1000;
+     private static final String KEY_LOCKOUT_RESET_USER = "lockout_reset_user";
+-- 
+2.17.1
+

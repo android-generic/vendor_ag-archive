@@ -1,0 +1,32 @@
+From 74574b2f87643a6da414cbb3ba877398b91da830 Mon Sep 17 00:00:00 2001
+From: Arvind Sankar <nivedita@alum.mit.edu>
+Date: Fri, 10 Jan 2020 15:23:49 -0500
+Subject: [PATCH 082/106] x86/tools/relocs: Add _etext and
+ __end_of_kernel_reserve to S_REL
+
+Pre-2.23 binutils makes symbols defined outside sections absolute, so
+these two symbols break the build on old linkers.
+
+Fixes: b907693883fd ("x86/vmlinux: Actually use _etext for the end of the text segment")
+Fixes: c603a309cc75 ("x86/mm: Identify the end of the kernel area to be reserved")
+Signed-off-by: Arvind Sankar <nivedita@alum.mit.edu>
+---
+ arch/x86/tools/relocs.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/x86/tools/relocs.c b/arch/x86/tools/relocs.c
+index ce7188cbdae5..0a6146d6414f 100644
+--- a/arch/x86/tools/relocs.c
++++ b/arch/x86/tools/relocs.c
+@@ -78,6 +78,8 @@ static const char * const sym_regex_kernel[S_NSYMTYPES] = {
+ 	"__end_rodata_hpage_align|"
+ #endif
+ 	"__vvar_page|"
++	"_etext|"
++	"__end_of_kernel_reserve|"
+ 	"_end)$"
+ };
+ 
+-- 
+2.17.1
+

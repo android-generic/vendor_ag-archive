@@ -1,0 +1,32 @@
+From 727921af5092a556edd8b6ab407ec84c43311978 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Thu, 21 Oct 2021 20:51:58 +0200
+Subject: [PATCH 21/23] Don't fail first stage mount if fstab is not found
+
+The first stage mount looks for default fstab, but we rely on properties
+to find fstab.${ro.hardware}. However properties are not available yet
+in that stage. Prior to Android S, failure to find default fstab at that
+stage was non fatal. As we don't need the first stage mount, just make
+it non fatal again.
+
+Change-Id: Ibaf1d9d1c278e2dcacbbd149f3661e00c3cc1553
+---
+ init/first_stage_mount.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init/first_stage_mount.cpp b/init/first_stage_mount.cpp
+index f5c10bbd49e..57771f3cd31 100644
+--- a/init/first_stage_mount.cpp
++++ b/init/first_stage_mount.cpp
+@@ -171,7 +171,7 @@ static Result<Fstab> ReadFirstStageFstab() {
+                                        }),
+                         fstab.end());
+         } else {
+-            return Error() << "failed to read default fstab for first stage mount";
++            LOG(INFO) << "failed to read default fstab for first stage mount";
+         }
+     }
+     return fstab;
+-- 
+2.25.1
+

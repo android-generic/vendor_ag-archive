@@ -1,0 +1,25 @@
+From 7d9408e818be3fcb896b4ff4218698e255a70d1b Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Sun, 18 Oct 2020 21:46:58 -0400
+Subject: [PATCH 07/36] Use wifi supplicant HAL 1.3
+
+---
+ init.x86.rc | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/init.x86.rc b/init.x86.rc
+index c589a46..58b3800 100644
+--- a/init.x86.rc
++++ b/init.x86.rc
+@@ -59,6 +59,8 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant -dd \
+     #   group wifi inet keystore
+     interface android.hardware.wifi.supplicant@1.0::ISupplicant default
+     interface android.hardware.wifi.supplicant@1.1::ISupplicant default
++    interface android.hardware.wifi.supplicant@1.2::ISupplicant default
++    interface android.hardware.wifi.supplicant@1.3::ISupplicant default
+     class main
+     socket wpa_wlan0 dgram 660 wifi wifi
+     disabled
+-- 
+2.17.1
+

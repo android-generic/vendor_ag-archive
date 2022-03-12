@@ -1,0 +1,31 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Mon, 23 Nov 2015 00:46:22 +0800
+Subject: [PATCH 05/15] Don't use YV12 color format for video decoding
+
+YV12 is not supported by Mesa yet. This has to be reverted
+when we can enable h/w decoder.
+---
+ media/libstagefright/colorconversion/SoftwareRenderer.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/media/libstagefright/colorconversion/SoftwareRenderer.cpp b/media/libstagefright/colorconversion/SoftwareRenderer.cpp
+index 4711315615..4d889865f1 100644
+--- a/media/libstagefright/colorconversion/SoftwareRenderer.cpp
++++ b/media/libstagefright/colorconversion/SoftwareRenderer.cpp
+@@ -130,6 +130,7 @@ void SoftwareRenderer::resetFormatIfChanged(
+     // hardware has YUV12 and RGBA8888 support, so convert known formats
+     {
+         switch (mColorFormat) {
++#if 0
+             case OMX_COLOR_FormatYUV420Planar:
+             case OMX_COLOR_FormatYUV420SemiPlanar:
+             case OMX_TI_COLOR_FormatYUV420PackedSemiPlanar:
+@@ -139,6 +140,7 @@ void SoftwareRenderer::resetFormatIfChanged(
+                 bufHeight = (mCropHeight + 1) & ~1;
+                 break;
+             }
++#endif
+             case OMX_COLOR_Format24bitRGB888:
+             {
+                 halFormat = HAL_PIXEL_FORMAT_RGB_888;

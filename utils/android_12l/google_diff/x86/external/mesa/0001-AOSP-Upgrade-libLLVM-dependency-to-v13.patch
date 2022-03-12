@@ -1,0 +1,35 @@
+From f572b661fa985b1370eaa4be7f85129cf52280e5 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Mon, 11 Oct 2021 09:19:27 +0200
+Subject: [PATCH] AOSP: Upgrade libLLVM dependency to v13
+
+llvm-project version adapted for AOSP can be found here [1]
+
+[1] https://github.com/maurossi/llvm-project/tree/release_13.x
+
+Conflicts:
+	android/Android.mk
+---
+ android/Android.mk | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/android/Android.mk b/android/Android.mk
+index 002c4af5a73..5ee9eaa641b 100644
+--- a/android/Android.mk
++++ b/android/Android.mk
+@@ -89,8 +89,10 @@ MESON_GEN_PKGCONFIGS += DirectX-Headers
+ endif
+ 
+ ifneq ($(MESON_GEN_LLVM_STUB),)
+-MESON_LLVM_VERSION := 12.0.0
+-LOCAL_SHARED_LIBRARIES += libLLVM12
++MESON_LLVM_VERSION := 13.0.0
++# Required for swr gallium target
++MESON_LLVM_IRBUILDER_PATH := external/llvm-project/llvm/include/llvm/IR/IRBuilder.h
++LOCAL_SHARED_LIBRARIES += libLLVM13
+ endif
+ 
+ ifeq ($(shell test $(PLATFORM_SDK_VERSION) -ge 30; echo $$?), 0)
+-- 
+2.25.1
+

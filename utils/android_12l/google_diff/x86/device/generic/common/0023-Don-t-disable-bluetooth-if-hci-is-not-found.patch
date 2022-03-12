@@ -1,0 +1,26 @@
+From 7703a1fe940922f673f35c17a3133e85a8a70b10 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 2 Mar 2022 19:10:01 -0500
+Subject: [PATCH 23/25] Don't disable bluetooth if hci is not found
+
+---
+ init.sh | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/init.sh b/init.sh
+index 07f5d35..1d58291 100644
+--- a/init.sh
++++ b/init.sh
+@@ -464,7 +464,8 @@ function do_netconsole()
+ 
+ function do_bootcomplete()
+ {
+-	hciconfig | grep -q hci || pm disable com.android.bluetooth
++	#~ hciconfig | grep -q hci || pm disable com.android.bluetooth
++	hciconfig | grep -q hci
+ 
+ 	init_cpu_governor
+ 
+-- 
+2.25.1
+

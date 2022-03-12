@@ -1,0 +1,36 @@
+From ad86269d30ce7784d2962b722a50dc4877f05a02 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Fri, 8 Aug 2014 18:17:04 +0800
+Subject: [PATCH 02/23] libutils: fix incorrect calculation in utf8_length()
+ method
+
+The first character of utf-8 could be larger than 128. If use signed char
+variable to hold it, it would be treated as negative. That may result in
+some unexpected errors.
+
+For example, without this patch, suppose the code is 0xE88888, then
+first_char is 0xE8 and converted to int32_t type (0xFFFFFFE8) and
+masked with (~to_ignore_mask). The result utf32 is FFF08208
+which is incorrect.
+
+Change-Id: I72b355f380865bc375251eb287fc225fd585a115
+---
+ libutils/Unicode.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libutils/Unicode.cpp b/libutils/Unicode.cpp
+index 3ffcf7e34c5..e956c0a92ed 100644
+--- a/libutils/Unicode.cpp
++++ b/libutils/Unicode.cpp
+@@ -103,7 +103,7 @@ static inline void utf32_codepoint_to_utf8(uint8_t* dstP, char32_t srcChar, size
+ 
+ static inline int32_t utf32_at_internal(const char* cur, size_t *num_read)
+ {
+-    const char first_char = *cur;
++    const unsigned char first_char = *cur;
+     if ((first_char & 0x80) == 0) { // ASCII
+         *num_read = 1;
+         return *cur;
+-- 
+2.25.1
+

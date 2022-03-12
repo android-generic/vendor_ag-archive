@@ -1,0 +1,143 @@
+From d5b6801b617372ca438ea00acf5222c06c9a94c2 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 4 Oct 2020 21:29:44 +0200
+Subject: [PATCH 099/106] Revert "drm/virtio: fix DRM_FORMAT_* handling"
+
+This reverts commit 42fd9e6c29b39481fd4ef31715c6f0c427966f20.
+
+This restores the standard pixel formats that Android requires of all
+GPU implementations.
+
+ Conflicts:
+	drivers/gpu/drm/virtio/virtgpu_fb.c (was removed in kernel 5.3)
+	drivers/gpu/drm/virtio/virtgpu_gem.c (was kept as per kernel 5.9)
+---
+ drivers/gpu/drm/virtio/virtgpu_display.c |  5 ---
+ drivers/gpu/drm/virtio/virtgpu_gem.c     |  5 +--
+ drivers/gpu/drm/virtio/virtgpu_plane.c   | 54 +++++++++++++++++++++++-
+ 3 files changed, 53 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/gpu/drm/virtio/virtgpu_display.c b/drivers/gpu/drm/virtio/virtgpu_display.c
+index a6caebd4a0dd..bb955dfaca14 100644
+--- a/drivers/gpu/drm/virtio/virtgpu_display.c
++++ b/drivers/gpu/drm/virtio/virtgpu_display.c
+@@ -298,10 +298,6 @@ virtio_gpu_user_framebuffer_create(struct drm_device *dev,
+ 	struct virtio_gpu_framebuffer *virtio_gpu_fb;
+ 	int ret;
+ 
+-	if (mode_cmd->pixel_format != DRM_FORMAT_HOST_XRGB8888 &&
+-	    mode_cmd->pixel_format != DRM_FORMAT_HOST_ARGB8888)
+-		return ERR_PTR(-ENOENT);
+-
+ 	/* lookup object associated with res handle */
+ 	obj = drm_gem_object_lookup(file_priv, mode_cmd->handles[0]);
+ 	if (!obj)
+@@ -335,7 +331,6 @@ int virtio_gpu_modeset_init(struct virtio_gpu_device *vgdev)
+ 	if (ret)
+ 		return ret;
+ 
+-	vgdev->ddev->mode_config.quirk_addfb_prefer_host_byte_order = true;
+ 	vgdev->ddev->mode_config.funcs = &virtio_gpu_mode_funcs;
+ 
+ 	/* modes will be validated against the framebuffer size */
+diff --git a/drivers/gpu/drm/virtio/virtgpu_gem.c b/drivers/gpu/drm/virtio/virtgpu_gem.c
+index c30c75ee83fc..50e9b9358aeb 100644
+--- a/drivers/gpu/drm/virtio/virtgpu_gem.c
++++ b/drivers/gpu/drm/virtio/virtgpu_gem.c
+@@ -70,10 +70,7 @@ int virtio_gpu_mode_dumb_create(struct drm_file *file_priv,
+ 	int ret;
+ 	uint32_t pitch;
+ 
+-	if (args->bpp != 32)
+-		return -EINVAL;
+-
+-	pitch = args->width * 4;
++	pitch = args->width * ((args->bpp + 1) / 8);
+ 	args->size = pitch * args->height;
+ 	args->size = ALIGN(args->size, PAGE_SIZE);
+ 
+diff --git a/drivers/gpu/drm/virtio/virtgpu_plane.c b/drivers/gpu/drm/virtio/virtgpu_plane.c
+index 42ac08ed1442..5f3d0215ac57 100644
+--- a/drivers/gpu/drm/virtio/virtgpu_plane.c
++++ b/drivers/gpu/drm/virtio/virtgpu_plane.c
+@@ -31,11 +31,22 @@
+ #include "virtgpu_drv.h"
+ 
+ static const uint32_t virtio_gpu_formats[] = {
+-	DRM_FORMAT_HOST_XRGB8888,
++	DRM_FORMAT_XRGB8888,
++	DRM_FORMAT_ARGB8888,
++	DRM_FORMAT_BGRX8888,
++	DRM_FORMAT_BGRA8888,
++	DRM_FORMAT_RGBX8888,
++	DRM_FORMAT_RGBA8888,
++	DRM_FORMAT_XBGR8888,
++	DRM_FORMAT_ABGR8888,
+ };
+ 
+ static const uint32_t virtio_gpu_cursor_formats[] = {
+-	DRM_FORMAT_HOST_ARGB8888,
++#ifdef __BIG_ENDIAN
++	DRM_FORMAT_BGRA8888,
++#else
++	DRM_FORMAT_ARGB8888,
++#endif
+ };
+ 
+ uint32_t virtio_gpu_translate_format(uint32_t drm_fourcc)
+@@ -43,6 +54,32 @@ uint32_t virtio_gpu_translate_format(uint32_t drm_fourcc)
+ 	uint32_t format;
+ 
+ 	switch (drm_fourcc) {
++#ifdef __BIG_ENDIAN
++	case DRM_FORMAT_XRGB8888:
++		format = VIRTIO_GPU_FORMAT_X8R8G8B8_UNORM;
++		break;
++	case DRM_FORMAT_ARGB8888:
++		format = VIRTIO_GPU_FORMAT_A8R8G8B8_UNORM;
++		break;
++	case DRM_FORMAT_BGRX8888:
++		format = VIRTIO_GPU_FORMAT_B8G8R8X8_UNORM;
++		break;
++	case DRM_FORMAT_BGRA8888:
++		format = VIRTIO_GPU_FORMAT_B8G8R8A8_UNORM;
++		break;
++	case DRM_FORMAT_RGBX8888:
++		format = VIRTIO_GPU_FORMAT_R8G8B8X8_UNORM;
++		break;
++	case DRM_FORMAT_RGBA8888:
++		format = VIRTIO_GPU_FORMAT_R8G8B8A8_UNORM;
++		break;
++	case DRM_FORMAT_XBGR8888:
++		format = VIRTIO_GPU_FORMAT_X8B8G8R8_UNORM;
++		break;
++	case DRM_FORMAT_ABGR8888:
++		format = VIRTIO_GPU_FORMAT_A8B8G8R8_UNORM;
++		break;
++#else
+ 	case DRM_FORMAT_XRGB8888:
+ 		format = VIRTIO_GPU_FORMAT_B8G8R8X8_UNORM;
+ 		break;
+@@ -55,6 +92,19 @@ uint32_t virtio_gpu_translate_format(uint32_t drm_fourcc)
+ 	case DRM_FORMAT_BGRA8888:
+ 		format = VIRTIO_GPU_FORMAT_A8R8G8B8_UNORM;
+ 		break;
++	case DRM_FORMAT_RGBX8888:
++		format = VIRTIO_GPU_FORMAT_X8B8G8R8_UNORM;
++		break;
++	case DRM_FORMAT_RGBA8888:
++		format = VIRTIO_GPU_FORMAT_A8B8G8R8_UNORM;
++		break;
++	case DRM_FORMAT_XBGR8888:
++		format = VIRTIO_GPU_FORMAT_R8G8B8X8_UNORM;
++		break;
++	case DRM_FORMAT_ABGR8888:
++		format = VIRTIO_GPU_FORMAT_R8G8B8A8_UNORM;
++		break;
++#endif
+ 	default:
+ 		/*
+ 		 * This should not happen, we handle everything listed
+-- 
+2.17.1
+

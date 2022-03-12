@@ -1,0 +1,145 @@
+From 3b6b41394f78661d1c6c867ebafb11afcec0dcba Mon Sep 17 00:00:00 2001
+From: jgu21 <jinghui.gu@intel.com>
+Date: Wed, 30 Mar 2016 02:57:38 -0400
+Subject: [PATCH 13/30] Fix KW issues on PRC compatibility
+
+Fix KW issues on PRC compatibility,introduced by below commit.
+https://android.intel.com/#/c/484542/
+
+Change-Id: Ib10899655dd2a18569387dbafbe33856acf5df59
+Tracked-On: https://jira01.devtools.intel.com/browse/OAM-26904
+Signed-off-by: jgu21 <jinghui.gu@intel.com>
+Reviewed-on: https://android.intel.com:443/487804
+---
+ core/jni/abipicker/ABIPicker.cpp              | 42 ++++++++++---------
+ ...d_internal_content_NativeLibraryHelper.cpp |  7 +++-
+ 2 files changed, 28 insertions(+), 21 deletions(-)
+
+diff --git a/core/jni/abipicker/ABIPicker.cpp b/core/jni/abipicker/ABIPicker.cpp
+index fcfb371ba022..374b1f831e51 100644
+--- a/core/jni/abipicker/ABIPicker.cpp
++++ b/core/jni/abipicker/ABIPicker.cpp
+@@ -44,12 +44,15 @@ static const char* iaRelated[] = {"intel", "intl", "atom", "x86", "x64"};
+ 
+ //////////////////////////////////////////////////////////////////////
+ void getConfig(const char* cfgFile , Vector<char*>& cfgVec) {
+-    FILE* fp = fopen(cfgFile, "r");
+-    assert(fp != NULL);
+     int read = -1;
+     char *line = NULL;
+     size_t len = 0;
+ 
++    FILE* fp = fopen(cfgFile, "r");
++    if (fp == NULL) {
++        return;
++    }
++
+     while ((read = getline(&line, &len, fp)) != -1) {
+         int i = 0 , j = 0;
+         char *cfgline = (char*)malloc(len);
+@@ -262,10 +265,10 @@ bool ABIPicker::compare(char* armRef, char* iaRef,
+ 
+         Vector<char*>* iaRefList = getLibList(iaRef);
+         Vector<char*>* armRefList = getLibList(armRef);
++        if (iaRefList == NULL || armRefList == NULL) {
++            break;
++        }
+ 
+-        // if contains the key words in iaRelated, just return true
+-        assert(iaRefList != NULL);
+-        assert(armRefList != NULL);
+         if (isReliableLib(*iaRefList)) {
+             *result = iaRef;
+             break;
+@@ -341,27 +344,29 @@ bool ABIPicker::compareLibList(Vector<char*>& iaRefList,
+     // till the end, and the last result is equal
+     if (itArm == armRefList.end() && isEqual){
+         return true;
+-    } else {
+-        return false;
+     }
++
++    return false;
+ }
+ 
+ bool ABIPicker::compare3rdPartyLibList(
+                 char* iaRef, char* armRef,
+                 size_t* iaIsvLibCount, size_t* armIsvLibCount) {
++    bool result = true;
++
+     Vector<char*>* iaRefList = getLibList(iaRef);
+     Vector<char*>* armRefList = getLibList(armRef);
+-    assert(iaRefList != NULL);
+-    assert(armRefList != NULL);
+-
+-    Vector<char*>* armRef3rdPartyLibList = new Vector<char*>();
+-    Vector<char*>::iterator itArm = armRefList->begin();
++    if (iaRefList == NULL || armRefList == NULL) {
++        return result;
++    }
+ 
+-    // Load thirdPartyso
+     if (!thirdload) {
+         getConfig(THIRDPARTY, thirdPartySO);
+         thirdload = true;
+     }
++
++    Vector<char*>* armRef3rdPartyLibList = new Vector<char*>();
++    Vector<char*>::iterator itArm = armRefList->begin();
+     while (itArm != armRefList->end()) {
+         char* armLibName = *itArm;
+         if (isInThirdPartySOList(armLibName)) {
+@@ -385,11 +390,10 @@ bool ABIPicker::compare3rdPartyLibList(
+ 
+         itIa++;
+     }
+-    bool result = compareLibList(*iaRef3rdPartyLibList, *armRef3rdPartyLibList);
++    result = compareLibList(*iaRef3rdPartyLibList, *armRef3rdPartyLibList);
+ 
+-    //release the memory
+-    free(armRef3rdPartyLibList);
+-    free(iaRef3rdPartyLibList);
++    delete armRef3rdPartyLibList;
++    delete iaRef3rdPartyLibList;
+     return result;
+ }
+ 
+@@ -472,11 +476,9 @@ bool ABIPicker::foundMixedELF(const char* abiName) {
+ //////////////////////////////////////////////////////////////////////
+ ABIPicker::ABIPicker(const char* pkgName, Vector<ScopedUtfChars*> abiList) {
+     mLibList = new Vector<struct libInfo*>();
+-    mpkgName = (char*)malloc(strlen(pkgName)+1);
++    mpkgName = strdup(pkgName);
+     if (!mpkgName) {
+         P_LOG("ABIPicker Construct Allocated space fails");
+-    } else {
+-        snprintf(mpkgName, strlen(pkgName)+1, "%s", pkgName);
+     }
+     Vector<ScopedUtfChars*>::iterator it = abiList.begin();
+     while (it != abiList.end()) {
+diff --git a/core/jni/com_android_internal_content_NativeLibraryHelper.cpp b/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
+index 36eac3b46b13..8bb5a86a0830 100644
+--- a/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
++++ b/core/jni/com_android_internal_content_NativeLibraryHelper.cpp
+@@ -537,12 +537,17 @@ com_android_internal_content_NativeLibraryHelper_findSupportedAbi_replace(
+     Vector<ScopedUtfChars*> supportedAbis;
+ 
+     assert(apkdir_size < 256 - 15);
+-    strcpy(abiFlag, apkdir.c_str());
++    if (strlcpy(abiFlag, apkdir.c_str(), 256) != apkdir.size()) {
++        return (jint)abiType;
++    }
++
+     abiFlag[apkdir_size] = '/';
+     abiFlag[apkdir_size + 1] = '.';
+     for (int i = 0; i < numAbis; i++) {
+         ScopedUtfChars* abiName = new ScopedUtfChars(env,
+                  (jstring)env->GetObjectArrayElement(javaCpuAbisToSearch, i));
++        assert(abiName != NULL);
++        assert(abiName->c_str() != NULL);
+         if (strlcpy(abiFlag + apkdir_size + 2, abiName->c_str(), 256 - apkdir_size - 2)
+                 == abiName->size()) {
+             if (access(abiFlag, F_OK) == 0) {
+-- 
+2.25.1
+

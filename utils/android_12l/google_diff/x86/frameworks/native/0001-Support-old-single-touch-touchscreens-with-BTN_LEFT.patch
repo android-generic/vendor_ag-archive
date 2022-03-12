@@ -1,0 +1,53 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: DanielK <daniel.kenzelmann@googlemail.com>
+Date: Tue, 20 Mar 2012 14:28:43 +0800
+Subject: [PATCH 01/15] Support old single-touch touchscreens with BTN_LEFT
+
+---
+ services/inputflinger/reader/EventHub.cpp                    | 2 +-
+ .../reader/mapper/accumulator/TouchButtonAccumulator.cpp     | 5 +++--
+ 2 files changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/services/inputflinger/reader/EventHub.cpp b/services/inputflinger/reader/EventHub.cpp
+index b19b4195d1..7e96babac3 100644
+--- a/services/inputflinger/reader/EventHub.cpp
++++ b/services/inputflinger/reader/EventHub.cpp
+@@ -2013,7 +2013,7 @@ void EventHub::openDeviceLocked(const std::string& devicePath) {
+             device->classes |= (InputDeviceClass::TOUCH | InputDeviceClass::TOUCH_MT);
+         }
+         // Is this an old style single-touch driver?
+-    } else if (device->keyBitmask.test(BTN_TOUCH) && device->absBitmask.test(ABS_X) &&
++    } else if ((device->keyBitmask.test(BTN_TOUCH) || device->keyBitmask.test(BTN_LEFT)) && device->absBitmask.test(ABS_X) &&
+                device->absBitmask.test(ABS_Y)) {
+         device->classes |= InputDeviceClass::TOUCH;
+         // Is this a BT stylus?
+diff --git a/services/inputflinger/reader/mapper/accumulator/TouchButtonAccumulator.cpp b/services/inputflinger/reader/mapper/accumulator/TouchButtonAccumulator.cpp
+index 86153d3f5e..a5e0150e92 100644
+--- a/services/inputflinger/reader/mapper/accumulator/TouchButtonAccumulator.cpp
++++ b/services/inputflinger/reader/mapper/accumulator/TouchButtonAccumulator.cpp
+@@ -26,7 +26,7 @@ TouchButtonAccumulator::TouchButtonAccumulator() : mHaveBtnTouch(false), mHaveSt
+ }
+ 
+ void TouchButtonAccumulator::configure(InputDeviceContext& deviceContext) {
+-    mHaveBtnTouch = deviceContext.hasScanCode(BTN_TOUCH);
++    mHaveBtnTouch = deviceContext.hasScanCode(BTN_TOUCH) || deviceContext.hasScanCode(BTN_LEFT);
+     mHaveStylus = deviceContext.hasScanCode(BTN_TOOL_PEN) ||
+             deviceContext.hasScanCode(BTN_TOOL_RUBBER) ||
+             deviceContext.hasScanCode(BTN_TOOL_BRUSH) ||
+@@ -35,7 +35,7 @@ void TouchButtonAccumulator::configure(InputDeviceContext& deviceContext) {
+ }
+ 
+ void TouchButtonAccumulator::reset(InputDeviceContext& deviceContext) {
+-    mBtnTouch = deviceContext.isKeyPressed(BTN_TOUCH);
++    mBtnTouch = deviceContext.isKeyPressed(BTN_TOUCH) || deviceContext.isKeyPressed(BTN_LEFT);
+     mBtnStylus = deviceContext.isKeyPressed(BTN_STYLUS);
+     // BTN_0 is what gets mapped for the HID usage Digitizers.SecondaryBarrelSwitch
+     mBtnStylus2 = deviceContext.isKeyPressed(BTN_STYLUS2) || deviceContext.isKeyPressed(BTN_0);
+@@ -73,6 +73,7 @@ void TouchButtonAccumulator::process(const RawEvent* rawEvent) {
+     if (rawEvent->type == EV_KEY) {
+         switch (rawEvent->code) {
+             case BTN_TOUCH:
++            case BTN_LEFT:
+                 mBtnTouch = rawEvent->value;
+                 break;
+             case BTN_STYLUS:

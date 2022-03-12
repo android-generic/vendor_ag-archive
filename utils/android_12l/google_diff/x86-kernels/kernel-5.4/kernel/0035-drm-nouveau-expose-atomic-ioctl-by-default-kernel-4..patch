@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Wed, 1 Nov 2017 18:08:34 +0100
+Subject: [PATCH 35/54] drm/nouveau: expose atomic ioctl by default (kernel
+ 4.18)
+
+atomic module parameter current default is disabled,
+we set to enabled for convenience and simplification
+---
+ drivers/gpu/drm/nouveau/nouveau_drm.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/nouveau/nouveau_drm.c b/drivers/gpu/drm/nouveau/nouveau_drm.c
+index 42fc5c813a9b..ebf20a9acebc 100644
+--- a/drivers/gpu/drm/nouveau/nouveau_drm.c
++++ b/drivers/gpu/drm/nouveau/nouveau_drm.c
+@@ -85,8 +85,8 @@ MODULE_PARM_DESC(modeset, "enable driver (default: auto, "
+ int nouveau_modeset = -1;
+ module_param_named(modeset, nouveau_modeset, int, 0400);
+ 
+-MODULE_PARM_DESC(atomic, "Expose atomic ioctl (default: disabled)");
+-static int nouveau_atomic = 0;
++MODULE_PARM_DESC(atomic, "Expose atomic ioctl (default: enabled)");
++static int nouveau_atomic = 1;
+ module_param_named(atomic, nouveau_atomic, int, 0400);
+ 
+ MODULE_PARM_DESC(runpm, "disable (0), force enable (1), optimus only default (-1)");

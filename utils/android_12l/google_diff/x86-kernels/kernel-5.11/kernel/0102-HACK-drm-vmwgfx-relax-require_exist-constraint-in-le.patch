@@ -1,0 +1,38 @@
+From ce138ef2463dff85fa83c888e0f96e5eb0d83c49 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sat, 24 Oct 2020 10:46:51 +0200
+Subject: [PATCH 102/106] HACK: drm/vmwgfx: relax 'require_exist' constraint in
+ legacy path
+
+Previously when a surface was opened using a legacy (non prime) handle,
+it was verified to have already a reference.
+Relax this so that opening is also allowed to client who dropped drm master.
+
+This is to test a regression with drm_gralloc (text mode with white cursor)
+---
+ drivers/gpu/drm/vmwgfx/vmwgfx_surface.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_surface.c b/drivers/gpu/drm/vmwgfx/vmwgfx_surface.c
+index 033471e7266c..67c8d67826b7 100644
+--- a/drivers/gpu/drm/vmwgfx/vmwgfx_surface.c
++++ b/drivers/gpu/drm/vmwgfx/vmwgfx_surface.c
+@@ -968,12 +968,13 @@ vmw_surface_handle_reference(struct vmw_private *dev_priv,
+ 					prime.base);
+ 
+ 		/*
+-		 * Make sure the surface creator has the same
++		 * RELAXED FOR TEST: Make sure the surface creator has the same
+ 		 * authenticating master, or is already registered with us.
+-		 */
++		 *
+ 		if (drm_is_primary_client(file_priv) &&
+ 		    user_srf->master != file_priv->master)
+ 			require_exist = true;
++		 */
+ 
+ 		ret = ttm_ref_object_add(tfile, base, TTM_REF_USAGE, NULL,
+ 					 require_exist);
+-- 
+2.17.1
+

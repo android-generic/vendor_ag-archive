@@ -1,0 +1,52 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: "Fan, Yugang" <yugang.fan@intel.com>
+Date: Tue, 20 Aug 2019 20:52:43 +0800
+Subject: [PATCH 14/15] Use BRGA as default format for only EFI FB rendering.
+
+As efifb only supports BGRA format, we need config up-level
+to support this when using software rendering.
+
+Change-Id: I1fb2ba042522faac160440e5b660c01a24db2489
+Tracked-On: None
+Signed-off-by: Fan Yugang <yugang.fan@intel.com>
+---
+ .../CompositionEngine/src/RenderSurface.cpp      | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/services/surfaceflinger/CompositionEngine/src/RenderSurface.cpp b/services/surfaceflinger/CompositionEngine/src/RenderSurface.cpp
+index ef50870615..d62e930241 100644
+--- a/services/surfaceflinger/CompositionEngine/src/RenderSurface.cpp
++++ b/services/surfaceflinger/CompositionEngine/src/RenderSurface.cpp
+@@ -32,6 +32,7 @@
+ #include <ui/GraphicBuffer.h>
+ #include <ui/Rect.h>
+ #include <utils/Trace.h>
++#include <cutils/properties.h>
+ 
+ // TODO(b/129481165): remove the #pragma below and fix conversion issues
+ #pragma clang diagnostic push
+@@ -79,11 +80,22 @@ bool RenderSurface::isValid() const {
+ 
+ void RenderSurface::initialize() {
+     ANativeWindow* const window = mNativeWindow.get();
++    char value[PROPERTY_VALUE_MAX] = {};
++    int format = HAL_PIXEL_FORMAT_RGBA_8888;
+ 
+     int status = native_window_api_connect(window, NATIVE_WINDOW_API_EGL);
+     ALOGE_IF(status != NO_ERROR, "Unable to connect BQ producer: %d", status);
+-    status = native_window_set_buffers_format(window, HAL_PIXEL_FORMAT_RGBA_8888);
+-    ALOGE_IF(status != NO_ERROR, "Unable to set BQ format to RGBA888: %d", status);
++
++    if (property_get("ro.hardware.egl", value, NULL) > 0){
++        ALOGI("Use BGRA_8888 as surface format when EGL is \"%s\"", value);
++        if (!strcmp("swiftshader", value)) {
++            format = HAL_PIXEL_FORMAT_BGRA_8888;
++        }
++    }
++
++    status = native_window_set_buffers_format(window, format);
++    ALOGE_IF(status != NO_ERROR, "Unable to set BQ format to %d: %d", format, status);
++
+     status = native_window_set_usage(window, DEFAULT_USAGE);
+     ALOGE_IF(status != NO_ERROR, "Unable to set BQ usage bits for GPU rendering: %d", status);
+ }

@@ -1,0 +1,33 @@
+From ff34d6d549f026156188cf1467f26628e5cac658 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Tue, 15 Sep 2020 12:10:29 -0400
+Subject: [PATCH 04/36] Disable sdcardfs
+
+The use of FUSE-enabled sdcard, e.g. in live mode, creates a lock-up in
+vold, which is waiting for sdcard to exit, but never happens as it's
+using FUSE.
+
+Disable the use of sdcardfs in vold. This may creates problems in live
+mode, where /data is mounted as tmpfs, which does not fully support
+xattr.
+---
+ device.mk | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/device.mk b/device.mk
+index efdc980..665f17e 100644
+--- a/device.mk
++++ b/device.mk
+@@ -98,6 +98,9 @@ PRODUCT_AAPT_PREF_CONFIG := mdpi
+ 
+ DEVICE_PACKAGE_OVERLAYS := $(LOCAL_PATH)/overlay
+ 
++# Get emulated storage settings
++$(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
++
+ # Get Android 8.0 HIDL HALs
+ $(call inherit-product,$(LOCAL_PATH)/treble.mk)
+ 
+-- 
+2.17.1
+

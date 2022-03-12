@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+	<!-- Magisk -->
+<!--
+    <project name="rusty-magisk" path="rusgik" remote="ax" revision="568ca9e1774846aa4592801054d24989f3f4fd9d" />
+-->
+    <!-- FOSS Apps -->
+<!--
+    <project name="vendor_foss" path="vendor/foss" remote="BR-x86" revision="foss-minimal" />
+-->
+<!--
+	<project path="vendor/google/chromeos-x86" name="android_vendor_google_chromeos-x86.git" remote="blissroms-x86" revision="13816.82.0_hatch" />
+-->
+	
+	<project path="vendor/prebuilts/agp-apps" name="vendor_prebuilts_agp-apps" remote="ag" revision="master" />
+	<project path="vendor/gapps" name="vendor_gapps" remote="ag" revision="s-x86" />
+
+</manifest>

@@ -1,0 +1,128 @@
+From c85feec391ecefdacd1ea22414ef3b9b0cdd0c8f Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 13 Sep 2016 17:43:11 +0800
+Subject: [PATCH 08/30] Detect HDMI audio by switch events
+
+If detect SW_VIDEOOUT_INSERT, assume HDMI is plugged.
+---
+ .../android/server/WiredAccessoryManager.java | 28 +++++++++++++++----
+ .../server/input/InputManagerService.java     |  6 +++-
+ 2 files changed, 28 insertions(+), 6 deletions(-)
+
+diff --git a/services/core/java/com/android/server/WiredAccessoryManager.java b/services/core/java/com/android/server/WiredAccessoryManager.java
+index 7fa93c045ce0..f5776dd14b5a 100644
+--- a/services/core/java/com/android/server/WiredAccessoryManager.java
++++ b/services/core/java/com/android/server/WiredAccessoryManager.java
+@@ -22,6 +22,8 @@ import static com.android.server.input.InputManagerService.SW_LINEOUT_INSERT;
+ import static com.android.server.input.InputManagerService.SW_LINEOUT_INSERT_BIT;
+ import static com.android.server.input.InputManagerService.SW_MICROPHONE_INSERT;
+ import static com.android.server.input.InputManagerService.SW_MICROPHONE_INSERT_BIT;
++import static com.android.server.input.InputManagerService.SW_VIDEOOUT_INSERT;
++import static com.android.server.input.InputManagerService.SW_VIDEOOUT_INSERT_BIT;
+ 
+ import android.content.Context;
+ import android.media.AudioManager;
+@@ -118,8 +120,11 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+             if (mInputManager.getSwitchState(-1, InputDevice.SOURCE_ANY, SW_LINEOUT_INSERT) == 1) {
+                 switchValues |= SW_LINEOUT_INSERT_BIT;
+             }
++            if (mInputManager.getSwitchState(-1, InputDevice.SOURCE_ANY, SW_VIDEOOUT_INSERT) == 1) {
++                switchValues |= SW_VIDEOOUT_INSERT_BIT;
++            }
+             notifyWiredAccessoryChanged(0, switchValues,
+-                    SW_HEADPHONE_INSERT_BIT | SW_MICROPHONE_INSERT_BIT | SW_LINEOUT_INSERT_BIT);
++                    SW_HEADPHONE_INSERT_BIT | SW_MICROPHONE_INSERT_BIT | SW_LINEOUT_INSERT_BIT | SW_VIDEOOUT_INSERT_BIT);
+         }
+ 
+ 
+@@ -137,7 +142,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+     @Override
+     public void notifyWiredAccessoryChanged(long whenNanos, int switchValues, int switchMask) {
+         if (LOG) {
+-            Slog.v(TAG, "notifyWiredAccessoryChanged: when=" + whenNanos
++            Slog.i(TAG, "notifyWiredAccessoryChanged: when=" + whenNanos
+                     + " bits=" + switchCodeToString(switchValues, switchMask)
+                     + " mask=" + Integer.toHexString(switchMask));
+         }
+@@ -146,7 +151,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+             int headset;
+             mSwitchValues = (mSwitchValues & ~switchMask) | switchValues;
+             switch (mSwitchValues &
+-                    (SW_HEADPHONE_INSERT_BIT | SW_MICROPHONE_INSERT_BIT | SW_LINEOUT_INSERT_BIT)) {
++                    (SW_HEADPHONE_INSERT_BIT | SW_MICROPHONE_INSERT_BIT | SW_LINEOUT_INSERT_BIT | SW_VIDEOOUT_INSERT_BIT)) {
+                 case 0:
+                     headset = 0;
+                     break;
+@@ -159,6 +164,11 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+                     headset = BIT_LINEOUT;
+                     break;
+ 
++                case SW_VIDEOOUT_INSERT_BIT:
++                case SW_VIDEOOUT_INSERT_BIT | SW_LINEOUT_INSERT_BIT:
++                    headset = BIT_HDMI_AUDIO;
++                    break;
++
+                 case SW_HEADPHONE_INSERT_BIT | SW_MICROPHONE_INSERT_BIT:
+                     headset = BIT_HEADSET;
+                     break;
+@@ -173,7 +183,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+             }
+ 
+             updateLocked(NAME_H2W,
+-                    (mHeadsetState & ~(BIT_HEADSET | BIT_HEADSET_NO_MIC | BIT_LINEOUT)) | headset);
++                    (mHeadsetState & ~(BIT_HEADSET | BIT_HEADSET_NO_MIC | BIT_LINEOUT | BIT_HDMI_AUDIO)) | headset);
+         }
+     }
+ 
+@@ -305,7 +315,7 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+             }
+ 
+             if (LOG) {
+-                Slog.v(TAG, "headsetName: " + headsetName +
++                Slog.i(TAG, "headsetName: " + headsetName +
+                         (state == 1 ? " connected" : " disconnected"));
+             }
+ 
+@@ -328,6 +338,14 @@ final class WiredAccessoryManager implements WiredAccessoryCallbacks {
+                 (switchValues & SW_MICROPHONE_INSERT_BIT) != 0) {
+             sb.append("SW_MICROPHONE_INSERT");
+         }
++        if ((switchMask & SW_LINEOUT_INSERT_BIT) != 0 &&
++                (switchValues & SW_LINEOUT_INSERT_BIT) != 0) {
++            sb.append("SW_LINEOUT_INSERT ");
++        }
++        if ((switchMask & SW_VIDEOOUT_INSERT_BIT) != 0 &&
++                (switchValues & SW_VIDEOOUT_INSERT_BIT) != 0) {
++            sb.append("SW_VIDEOOUT_INSERT ");
++        }
+         return sb.toString();
+     }
+ 
+diff --git a/services/core/java/com/android/server/input/InputManagerService.java b/services/core/java/com/android/server/input/InputManagerService.java
+index 9d2edff7cc02..b47d12d570a3 100644
+--- a/services/core/java/com/android/server/input/InputManagerService.java
++++ b/services/core/java/com/android/server/input/InputManagerService.java
+@@ -401,6 +401,9 @@ public class InputManagerService extends IInputManager.Stub
+     /** Switch code: Headphone/Microphone Jack.  When set, something is inserted. */
+     public static final int SW_JACK_PHYSICAL_INSERT = 0x07;
+ 
++    /** Switch code: Video out jack.  When set, something is inserted. */
++    public static final int SW_VIDEOOUT_INSERT = 0x08;
++
+     /** Switch code: Camera lens cover. When set the lens is covered. */
+     public static final int SW_CAMERA_LENS_COVER = 0x09;
+ 
+@@ -414,8 +417,9 @@ public class InputManagerService extends IInputManager.Stub
+     public static final int SW_MICROPHONE_INSERT_BIT = 1 << SW_MICROPHONE_INSERT;
+     public static final int SW_LINEOUT_INSERT_BIT = 1 << SW_LINEOUT_INSERT;
+     public static final int SW_JACK_PHYSICAL_INSERT_BIT = 1 << SW_JACK_PHYSICAL_INSERT;
++    public static final int SW_VIDEOOUT_INSERT_BIT = 1 << SW_VIDEOOUT_INSERT;
+     public static final int SW_JACK_BITS =
+-            SW_HEADPHONE_INSERT_BIT | SW_MICROPHONE_INSERT_BIT | SW_JACK_PHYSICAL_INSERT_BIT | SW_LINEOUT_INSERT_BIT;
++            SW_HEADPHONE_INSERT_BIT | SW_MICROPHONE_INSERT_BIT | SW_JACK_PHYSICAL_INSERT_BIT | SW_LINEOUT_INSERT_BIT | SW_VIDEOOUT_INSERT_BIT;
+     public static final int SW_CAMERA_LENS_COVER_BIT = 1 << SW_CAMERA_LENS_COVER;
+     public static final int SW_MUTE_DEVICE_BIT = 1 << SW_MUTE_DEVICE;
+ 
+-- 
+2.25.1
+

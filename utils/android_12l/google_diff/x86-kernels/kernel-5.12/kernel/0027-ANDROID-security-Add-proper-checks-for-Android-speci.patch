@@ -1,0 +1,39 @@
+From fb1a36f64120035d8e6f5c437b043206e0c31f1e Mon Sep 17 00:00:00 2001
+From: Tushar Behera <tushar.behera@linaro.org>
+Date: Mon, 26 Mar 2012 16:54:15 +0530
+Subject: [PATCH 027/100] ANDROID: security: Add proper checks for Android
+ specific capability checks
+
+Commit b641072 ("security: Add AID_NET_RAW and AID_NET_ADMIN capability
+check in cap_capable().") introduces additional checks for AID_NET_xxx
+macros. Since the header file including those macros are conditionally
+included, the checks should also be conditionally executed.
+
+Change-Id: Iaec5208d5b95a46b1ac3f2db8449c661e803fa5b
+Signed-off-by: Tushar Behera <tushar.behera@linaro.org>
+Signed-off-by: Andrey Konovalov <andrey.konovalov@linaro.org>
+Signed-off-by: youling257 <youling257@gmail.com>
+---
+ security/commoncap.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/security/commoncap.c b/security/commoncap.c
+index f31a24923516..fd735e10c5f3 100644
+--- a/security/commoncap.c
++++ b/security/commoncap.c
+@@ -71,10 +71,12 @@ int cap_capable(const struct cred *cred, struct user_namespace *targ_ns,
+ {
+ 	struct user_namespace *ns = targ_ns;
+ 
++#ifdef CONFIG_ANDROID_PARANOID_NETWORK
+ 	if (cap == CAP_NET_RAW && in_egroup_p(AID_NET_RAW))
+ 		return 0;
+ 	if (cap == CAP_NET_ADMIN && in_egroup_p(AID_NET_ADMIN))
+ 		return 0;
++#endif
+ 
+ 	/* See if cred has the capability in the target user namespace
+ 	 * by examining the target user namespace and all of the target
+-- 
+2.17.1
+

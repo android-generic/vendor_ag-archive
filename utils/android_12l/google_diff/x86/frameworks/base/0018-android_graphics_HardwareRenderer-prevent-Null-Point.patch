@@ -1,0 +1,49 @@
+From 5ae523cbefa8d68079787896408d366ff04b9864 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Sun, 3 Mar 2019 16:28:41 +0100
+Subject: [PATCH 18/30] android_graphics_HardwareRenderer: prevent Null Pointer
+ Exception in createBitmap
+
+To avoid Playstore crashes with nouveau and Hardware Bitmap,
+a check is added to bitmap returned by Bitmap::createFrom(buffer)
+inspired by similar behavior in Bitmap.cpp Bitmap_createHardwareBitmap()
+
+Fixes the following crash:
+
+*** *** *** *** *** *** *** *** *** *** *** *** *** *** *** ***
+Build fingerprint: 'Android-x86/android_x86/x86:8.1.0/OPM8.181005.003/uten01131829:userdebug/test-keys'
+Revision: '0'
+ABI: 'x86'
+pid: 4644, tid: 4644, name: android.vending  >>> com.android.vending <<<
+signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0xc
+Cause: null pointer dereference
+    eax 89195380  ebx b1d36290  ecx 00000000  edx ae783074
+    esi 00000000  edi ae7a9380
+    xcs 00000073  xds 0000007b  xes 0000007b  xfs 0000003b  xss 0000007b
+    eip b1c4f7c8  ebp bff902c8  esp bff9028c  flags 00010246
+
+backtrace:
+    #00 pc 000fd7c8  /system/lib/libandroid_runtime.so (android::bitmap::createBitmap(_JNIEnv*, android::Bitmap*, int, _jbyteArray*, _jobject*, int)+104)
+    #01 pc 000d08ca  /system/lib/libandroid_runtime.so (android::android_view_ThreadedRenderer_createHardwareBitmapFromRenderNode(_JNIEnv*, _jobject*, long long, int, int)+1002)
+---
+ libs/hwui/jni/android_graphics_HardwareRenderer.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/libs/hwui/jni/android_graphics_HardwareRenderer.cpp b/libs/hwui/jni/android_graphics_HardwareRenderer.cpp
+index 54367b8334cb..a10bdaf90cb0 100644
+--- a/libs/hwui/jni/android_graphics_HardwareRenderer.cpp
++++ b/libs/hwui/jni/android_graphics_HardwareRenderer.cpp
+@@ -751,6 +751,10 @@ static jobject android_view_ThreadedRenderer_createHardwareBitmapFromRenderNode(
+         cs = SkColorSpace::MakeSRGB();
+     }
+     sk_sp<Bitmap> bitmap = Bitmap::createFrom(buffer, cs);
++    if (!bitmap.get()) {
++        ALOGW("Failed to create hardware bitmap from graphic buffer");
++        return nullptr;
++    }
+     return bitmap::createBitmap(env, bitmap.release(),
+             android::bitmap::kBitmapCreateFlag_Premultiplied);
+ }
+-- 
+2.25.1
+

@@ -1,0 +1,34 @@
+From fdb939ea0d87d39f9eca2eca10f2407bd9415866 Mon Sep 17 00:00:00 2001
+From: Ziyang Zhou <ziyang.zhou@outlook.com>
+Date: Sat, 16 Oct 2021 14:46:12 +0800
+Subject: [PATCH 3/3] add HAL_PIXEL_FORMAT_RGBA_FP16 support
+
+---
+ gralloc_gbm.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/gralloc_gbm.cpp b/gralloc_gbm.cpp
+index d8ef7f3..656f993 100644
+--- a/gralloc_gbm.cpp
++++ b/gralloc_gbm.cpp
+@@ -112,6 +112,9 @@ static int gralloc_gbm_get_bpp(int format)
+ 	int bpp;
+ 
+ 	switch (format) {
++	case HAL_PIXEL_FORMAT_RGBA_FP16:
++		bpp = 8;
++		break;
+ 	case HAL_PIXEL_FORMAT_RGBA_8888:
+ 	case HAL_PIXEL_FORMAT_RGBX_8888:
+ 	case HAL_PIXEL_FORMAT_BGRA_8888:
+@@ -132,6 +135,7 @@ static int gralloc_gbm_get_bpp(int format)
+ 		bpp = 1;
+ 		break;
+ 	default:
++		ALOGE("gralloc_gbm_get_bpp: format: %d", format);
+ 		bpp = 0;
+ 		break;
+ 	}
+-- 
+2.25.1
+

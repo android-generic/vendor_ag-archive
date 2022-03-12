@@ -1,0 +1,32 @@
+From 8eabaa9b787cdc7d8ac54292d801c72c4755a917 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Tue, 23 Feb 2021 11:52:58 -0500
+Subject: [PATCH 10/36] Provide M4 and DEPMOD during kernel compilation
+
+M4 needs to be provided through environment variable. This is required
+by flex, which runs m4 internally.
+
+See https://cs.android.com/android/_/android/platform/build/+/2bfffb9f48a78de12faf5da77424c0cecb70d6eb:Changes.md
+
+DEPMOD is used during kernel compilatio. Use absolute path to evade
+building sandbox.
+---
+ build/tasks/kernel.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/build/tasks/kernel.mk b/build/tasks/kernel.mk
+index 6c25b2c..0bd2dc8 100644
+--- a/build/tasks/kernel.mk
++++ b/build/tasks/kernel.mk
+@@ -50,7 +50,7 @@ endif
+ 
+ mk_kernel := + $(hide) prebuilts/build-tools/$(HOST_PREBUILT_TAG)/bin/make -j$(KBUILD_JOBS) -l$$(($(KBUILD_JOBS)+2)) \
+ 	-C $(KERNEL_DIR) O=$(abspath $(KBUILD_OUTPUT)) ARCH=$(TARGET_ARCH) CROSS_COMPILE="$(abspath $(CC_WRAPPER)) $(CROSS_COMPILE)" $(if $(SHOW_COMMANDS),V=1) \
+-	YACC=$(abspath $(BISON)) LEX=$(abspath $(LEX)) \
++	YACC=$(abspath $(BISON)) LEX=$(abspath $(LEX)) M4=$(abspath $(M4)) DEPMOD=/sbin/depmod \
+ 	$(KERNEL_CLANG_CLAGS)
+ 
+ KERNEL_CONFIG_FILE := $(if $(wildcard $(TARGET_KERNEL_CONFIG)),$(TARGET_KERNEL_CONFIG),$(KERNEL_DIR)/$(KERNEL_CONFIG_DIR)/$(TARGET_KERNEL_CONFIG))
+-- 
+2.17.1
+

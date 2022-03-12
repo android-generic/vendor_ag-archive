@@ -1,0 +1,28 @@
+From ee012379955d936614f6eda4983325bf4bb5509e Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Fri, 4 Mar 2022 16:50:26 -0500
+Subject: [PATCH 19/25] Inherit agp-apps and use Smart Dock
+
+---
+ device.mk | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/device.mk b/device.mk
+index a515173..dbfa5f5 100644
+--- a/device.mk
++++ b/device.mk
+@@ -170,4 +170,9 @@ PRODUCT_SOONG_NAMESPACES += packages/apps/Bluetooth
+ # Need this so that the application's loop on reading input can be synchronized with HW VSYNC
+ PRODUCT_VENDOR_PROPERTIES += \
+     ro.surface_flinger.running_without_sync_framework=true
+-    
+\ No newline at end of file
++
++# Add agp-apps
++$(call inherit-product-if-exists, vendor/prebuilts/agp-apps/agp-apps.mk)
++
++# Use Smart Dock instead of Taskbar
++USE_SMARTDOCK := true
+-- 
+2.25.1
+

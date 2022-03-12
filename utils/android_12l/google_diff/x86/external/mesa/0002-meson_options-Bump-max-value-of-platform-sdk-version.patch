@@ -1,0 +1,25 @@
+From d05ec11110101779ad9da7d5f15642eedd2bcab6 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sat, 12 Mar 2022 14:56:01 -0500
+Subject: [PATCH] meson_options: Bump max value of platform-sdk-version to 32
+
+---
+ meson_options.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/meson_options.txt b/meson_options.txt
+index 1f6ef385561..04dbef4419e 100644
+--- a/meson_options.txt
++++ b/meson_options.txt
+@@ -455,7 +455,7 @@ option(
+   'platform-sdk-version',
+   type : 'integer',
+   min : 25,
+-  max : 31,
++  max : 32,
+   value : 25,
+   description : 'Android Platform SDK version. Default: Nougat version.'
+ )
+-- 
+2.25.1
+

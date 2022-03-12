@@ -1,0 +1,55 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Tue, 15 Aug 2017 12:45:48 +0800
+Subject: [PATCH 08/15] nuplayer: skip bad SAR values
+
+Historically there are two definitions of SAR:
+
+1. Storage Aspect Ratio
+2. Sample Aspect Ratio
+
+The first one is used in MPEG2 terminology, while the second is used
+in MPEG4-AVC terminology.
+
+The MPEG2 terminology actually means the real frame dimension (w:h),
+while the MPEG4-AVC terminology means the shape of individual pixels.
+It's called PAR (Pixel Aspect Ratio) in MPEG2 terminology.
+
+Android apparently uses the second definition as comments in the code.
+However, some video files include SAR tags in MPEG2 terminology sense.
+For example,
+
+08-14 18:13:45.212  2841  4769 I NuPlayer:   int32_t width = 856
+08-14 18:13:45.212  2841  4769 I NuPlayer:   int32_t height = 480
+08-14 18:13:45.212  2841  4769 I NuPlayer:   int32_t sar-width = 852
+08-14 18:13:45.212  2841  4769 I NuPlayer:   int32_t sar-height = 480
+
+That makes Android calculate the DAR (Display Aspect Ratio)
+incorrectly, where DAR = FAR (Frame Aspect Ratio) x SAR.
+As a result the video is stretched strangely.
+
+To workaround it, skip the SAR tags if they look like the
+Storage Aspect Ratio.
+---
+ media/libmediaplayerservice/nuplayer/NuPlayer.cpp | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+index 9ae7ddbe47..c2057ef1a8 100644
+--- a/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
++++ b/media/libmediaplayerservice/nuplayer/NuPlayer.cpp
+@@ -2094,7 +2094,13 @@ void NuPlayer::updateVideoSize(
+             && sarWidth > 0 && sarHeight > 0) {
+         ALOGV("Sample aspect ratio %d : %d", sarWidth, sarHeight);
+ 
+-        displayWidth = (displayWidth * sarWidth) / sarHeight;
++        if (sarWidth == displayWidth) {
++            ALOGW("sarWidth(%d) is the same as displayWidth, assume it's Storage Aspect Ratio and skip it!", sarWidth);
++        } else if (sarHeight == displayHeight) {
++            ALOGW("sarHeight(%d) is the same as displayHeight, assume it's Storage Aspect Ratio and skip it!", sarHeight);
++        } else {
++            displayWidth = (displayWidth * sarWidth) / sarHeight;
++        }
+ 
+         ALOGV("display dimensions %d x %d", displayWidth, displayHeight);
+     } else {

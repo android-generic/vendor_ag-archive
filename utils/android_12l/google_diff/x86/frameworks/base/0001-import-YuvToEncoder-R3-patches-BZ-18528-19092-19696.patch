@@ -1,0 +1,109 @@
+From 6926993ae4ac82a5e0f2643f6ed430addc53e23a Mon Sep 17 00:00:00 2001
+From: Zhao Liang <leo.zhao@intel.com>
+Date: Fri, 20 Jul 2012 11:56:51 +0800
+Subject: [PATCH 01/30] import YuvToEncoder R3 patches, BZ 18528, 19092, 19696
+
+BZ: 47824
+
+Please refer http://umgbugzilla.sh.intel.com:41006/show_bug.cgi?id=19092 and
+external/jpeg/libjpeg.doc
+
+The MCU height is max_v_samp_factor = 2 DCT rows so you must pass at least 16
+scanlines on each call to jpeg_write_raw_data(), which is to say 16 actual
+sample rows of Y and 8 each of Cb and Cr.
+
+The original implement of Yuv420SpToJpegEncoder::compress didn't add padding to the frame buffer
+when height and width aren't aligned with 16 pixel. It will cause illegal memory violation and core dump.
+
+Category: aosp improvement
+Domain: Video.Media-jpeg
+Origin: Internal
+Upstream: Yes
+
+Change-Id: Ibcf14230d616e2d440ace244bb420723b5c01dc2
+Orig-Change-Id: Ic1b7494b98ee9c1997b226d58abd034b1dcb18f6
+Signed-off-by: Tong, Bo <box.tong@intel.com>
+Signed-off-by: Zhao Liang <leo.zhao@intel.com>
+---
+ libs/hwui/jni/YuvToJpegEncoder.cpp | 35 +++++++++++++++++++++---------
+ 1 file changed, 25 insertions(+), 10 deletions(-)
+
+diff --git a/libs/hwui/jni/YuvToJpegEncoder.cpp b/libs/hwui/jni/YuvToJpegEncoder.cpp
+index 689cf0bea741..55410df10b92 100644
+--- a/libs/hwui/jni/YuvToJpegEncoder.cpp
++++ b/libs/hwui/jni/YuvToJpegEncoder.cpp
+@@ -56,6 +56,7 @@ bool YuvToJpegEncoder::encode(SkWStream* stream, void* inYuv, int width,
+     compress(&cinfo, (uint8_t*) inYuv, offsets);
+ 
+     jpeg_finish_compress(&cinfo);
++    jpeg_destroy_compress(&cinfo);
+ 
+     jpeg_destroy_compress(&cinfo);
+ 
+@@ -94,13 +95,19 @@ void Yuv420SpToJpegEncoder::compress(jpeg_compress_struct* cinfo,
+     planes[1] = cb;
+     planes[2] = cr;
+ 
+-    int width = cinfo->image_width;
+-    int height = cinfo->image_height;
++    JDIMENSION width = cinfo->image_width;
++    JDIMENSION height = cinfo->image_height;
+     uint8_t* yPlanar = yuv + offsets[0];
+     uint8_t* vuPlanar = yuv + offsets[1]; //width * height;
+-    uint8_t* uRows = new uint8_t [8 * (width >> 1)];
+-    uint8_t* vRows = new uint8_t [8 * (width >> 1)];
+-
++    uint8_t* uRows = new uint8_t [8 * (((width + 15) & ~15) >> 1)];
++    uint8_t* vRows = new uint8_t [8 * (((width + 15) & ~15) >> 1)];
++    uint8_t* yRows;
++    int lastLines;
++
++    if ((height & 0xf) != 0) {
++        lastLines = height & 0xf;
++        yRows = new uint8_t [16 * ((width + 15) & ~15)];
++    }
+ 
+     // process 16 lines of Y and 8 lines of U/V each time.
+     while (cinfo->next_scanline < cinfo->image_height) {
+@@ -109,8 +116,11 @@ void Yuv420SpToJpegEncoder::compress(jpeg_compress_struct* cinfo,
+ 
+         // Jpeg library ignores the rows whose indices are greater than height.
+         for (int i = 0; i < 16; i++) {
+-            // y row
+-            y[i] = yPlanar + (cinfo->next_scanline + i) * fStrides[0];
++            // y row. Add padding if height isn't aligned to 16 pixels.
++            if ((height & 0xf) != 0 && (cinfo->next_scanline + i) > height)
++                y[i] = &yRows[(i - lastLines) * ((width + 15) & ~15)];
++            else
++                y[i] = yPlanar + (cinfo->next_scanline + i) * fStrides[0];
+ 
+             // construct u row and v row
+             if ((i & 1) == 0) {
+@@ -122,6 +132,8 @@ void Yuv420SpToJpegEncoder::compress(jpeg_compress_struct* cinfo,
+           }
+         jpeg_write_raw_data(cinfo, planes, 16);
+     }
++    if ((height & 0xf) != 0)
++        delete [] yRows;
+     delete [] uRows;
+     delete [] vRows;
+ 
+@@ -129,9 +141,12 @@ void Yuv420SpToJpegEncoder::compress(jpeg_compress_struct* cinfo,
+ 
+ void Yuv420SpToJpegEncoder::deinterleave(uint8_t* vuPlanar, uint8_t* uRows,
+         uint8_t* vRows, int rowIndex, int width, int height) {
+-    int numRows = (height - rowIndex) / 2;
+-    if (numRows > 8) numRows = 8;
+-    for (int row = 0; row < numRows; ++row) {
++    int lines = 16;
++    //In case there isn't enough lines to process
++    if ((rowIndex + lines) > height)
++        lines = (height - rowIndex);
++
++    for (int row = 0; row < (lines >> 1); ++row) {
+         int offset = ((rowIndex >> 1) + row) * fStrides[1];
+         uint8_t* vu = vuPlanar + offset;
+         for (int i = 0; i < (width >> 1); ++i) {
+-- 
+2.25.1
+

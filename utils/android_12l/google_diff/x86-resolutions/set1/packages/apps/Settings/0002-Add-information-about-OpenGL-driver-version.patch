@@ -1,0 +1,191 @@
+From c796b85d4f1a71fdcdb56aa51b4481e657f81ac6 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Wed, 13 Dec 2017 01:23:34 +0800
+Subject: [PATCH 1/2] Add information about OpenGL driver version
+
+In order to get Mesa / OpenGL ES info, an EGL context is required.
+Without it, GLES20.glGetString returns NULL.
+---
+ res/values-zh-rCN/strings.xml                 |   1 +
+ res/values-zh-rTW/strings.xml                 |   1 +
+ res/values/strings.xml                        |   2 +
+ res/xml/firmware_version.xml                  |   8 ++
+ .../OpenGLVersionPreferenceController.java    | 110 ++++++++++++++++++
+ 5 files changed, 122 insertions(+)
+ create mode 100644 src/com/android/settings/deviceinfo/firmwareversion/OpenGLVersionPreferenceController.java
+
+diff --git a/res/values-zh-rCN/strings.xml b/res/values-zh-rCN/strings.xml
+index 05ac229e61..7506741633 100644
+--- a/res/values-zh-rCN/strings.xml
++++ b/res/values-zh-rCN/strings.xml
+@@ -1336,6 +1336,7 @@
+     <string name="fcc_equipment_id" msgid="6596668314025646129">"设备 ID"</string>
+     <string name="baseband_version" msgid="2600182227599835857">"基带版本"</string>
+     <string name="kernel_version" msgid="3513538109381366881">"内核版本"</string>
++    <string name="opengl_version">"Open GL 驱动版本"</string>
+     <string name="build_number" msgid="9009733242117579826">"版本号"</string>
+     <string name="module_version" msgid="1787518340082046658">"Google Play 系统更新"</string>
+     <string name="device_info_not_available" msgid="4804474466616712326">"无法获取"</string>
+diff --git a/res/values-zh-rTW/strings.xml b/res/values-zh-rTW/strings.xml
+index cf3f3fbb29..3c1468e35a 100644
+--- a/res/values-zh-rTW/strings.xml
++++ b/res/values-zh-rTW/strings.xml
+@@ -1336,6 +1336,7 @@
+     <string name="fcc_equipment_id" msgid="6596668314025646129">"設備 ID"</string>
+     <string name="baseband_version" msgid="2600182227599835857">"基頻版本"</string>
+     <string name="kernel_version" msgid="3513538109381366881">"核心版本"</string>
++    <string name="opengl_version">"Open GL 驅動版本"</string>
+     <string name="build_number" msgid="9009733242117579826">"版本號碼"</string>
+     <string name="module_version" msgid="1787518340082046658">"Google Play 系統更新"</string>
+     <string name="device_info_not_available" msgid="4804474466616712326">"無法取得"</string>
+diff --git a/res/values/strings.xml b/res/values/strings.xml
+index 439bae7e94..68148409fa 100644
+--- a/res/values/strings.xml
++++ b/res/values/strings.xml
+@@ -3069,6 +3069,8 @@
+     <!-- About phone screen,  setting option name  [CHAR LIMIT=40] -->
+     <string name="kernel_version">Kernel version</string>
+     <!-- About phone screen,  setting option name  [CHAR LIMIT=40] -->
++    <string name="opengl_version">OpenGL driver version</string>
++    <!-- About phone screen,  setting option name  [CHAR LIMIT=40] -->
+     <string name="build_number">Build number</string>
+     <!-- About phone screen, tapping this button will take user to a seperate UI to check Google Play system update [CHAR LIMIT=60] -->
+     <string name="module_version">Google Play system update</string>
+diff --git a/res/xml/firmware_version.xml b/res/xml/firmware_version.xml
+index 78b77259d9..60d22d73c1 100644
+--- a/res/xml/firmware_version.xml
++++ b/res/xml/firmware_version.xml
+@@ -72,6 +72,14 @@
+         android:selectable="false"
+         settings:controller="com.android.settings.deviceinfo.firmwareversion.SelinuxStatusPreferenceController"/>
+ 
++    <!-- OpenGL driver -->
++    <Preference
++        android:key="opengl_version"
++        android:title="@string/opengl_version"
++        android:summary="@string/summary_placeholder"
++        settings:enableCopying="true"
++        settings:controller="com.android.settings.deviceinfo.firmwareversion.OpenGLVersionPreferenceController"/>
++
+     <!-- Build -->
+     <Preference
+         android:key="os_build_number"
+diff --git a/src/com/android/settings/deviceinfo/firmwareversion/OpenGLVersionPreferenceController.java b/src/com/android/settings/deviceinfo/firmwareversion/OpenGLVersionPreferenceController.java
+new file mode 100644
+index 0000000000..bb950cdb15
+--- /dev/null
++++ b/src/com/android/settings/deviceinfo/firmwareversion/OpenGLVersionPreferenceController.java
+@@ -0,0 +1,110 @@
++/*
++ * Copyright (C) 2019 The Android-x86 Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++
++package com.android.settings.deviceinfo.firmwareversion;
++
++import android.content.Context;
++import android.graphics.SurfaceTexture;
++import android.opengl.EGL14;
++import android.opengl.GLES20;
++import android.util.Log;
++import com.android.settings.core.BasePreferenceController;
++
++import javax.microedition.khronos.egl.EGL10;
++import javax.microedition.khronos.egl.EGLConfig;
++import javax.microedition.khronos.egl.EGLContext;
++import javax.microedition.khronos.egl.EGLDisplay;
++import javax.microedition.khronos.egl.EGLSurface;
++
++public class OpenGLVersionPreferenceController extends BasePreferenceController {
++
++    private static final String LOG_TAG = "opengl_version";
++
++    private String mResult;
++
++    public OpenGLVersionPreferenceController(Context context, String preferenceKey) {
++        super(context, preferenceKey);
++        initialize();
++    }
++
++    @Override
++    public int getAvailabilityStatus() {
++        return AVAILABLE;
++    }
++
++    @Override
++    public CharSequence getSummary() {
++        return mResult;
++    }
++
++    private void initialize() {
++        // Create an EGL Context
++        // References:
++        // [1] http://wlog.flatlib.jp/archive/1/2013-12-22
++        // [2] packages/apps/Camera2/src/com/android/camera/SurfaceTextureRenderer.java
++
++        EGL10 egl = (EGL10) EGLContext.getEGL();
++        EGLSurface eglSurface = null;
++        EGLContext eglContext = null;
++
++        // Initialize display
++        EGLDisplay eglDisplay = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
++        if (eglDisplay == EGL10.EGL_NO_DISPLAY) {
++            Log.w(LOG_TAG, "eglGetDisplay failed");
++        }
++        int[] iparam = new int[2];
++        if (!egl.eglInitialize(eglDisplay, iparam)) {
++            Log.w(LOG_TAG, "eglInitialize failed");
++        }
++
++        // Choose config
++        EGLConfig[] eglConfigs = new EGLConfig[1];
++        final int[] configSpec = { EGL10.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT, EGL10.EGL_NONE };
++        if (egl.eglChooseConfig(eglDisplay, configSpec, eglConfigs, 1, iparam) && iparam[0] > 0) {
++            // create surface
++            SurfaceTexture surfaceTexture = new SurfaceTexture(0);
++            eglSurface = egl.eglCreateWindowSurface(eglDisplay, eglConfigs[0], surfaceTexture, null);
++            if (eglSurface == null || eglSurface == EGL10.EGL_NO_SURFACE) {
++                Log.w(LOG_TAG, "eglCreateWindowSurface failed");
++            } else {
++                // Create context
++                final int[] attribList = { EGL14.EGL_CONTEXT_CLIENT_VERSION, 2, EGL10.EGL_NONE };
++                eglContext = egl.eglCreateContext(
++                        eglDisplay, eglConfigs[0], EGL10.EGL_NO_CONTEXT, attribList);
++                if (eglContext == null || eglContext == EGL10.EGL_NO_CONTEXT) {
++                    Log.w(LOG_TAG, "eglCreateContext failed");
++                }
++
++                // Bind context
++                if (!egl.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext)) {
++                    Log.w(LOG_TAG, "eglMakeCurrent failed");
++                }
++            }
++        } else {
++            Log.w(LOG_TAG, "eglChooseConfig failed");
++        }
++
++        mResult = "GL Vendor: " + GLES20.glGetString(GLES20.GL_VENDOR) + "\n" +
++                  "GL Renderer: " + GLES20.glGetString(GLES20.GL_RENDERER) + "\n" +
++                  "GL Version: " + GLES20.glGetString(GLES20.GL_VERSION);
++
++        if (eglContext != null) {
++            egl.eglMakeCurrent(eglDisplay, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_SURFACE, EGL10.EGL_NO_CONTEXT);
++            egl.eglDestroyContext(eglDisplay, eglContext);
++            egl.eglDestroySurface(eglDisplay, eglSurface);
++        }
++    }
++}
+-- 
+2.17.1
+

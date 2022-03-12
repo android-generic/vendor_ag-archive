@@ -1,0 +1,27 @@
+From e9e312a50a0c019b3363a1f31ddc10df6b89bbeb Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Fri, 22 Oct 2021 18:19:21 +0200
+Subject: [PATCH 2/3] Use libgbm_mesa shared dependency
+
+In Android S libgbm module name is used by external/minigbm
+gbm_gralloc and mesa need to use libgbm_mesa module name
+---
+ Android.mk | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Android.mk b/Android.mk
+index 9452774..94c7279 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -28,7 +28,7 @@ LOCAL_SRC_FILES := \
+ 
+ LOCAL_SHARED_LIBRARIES := \
+ 	libdrm \
+-	libgbm \
++	libgbm_mesa \
+ 	liblog \
+ 	libcutils \
+ 	libhardware \
+-- 
+2.25.1
+

@@ -1,0 +1,27 @@
+From e7e356b7d5312771ab2ab4806a706c32df40fae8 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Thu, 13 Apr 2017 16:30:36 +0800
+Subject: [PATCH 062/106] vmwgfx: change the default resolution to 1280x720
+
+---
+ drivers/gpu/drm/vmwgfx/vmwgfx_drv.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/vmwgfx/vmwgfx_drv.c b/drivers/gpu/drm/vmwgfx/vmwgfx_drv.c
+index 216daf93022c..2f6f07d5e8ee 100644
+--- a/drivers/gpu/drm/vmwgfx/vmwgfx_drv.c
++++ b/drivers/gpu/drm/vmwgfx/vmwgfx_drv.c
+@@ -46,8 +46,8 @@
+ #define VMWGFX_CHIP_SVGAII 0
+ #define VMW_FB_RESERVATION 0
+ 
+-#define VMW_MIN_INITIAL_WIDTH 800
+-#define VMW_MIN_INITIAL_HEIGHT 600
++#define VMW_MIN_INITIAL_WIDTH 1280
++#define VMW_MIN_INITIAL_HEIGHT 720
+ 
+ #ifndef VMWGFX_GIT_VERSION
+ #define VMWGFX_GIT_VERSION "Unknown"
+-- 
+2.17.1
+

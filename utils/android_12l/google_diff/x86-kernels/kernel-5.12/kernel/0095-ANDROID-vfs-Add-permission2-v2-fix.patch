@@ -1,0 +1,151 @@
+From efdd8436266f3921e229dedb85ac86f561b83900 Mon Sep 17 00:00:00 2001
+From: Mauro Rossi <issor.oruam@gmail.com>
+Date: Fri, 5 Mar 2021 22:34:05 +0100
+Subject: [PATCH 095/100] ANDROID: vfs: Add permission2 (v2 fix)
+
+---
+ fs/attr.c                        | 4 ++--
+ fs/exec.c                        | 2 +-
+ fs/namei.c                       | 8 ++++----
+ fs/notify/inotify/inotify_user.c | 2 +-
+ fs/open.c                        | 4 ++--
+ fs/xattr.c                       | 2 +-
+ include/linux/fs.h               | 4 ++--
+ 7 files changed, 13 insertions(+), 13 deletions(-)
+
+diff --git a/fs/attr.c b/fs/attr.c
+index dd9d90352982..a3d8c03f0aaa 100644
+--- a/fs/attr.c
++++ b/fs/attr.c
+@@ -303,8 +303,8 @@ int notify_change2(struct vfsmount *mnt, struct user_namespace *mnt_userns, stru
+ 		if (IS_IMMUTABLE(inode))
+ 			return -EPERM;
+ 
+-		if (!inode_owner_or_capable(inode)) {
+-			error = inode_permission2(mnt, inode, MAY_WRITE);
++		if (!inode_owner_or_capable(mnt_userns, inode)) {
++			error = inode_permission2(mnt, mnt_userns, inode, MAY_WRITE);
+ 			if (error)
+ 				return error;
+ 		}
+diff --git a/fs/exec.c b/fs/exec.c
+index f20f9a8cc7c8..84d9ee3f66c1 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -1405,7 +1405,7 @@ void would_dump(struct linux_binprm *bprm, struct file *file)
+ {
+ 	struct inode *inode = file_inode(file);
+ 	struct user_namespace *mnt_userns = file_mnt_user_ns(file);
+-	if (inode_permission2(file->f_path.mnt, inode, MAY_READ) < 0) {
++	if (inode_permission2(file->f_path.mnt, mnt_userns, inode, MAY_READ) < 0) {
+ 		struct user_namespace *old, *user_ns;
+ 		bprm->interp_flags |= BINPRM_FLAGS_ENFORCE_NONDUMP;
+ 
+diff --git a/fs/namei.c b/fs/namei.c
+index c1415743bcbc..51f5ce8f619d 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -444,7 +444,7 @@ static inline int do_inode_permission(struct vfsmount *mnt, struct user_namespac
+ {
+ 	if (unlikely(!(inode->i_opflags & IOP_FASTPERM))) {
+ 		if (likely(mnt && inode->i_op->permission2))
+-			return inode->i_op->permission2(mnt, inode, mask);
++			return inode->i_op->permission2(mnt, mnt_userns, inode, mask);
+ 		if (likely(inode->i_op->permission))
+ 			return inode->i_op->permission(mnt_userns, inode, mask);
+ 
+@@ -4563,10 +4563,10 @@ int vfs_rename2(struct vfsmount *mnt, struct renamedata *rd)
+ 		new_is_dir = d_is_dir(new_dentry);
+ 
+ 		if (!(flags & RENAME_EXCHANGE))
+-			error = error = may_delete(mnt, rd->new_mnt_userns, new_dir,
++			error = may_delete(mnt, rd->new_mnt_userns, new_dir,
+ 					   new_dentry, is_dir);
+ 		else
+-			error = error = may_delete(mnt, rd->new_mnt_userns, new_dir,
++			error = may_delete(mnt, rd->new_mnt_userns, new_dir,
+ 					   new_dentry, new_is_dir);
+ 	}
+ 	if (error)
+@@ -4669,7 +4669,7 @@ EXPORT_SYMBOL(vfs_rename2);
+ 
+ int vfs_rename(struct renamedata *rd)
+ {
+-	return vfs_rename2(NULL, struct renamedata *rd);
++	return vfs_rename2(NULL, rd);
+ }
+ EXPORT_SYMBOL(vfs_rename);
+ 
+diff --git a/fs/notify/inotify/inotify_user.c b/fs/notify/inotify/inotify_user.c
+index 844053531ac7..e834a4710e84 100644
+--- a/fs/notify/inotify/inotify_user.c
++++ b/fs/notify/inotify/inotify_user.c
+@@ -352,7 +352,7 @@ static int inotify_find_inode(const char __user *dirname, struct path *path,
+ 	if (error)
+ 		return error;
+ 	/* you can only watch an inode if you have read permissions on it */
+-	error = inode_permission2(path->mnt, path->dentry->d_inode, MAY_READ);
++	error = path_permission2(path->mnt, path, MAY_READ);
+ 	if (error) {
+ 		path_put(path);
+ 		return error;
+diff --git a/fs/open.c b/fs/open.c
+index 47ce7802493d..ef6437c4557a 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -92,7 +92,7 @@ long vfs_truncate(const struct path *path, loff_t length)
+ 		goto out;
+ 
+ 	mnt_userns = mnt_user_ns(path->mnt);
+-	error = inode_permission2(mnt, inode, MAY_WRITE);
++	error = inode_permission2(mnt, mnt_userns, inode, MAY_WRITE);
+ 	if (error)
+ 		goto mnt_drop_write_and_out;
+ 
+@@ -448,7 +448,7 @@ static long do_faccessat(int dfd, const char __user *filename, int mode, int fla
+ 			goto out_path_release;
+ 	}
+ 
+-	res = inode_permission2(mnt, inode, mode | MAY_ACCESS);
++	res = inode_permission2(mnt, mnt_user_ns(path.mnt), inode, mode | MAY_ACCESS);
+ 	/* SuS v2 requires we report a read only fs too */
+ 	if (res || !(mode & S_IWOTH) || special_file(inode->i_mode))
+ 		goto out_path_release;
+diff --git a/fs/xattr.c b/fs/xattr.c
+index 3d01214a1f65..c3e090cedc07 100644
+--- a/fs/xattr.c
++++ b/fs/xattr.c
+@@ -133,7 +133,7 @@ xattr_permission(struct user_namespace *mnt_userns, struct inode *inode,
+ 			return -EPERM;
+ 	}
+ 
+-	return inode_permission2(ERR_PTR(-EOPNOTSUPP), inode, mask);
++	return inode_permission2(ERR_PTR(-EOPNOTSUPP), mnt_userns, inode, mask);
+ }
+ 
+ /*
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 382ba7facad9..23a51000ab87 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -1942,7 +1942,7 @@ struct inode_operations {
+ 	struct dentry * (*lookup) (struct inode *,struct dentry *, unsigned int);
+ 	const char * (*get_link) (struct dentry *, struct inode *, struct delayed_call *);
+ 	int (*permission) (struct user_namespace *, struct inode *, int);
+-	int (*permission2) (struct vfsmount *, struct inode *, int);
++	int (*permission2) (struct vfsmount *, struct user_namespace *, struct inode *, int);
+ 	struct posix_acl * (*get_acl)(struct inode *, int);
+ 
+ 	int (*readlink) (struct dentry *, char __user *,int);
+@@ -2887,7 +2887,7 @@ int notify_change(struct user_namespace *, struct dentry *,
+ extern int notify_change2(struct vfsmount *, struct user_namespace *, struct dentry *,
+ 			struct iattr *, struct inode **);
+ int inode_permission(struct user_namespace *, struct inode *, int);
+-extern int inode_permission2(struct vfsmount *, struct inode *, int);
++extern int inode_permission2(struct vfsmount *, struct user_namespace *, struct inode *, int);
+ int generic_permission(struct user_namespace *, struct inode *, int);
+ static inline int file_permission(struct file *file, int mask)
+ {
+-- 
+2.17.1
+

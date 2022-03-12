@@ -1,0 +1,30 @@
+From 7b025530738192bbe9a7a3a099d1258695b87db8 Mon Sep 17 00:00:00 2001
+From: Andrew Boie <andrew.p.boie@intel.com>
+Date: Thu, 10 Nov 2011 17:58:05 -0800
+Subject: [PATCH 07/23] diskconfig: Fix disk_layout.conf size parsing
+
+If the user was appending 'K' to their lengths (which is valid
+but redundant) it was being treated as megabytes instead of
+kilobytes.
+
+Change-Id: I979ec4d01f1342de1f3209b946201ca87bad32a7
+---
+ libdiskconfig/diskconfig.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libdiskconfig/diskconfig.c b/libdiskconfig/diskconfig.c
+index c7e1b437457..70ce85c1d6f 100644
+--- a/libdiskconfig/diskconfig.c
++++ b/libdiskconfig/diskconfig.c
+@@ -74,7 +74,7 @@ parse_len(const char *str, uint64_t *plen)
+         }
+     } else {
+         /* convert len to kilobytes */
+-        if (multiple > 1024)
++        if (multiple >= 1024)
+             multiple >>= 10;
+         *plen *= multiple;
+ 
+-- 
+2.25.1
+

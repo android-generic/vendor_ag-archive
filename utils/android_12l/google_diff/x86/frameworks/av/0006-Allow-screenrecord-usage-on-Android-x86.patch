@@ -1,0 +1,42 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Paulo Sergio Travaglia <pstglia@gmail.com>
+Date: Sun, 17 Jan 2016 15:23:06 -0200
+Subject: [PATCH 06/15] Allow screenrecord usage on Android-x86
+
+Selects a supported color format for screenrecord (
+OMX_COLOR_FormatYUV420Planar instead of OMX_COLOR_FormatAndroidOpaque)
+and removes a check on SoftVideoEncoderOMXComponent.cpp
+in order to make screenrecord work on Android-x86.
+---
+ cmds/screenrecord/screenrecord.cpp                        | 2 +-
+ media/libstagefright/omx/SoftVideoEncoderOMXComponent.cpp | 2 ++
+ 2 files changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/cmds/screenrecord/screenrecord.cpp b/cmds/screenrecord/screenrecord.cpp
+index e6e347321d..ecdbf81338 100644
+--- a/cmds/screenrecord/screenrecord.cpp
++++ b/cmds/screenrecord/screenrecord.cpp
+@@ -193,7 +193,7 @@ static status_t prepareEncoder(float displayFps, sp<MediaCodec>* pCodec,
+     format->setInt32(KEY_WIDTH, gVideoWidth);
+     format->setInt32(KEY_HEIGHT, gVideoHeight);
+     format->setString(KEY_MIME, kMimeTypeAvc);
+-    format->setInt32(KEY_COLOR_FORMAT, OMX_COLOR_FormatAndroidOpaque);
++    format->setInt32(KEY_COLOR_FORMAT, OMX_COLOR_FormatYUV420Planar);
+     format->setInt32(KEY_BIT_RATE, gBitRate);
+     format->setFloat(KEY_FRAME_RATE, displayFps);
+     format->setInt32(KEY_I_FRAME_INTERVAL, 10);
+diff --git a/media/libstagefright/omx/SoftVideoEncoderOMXComponent.cpp b/media/libstagefright/omx/SoftVideoEncoderOMXComponent.cpp
+index 11e563cdc2..67833d5263 100644
+--- a/media/libstagefright/omx/SoftVideoEncoderOMXComponent.cpp
++++ b/media/libstagefright/omx/SoftVideoEncoderOMXComponent.cpp
+@@ -397,8 +397,10 @@ OMX_ERRORTYPE SoftVideoEncoderOMXComponent::internalGetParameter(
+             // XXX: For now just configure input and output buffers the same size.
+             // May want to determine a more suitable output buffer size independent
+             // of YUV format.
++#if !defined(__i386__) && !defined(__x86_64__)
+             CHECK(mColorFormat == OMX_COLOR_FormatYUV420Planar ||
+                     mColorFormat == OMX_COLOR_FormatYUV420SemiPlanar);
++#endif
+             def->nBufferSize = mWidth * mHeight * 3 / 2;
+ 
+             return OMX_ErrorNone;

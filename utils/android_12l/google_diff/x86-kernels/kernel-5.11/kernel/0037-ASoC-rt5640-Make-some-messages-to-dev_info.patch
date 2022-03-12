@@ -1,0 +1,114 @@
+From 4f8db03c46d933bbb870aa46ee48c19a97ddc6ea Mon Sep 17 00:00:00 2001
+From: youling257 <youling257@gmail.com>
+Date: Sun, 17 Jun 2018 10:38:39 +0800
+Subject: [PATCH 037/106] ASoC: rt5640: Make some messages to dev_info
+
+Signed-off-by: youling257 <youling257@gmail.com>
+---
+ sound/soc/codecs/rt5640.c             | 18 +++++++++---------
+ sound/soc/intel/boards/bytcr_rt5640.c |  4 ++--
+ 2 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/sound/soc/codecs/rt5640.c b/sound/soc/codecs/rt5640.c
+index 1414ad15d01c..97815cd5fc3a 100644
+--- a/sound/soc/codecs/rt5640.c
++++ b/sound/soc/codecs/rt5640.c
+@@ -2147,7 +2147,7 @@ static bool rt5640_micbias1_ovcd(struct snd_soc_component *component)
+ 	int val;
+ 
+ 	val = snd_soc_component_read(component, RT5640_IRQ_CTRL2);
+-	dev_dbg(component->dev, "irq ctrl2 %#04x\n", val);
++	dev_info(component->dev, "irq ctrl2 %#04x\n", val);
+ 
+ 	return (val & RT5640_MB1_OC_STATUS);
+ }
+@@ -2158,7 +2158,7 @@ static bool rt5640_jack_inserted(struct snd_soc_component *component)
+ 	int val;
+ 
+ 	val = snd_soc_component_read(component, RT5640_INT_IRQ_ST);
+-	dev_dbg(component->dev, "irq status %#04x\n", val);
++	dev_info(component->dev, "irq status %#04x\n", val);
+ 
+ 	if (rt5640->jd_inverted)
+ 		return !(val & RT5640_JD_STATUS);
+@@ -2222,7 +2222,7 @@ static void rt5640_button_press_work(struct work_struct *work)
+ 	}
+ 
+ 	if (rt5640->pressed && !rt5640->press_reported) {
+-		dev_dbg(component->dev, "headset button press\n");
++		dev_info(component->dev, "headset button press\n");
+ 		snd_soc_jack_report(rt5640->jack, SND_JACK_BTN_0,
+ 				    SND_JACK_BTN_0);
+ 		rt5640->press_reported = true;
+@@ -2230,7 +2230,7 @@ static void rt5640_button_press_work(struct work_struct *work)
+ 
+ 	if (rt5640->release_count >= BP_THRESHOLD) {
+ 		if (rt5640->press_reported) {
+-			dev_dbg(component->dev, "headset button release\n");
++			dev_info(component->dev, "headset button release\n");
+ 			snd_soc_jack_report(rt5640->jack, 0, SND_JACK_BTN_0);
+ 		}
+ 		/* Re-enable OVCD IRQ to detect next press */
+@@ -2268,13 +2268,13 @@ static int rt5640_detect_headset(struct snd_soc_component *component)
+ 			 * 2nd ring contact and the ground, so a TRS connector
+ 			 * without a mic contact and thus plain headphones.
+ 			 */
+-			dev_dbg(component->dev, "jack mic-gnd shorted\n");
++			dev_info(component->dev, "jack mic-gnd shorted\n");
+ 			headset_count = 0;
+ 			headphone_count++;
+ 			if (headphone_count == JACK_DETECT_COUNT)
+ 				return SND_JACK_HEADPHONE;
+ 		} else {
+-			dev_dbg(component->dev, "jack mic-gnd open\n");
++			dev_info(component->dev, "jack mic-gnd open\n");
+ 			headphone_count = 0;
+ 			headset_count++;
+ 			if (headset_count == JACK_DETECT_COUNT)
+@@ -2303,7 +2303,7 @@ static void rt5640_jack_work(struct work_struct *work)
+ 			}
+ 			snd_soc_jack_report(rt5640->jack, 0,
+ 					    SND_JACK_HEADSET | SND_JACK_BTN_0);
+-			dev_dbg(component->dev, "jack unplugged\n");
++			dev_info(component->dev, "jack unplugged\n");
+ 		}
+ 	} else if (!(rt5640->jack->status & SND_JACK_HEADPHONE)) {
+ 		/* Jack inserted */
+@@ -2317,10 +2317,10 @@ static void rt5640_jack_work(struct work_struct *work)
+ 			/* No more need for overcurrent detect. */
+ 			rt5640_disable_micbias1_for_ovcd(component);
+ 		}
+-		dev_dbg(component->dev, "detect status %#02x\n", status);
++		dev_info(component->dev, "detect status %#02x\n", status);
+ 		snd_soc_jack_report(rt5640->jack, status, SND_JACK_HEADSET);
+ 	} else if (rt5640->ovcd_irq_enabled && rt5640_micbias1_ovcd(component)) {
+-		dev_dbg(component->dev, "OVCD IRQ\n");
++		dev_info(component->dev, "OVCD IRQ\n");
+ 
+ 		/*
+ 		 * The ovcd IRQ keeps firing while the button is pressed, so
+diff --git a/sound/soc/intel/boards/bytcr_rt5640.c b/sound/soc/intel/boards/bytcr_rt5640.c
+index 5520d7c80019..8e5e9275c944 100644
+--- a/sound/soc/intel/boards/bytcr_rt5640.c
++++ b/sound/soc/intel/boards/bytcr_rt5640.c
+@@ -1131,7 +1131,7 @@ static int byt_rt5640_suspend(struct snd_soc_card *card)
+ 
+ 	for_each_card_components(card, component) {
+ 		if (!strcmp(component->name, byt_rt5640_codec_name)) {
+-			dev_dbg(component->dev, "disabling jack detect before suspend\n");
++			dev_info(component->dev, "disabling jack detect before suspend\n");
+ 			snd_soc_component_set_jack(component, NULL, NULL);
+ 			break;
+ 		}
+@@ -1150,7 +1150,7 @@ static int byt_rt5640_resume(struct snd_soc_card *card)
+ 
+ 	for_each_card_components(card, component) {
+ 		if (!strcmp(component->name, byt_rt5640_codec_name)) {
+-			dev_dbg(component->dev, "re-enabling jack detect after resume\n");
++			dev_info(component->dev, "re-enabling jack detect after resume\n");
+ 			snd_soc_component_set_jack(component, &priv->jack, NULL);
+ 			break;
+ 		}
+-- 
+2.17.1
+

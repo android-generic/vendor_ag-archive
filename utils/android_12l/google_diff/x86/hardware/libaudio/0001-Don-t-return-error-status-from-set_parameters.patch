@@ -1,0 +1,71 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Michael Goffioul <michael.goffioul@lincor.com>
+Date: Fri, 30 Oct 2020 16:15:59 -0400
+Subject: [PATCH 1/2] Don't return error status from set_parameters()
+
+Just ignore unknown parameters, always return 0. Returning > 0 makes
+Android think the command failed and breaks audio input/output.
+---
+ audio_hw.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/audio_hw.c b/audio_hw.c
+index 1b24995..7bdfd6f 100644
+--- a/audio_hw.c
++++ b/audio_hw.c
+@@ -706,15 +706,15 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
+     struct audio_device *adev = out->dev;
+     struct str_parms *parms;
+     char value[32];
+-    int ret;
++    int len;
+     unsigned int val;
+ 
+     parms = str_parms_create_str(kvpairs);
+ 
+-    ret = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING,
++    len = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING,
+                             value, sizeof(value));
+     pthread_mutex_lock(&adev->lock);
+-    if (ret >= 0) {
++    if (len >= 0) {
+         val = atoi(value);
+         if ((adev->out_device != val) && (val != 0)) {
+             /*
+@@ -735,7 +735,7 @@ static int out_set_parameters(struct audio_stream *stream, const char *kvpairs)
+     pthread_mutex_unlock(&adev->lock);
+ 
+     str_parms_destroy(parms);
+-    return ret;
++    return 0;
+ }
+ 
+ static char *out_get_parameters(const struct audio_stream *stream __unused, const char *keys __unused)
+@@ -1014,15 +1014,15 @@ static int in_set_parameters(struct audio_stream *stream, const char *kvpairs)
+     struct audio_device *adev = in->dev;
+     struct str_parms *parms;
+     char value[32];
+-    int ret;
++    int len;
+     unsigned int val;
+ 
+     parms = str_parms_create_str(kvpairs);
+ 
+-    ret = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING,
++    len = str_parms_get_str(parms, AUDIO_PARAMETER_STREAM_ROUTING,
+                             value, sizeof(value));
+     pthread_mutex_lock(&adev->lock);
+-    if (ret >= 0) {
++    if (len >= 0) {
+         val = atoi(value) & ~AUDIO_DEVICE_BIT_IN;
+         if ((adev->in_device != val) && (val != 0)) {
+             /*
+@@ -1043,7 +1043,7 @@ static int in_set_parameters(struct audio_stream *stream, const char *kvpairs)
+     pthread_mutex_unlock(&adev->lock);
+ 
+     str_parms_destroy(parms);
+-    return ret;
++    return 0;
+ }
+ 
+ static char * in_get_parameters(const struct audio_stream *stream __unused,

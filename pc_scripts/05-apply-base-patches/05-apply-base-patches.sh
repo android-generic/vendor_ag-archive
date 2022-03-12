@@ -23,25 +23,6 @@ private_utils_dir="$top_dir/vendor/$ag_vendor_path/PRIVATE/utils"
 private_patch_dir="$private_utils_dir/android_r/google_diff/$TARGET_PRODUCT"
 LOCALDIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-if [ -f build/make/core/version_defaults.mk ]; then
-	if grep -q "PLATFORM_SDK_VERSION := 28" build/make/core/version_defaults.mk; then
-        patch_dir="$utils_path/android_p/google_diff/x86"
-        roms_patch_dir="$utils_path/android_p/google_diff/x86-resolutions"
-    fi
-    if grep -q "PLATFORM_SDK_VERSION := 29" build/make/core/version_defaults.mk; then
-        patch_dir="$utils_path/android_q/google_diff/x86"
-        roms_patch_dir="$utils_path/android_q/google_diff/x86-resolutions"
-    fi
-    if grep -q "PLATFORM_SDK_VERSION := 30" build/make/core/version_defaults.mk; then
-        patch_dir="$utils_path/android_r/google_diff/x86"
-        roms_patch_dir="$utils_path/android_r/google_diff/x86-resolutions"
-    fi
-    if grep -q "PLATFORM_SDK_VERSION := 31" build/make/core/version_defaults.mk; then
-        patch_dir="$utils_path/android_s/google_diff/x86"
-        roms_patch_dir="$utils_path/android_s/google_diff/x86-resolutions"
-    fi
-fi
-
 #setup colors
 red=`tput setaf 1`
 green=`tput setaf 2`
@@ -65,6 +46,36 @@ conflict=""
 conflict_list=""
 goodpatch=""
 project_revision=""
+
+
+if [ -f build/make/core/version_defaults.mk ]; then
+	if grep -q "PLATFORM_SDK_VERSION := 28" build/make/core/version_defaults.mk; then
+		echo -e ${ltgreen}"Android P found"${reset}
+        patch_dir="$utils_path/android_p/google_diff/x86"
+        roms_patch_dir="$utils_path/android_p/google_diff/x86-resolutions"
+    fi
+    if grep -q "PLATFORM_SDK_VERSION := 29" build/make/core/version_defaults.mk; then
+		echo -e ${ltgreen}"Android Q found"${reset}
+        patch_dir="$utils_path/android_q/google_diff/x86"
+        roms_patch_dir="$utils_path/android_q/google_diff/x86-resolutions"
+    fi
+    if grep -q "PLATFORM_SDK_VERSION := 30" build/make/core/version_defaults.mk; then
+		echo -e ${ltgreen}"Android R found"${reset}
+        patch_dir="$utils_path/android_r/google_diff/x86"
+        roms_patch_dir="$utils_path/android_r/google_diff/x86-resolutions"
+    fi
+    if grep -q "PLATFORM_SDK_VERSION := 31" build/make/core/version_defaults.mk; then
+		echo -e ${ltgreen}"Android S found"${reset}
+        patch_dir="$utils_path/android_s/google_diff/x86"
+        roms_patch_dir="$utils_path/android_s/google_diff/x86-resolutions"
+    fi
+    if grep -q "PLATFORM_SDK_VERSION := 32" build/make/core/version_defaults.mk; then
+		echo -e ${ltgreen}"Android 12L found"${reset}
+        patch_dir="$utils_path/android_12l/google_diff/x86"
+        roms_patch_dir="$utils_path/android_12l/google_diff/x86-resolutions"
+    fi
+    
+fi
 
 tag_project() {
   cd $top_dir/$1

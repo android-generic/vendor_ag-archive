@@ -1,0 +1,56 @@
+From dd8a58c23346a78b403184f314acb3c5be8610d3 Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Wed, 2 Mar 2022 18:55:05 -0500
+Subject: [PATCH 15/25] drm_gralloc changes for mesa
+
+---
+ BoardConfig.mk | 7 +++++--
+ device.mk      | 5 +++++
+ 2 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/BoardConfig.mk b/BoardConfig.mk
+index b5e44a5..f82a739 100644
+--- a/BoardConfig.mk
++++ b/BoardConfig.mk
+@@ -58,7 +58,7 @@ USE_INTEL_OMX_COMPONENTS := true
+ 
+ USE_OPENGL_RENDERER := true
+ NUM_FRAMEBUFFER_SURFACE_BUFFERS ?= 3
+-BOARD_USES_DRM_GRALLOC := false
++BOARD_USES_DRM_GRALLOC := true
+ BOARD_USES_DRM_HWCOMPOSER ?= true
+ 
+ USE_CAMERA_STUB ?= false
+@@ -101,7 +101,7 @@ BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
+ 
+ BOARD_USES_MINIGBM := true
+ BOARD_USES_MINIGBM_INTEL := true
+-BOARD_USES_GRALLOC1 := true
++#~ BOARD_USES_GRALLOC1 := true
+ BOARD_USES_IA_HWCOMPOSER := true
+ TARGET_USES_HWC2 ?= true
+ #BOARD_USES_VULKAN := true
+@@ -117,3 +117,6 @@ BOARD_USES_GRALLOC_HANDLE := true
+ -include vendor/google/chromeos-x86/board/native_bridge_arm_on_x86.mk
+ 
+ PRODUCT_FULL_TREBLE := true
++BUILD_BROKEN_DUP_RULES := true
++RELAX_USES_LIBRARY_CHECK := true
++
+diff --git a/device.mk b/device.mk
+index 5a4e806..6940c97 100644
+--- a/device.mk
++++ b/device.mk
+@@ -156,3 +156,8 @@ PRODUCT_COPY_FILES += \
+ 	frameworks/native/data/etc/pc_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/pc_core_hardware.xml
+ 
+ $(call inherit-product, frameworks/native/build/tablet-10in-xhdpi-2048-dalvik-heap.mk)
++
++# Need this so that the application's loop on reading input can be synchronized with HW VSYNC
++PRODUCT_VENDOR_PROPERTIES += \
++    ro.surface_flinger.running_without_sync_framework=true
++    
+\ No newline at end of file
+-- 
+2.25.1
+

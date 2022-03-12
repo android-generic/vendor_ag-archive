@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Chih-Wei Huang <cwhuang@linux.org.tw>
+Date: Sun, 26 Mar 2017 00:47:42 +0800
+Subject: [PATCH 8/8] vold3: check supported filesystem modules
+
+If there is a filesystem module of the requested type,
+it should be considered supported.
+
+Note the kernel will auto load the filesystem module
+on mounting by modprobe.
+---
+ Utils.cpp | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/Utils.cpp b/Utils.cpp
+index fd72cf2..a438929 100644
+--- a/Utils.cpp
++++ b/Utils.cpp
+@@ -27,6 +27,7 @@
+ #include <android-base/strings.h>
+ #include <android-base/unique_fd.h>
+ #include <cutils/fs.h>
++#include <cutils/probe_module.h>
+ #include <logwrap/logwrap.h>
+ #include <private/android_filesystem_config.h>
+ #include <private/android_projectid_config.h>
+@@ -1007,7 +1008,15 @@ bool IsFilesystemSupported(const std::string& fsType) {
+     /* fuse filesystems */
+     supported.append("fuse\tntfs\n");
+ 
+-    return supported.find(fsType + "\n") != std::string::npos;
++    if (supported.find(fsType + "\n") != std::string::npos) {
++        return true;
++    }
++
++    // Check if there is a filesystem module available
++    char fs[PATH_MAX];
++    get_default_mod_path(fs);
++    supported = StringPrintf("%skernel/fs/%s", fs, fsType.c_str());
++    return !access(supported.c_str(), F_OK);
+ }
+ 
+ bool IsSdcardfsUsed() {

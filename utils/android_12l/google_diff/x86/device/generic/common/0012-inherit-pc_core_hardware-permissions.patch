@@ -1,0 +1,28 @@
+From 0ced8025c04076d0c954681c161b51be71dd22ca Mon Sep 17 00:00:00 2001
+From: Jon West <electrikjesus@gmail.com>
+Date: Sun, 20 Feb 2022 12:34:40 -0500
+Subject: [PATCH 12/25] inherit pc_core_hardware permissions
+
+Used from cuttlefish device for their PC config
+---
+ device.mk | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/device.mk b/device.mk
+index 0283b3f..342bd45 100644
+--- a/device.mk
++++ b/device.mk
+@@ -134,3 +134,10 @@ $(call inherit-product-if-exists,$(if $(wildcard vendor/google/products/gms.mk),
+ $(call inherit-product-if-exists,$(LOCAL_PATH)/nativebridge/nativebridge.mk)
+ 
+ $(call inherit-product,$(if $(wildcard $(PRODUCT_DIR)packages.mk),$(PRODUCT_DIR),$(LOCAL_PATH)/)packages.mk)
++
++$(call inherit-product, $(SRC_TARGET_DIR)/product/handheld_vendor.mk)
++
++PRODUCT_COPY_FILES += \
++	frameworks/native/data/etc/pc_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/pc_core_hardware.xml
++
++$(call inherit-product, frameworks/native/build/tablet-10in-xhdpi-2048-dalvik-heap.mk)
+-- 
+2.25.1
+
