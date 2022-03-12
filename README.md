@@ -4,7 +4,7 @@
 ## What Is This?
 
 Android-Generic Project is a collection of scripts, manifests & patches that allow for rapid prototyping of Android projects based off AOSP to produce generic images for Linux PC hardware as well as others.
-For a more in-depth description of the goals and progressions leading up to this project, please read [This Blog Post](https://blog.blissroms.com/2020/06/26/lets-try-and-change-the-game/)
+For a more in-depth description of the goals and progressions leading up to this project, please read [This Blog Post](https://blog.blissroms.org/2020/06/26/lets-try-and-change-the-game.html)
 
 The first version of this toolset did indeed do what we intended it to do, but we felt things still aren't simple enough for mainstream use. So we are going to try and address that with this new version of Android-Generic Project.
 
