@@ -1,48 +1,33 @@
-From f90442cbc1e64f279a46a80f67f2e8f308c4a42b Mon Sep 17 00:00:00 2001
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Chih-Wei Huang <cwhuang@linux.org.tw>
 Date: Tue, 20 May 2014 00:38:35 +0800
 Subject: [PATCH] Disable the legacy su
 
 ---
- su/Android.bp | 29 -----------------------------
- 1 file changed, 29 deletions(-)
- delete mode 100644 su/Android.bp
+ su/Android.mk | 17 -----------------
+ 1 file changed, 17 deletions(-)
+ delete mode 100644 su/Android.mk
 
-diff --git a/su/Android.bp b/su/Android.bp
+diff --git a/su/Android.mk b/su/Android.mk
 deleted file mode 100644
-index 86e44fb4..00000000
---- a/su/Android.bp
+index 18493992..00000000
+--- a/su/Android.mk
 +++ /dev/null
-@@ -1,29 +0,0 @@
--package {
--    default_applicable_licenses: ["system_extras_su_license"],
--}
+@@ -1,17 +0,0 @@
+-LOCAL_PATH:= $(call my-dir)
+-include $(CLEAR_VARS)
 -
--license {
--    name: "system_extras_su_license",
--    visibility: [":__subpackages__"],
--    license_kinds: [
--        "SPDX-license-identifier-Apache-2.0",
--    ],
--    license_text: [
--        "NOTICE",
--    ],
--}
+-LOCAL_CFLAGS := -Wall -Werror
 -
--cc_binary {
--    name: "su",
+-LOCAL_SRC_FILES:= su.cpp
 -
--    cflags: [
--        "-Wall",
--        "-Werror",
--    ],
+-LOCAL_MODULE:= su
+-LOCAL_LICENSE_KINDS:= SPDX-license-identifier-Apache-2.0
+-LOCAL_LICENSE_CONDITIONS:= notice
+-LOCAL_NOTICE_FILE:= $(LOCAL_PATH)/NOTICE
 -
--    srcs: ["su.cpp"],
+-LOCAL_HEADER_LIBRARIES := libcutils_headers
 -
--    install_in_xbin: true,
+-LOCAL_MODULE_PATH := $(TARGET_OUT_OPTIONAL_EXECUTABLES)
 -
--    header_libs: ["libcutils_headers"],
--}
--- 
-2.25.1
-
+-include $(BUILD_EXECUTABLE)
