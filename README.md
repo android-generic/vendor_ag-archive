@@ -8,7 +8,7 @@ For a more in-depth description of the goals and progressions leading up to this
 
 The first version of this toolset did indeed do what we intended it to do, but we felt things still aren't simple enough for mainstream use. So we are going to try and address that with this new version of Android-Generic Project.
 
-The menu system uses [easybashgui](https://sites.google.com/site/easybashgui/) for it's menu system, so it will automatically detect and use: yad, gtkdialog, kdialog, zenity, Xdialog, (c)dialog, whiptail or bash builtins to display the optioins. That means this system should work on any server or SSH session.
+The menu system uses [easybashgui](https://sites.google.com/site/easybashgui/) for it's menu system, so it will automatically detect and use: yad, gtkdialog, kdialog, zenity, Xdialog, (c)dialog, whiptail or bash builtins to display the options. That means this system should work on any server or SSH session.
 
 ### Development Chats:
 
