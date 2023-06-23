@@ -1,0 +1,31 @@
+From 9730e4064a8408e6ef1ffb9498f298c236b82744 Mon Sep 17 00:00:00 2001
+From: Weijie Wang <weijiew@codeaurora.org>
+Date: Mon, 28 Jun 2021 19:09:14 +0800
+Subject: [PATCH] SystemUI: Fix NPE in BatteryMeterView
+
+Change-Id: I4c9281aadfd9befda2270d672187cca82bdc3d4c
+CRs-Fixed: 2978962
+---
+ .../SystemUI/src/com/android/systemui/BatteryMeterView.java | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/BatteryMeterView.java b/packages/SystemUI/src/com/android/systemui/BatteryMeterView.java
+index fc30be416c0f..691d37fce892 100644
+--- a/packages/SystemUI/src/com/android/systemui/BatteryMeterView.java
++++ b/packages/SystemUI/src/com/android/systemui/BatteryMeterView.java
+@@ -386,8 +386,10 @@ public class BatteryMeterView extends LinearLayout implements
+     }
+ 
+     private void setPercentTextAtCurrentLevel() {
+-        mBatteryPercentView.setText(
+-                NumberFormat.getPercentInstance().format(mLevel / 100f));
++        if (mBatteryPercentView != null) {
++            mBatteryPercentView.setText(
++                    NumberFormat.getPercentInstance().format(mLevel / 100f));
++        }
+         setContentDescription(
+                 getContext().getString(mCharging ? R.string.accessibility_battery_level_charging
+                         : R.string.accessibility_battery_level, mLevel));
+-- 
+2.31.1
+
